@@ -1,5 +1,4 @@
-
-import { Device, DeviceRequest, User } from '@/types';
+import { Device, DeviceRequest, User, RequestStatus } from '@/types';
 
 export const mockUsers: User[] = [
   {

@@ -9,7 +9,7 @@ import { dataStore } from '@/utils/mockData';
 import { DeviceRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { ArrowRight, Clock, PackageCheck, Shield } from 'lucide-react';
 
 const Dashboard: React.FC = () => {

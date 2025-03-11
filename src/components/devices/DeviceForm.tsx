@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { dataStore } from '@/utils/mockData';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 import { Loader2, Plus } from 'lucide-react';
 
 interface DeviceFormProps {

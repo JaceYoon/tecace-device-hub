@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '@/types';
 import { mockUsers } from '@/utils/mockData';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);

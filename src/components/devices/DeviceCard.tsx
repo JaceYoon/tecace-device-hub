@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -9,7 +8,7 @@ import { cn } from '@/lib/utils';
 import { Calendar, ChevronRight, Cpu, Hash, Smartphone, User as UserIcon } from 'lucide-react';
 import { dataStore } from '@/utils/mockData';
 import { formatDistanceToNow } from 'date-fns';
-import { toast } from '@/components/ui/sonner';
+import { toast } from 'sonner';
 
 interface DeviceCardProps {
   device: Device;
@@ -67,7 +66,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
     }
   };
   
-  // Manager action to mark as missing/stolen or available
   const handleStatusChange = (newStatus: 'missing' | 'stolen' | 'available') => {
     if (!isManager) return;
     
