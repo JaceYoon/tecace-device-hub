@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,20 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				tecace: {
+					'50': '#f5f7fa',
+					'100': '#ebeef3',
+					'200': '#d2dae6',
+					'300': '#adbcd1',
+					'400': '#8199b8',
+					'500': '#617ca2',
+					'600': '#4d6586',
+					'700': '#3f526e',
+					'800': '#36465d',
+					'900': '#313d4f',
+					'950': '#21293a',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,11 +98,49 @@ export default {
 					to: {
 						height: '0'
 					}
+				},
+				fadeIn: {
+					from: { opacity: '0' },
+					to: { opacity: '1' }
+				},
+				slideUp: {
+					from: { transform: 'translateY(10px)', opacity: '0' },
+					to: { transform: 'translateY(0)', opacity: '1' }
+				},
+				slideDown: {
+					from: { transform: 'translateY(-10px)', opacity: '0' },
+					to: { transform: 'translateY(0)', opacity: '1' }
+				},
+				slideLeft: {
+					from: { transform: 'translateX(10px)', opacity: '0' },
+					to: { transform: 'translateX(0)', opacity: '1' }
+				},
+				slideRight: {
+					from: { transform: 'translateX(-10px)', opacity: '0' },
+					to: { transform: 'translateX(0)', opacity: '1' }
+				},
+				scale: {
+					from: { transform: 'scale(0.95)', opacity: '0' },
+					to: { transform: 'scale(1)', opacity: '1' }
 				}
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'fade-in': 'fadeIn 0.5s ease-out',
+				'slide-up': 'slideUp 0.5s ease-out',
+				'slide-down': 'slideDown 0.5s ease-out',
+				'slide-left': 'slideLeft 0.5s ease-out',
+				'slide-right': 'slideRight 0.5s ease-out',
+				'scale-in': 'scale 0.5s ease-out',
+			},
+			boxShadow: {
+				'soft-sm': '0 2px 8px rgba(0, 0, 0, 0.05)',
+				'soft': '0 4px 16px rgba(0, 0, 0, 0.08)',
+				'soft-lg': '0 8px 24px rgba(0, 0, 0, 0.1)',
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
 			}
 		}
 	},
