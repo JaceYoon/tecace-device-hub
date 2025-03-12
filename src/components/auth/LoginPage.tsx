@@ -1,35 +1,24 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!email || !password) {
-      return;
-    }
-    
+  const handleLogin = async () => {
     setIsSubmitting(true);
     
     try {
-      await login(email, password);
-      navigate('/dashboard');
+      await login();
+      // Navigate is handled by the OAuth redirect
     } catch (error) {
       console.error('Login failed:', error);
-    } finally {
       setIsSubmitting(false);
     }
   };
@@ -45,68 +34,29 @@ const LoginPage: React.FC = () => {
         <Card className="w-full shadow-soft-lg">
           <CardHeader>
             <CardTitle className="text-xl">Sign In</CardTitle>
-            <CardDescription>Use your credentials to sign in</CardDescription>
+            <CardDescription>Sign in with your Confluence account</CardDescription>
           </CardHeader>
           
-          <form onSubmit={handleSubmit}>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="name@company.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  autoComplete="email"
-                  className="transition-all-ease"
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  className="transition-all-ease"
-                />
-              </div>
-            </CardContent>
-            
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Signing in...
-                  </>
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </CardFooter>
-          </form>
-        </Card>
-        
-        <div className="mt-6 text-center text-sm text-muted-foreground">
-          <div className="mt-2">
-            <p className="text-xs text-muted-foreground opacity-70">
-              Demo accounts:
-              <br />
-              Manager: admin@tecace.com
-              <br />
-              User: john@tecace.com or jane@tecace.com
-              <br />
-              (any password will work)
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Click the button below to authenticate with your Confluence account.
+              You will be redirected to Atlassian for secure authentication.
             </p>
-          </div>
-        </div>
+          </CardContent>
+          
+          <CardFooter>
+            <Button onClick={handleLogin} className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Redirecting...
+                </>
+              ) : (
+                "Sign In with Confluence"
+              )}
+            </Button>
+          </CardFooter>
+        </Card>
       </div>
     </div>
   );

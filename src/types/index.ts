@@ -18,12 +18,11 @@ export interface Device {
   imei: string;
   serialNumber: string;
   status: DeviceStatus;
-  assignedTo?: string; // user id
-  requestedBy?: string; // user id
-  addedBy: string; // manager id
-  addedAt: Date;
-  updatedAt: Date;
+  assignedTo?: User;
+  addedBy: User;
   notes?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -36,7 +35,9 @@ export interface DeviceRequest {
   type: 'assign' | 'release';
   requestedAt: Date;
   processedAt?: Date;
-  processedBy?: string; // manager id
+  processedBy?: User;
+  device?: Device;
+  user?: User;
 }
 
 export interface AuthContextType {
@@ -44,6 +45,6 @@ export interface AuthContextType {
   isAuthenticated: boolean;
   isLoading: boolean;
   isManager: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: () => Promise<void>;
   logout: () => void;
 }

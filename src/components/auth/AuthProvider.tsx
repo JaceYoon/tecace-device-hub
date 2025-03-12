@@ -1,63 +1,67 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '@/types';
-import { mockUsers } from '@/utils/mockData';
 import { toast } from 'sonner';
 
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Backend API URL
+const API_URL = 'http://localhost:5000/api';
+
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check if there's a stored user on mount
+  // Check authentication status on mount
   useEffect(() => {
-    const storedUser = localStorage.getItem('tecace_user');
-    if (storedUser) {
+    const checkAuth = async () => {
       try {
-        setUser(JSON.parse(storedUser));
+        const response = await fetch(`${API_URL}/auth/check`, {
+          method: 'GET',
+          credentials: 'include',
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.isAuthenticated && data.user) {
+            setUser({
+              id: data.user.id,
+              name: data.user.name,
+              email: data.user.email,
+              role: data.user.role,
+              avatarUrl: data.user.avatarUrl
+            });
+          }
+        }
       } catch (error) {
-        console.error('Failed to parse stored user:', error);
-        localStorage.removeItem('tecace_user');
+        console.error('Auth check failed:', error);
+      } finally {
+        setIsLoading(false);
       }
-    }
-    setIsLoading(false);
+    };
+    
+    checkAuth();
   }, []);
 
-  // Login function
-  const login = async (email: string, password: string): Promise<void> => {
-    setIsLoading(true);
-    
-    // Simulate API call with timeout
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Find user with matching email
-    const user = mockUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
-    
-    if (user && password.trim() !== '') {
-      // For demo purposes, any non-empty password works
-      setUser(user);
-      localStorage.setItem('tecace_user', JSON.stringify(user));
-      toast.success('Logged in successfully!');
-    } else {
-      if (!user) {
-        toast.error('User not found');
-        throw new Error('User not found');
-      } else {
-        toast.error('Password is required');
-        throw new Error('Password is required');
-      }
-    }
-    
-    setIsLoading(false);
+  // Login function - redirects to Atlassian OAuth
+  const login = async (): Promise<void> => {
+    window.location.href = `${API_URL}/auth/login`;
   };
 
   // Logout function
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('tecace_user');
-    toast.info('Logged out successfully');
+  const logout = async () => {
+    try {
+      await fetch(`${API_URL}/auth/logout`, {
+        method: 'GET',
+        credentials: 'include',
+      });
+      
+      setUser(null);
+      toast.info('Logged out successfully');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   // Check if user is manager
