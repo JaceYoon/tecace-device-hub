@@ -30,7 +30,7 @@ export const exportDevicesToExcel = (
     'Current Owner': getUserNameById(device.assignedTo, users),
     ...(isManager && {
       'Added By': getUserNameById(device.addedBy, users),
-      'Added Date': new Date(device.addedAt).toLocaleDateString(),
+      'Added Date': new Date(device.createdAt).toLocaleDateString(),
       'Last Updated': new Date(device.updatedAt).toLocaleDateString(),
       'Notes': device.notes || ''
     })

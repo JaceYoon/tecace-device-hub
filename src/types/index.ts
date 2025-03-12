@@ -18,11 +18,12 @@ export interface Device {
   imei: string;
   serialNumber: string;
   status: DeviceStatus;
-  assignedTo?: User;
-  addedBy: User;
+  assignedTo?: string; // Changed from User to string (user ID)
+  addedBy: string; // Changed from User to string (user ID)
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
+  requestedBy?: string; // Added requestedBy field as string (user ID)
 }
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected';
@@ -35,7 +36,7 @@ export interface DeviceRequest {
   type: 'assign' | 'release';
   requestedAt: Date;
   processedAt?: Date;
-  processedBy?: User;
+  processedBy?: string; // Changed from User to string (user ID)
   device?: Device;
   user?: User;
 }
