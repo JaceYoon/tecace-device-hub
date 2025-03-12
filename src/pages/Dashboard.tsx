@@ -10,7 +10,7 @@ import { DeviceRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowRight, Clock, PackageCheck, Shield } from 'lucide-react';
+import { ArrowRight, Clock, PackageCheck, Shield, Smartphone, Package } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated, isManager } = useAuth();
@@ -131,14 +131,18 @@ const Dashboard: React.FC = () => {
         
         {/* Device Tabs */}
         <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-2 w-full max-w-md mb-8">
+          <TabsList className="grid grid-cols-3 w-full max-w-md mb-8">
             <TabsTrigger value="available" className="flex items-center gap-1">
               <Shield className="h-4 w-4" />
-              Available Devices
+              Available
             </TabsTrigger>
             <TabsTrigger value="my-devices" className="flex items-center gap-1">
               <PackageCheck className="h-4 w-4" />
               My Devices
+            </TabsTrigger>
+            <TabsTrigger value="all-devices" className="flex items-center gap-1">
+              <Package className="h-4 w-4" />
+              All Devices
             </TabsTrigger>
           </TabsList>
           
@@ -146,6 +150,7 @@ const Dashboard: React.FC = () => {
             <DeviceList 
               title="Available Devices" 
               filterByAvailable={true}
+              showExportButton={false}
             />
           </TabsContent>
           
@@ -154,6 +159,15 @@ const Dashboard: React.FC = () => {
               title="My Devices" 
               filterByAssignedToUser={myDeviceFilter}
               showControls={false}
+              showExportButton={false}
+            />
+          </TabsContent>
+
+          <TabsContent value="all-devices" className="animate-slide-up">
+            <DeviceList 
+              title="All Devices"
+              filterByStatus={['available', 'assigned']} 
+              showExportButton={true}
             />
           </TabsContent>
         </Tabs>

@@ -118,6 +118,7 @@ const DeviceManagement: React.FC = () => {
           <TabsContent value="all-devices" className="animate-slide-up">
             <DeviceList 
               title="All Devices" 
+              showExportButton={true}
             />
           </TabsContent>
           
@@ -125,6 +126,7 @@ const DeviceManagement: React.FC = () => {
             <DeviceList 
               title="Assigned Devices" 
               filterByStatus={['assigned']}
+              showExportButton={false}
             />
           </TabsContent>
           
@@ -132,6 +134,7 @@ const DeviceManagement: React.FC = () => {
             <DeviceList 
               title="Missing & Stolen Devices" 
               filterByStatus={['missing', 'stolen']}
+              showExportButton={false}
             />
           </TabsContent>
         </Tabs>

@@ -20,6 +20,7 @@ interface DeviceListProps {
   filterByAssignedToUser?: string;
   filterByStatus?: string[];
   showControls?: boolean;
+  showExportButton?: boolean;
   className?: string;
 }
 
@@ -29,6 +30,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   filterByAssignedToUser,
   filterByStatus,
   showControls = true,
+  showExportButton = true,
   className,
 }) => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -97,7 +99,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       {title && (
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-          {filteredDevices.length > 0 && (
+          {showExportButton && filteredDevices.length > 0 && (
             <ExportButton 
               devices={filteredDevices} 
               users={users} 
