@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/select';
 import { dataStore } from '@/utils/mockData';
 import { Search } from 'lucide-react';
+import ExportButton from './ExportButton';
 
 interface DeviceListProps {
   title?: string;
@@ -94,7 +95,16 @@ const DeviceList: React.FC<DeviceListProps> = ({
   return (
     <div className={className}>
       {title && (
-        <h2 className="text-2xl font-semibold tracking-tight mb-6">{title}</h2>
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
+          {filteredDevices.length > 0 && (
+            <ExportButton 
+              devices={filteredDevices} 
+              users={users} 
+              exportFileName={title.replace(/\s+/g, '_')}
+            />
+          )}
+        </div>
       )}
       
       {showControls && (

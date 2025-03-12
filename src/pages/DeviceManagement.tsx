@@ -8,7 +8,9 @@ import DeviceForm from '@/components/devices/DeviceForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Package, PlusCircle, Shield, Smartphone } from 'lucide-react';
+import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet } from 'lucide-react';
+import { dataStore } from '@/utils/mockData';
+import ExportButton from '@/components/devices/ExportButton';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isManager } = useAuth();
@@ -50,7 +52,7 @@ const DeviceManagement: React.FC = () => {
   return (
     <PageContainer>
       <div className="flex flex-col space-y-8 pt-6">
-        <div className="flex items-baseline justify-between">
+        <div className="flex flex-col md:flex-row md:items-baseline justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight mb-2">Device Management</h1>
             <p className="text-muted-foreground">
@@ -58,19 +60,28 @@ const DeviceManagement: React.FC = () => {
             </p>
           </div>
           
-          <Button 
-            onClick={() => setShowAddForm(!showAddForm)}
-            className="flex items-center gap-2"
-          >
-            {showAddForm ? (
-              <>Cancel</>
-            ) : (
-              <>
-                <PlusCircle className="h-4 w-4" />
-                Add Device
-              </>
-            )}
-          </Button>
+          <div className="flex gap-2 flex-wrap">
+            <ExportButton 
+              devices={dataStore.getDevices()} 
+              users={dataStore.getUsers()}
+              exportFileName="Complete_Device_Inventory"
+              variant="secondary"
+            />
+            
+            <Button 
+              onClick={() => setShowAddForm(!showAddForm)}
+              className="flex items-center gap-2"
+            >
+              {showAddForm ? (
+                <>Cancel</>
+              ) : (
+                <>
+                  <PlusCircle className="h-4 w-4" />
+                  Add Device
+                </>
+              )}
+            </Button>
+          </div>
         </div>
         
         {/* Add Device Form */}
