@@ -35,14 +35,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Find user with matching email
     const user = mockUsers.find(user => user.email.toLowerCase() === email.toLowerCase());
     
-    if (user) {
-      // In real app, password would be verified here
+    if (user && password.trim() !== '') {
+      // For demo purposes, any non-empty password works
       setUser(user);
       localStorage.setItem('tecace_user', JSON.stringify(user));
       toast.success('Logged in successfully!');
     } else {
-      toast.error('Invalid credentials');
-      throw new Error('Invalid credentials');
+      if (!user) {
+        toast.error('User not found');
+        throw new Error('User not found');
+      } else {
+        toast.error('Password is required');
+        throw new Error('Password is required');
+      }
     }
     
     setIsLoading(false);

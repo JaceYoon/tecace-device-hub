@@ -45,7 +45,7 @@ const LoginPage: React.FC = () => {
         <Card className="w-full shadow-soft-lg">
           <CardHeader>
             <CardTitle className="text-xl">Sign In</CardTitle>
-            <CardDescription>Use your Confluence credentials to sign in</CardDescription>
+            <CardDescription>Use your credentials to sign in</CardDescription>
           </CardHeader>
           
           <form onSubmit={handleSubmit}>
