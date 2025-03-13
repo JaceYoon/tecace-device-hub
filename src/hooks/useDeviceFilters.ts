@@ -1,0 +1,91 @@
+
+import { useState, useEffect } from 'react';
+import { Device, User } from '@/types';
+import { dataStore } from '@/utils/mockData';
+
+interface UseDeviceFiltersProps {
+  filterByAvailable?: boolean;
+  filterByAssignedToUser?: string;
+  filterByStatus?: string[];
+}
+
+export const useDeviceFilters = ({
+  filterByAvailable = false,
+  filterByAssignedToUser,
+  filterByStatus,
+}: UseDeviceFiltersProps) => {
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  
+  // Get unique device types
+  const deviceTypes = [...new Set(devices.map(device => device.type))];
+  
+  // Fetch devices and users
+  const fetchData = () => {
+    setDevices(dataStore.getDevices());
+    setUsers(dataStore.getUsers());
+  };
+  
+  useEffect(() => {
+    fetchData();
+  }, []);
+  
+  // Filter devices
+  const filteredDevices = devices.filter(device => {
+    // Text search
+    const matchesSearch = 
+      searchQuery === '' || 
+      device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      device.imei.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = 
+      statusFilter === 'all' || 
+      device.status === statusFilter;
+    
+    // Type filter
+    const matchesType = 
+      typeFilter === 'all' || 
+      device.type === typeFilter;
+    
+    // Available filter
+    const matchesAvailable = 
+      !filterByAvailable || 
+      device.status === 'available';
+    
+    // Assigned to user filter
+    const matchesAssignedToUser = 
+      !filterByAssignedToUser || 
+      device.assignedTo === filterByAssignedToUser;
+    
+    // Status filter array
+    const matchesStatusArray = 
+      !filterByStatus || 
+      filterByStatus.includes(device.status);
+    
+    return matchesSearch && 
+           matchesStatus && 
+           matchesType && 
+           matchesAvailable && 
+           matchesAssignedToUser &&
+           matchesStatusArray;
+  });
+  
+  return {
+    devices,
+    users,
+    filteredDevices,
+    deviceTypes,
+    searchQuery,
+    setSearchQuery,
+    statusFilter,
+    setStatusFilter,
+    typeFilter,
+    setTypeFilter,
+    fetchData
+  };
+};
