@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, RequestStatus } from '@/types';
 
 export const mockUsers: User[] = [
@@ -33,7 +34,7 @@ export const mockDevices: Device[] = [
     serialNumber: 'ABCD1234XYZ',
     status: 'available',
     addedBy: '1',
-    addedAt: new Date('2023-01-15'),
+    createdAt: new Date('2023-01-15'),
     updatedAt: new Date('2023-01-15'),
   },
   {
@@ -45,7 +46,7 @@ export const mockDevices: Device[] = [
     status: 'assigned',
     assignedTo: '2',
     addedBy: '1',
-    addedAt: new Date('2023-02-10'),
+    createdAt: new Date('2023-02-10'),
     updatedAt: new Date('2023-03-05'),
   },
   {
@@ -56,7 +57,7 @@ export const mockDevices: Device[] = [
     serialNumber: 'IPAD2022987',
     status: 'missing',
     addedBy: '1',
-    addedAt: new Date('2023-03-20'),
+    createdAt: new Date('2023-03-20'),
     updatedAt: new Date('2023-04-15'),
     notes: 'Last seen in meeting room B',
   },
@@ -68,7 +69,7 @@ export const mockDevices: Device[] = [
     serialNumber: 'SGS22ABC123',
     status: 'stolen',
     addedBy: '1',
-    addedAt: new Date('2023-01-05'),
+    createdAt: new Date('2023-01-05'),
     updatedAt: new Date('2023-05-10'),
     notes: 'Police report filed #12345',
   },
@@ -81,7 +82,7 @@ export const mockDevices: Device[] = [
     status: 'available',
     requestedBy: '3',
     addedBy: '1',
-    addedAt: new Date('2023-04-10'),
+    createdAt: new Date('2023-04-10'),
     updatedAt: new Date('2023-04-10'),
   }
 ];
@@ -129,18 +130,18 @@ class MockDataStore {
     return this.devices.find(device => device.id === id);
   }
 
-  addDevice(device: Omit<Device, 'id' | 'addedAt' | 'updatedAt'>): Device {
+  addDevice(device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Device {
     const newDevice: Device = {
       ...device,
       id: (this.devices.length + 1).toString(),
-      addedAt: new Date(),
+      createdAt: new Date(),
       updatedAt: new Date(),
     };
     this.devices.push(newDevice);
     return newDevice;
   }
 
-  updateDevice(id: string, updates: Partial<Omit<Device, 'id' | 'addedAt'>>): Device | null {
+  updateDevice(id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Device | null {
     const index = this.devices.findIndex(device => device.id === id);
     if (index === -1) return null;
     
