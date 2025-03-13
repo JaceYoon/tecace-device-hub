@@ -1,8 +1,8 @@
 
-import React, { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '@/components/auth/AuthProvider';
+import React from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/auth/AuthProvider';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,137 +12,118 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { LogOut, Menu, Package, Shield, Users, X } from 'lucide-react';
+import { Box, LogOut, Package, Settings, Smartphone, User } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { user, logout, isManager } = useAuth();
+  const { user, isAuthenticated, isManager, logout } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
     navigate('/');
   };
 
-  const navItems = [
-    { label: 'Dashboard', path: '/dashboard', icon: Package },
-    ...(isManager ? [{ label: 'Manage Devices', path: '/manage', icon: Shield }] : []),
-  ];
-
-  const isActive = (path: string) => location.pathname.startsWith(path);
-
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-md">
-      <div className="container flex h-16 items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Link to="/dashboard" className="flex items-center gap-2">
-            <div className="rounded-md bg-primary p-1">
-              <Package className="h-6 w-6 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold tracking-tight">Tecace</span>
+    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="container flex h-14 items-center">
+        <div className="mr-4 flex">
+          <Link to="/" className="flex items-center space-x-2">
+            <Box className="h-6 w-6" />
+            <span className="hidden font-bold sm:inline-block">
+              TecAce Device Manager
+            </span>
           </Link>
         </div>
 
-        {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
-          {user && (
-            <>
-              {navItems.map((item) => (
-                <Link
-                  key={item.path}
-                  to={item.path}
-                  className={`flex items-center gap-1 text-sm font-medium transition-colors hover:text-primary ${
-                    isActive(item.path) 
-                      ? 'text-primary' 
-                      : 'text-muted-foreground'
-                  }`}
-                >
-                  <item.icon className="h-4 w-4" />
-                  {item.label}
+        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
+          <div className="w-full flex-1 md:w-auto md:flex-none">
+            {isAuthenticated ? (
+              <div className="flex gap-6 md:gap-2">
+                <Link to="/dashboard">
+                  <Button variant="ghost" className="gap-2">
+                    <Smartphone className="h-[1.2rem] w-[1.2rem]" />
+                    <span className="hidden md:inline-block">My Devices</span>
+                  </Button>
                 </Link>
-              ))}
-            </>
-          )}
-        </nav>
 
-        {/* User Menu */}
-        {user ? (
-          <div className="flex items-center gap-4">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar className="h-9 w-9 border">
-                    <AvatarImage src={user.avatarUrl} alt={user.name} />
-                    <AvatarFallback className="text-xs">
-                      {user.name
-                        .split(' ')
-                        .map((n) => n[0])
-                        .join('')
-                        .toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-56" align="end" forceMount>
-                <DropdownMenuLabel>
-                  <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium">{user.name}</p>
-                    <p className="text-xs text-muted-foreground">{user.email}</p>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer" onClick={handleLogout}>
-                  <LogOut className="mr-2 h-4 w-4" />
-                  <span>Log out</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            
-            {/* Mobile menu button */}
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? (
-                <X className="h-5 w-5" />
-              ) : (
-                <Menu className="h-5 w-5" />
-              )}
-            </Button>
+                {isManager && (
+                  <Link to="/device-management">
+                    <Button variant="ghost" className="gap-2">
+                      <Package className="h-[1.2rem] w-[1.2rem]" />
+                      <span className="hidden md:inline-block">Manage Devices</span>
+                    </Button>
+                  </Link>
+                )}
+              </div>
+            ) : (
+              <div />
+            )}
           </div>
-        ) : (
-          <Button asChild>
-            <Link to="/">Sign In</Link>
-          </Button>
-        )}
-      </div>
 
-      {/* Mobile Navigation */}
-      {mobileMenuOpen && (
-        <div className="md:hidden border-t">
-          <div className="container py-3 flex flex-col space-y-2 animate-slide-down">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                to={item.path}
-                className={`flex items-center gap-2 py-2 px-3 rounded-md transition-colors ${
-                  isActive(item.path) 
-                    ? 'bg-secondary text-primary font-medium' 
-                    : 'text-muted-foreground'
-                }`}
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <item.icon className="h-5 w-5" />
-                {item.label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-2">
+            {isAuthenticated ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="relative h-8 w-8 rounded-full"
+                  >
+                    <Avatar className="h-8 w-8">
+                      {user?.avatarUrl ? (
+                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                      ) : (
+                        <AvatarFallback>
+                          {user?.name
+                            .split(' ')
+                            .map((n) => n[0])
+                            .join('')}
+                        </AvatarFallback>
+                      )}
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <DropdownMenuLabel className="font-normal">
+                    <div className="flex flex-col space-y-1">
+                      <p className="text-sm font-medium leading-none">
+                        {user?.name}
+                      </p>
+                      <p className="text-xs leading-none text-muted-foreground">
+                        {user?.email}
+                      </p>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Profile</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
+                    <Smartphone className="mr-2 h-4 w-4" />
+                    <span>My Devices</span>
+                  </DropdownMenuItem>
+                  {isManager && (
+                    <DropdownMenuItem
+                      onClick={() => navigate('/device-management')}
+                    >
+                      <Settings className="mr-2 h-4 w-4" />
+                      <span>Manage Devices</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleLogout}>
+                    <LogOut className="mr-2 h-4 w-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Button onClick={() => navigate('/login')}>Login</Button>
+            )}
           </div>
         </div>
-      )}
-    </header>
+      </div>
+    </nav>
   );
 };
 

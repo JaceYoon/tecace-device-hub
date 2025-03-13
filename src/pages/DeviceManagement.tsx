@@ -126,7 +126,7 @@ const DeviceManagement: React.FC = () => {
             <DeviceList 
               title="Assigned Devices" 
               filterByStatus={['assigned']}
-              showExportButton={false}
+              showExportButton={true}
             />
           </TabsContent>
           
@@ -134,7 +134,7 @@ const DeviceManagement: React.FC = () => {
             <DeviceList 
               title="Missing & Stolen Devices" 
               filterByStatus={['missing', 'stolen']}
-              showExportButton={false}
+              showExportButton={true}
             />
           </TabsContent>
         </Tabs>

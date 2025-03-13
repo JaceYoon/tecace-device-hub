@@ -12,7 +12,7 @@ interface DeviceListHeaderProps {
 
 const DeviceListHeader: React.FC<DeviceListHeaderProps> = ({
   title,
-  showExportButton,
+  showExportButton = true,
   devices,
   users
 }) => {

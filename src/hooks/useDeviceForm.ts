@@ -31,6 +31,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps) =
     'Tablet',
     'Laptop',
     'Desktop',
+    'Smartwatch',
+    'Box',
     'Accessory',
     'Other',
   ];
@@ -63,6 +65,10 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps) =
       return;
     }
     
+    // Show confirmation
+    const confirmed = window.confirm(`Are you sure you want to add ${name} (${type})?`);
+    if (!confirmed) return;
+    
     setIsSubmitting(true);
     
     try {
@@ -77,7 +83,9 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps) =
         notes: notes || undefined,
       });
       
-      toast.success('Device added successfully');
+      toast.success('Device added successfully', {
+        description: `${name} has been added to the inventory`
+      });
       
       // Reset form
       setDeviceData({

@@ -1,80 +1,36 @@
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as SonnerToaster } from "sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth } from "@/components/auth/AuthProvider";
-import Index from "./pages/Index";
-import Dashboard from "./pages/Dashboard";
-import DeviceManagement from "./pages/DeviceManagement";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import Index from './pages/Index';
+import LoginPage from './components/auth/LoginPage';
+import Dashboard from './pages/Dashboard';
+import DeviceManagement from './pages/DeviceManagement';
+import NotFound from './pages/NotFound';
+import ProfilePage from './pages/ProfilePage';
+import { AuthProvider } from './components/auth/AuthProvider';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
+// Initialize Query Client
 const queryClient = new QueryClient();
 
-// Protected route component
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-// Manager route component
-const ManagerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, isManager, isLoading } = useAuth();
-  
-  if (isLoading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
-  }
-  
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
-  
-  if (!isManager) {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return <>{children}</>;
-};
-
-const AppRoutes = () => (
-  <Routes>
-    <Route path="/" element={<Index />} />
-    <Route path="/dashboard" element={
-      <ProtectedRoute>
-        <Dashboard />
-      </ProtectedRoute>
-    } />
-    <Route path="/manage" element={
-      <ManagerRoute>
-        <DeviceManagement />
-      </ManagerRoute>
-    } />
-    <Route path="*" element={<NotFound />} />
-  </Routes>
-);
-
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <Toaster />
-        <SonnerToaster />
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
+        <Router>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/device-management" element={<DeviceManagement />} />
+            <Route path="/profile" element={<ProfilePage />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </Router>
       </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+      <Toaster richColors />
+    </QueryClientProvider>
+  );
+}
 
 export default App;
