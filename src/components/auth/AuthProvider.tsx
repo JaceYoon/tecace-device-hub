@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '@/types';
 import { toast } from 'sonner';
@@ -29,6 +30,17 @@ const MOCK_USERS: User[] = [
 
 // In-memory storage for verification codes
 const verificationCodes: Record<string, string> = {};
+
+// Helper function to send a verification email (mock)
+const sendVerificationEmail = (email: string, code: string) => {
+  console.log(`Sending verification code to ${email}: ${code}`);
+  // In a real implementation, this would send an actual email
+  // For now, we'll just show the code in a toast for demo purposes
+  toast.info(`Verification code for ${email}: ${code}`, {
+    duration: 10000, // Keep it visible longer for testing
+    description: "In a real app, this would be sent to your email"
+  });
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -117,14 +129,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
     verificationCodes[email] = verificationCode;
 
-    // In a real app, you would send this code via email
-    console.log(`Verification code for ${email}: ${verificationCode}`);
+    // Send verification email (mock)
+    sendVerificationEmail(email, verificationCode);
     
-    // For demo purposes, show the code in a toast (remove in production)
-    toast.info(`Verification code: ${verificationCode}`, {
-      description: "In a real app, this would be sent to your email"
-    });
-
     return { 
       success: true, 
       message: 'Verification code sent to your email', 

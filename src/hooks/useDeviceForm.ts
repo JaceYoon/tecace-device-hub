@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Device } from '@/types';
-import { dataStore } from '@/utils/mockData';
+import { deviceStore } from '@/utils/data/deviceStore';
 import { toast } from 'sonner';
 
 interface UseDeviceFormProps {
@@ -65,15 +65,11 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps) =
       return;
     }
     
-    // Show confirmation
-    const confirmed = window.confirm(`Are you sure you want to add ${name} (${type})?`);
-    if (!confirmed) return;
-    
     setIsSubmitting(true);
     
     try {
-      // Add the device
-      const newDevice = dataStore.addDevice({
+      // Add the device using the deviceStore directly
+      const newDevice = deviceStore.addDevice({
         name,
         type,
         imei,
