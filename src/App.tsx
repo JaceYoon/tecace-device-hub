@@ -5,6 +5,7 @@ import Index from './pages/Index';
 import LoginPage from './components/auth/LoginPage';
 import Dashboard from './pages/Dashboard';
 import DeviceManagement from './pages/DeviceManagement';
+import UserManagement from './pages/UserManagement';
 import NotFound from './pages/NotFound';
 import ProfilePage from './pages/ProfilePage';
 import { AuthProvider } from './components/auth/AuthProvider';
@@ -24,6 +25,7 @@ function App() {
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/manage" element={<DeviceManagement />} />
             <Route path="/device-management" element={<DeviceManagement />} />
+            <Route path="/user-management" element={<UserManagement />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

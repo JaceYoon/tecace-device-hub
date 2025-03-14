@@ -1,9 +1,11 @@
 
-export type UserRole = 'manager' | 'user';
+export type UserRole = 'admin' | 'manager' | 'user';
 
 export interface User {
   id: string;
   name: string;
+  firstName?: string;
+  lastName?: string;
   email: string;
   role: UserRole;
   avatarUrl?: string;
@@ -43,9 +45,16 @@ export interface DeviceRequest {
 
 export interface AuthContextType {
   user: User | null;
+  users: User[];
   isAuthenticated: boolean;
   isLoading: boolean;
   isManager: boolean;
-  login: () => Promise<void>;
+  isAdmin: boolean;
+  login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
+  register: (firstName: string, lastName: string, email: string, password: string) 
+    => Promise<{ success: boolean, message: string, verificationRequired: boolean }>;
+  verifyEmail: (email: string, code: string, userData: { firstName: string, lastName: string, password: string }) 
+    => Promise<boolean>;
+  updateUserRole: (userId: string, role: 'admin' | 'user' | 'manager') => boolean;
 }
