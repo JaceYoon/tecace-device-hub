@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { dataStore } from '@/utils/mockData';
+import { dataStore } from '@/utils/data';  // Updated import to correct path
 import { DeviceRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -58,8 +58,8 @@ const Dashboard: React.FC = () => {
   
   if (!user) return null;
   
-  // Filter pending requests
-  const pendingRequests = requests.filter(request => request.status === 'pending');
+  // Filter pending requests - adding null check to prevent error
+  const pendingRequests = requests ? requests.filter(request => request.status === 'pending') : [];
   
   // Get my devices
   const myDeviceFilter = user.id;
