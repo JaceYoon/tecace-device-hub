@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
-import { dataStore } from '@/utils/mockData';
+import { dataStore } from '@/utils/data';
 
 interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
@@ -20,13 +20,15 @@ export const useDeviceFilters = ({
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   
-  // Get unique device types
-  const deviceTypes = [...new Set(devices.map(device => device.type))];
+  // Get unique device types - with null check
+  const deviceTypes = devices?.length ? [...new Set(devices.map(device => device.type))] : [];
   
   // Fetch devices and users
   const fetchData = () => {
-    setDevices(dataStore.getDevices());
-    setUsers(dataStore.getUsers());
+    const fetchedDevices = dataStore.getDevices() || [];
+    const fetchedUsers = dataStore.getUsers() || [];
+    setDevices(fetchedDevices);
+    setUsers(fetchedUsers);
   };
   
   useEffect(() => {
@@ -34,7 +36,7 @@ export const useDeviceFilters = ({
   }, []);
   
   // Filter devices
-  const filteredDevices = devices.filter(device => {
+  const filteredDevices = devices?.filter(device => {
     // Text search
     const matchesSearch = 
       searchQuery === '' || 
@@ -73,7 +75,7 @@ export const useDeviceFilters = ({
            matchesAvailable && 
            matchesAssignedToUser &&
            matchesStatusArray;
-  });
+  }) || [];
   
   return {
     devices,

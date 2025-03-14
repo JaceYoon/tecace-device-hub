@@ -5,7 +5,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { dataStore } from '@/utils/data';  // Updated import to correct path
+import { dataStore } from '@/utils/data';
 import { DeviceRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,7 @@ const Dashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('available');
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,8 +29,16 @@ const Dashboard: React.FC = () => {
   // Fetch requests
   useEffect(() => {
     if (user) {
-      const allRequests = dataStore.getRequests();
-      setRequests(allRequests);
+      try {
+        setIsLoading(true);
+        const allRequests = dataStore.getRequests() || [];
+        setRequests(allRequests);
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+        toast.error('Failed to load requests');
+      } finally {
+        setIsLoading(false);
+      }
     }
   }, [user, refreshTrigger]);
   
@@ -58,11 +67,21 @@ const Dashboard: React.FC = () => {
   
   if (!user) return null;
   
-  // Filter pending requests - adding null check to prevent error
+  // Safe filter for pending requests
   const pendingRequests = requests ? requests.filter(request => request.status === 'pending') : [];
   
   // Get my devices
   const myDeviceFilter = user.id;
+  
+  if (isLoading) {
+    return (
+      <PageContainer>
+        <div className="flex flex-col items-center justify-center h-64">
+          <p className="text-lg text-muted-foreground">Loading dashboard...</p>
+        </div>
+      </PageContainer>
+    );
+  }
   
   return (
     <PageContainer>
