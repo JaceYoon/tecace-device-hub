@@ -6,8 +6,18 @@ import { toast } from 'sonner';
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Backend API URL
-const API_URL = 'http://localhost:5000/api';
+// Backend API URL - with fallback to mock mode
+const IS_MOCK_MODE = true; // Set to true to use mock authentication
+const API_URL = IS_MOCK_MODE ? '' : 'http://localhost:5000/api';
+
+// Mock user data for development purposes
+const MOCK_USER: User = {
+  id: 'mock-user-1',
+  name: 'Demo User',
+  email: 'demo@tecace.com',
+  role: 'manager',
+  avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=demo'
+};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -17,6 +27,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        if (IS_MOCK_MODE) {
+          // In mock mode, use local storage to persist login state
+          const savedUser = localStorage.getItem('mock_user');
+          if (savedUser) {
+            setUser(JSON.parse(savedUser));
+          }
+          setIsLoading(false);
+          return;
+        }
+
+        // Real API call when not in mock mode
         const response = await fetch(`${API_URL}/auth/check`, {
           method: 'GET',
           credentials: 'include',
@@ -44,14 +65,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  // Login function - redirects to Atlassian OAuth
+  // Login function - uses mock in mock mode, otherwise redirects to Atlassian OAuth
   const login = async (): Promise<void> => {
+    if (IS_MOCK_MODE) {
+      // In mock mode, simulate login with mock user
+      setUser(MOCK_USER);
+      localStorage.setItem('mock_user', JSON.stringify(MOCK_USER));
+      toast.success('Logged in as Demo User');
+      return;
+    }
+    
+    // Real OAuth login when not in mock mode
     window.location.href = `${API_URL}/auth/login`;
   };
 
   // Logout function
   const logout = async () => {
     try {
+      if (IS_MOCK_MODE) {
+        // In mock mode, clear local storage
+        localStorage.removeItem('mock_user');
+        setUser(null);
+        toast.info('Logged out successfully');
+        return;
+      }
+      
+      // Real logout when not in mock mode
       await fetch(`${API_URL}/auth/logout`, {
         method: 'GET',
         credentials: 'include',
