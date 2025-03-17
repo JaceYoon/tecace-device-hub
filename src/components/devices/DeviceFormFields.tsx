@@ -17,6 +17,7 @@ interface DeviceFormFieldsProps {
     type: string;
     imei: string;
     serialNumber: string;
+    status?: string;
     notes?: string;
   };
   deviceTypes: string[];
@@ -62,6 +63,26 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           </SelectContent>
         </Select>
       </div>
+      
+      {isEditMode && (
+        <div className="space-y-2">
+          <Label htmlFor="status">Device Status *</Label>
+          <Select
+            value={deviceData.status}
+            onValueChange={(value) => handleSelectChange(value, 'status')}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select device status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="available">Available</SelectItem>
+              <SelectItem value="assigned">Assigned</SelectItem>
+              <SelectItem value="missing">Missing</SelectItem>
+              <SelectItem value="stolen">Stolen</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">

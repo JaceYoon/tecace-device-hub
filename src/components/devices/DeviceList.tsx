@@ -10,6 +10,7 @@ interface DeviceListProps {
   filterByAvailable?: boolean;
   filterByAssignedToUser?: string;
   filterByStatus?: string[];
+  statusFilter?: string;
   showControls?: boolean;
   showExportButton?: boolean;
   className?: string;
@@ -20,6 +21,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   filterByAvailable = false,
   filterByAssignedToUser,
   filterByStatus,
+  statusFilter,
   showControls = true,
   showExportButton = true,
   className,
@@ -30,7 +32,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     deviceTypes,
     searchQuery,
     setSearchQuery,
-    statusFilter,
+    statusFilter: internalStatusFilter,
     setStatusFilter,
     typeFilter,
     setTypeFilter,
@@ -40,6 +42,13 @@ const DeviceList: React.FC<DeviceListProps> = ({
     filterByAssignedToUser,
     filterByStatus
   });
+  
+  // Set initial status filter if provided as prop
+  React.useEffect(() => {
+    if (statusFilter) {
+      setStatusFilter(statusFilter);
+    }
+  }, [statusFilter]);
   
   return (
     <div className={className}>
@@ -54,7 +63,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
         <DeviceFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
-          statusFilter={statusFilter}
+          statusFilter={internalStatusFilter}
           onStatusChange={setStatusFilter}
           typeFilter={typeFilter}
           onTypeChange={setTypeFilter}

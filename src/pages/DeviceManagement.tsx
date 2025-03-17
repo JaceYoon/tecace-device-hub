@@ -8,9 +8,10 @@ import DeviceForm from '@/components/devices/DeviceForm';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet } from 'lucide-react';
+import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Clock } from 'lucide-react';
 import { dataStore } from '@/utils/mockData';
 import ExportButton from '@/components/devices/ExportButton';
+import RequestList from '@/components/devices/RequestList';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isManager } = useAuth();
@@ -33,6 +34,10 @@ const DeviceManagement: React.FC = () => {
   
   const handleDeviceAdded = () => {
     setShowAddForm(false);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleRequestProcessed = () => {
     setRefreshTrigger(prev => prev + 1);
   };
   
@@ -100,7 +105,7 @@ const DeviceManagement: React.FC = () => {
           onValueChange={setActiveTab} 
           className="w-full"
         >
-          <TabsList className="grid grid-cols-3 w-full max-w-md mb-8">
+          <TabsList className="grid grid-cols-4 w-full max-w-md mb-8">
             <TabsTrigger value="all-devices" className="flex items-center gap-1">
               <Package className="h-4 w-4" />
               All
@@ -108,6 +113,10 @@ const DeviceManagement: React.FC = () => {
             <TabsTrigger value="assigned" className="flex items-center gap-1">
               <Smartphone className="h-4 w-4" />
               Assigned
+            </TabsTrigger>
+            <TabsTrigger value="pending" className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              Pending
             </TabsTrigger>
             <TabsTrigger value="special" className="flex items-center gap-1">
               <Shield className="h-4 w-4" />
@@ -128,6 +137,21 @@ const DeviceManagement: React.FC = () => {
               filterByStatus={['assigned']}
               showExportButton={true}
             />
+          </TabsContent>
+          
+          <TabsContent value="pending" className="animate-slide-up">
+            <div className="space-y-8">
+              <DeviceList 
+                title="Devices with Pending Requests" 
+                statusFilter="pending"
+                showExportButton={true}
+              />
+              
+              <RequestList 
+                title="Pending Device Requests" 
+                onRequestProcessed={handleRequestProcessed}
+              />
+            </div>
           </TabsContent>
           
           <TabsContent value="special" className="animate-slide-up">

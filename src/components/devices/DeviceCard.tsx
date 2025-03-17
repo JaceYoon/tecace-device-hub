@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,11 +7,12 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { 
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu, 
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock 
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit
 } from 'lucide-react';
 import { dataStore } from '@/utils/data';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import DeviceEditDialog from './DeviceEditDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -166,7 +166,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
     );
   };
   
-  // Determine if the device is requested (but not by current user)
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
   
   return (
@@ -198,7 +197,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 {device.type}
               </CardDescription>
             </div>
-            <div className="flex flex-col items-end">
+            <div className="flex flex-col items-end gap-1">
+              {isManager && (
+                <DeviceEditDialog device={device} onDeviceUpdated={onAction} />
+              )}
               <StatusBadge status={device.status} />
               {isRequested && (
                 <span className="text-xs text-amber-600 flex items-center mt-1">
@@ -212,7 +214,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
         
         <CardContent className="pb-3 space-y-3">
           <div className="space-y-2 text-sm">
-            {/* Always visible */}
             <div className="flex items-start">
               <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
               <div>
@@ -229,7 +230,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
               </div>
             </div>
 
-            {/* Only visible when expanded */}
             {expanded && (
               <>
                 {assignedUser && (
@@ -362,7 +362,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
         </CardFooter>
       </Card>
       
-      {/* Confirmation Dialog */}
       <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({...prev, isOpen: false}))}>
         <AlertDialogContent>
           <AlertDialogHeader>

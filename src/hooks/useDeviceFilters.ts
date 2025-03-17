@@ -51,7 +51,7 @@ export const useDeviceFilters = ({
     // Status filter
     const matchesStatus = 
       statusFilter === 'all' || 
-      device.status === statusFilter;
+      (statusFilter === 'pending' ? !!device.requestedBy : device.status === statusFilter);
     
     // Type filter
     const matchesType = 
