@@ -22,13 +22,15 @@ interface DeviceFormFieldsProps {
   deviceTypes: string[];
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (value: string, field: string) => void;
+  isEditMode?: boolean;
 }
 
 const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({ 
   deviceData, 
   deviceTypes, 
   handleChange, 
-  handleSelectChange 
+  handleSelectChange,
+  isEditMode = false
 }) => {
   return (
     <div className="space-y-4">
