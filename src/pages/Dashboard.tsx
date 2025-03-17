@@ -5,15 +5,20 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { dataStore } from '@/utils/data';
+import { deviceStore } from '@/utils/data/deviceStore';
+import { requestStore } from '@/utils/data/requestStore';
+import { populateTestData } from '@/utils/data/generateTestData';
 import { DeviceRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { ArrowRight, Clock, PackageCheck, Shield, Smartphone, Package } from 'lucide-react';
+import { 
+  ArrowRight, Clock, Database, Loader2, PackageCheck, 
+  Shield, Smartphone, Package 
+} from 'lucide-react';
 
 const Dashboard: React.FC = () => {
-  const { user, isAuthenticated, isManager } = useAuth();
+  const { user, isAuthenticated, isManager, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('available');
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
@@ -31,7 +36,7 @@ const Dashboard: React.FC = () => {
     if (user) {
       try {
         setIsLoading(true);
-        const allRequests = dataStore.getRequests() || [];
+        const allRequests = requestStore.getRequests() || [];
         setRequests(allRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
@@ -51,7 +56,7 @@ const Dashboard: React.FC = () => {
     if (!isManager || !user) return;
     
     try {
-      dataStore.processRequest(
+      requestStore.processRequest(
         requestId, 
         approve ? 'approved' : 'rejected', 
         user.id
@@ -62,6 +67,23 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error processing request:', error);
       toast.error('Failed to process request');
+    }
+  };
+  
+  const handlePopulateTestData = () => {
+    try {
+      const success = populateTestData();
+      if (success) {
+        toast.success('Test data generated successfully', {
+          description: '30 random devices and 5 users added to the system'
+        });
+      } else {
+        toast.info('Database already has sufficient test data');
+      }
+      handleRefresh();
+    } catch (error) {
+      console.error('Error generating test data:', error);
+      toast.error('Failed to generate test data');
     }
   };
   
@@ -77,7 +99,8 @@ const Dashboard: React.FC = () => {
     return (
       <PageContainer>
         <div className="flex flex-col items-center justify-center h-64">
-          <p className="text-lg text-muted-foreground">Loading dashboard...</p>
+          <Loader2 className="h-8 w-8 animate-spin" />
+          <p className="text-lg text-muted-foreground mt-4">Loading dashboard...</p>
         </div>
       </PageContainer>
     );
@@ -86,11 +109,24 @@ const Dashboard: React.FC = () => {
   return (
     <PageContainer>
       <div className="flex flex-col space-y-8 pt-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight mb-2">Device Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome back, {user.name}
-          </p>
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight mb-2">Device Dashboard</h1>
+            <p className="text-muted-foreground">
+              Welcome back, {user.name}
+            </p>
+          </div>
+          
+          {isAdmin && (
+            <Button 
+              variant="outline" 
+              className="flex items-center gap-2"
+              onClick={handlePopulateTestData}
+            >
+              <Database className="h-4 w-4" />
+              Generate Test Data
+            </Button>
+          )}
         </div>
         
         {/* Manager: Pending Requests Section */}
@@ -106,8 +142,8 @@ const Dashboard: React.FC = () => {
             
             <div className="space-y-4">
               {pendingRequests.map(request => {
-                const device = dataStore.getDeviceById(request.deviceId);
-                const requestUser = dataStore.getUserById(request.userId);
+                const device = deviceStore.getDeviceById(request.deviceId);
+                const requestUser = deviceStore.getUserById(request.userId);
                 
                 if (!device || !requestUser) return null;
                 

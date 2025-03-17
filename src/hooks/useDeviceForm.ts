@@ -11,6 +11,7 @@ interface UseDeviceFormProps {
 
 export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfirmation, setShowConfirmation] = useState(false);
   
   const [deviceData, setDeviceData] = useState<{
     name: string;
@@ -108,6 +109,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps) =
     deviceData,
     deviceTypes,
     isSubmitting,
+    showConfirmation,
+    setShowConfirmation,
     handleChange,
     handleSelectChange,
     handleSubmit,

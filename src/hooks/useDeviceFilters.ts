@@ -1,7 +1,8 @@
 
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
-import { dataStore } from '@/utils/data';
+import { deviceStore } from '@/utils/data/deviceStore';
+import { userStore } from '@/utils/data/userStore';
 
 interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
@@ -25,8 +26,8 @@ export const useDeviceFilters = ({
   
   // Fetch devices and users
   const fetchData = () => {
-    const fetchedDevices = dataStore.getDevices() || [];
-    const fetchedUsers = dataStore.getUsers() || [];
+    const fetchedDevices = deviceStore.getDevices() || [];
+    const fetchedUsers = userStore.getUsers() || [];
     setDevices(fetchedDevices);
     setUsers(fetchedUsers);
   };
