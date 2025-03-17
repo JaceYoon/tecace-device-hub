@@ -6,6 +6,7 @@ import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { deviceStore } from '@/utils/data/deviceStore';
+import { userStore } from '@/utils/data/userStore';
 import { requestStore } from '@/utils/data/requestStore';
 import { populateTestData } from '@/utils/data/generateTestData';
 import { DeviceRequest } from '@/types';
@@ -143,7 +144,7 @@ const Dashboard: React.FC = () => {
             <div className="space-y-4">
               {pendingRequests.map(request => {
                 const device = deviceStore.getDeviceById(request.deviceId);
-                const requestUser = deviceStore.getUserById(request.userId);
+                const requestUser = userStore.getUserById(request.userId);
                 
                 if (!device || !requestUser) return null;
                 

@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
-import { deviceStore } from '@/utils/data/deviceStore';
-import { userStore } from '@/utils/data/userStore';
+import { dataStore } from '@/utils/data';
 
 interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
@@ -26,10 +25,14 @@ export const useDeviceFilters = ({
   
   // Fetch devices and users
   const fetchData = () => {
-    const fetchedDevices = deviceStore.getDevices() || [];
-    const fetchedUsers = userStore.getUsers() || [];
-    setDevices(fetchedDevices);
-    setUsers(fetchedUsers);
+    try {
+      const fetchedDevices = dataStore.getDevices() || [];
+      const fetchedUsers = dataStore.getUsers() || [];
+      setDevices(fetchedDevices);
+      setUsers(fetchedUsers);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+    }
   };
   
   useEffect(() => {
@@ -43,7 +46,7 @@ export const useDeviceFilters = ({
       searchQuery === '' || 
       device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      device.imei.toLowerCase().includes(searchQuery.toLowerCase());
+      (device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()));
     
     // Status filter
     const matchesStatus = 

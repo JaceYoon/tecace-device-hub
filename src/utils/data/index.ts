@@ -9,6 +9,8 @@ export const dataStore = {
   // User methods
   getUsers: userStore.getUsers.bind(userStore),
   getUserById: userStore.getUserById.bind(userStore),
+  addUser: userStore.addUser.bind(userStore),
+  updateUser: userStore.updateUser.bind(userStore),
   
   // Device methods
   getDevices: deviceStore.getDevices.bind(deviceStore),
