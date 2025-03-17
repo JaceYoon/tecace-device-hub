@@ -3,6 +3,7 @@ import { userStore } from './userStore';
 import { deviceStore } from './deviceStore';
 import { requestStore } from './requestStore';
 import { populateTestData } from './generateTestData';
+import { User, UserRole } from '@/types';
 
 // Export a unified dataStore interface to minimize changes in existing code
 export const dataStore = {
@@ -31,14 +32,14 @@ export const dataStore = {
   // Add test users function
   addTestUsers: () => {
     // Generate 5 test users with different roles
-    const testUsers = [
+    const testUsers: User[] = [
       {
         id: 'test-manager-1',
         name: 'Test Manager',
         firstName: 'Test',
         lastName: 'Manager',
         email: 'manager@tecace.com',
-        role: 'manager',
+        role: 'manager' as UserRole,
         avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=manager'
       },
       {
@@ -47,7 +48,7 @@ export const dataStore = {
         firstName: 'John',
         lastName: 'Smith',
         email: 'john@tecace.com',
-        role: 'user',
+        role: 'user' as UserRole,
         avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=john'
       },
       {
@@ -56,7 +57,7 @@ export const dataStore = {
         firstName: 'Alice',
         lastName: 'Johnson',
         email: 'alice@tecace.com',
-        role: 'user',
+        role: 'user' as UserRole,
         avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=alice'
       },
       {
@@ -65,7 +66,7 @@ export const dataStore = {
         firstName: 'Robert',
         lastName: 'Chen',
         email: 'robert@tecace.com',
-        role: 'user',
+        role: 'user' as UserRole,
         avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=robert'
       },
       {
@@ -74,7 +75,7 @@ export const dataStore = {
         firstName: 'Maria',
         lastName: 'Garcia',
         email: 'maria@tecace.com',
-        role: 'user',
+        role: 'user' as UserRole,
         avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=maria'
       }
     ];

@@ -55,6 +55,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="available">Available</SelectItem>
           <SelectItem value="assigned">Assigned</SelectItem>
+          <SelectItem value="pending">Request Pending</SelectItem>
           {isManager && (
             <>
               <SelectItem value="missing">Missing</SelectItem>
