@@ -8,9 +8,9 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import { 
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu, 
-  Hash, Smartphone, Trash2, User as UserIcon, Check 
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock 
 } from 'lucide-react';
-import { deviceStore } from '@/utils/data/deviceStore';
+import { dataStore } from '@/utils/data';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import {
@@ -43,7 +43,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   
   const isDeviceOwner = device.assignedTo === user?.id;
   const hasRequested = device.requestedBy === user?.id;
+  const isRequested = !!device.requestedBy;
   const assignedUser = users.find(u => u.id === device.assignedTo);
+  const requestedByUser = users.find(u => u.id === device.requestedBy);
   
   const formatDate = (date: Date) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
@@ -66,7 +68,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       `Are you sure you want to request ${device.name}?`,
       () => {
         try {
-          deviceStore.updateDevice(device.id, {
+          // Create request
+          dataStore.addRequest({
+            deviceId: device.id,
+            userId: user.id,
+            status: 'pending',
+            type: 'assign',
+          });
+          
+          // Update device requestedBy field
+          dataStore.updateDevice(device.id, {
             requestedBy: user.id
           });
           
@@ -91,7 +102,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       () => {
         try {
           // Direct self-service return without manager approval
-          deviceStore.updateDevice(device.id, {
+          dataStore.updateDevice(device.id, {
             assignedTo: undefined,
             status: 'available'
           });
@@ -117,7 +128,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       `Are you sure you want to mark this device as ${newStatus}?`,
       () => {
         try {
-          deviceStore.updateDevice(device.id, { status: newStatus });
+          dataStore.updateDevice(device.id, { status: newStatus });
           toast.success(`Device marked as ${newStatus}`, {
             description: `The status of ${device.name} has been updated`
           });
@@ -138,7 +149,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       "Are you sure you want to permanently delete this device? This action cannot be undone.",
       () => {
         try {
-          const success = deviceStore.deleteDevice(device.id);
+          const success = dataStore.deleteDevice(device.id);
           if (success) {
             toast.success('Device deleted', {
               description: `${device.name} has been permanently removed`
@@ -155,6 +166,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
     );
   };
   
+  // Determine if the device is requested (but not by current user)
+  const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
+  
   return (
     <>
       <Card className={cn(
@@ -162,6 +176,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
         {
           "border-red-300 bg-red-50/40": device.status === 'stolen',
           "border-amber-300 bg-amber-50/40": device.status === 'missing',
+          "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
         },
         className
       )}>
@@ -183,7 +198,15 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 {device.type}
               </CardDescription>
             </div>
-            <StatusBadge status={device.status} />
+            <div className="flex flex-col items-end">
+              <StatusBadge status={device.status} />
+              {isRequested && (
+                <span className="text-xs text-amber-600 flex items-center mt-1">
+                  <Clock className="h-3 w-3 mr-1" />
+                  Request Pending
+                </span>
+              )}
+            </div>
           </div>
         </CardHeader>
         
@@ -215,6 +238,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                     <div>
                       <p className="text-muted-foreground">Assigned to</p>
                       <p className="text-sm">{assignedUser.name}</p>
+                    </div>
+                  </div>
+                )}
+                
+                {requestedByUser && (
+                  <div className="flex items-start">
+                    <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-muted-foreground">Requested by</p>
+                      <p className="text-sm">{requestedByUser.name}</p>
                     </div>
                   </div>
                 )}
@@ -279,7 +312,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
             </div>
           ) : (
             <>
-              {device.status === 'available' && !hasRequested && (
+              {device.status === 'available' && !isRequested && (
                 <Button 
                   className="w-full" 
                   size="sm" 
@@ -297,7 +330,20 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                   size="sm" 
                   disabled
                 >
+                  <Clock className="h-4 w-4 mr-1" />
                   Request Pending
+                </Button>
+              )}
+              
+              {isRequestedByOthers && (
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  size="sm" 
+                  disabled
+                >
+                  <Clock className="h-4 w-4 mr-1" />
+                  Already Requested
                 </Button>
               )}
               

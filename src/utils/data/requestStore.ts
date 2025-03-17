@@ -4,7 +4,24 @@ import { mockDeviceRequests } from './mockData';
 import { deviceStore } from './deviceStore';
 
 class RequestStore {
-  private requests: DeviceRequest[] = [...mockDeviceRequests];
+  private requests: DeviceRequest[] = [];
+
+  constructor() {
+    // Try to load requests from localStorage first
+    try {
+      const storedRequests = localStorage.getItem('tecace_requests');
+      if (storedRequests) {
+        this.requests = JSON.parse(storedRequests);
+      } else {
+        // Initialize with mock requests if none exist
+        this.requests = [...mockDeviceRequests];
+        localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
+      }
+    } catch (error) {
+      console.error('Error initializing RequestStore:', error);
+      this.requests = [...mockDeviceRequests];
+    }
+  }
 
   getRequests(): DeviceRequest[] {
     return this.requests;
@@ -17,18 +34,20 @@ class RequestStore {
   addRequest(request: Omit<DeviceRequest, 'id' | 'requestedAt'>): DeviceRequest {
     const newRequest: DeviceRequest = {
       ...request,
-      id: (this.requests.length + 1).toString(),
+      id: `request-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       requestedAt: new Date(),
     };
     this.requests.push(newRequest);
     
     // Update device requestedBy field
-    const device = deviceStore.getDeviceById(request.deviceId);
-    if (device) {
+    if (request.type === 'assign') {
       deviceStore.updateDevice(request.deviceId, {
-        requestedBy: request.type === 'assign' ? request.userId : undefined,
+        requestedBy: request.userId,
       });
     }
+    
+    // Persist to localStorage
+    localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
     
     return newRequest;
   }
@@ -60,6 +79,9 @@ class RequestStore {
         requestedBy: undefined,
       });
     }
+    
+    // Persist to localStorage
+    localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
     
     return this.requests[requestIndex];
   }

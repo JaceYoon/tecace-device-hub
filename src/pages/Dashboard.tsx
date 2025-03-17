@@ -4,18 +4,17 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
+import RequestList from '@/components/devices/RequestList';
+import StatusSummary from '@/components/devices/StatusSummary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { deviceStore } from '@/utils/data/deviceStore';
-import { userStore } from '@/utils/data/userStore';
-import { requestStore } from '@/utils/data/requestStore';
-import { populateTestData } from '@/utils/data/generateTestData';
+import { dataStore } from '@/utils/data';
 import { DeviceRequest } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { 
   ArrowRight, Clock, Database, Loader2, PackageCheck, 
-  Shield, Smartphone, Package 
+  Shield, Smartphone, Package, ListFilter
 } from 'lucide-react';
 
 const Dashboard: React.FC = () => {
@@ -37,7 +36,7 @@ const Dashboard: React.FC = () => {
     if (user) {
       try {
         setIsLoading(true);
-        const allRequests = requestStore.getRequests() || [];
+        const allRequests = dataStore.getRequests() || [];
         setRequests(allRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
@@ -57,7 +56,7 @@ const Dashboard: React.FC = () => {
     if (!isManager || !user) return;
     
     try {
-      requestStore.processRequest(
+      dataStore.processRequest(
         requestId, 
         approve ? 'approved' : 'rejected', 
         user.id
@@ -73,7 +72,7 @@ const Dashboard: React.FC = () => {
   
   const handlePopulateTestData = () => {
     try {
-      const success = populateTestData();
+      const success = dataStore.populateTestData();
       if (success) {
         toast.success('Test data generated successfully', {
           description: '30 random devices and 5 users added to the system'
@@ -91,7 +90,7 @@ const Dashboard: React.FC = () => {
   if (!user) return null;
   
   // Safe filter for pending requests
-  const pendingRequests = requests ? requests.filter(request => request.status === 'pending') : [];
+  const pendingRequests = requests.filter(request => request.status === 'pending') || [];
   
   // Get my devices
   const myDeviceFilter = user.id;
@@ -130,6 +129,9 @@ const Dashboard: React.FC = () => {
           )}
         </div>
         
+        {/* Status Summary */}
+        <StatusSummary onRefresh={handleRefresh} />
+        
         {/* Manager: Pending Requests Section */}
         {isManager && pendingRequests.length > 0 && (
           <div className="rounded-lg border p-4 animate-slide-up">
@@ -143,8 +145,8 @@ const Dashboard: React.FC = () => {
             
             <div className="space-y-4">
               {pendingRequests.map(request => {
-                const device = deviceStore.getDeviceById(request.deviceId);
-                const requestUser = userStore.getUserById(request.userId);
+                const device = dataStore.getDeviceById(request.deviceId);
+                const requestUser = dataStore.getUserById(request.userId);
                 
                 if (!device || !requestUser) return null;
                 
@@ -187,7 +189,7 @@ const Dashboard: React.FC = () => {
         
         {/* Device Tabs */}
         <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 w-full max-w-md mb-8">
+          <TabsList className={`grid ${isManager ? 'grid-cols-4' : 'grid-cols-4'} w-full max-w-md mb-8`}>
             <TabsTrigger value="available" className="flex items-center gap-1">
               <Shield className="h-4 w-4" />
               Available
@@ -195,6 +197,10 @@ const Dashboard: React.FC = () => {
             <TabsTrigger value="my-devices" className="flex items-center gap-1">
               <PackageCheck className="h-4 w-4" />
               My Devices
+            </TabsTrigger>
+            <TabsTrigger value="requests" className="flex items-center gap-1">
+              <Clock className="h-4 w-4" />
+              Requests
             </TabsTrigger>
             <TabsTrigger value="all-devices" className="flex items-center gap-1">
               <Package className="h-4 w-4" />
@@ -218,11 +224,20 @@ const Dashboard: React.FC = () => {
               showExportButton={false}
             />
           </TabsContent>
+          
+          <TabsContent value="requests" className="animate-slide-up">
+            <RequestList 
+              title="My Requests" 
+              userId={user.id}
+              showExportButton={false}
+              onRequestProcessed={handleRefresh}
+            />
+          </TabsContent>
 
           <TabsContent value="all-devices" className="animate-slide-up">
             <DeviceList 
               title="All Devices"
-              filterByStatus={['available', 'assigned']} 
+              filterByStatus={isManager ? ['available', 'assigned', 'missing', 'stolen'] : ['available', 'assigned']} 
               showExportButton={true}
             />
           </TabsContent>

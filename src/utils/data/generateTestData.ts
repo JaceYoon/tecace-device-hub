@@ -1,7 +1,7 @@
-
 import { Device, User, DeviceRequest } from '@/types';
 import { deviceStore } from './deviceStore';
 import { userStore } from './userStore';
+import { dataStore } from '.';
 
 // Generate a random IMEI (15 digits)
 const generateIMEI = (): string => {
@@ -166,50 +166,33 @@ export const generateRandomUsers = (count: number): User[] => {
 };
 
 // Populate the database with test data
-export const populateTestData = () => {
+export const populateTestData = (): boolean => {
   try {
-    // Check if we already have devices
-    const existingDevices = deviceStore.getDevices();
-    const existingUsers = userStore.getUsers();
+    console.info('Generating test data...');
     
-    if (existingDevices.length > 5 || existingUsers.length > 3) {
-      console.log('Database already has sufficient test data.');
+    // Check if we already have sufficient data
+    const existingDevices = dataStore.getDevices();
+    const existingUsers = dataStore.getUsers();
+    
+    if (existingDevices.length >= 30 && existingUsers.length >= 5) {
+      console.info('Already have sufficient test data');
       return false;
     }
     
-    console.log('Generating test data...');
+    // Add test users first
+    const testUsers = dataStore.addTestUsers();
+    console.info(`Added ${testUsers.length} test users`);
     
-    // Find an admin user or create one if none exists
-    let adminUser = existingUsers.find(u => u.role === 'admin');
-    
-    if (!adminUser) {
-      const adminId = `admin-${Date.now()}`;
-      adminUser = {
-        id: adminId,
-        name: 'Admin User',
-        firstName: 'Admin',
-        lastName: 'User',
-        email: 'admin@tecace.com',
-        role: 'admin',
-        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin'
-      };
-      
-      // We can't add to the userStore directly, so we'll handle it later
-    }
-    
-    // Generate and add random users (if userStore is accessible)
-    const newUsers = generateRandomUsers(5);
-    
-    // Generate devices
-    const newDevices = generateRandomDevices(30, adminUser.id);
+    // Continue with existing device generation code
+    const newDevices = generateRandomDevices(30, 'admin-1');
     
     // Add devices to store
     newDevices.forEach(device => {
       // Check if any devices need to be assigned to random users
       if (device.assignedTo === 'pending-assignment') {
         // Assign to a random user
-        const randomUserIndex = Math.floor(Math.random() * newUsers.length);
-        device.assignedTo = newUsers[randomUserIndex].id;
+        const randomUserIndex = Math.floor(Math.random() * testUsers.length);
+        device.assignedTo = testUsers[randomUserIndex].id;
       }
       
       // Add the device
@@ -228,7 +211,7 @@ export const populateTestData = () => {
     console.log(`Added ${newDevices.length} test devices`);
     return true;
   } catch (error) {
-    console.error('Error populating test data:', error);
+    console.error('Error generating test data:', error);
     return false;
   }
 };

@@ -8,6 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { Search } from 'lucide-react';
 
 interface DeviceFiltersProps {
@@ -29,6 +30,8 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   onTypeChange,
   deviceTypes,
 }) => {
+  const { isManager } = useAuth();
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <div className="relative flex-1">
@@ -52,8 +55,12 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           <SelectItem value="all">All Statuses</SelectItem>
           <SelectItem value="available">Available</SelectItem>
           <SelectItem value="assigned">Assigned</SelectItem>
-          <SelectItem value="missing">Missing</SelectItem>
-          <SelectItem value="stolen">Stolen</SelectItem>
+          {isManager && (
+            <>
+              <SelectItem value="missing">Missing</SelectItem>
+              <SelectItem value="stolen">Stolen</SelectItem>
+            </>
+          )}
         </SelectContent>
       </Select>
       

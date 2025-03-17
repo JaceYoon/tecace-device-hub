@@ -58,10 +58,10 @@ export const useDeviceFilters = ({
       typeFilter === 'all' || 
       device.type === typeFilter;
     
-    // Available filter
+    // Available filter - also include devices that are not requested by anyone
     const matchesAvailable = 
       !filterByAvailable || 
-      device.status === 'available';
+      (device.status === 'available' && !device.requestedBy);
     
     // Assigned to user filter
     const matchesAssignedToUser = 

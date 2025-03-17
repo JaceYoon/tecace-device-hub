@@ -26,5 +26,60 @@ export const dataStore = {
   processRequest: requestStore.processRequest.bind(requestStore),
   
   // Test data generator
-  populateTestData
+  populateTestData,
+  
+  // Add test users function
+  addTestUsers: () => {
+    // Generate 5 test users with different roles
+    const testUsers = [
+      {
+        id: 'test-manager-1',
+        name: 'Test Manager',
+        firstName: 'Test',
+        lastName: 'Manager',
+        email: 'manager@tecace.com',
+        role: 'manager',
+        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=manager'
+      },
+      {
+        id: 'test-user-1',
+        name: 'John Smith',
+        firstName: 'John',
+        lastName: 'Smith',
+        email: 'john@tecace.com',
+        role: 'user',
+        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=john'
+      },
+      {
+        id: 'test-user-2',
+        name: 'Alice Johnson',
+        firstName: 'Alice',
+        lastName: 'Johnson',
+        email: 'alice@tecace.com',
+        role: 'user',
+        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=alice'
+      },
+      {
+        id: 'test-user-3',
+        name: 'Robert Chen',
+        firstName: 'Robert',
+        lastName: 'Chen',
+        email: 'robert@tecace.com',
+        role: 'user',
+        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=robert'
+      },
+      {
+        id: 'test-user-4',
+        name: 'Maria Garcia',
+        firstName: 'Maria',
+        lastName: 'Garcia',
+        email: 'maria@tecace.com',
+        role: 'user',
+        avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=maria'
+      }
+    ];
+    
+    userStore.addTestUsers(testUsers);
+    return testUsers;
+  }
 };
