@@ -5,15 +5,24 @@ const Sequelize = require('sequelize');
 let sequelize;
 
 // Create sequelize instance
-if (process.env.NODE_ENV === 'development') {
+if (process.env.FORCE_DEV_MODE === 'true' || process.env.NODE_ENV === 'development') {
   console.log('Using mock models in development mode');
   sequelize = { define: () => ({}) };
 } else {
+  console.log('Connecting to database with config:', {
+    host: dbConfig.HOST,
+    port: dbConfig.PORT,
+    database: dbConfig.DB,
+    user: dbConfig.USER,
+    dialect: dbConfig.dialect
+  });
+  
   sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     host: dbConfig.HOST,
     port: dbConfig.PORT,
     dialect: dbConfig.dialect,
     operatorsAliases: 0,
+    logging: console.log, // Enable SQL logging
     pool: {
       max: dbConfig.pool.max,
       min: dbConfig.pool.min,
@@ -28,8 +37,8 @@ const db = {};
 db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
-// In development mode, provide mock implementations
-if (process.env.NODE_ENV === 'development') {
+// In development mode or forced dev mode, provide mock implementations
+if (process.env.FORCE_DEV_MODE === 'true' || process.env.NODE_ENV === 'development') {
   // Mock models with basic CRUD operations
   const mockModel = {
     findAll: () => Promise.resolve([]),
@@ -63,6 +72,17 @@ if (process.env.NODE_ENV === 'development') {
   db.request.belongsTo(db.user, { foreignKey: 'userId' });
   db.request.belongsTo(db.user, { foreignKey: 'processedById', as: 'processedBy' });
   db.request.belongsTo(db.device, { foreignKey: 'deviceId' });
+}
+
+// Test the database connection
+if (process.env.FORCE_DEV_MODE !== 'true' && process.env.NODE_ENV !== 'development') {
+  sequelize.authenticate()
+    .then(() => {
+      console.log('Database connection has been established successfully.');
+    })
+    .catch(err => {
+      console.error('Unable to connect to the database:', err);
+    });
 }
 
 module.exports = db;

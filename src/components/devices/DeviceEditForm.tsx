@@ -6,7 +6,7 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/componen
 import { Loader2, Save } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
 import { Device } from '@/types';
-import { dataStore } from '@/utils/data';
+import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
 interface DeviceEditFormProps {
@@ -54,7 +54,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     }));
   };
   
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isManager) {
@@ -73,8 +73,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
-      // Update the device
-      const updatedDevice = dataStore.updateDevice(device.id, {
+      // Update the device using the service
+      const updatedDevice = await dataService.updateDevice(device.id, {
         name,
         type,
         imei,

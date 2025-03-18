@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
-import { dataStore } from '@/utils/data';
+import { dataService } from '@/services/data.service';
 
 interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
@@ -9,77 +9,81 @@ interface UseDeviceFiltersProps {
   filterByStatus?: string[];
 }
 
-export const useDeviceFilters = ({
-  filterByAvailable = false,
-  filterByAssignedToUser,
-  filterByStatus,
-}: UseDeviceFiltersProps) => {
+export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
   
-  // Get unique device types - with null check
-  const deviceTypes = devices?.length ? [...new Set(devices.map(device => device.type))] : [];
+  // Get unique device types from the devices array
+  const deviceTypes = ['all', ...new Set(
+    devices.map(device => device.type)
+      .filter(Boolean)
+      .sort()
+  )];
   
   // Fetch devices and users
-  const fetchData = () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      const fetchedDevices = dataStore.getDevices() || [];
-      const fetchedUsers = dataStore.getUsers() || [];
-      setDevices(fetchedDevices);
-      setUsers(fetchedUsers);
+      const [devicesData, usersData] = await Promise.all([
+        dataService.getDevices(),
+        dataService.getUsers()
+      ]);
+      
+      setDevices(devicesData);
+      setUsers(usersData);
     } catch (error) {
       console.error('Error fetching data:', error);
+    } finally {
+      setLoading(false);
     }
   };
   
+  // Fetch data on component mount
   useEffect(() => {
     fetchData();
   }, []);
   
-  // Filter devices
-  const filteredDevices = devices?.filter(device => {
-    // Text search
-    const matchesSearch = 
-      searchQuery === '' || 
-      device.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()));
+  // Filter devices based on filters
+  const filteredDevices = devices.filter(device => {
+    // Filter by search query
+    if (searchQuery && !device.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !device.imei.toLowerCase().includes(searchQuery.toLowerCase())) {
+      return false;
+    }
     
-    // Status filter
-    const matchesStatus = 
-      statusFilter === 'all' || 
-      (statusFilter === 'pending' ? !!device.requestedBy : device.status === statusFilter);
+    // Filter by status
+    if (statusFilter !== 'all' && device.status !== statusFilter) {
+      return false;
+    }
     
-    // Type filter
-    const matchesType = 
-      typeFilter === 'all' || 
-      device.type === typeFilter;
+    // Filter by type
+    if (typeFilter !== 'all' && device.type !== typeFilter) {
+      return false;
+    }
     
-    // Available filter - also include devices that are not requested by anyone
-    const matchesAvailable = 
-      !filterByAvailable || 
-      (device.status === 'available' && !device.requestedBy);
+    // Filter by available only
+    if (props.filterByAvailable && device.status !== 'available') {
+      return false;
+    }
     
-    // Assigned to user filter
-    const matchesAssignedToUser = 
-      !filterByAssignedToUser || 
-      device.assignedTo === filterByAssignedToUser;
+    // Filter by assigned to user
+    if (props.filterByAssignedToUser && device.assignedTo !== props.filterByAssignedToUser) {
+      return false;
+    }
     
-    // Status filter array
-    const matchesStatusArray = 
-      !filterByStatus || 
-      filterByStatus.includes(device.status);
+    // Filter by allowed statuses
+    if (props.filterByStatus && props.filterByStatus.length > 0 && 
+        !props.filterByStatus.includes(device.status)) {
+      return false;
+    }
     
-    return matchesSearch && 
-           matchesStatus && 
-           matchesType && 
-           matchesAvailable && 
-           matchesAssignedToUser &&
-           matchesStatusArray;
-  }) || [];
+    return true;
+  });
   
   return {
     devices,
@@ -92,6 +96,7 @@ export const useDeviceFilters = ({
     setStatusFilter,
     typeFilter,
     setTypeFilter,
+    loading,
     fetchData
   };
 };

@@ -49,26 +49,31 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Tecace Device Management API' });
 });
 
-// For local development without a database, we can use NODE_ENV=development
-if (process.env.NODE_ENV === 'development') {
-  console.log('Running in development mode without database connection');
+// Check if the user wants to force development mode
+const forceDevelopmentMode = process.env.FORCE_DEV_MODE === 'true';
+
+if (forceDevelopmentMode) {
+  console.log('Running in forced development mode without database connection');
   app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
   });
 } else {
-  // Database sync & server start (for production)
+  // Database sync & server start
+  console.log('Attempting to connect to the database...');
   db.sequelize.sync()
     .then(() => {
-      console.log('Database synced');
+      console.log('Database synced successfully');
       app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
       });
     })
     .catch(err => {
       console.error('Failed to sync database:', err);
-      console.log('Starting server without database sync...');
+      console.log('ERROR DETAILS:', err.message);
+      console.log('If you want to run without a database connection, set FORCE_DEV_MODE=true in your .env file');
+      // We'll still start the server so the application can function
       app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
+        console.log(`Server running on port ${PORT} (without database sync)`);
       });
     });
 }
