@@ -14,7 +14,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite default port
+  origin: process.env.CLIENT_URL || 'http://localhost:5173', // Vite default port
   credentials: true
 }));
 app.use(express.json());
@@ -32,9 +32,12 @@ app.use(session({
   }
 }));
 
-// Initialize Passport
+// Initialize Passport with local strategy
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Initialize passport config
+require('./config/passport.config')();
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -46,14 +49,22 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Tecace Device Management API' });
 });
 
-// Database sync & server start
-db.sequelize.sync({ alter: process.env.NODE_ENV === 'development' })
-  .then(() => {
-    console.log('Database synced');
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  })
-  .catch(err => {
-    console.error('Failed to sync database:', err);
+// For local development without a database, we can simply start the server
+if (process.env.NODE_ENV === 'development') {
+  console.log('Running in development mode without database connection');
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
   });
+} else {
+  // Database sync & server start (for production)
+  db.sequelize.sync({ alter: process.env.NODE_ENV === 'development' })
+    .then(() => {
+      console.log('Database synced');
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('Failed to sync database:', err);
+    });
+}

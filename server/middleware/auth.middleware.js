@@ -9,9 +9,17 @@ exports.isAuthenticated = (req, res, next) => {
   res.status(401).json({ message: 'Unauthorized - Please log in' });
 };
 
+// Check if user is an admin
+exports.isAdmin = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    return next();
+  }
+  res.status(403).json({ message: 'Forbidden - Requires admin role' });
+};
+
 // Check if user is a manager
 exports.isManager = (req, res, next) => {
-  if (req.user && req.user.role === 'manager') {
+  if (req.user && (req.user.role === 'manager' || req.user.role === 'admin')) {
     return next();
   }
   res.status(403).json({ message: 'Forbidden - Requires manager role' });

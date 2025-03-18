@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User } from '@/types';
 
 const API_URL = 'http://localhost:5000/api';
@@ -33,7 +32,10 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 // Auth services
 export const authService = {
   checkAuth: () => apiCall('/auth/check'),
-  login: () => window.location.href = `${API_URL}/auth/login`,
+  login: (email: string, password: string) => apiCall('/auth/login', {
+    method: 'POST',
+    body: JSON.stringify({ email, password })
+  }),
   logout: () => apiCall('/auth/logout'),
 };
 
