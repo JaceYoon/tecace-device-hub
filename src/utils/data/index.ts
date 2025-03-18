@@ -5,6 +5,9 @@ import { requestStore } from './requestStore';
 import { populateTestData } from './generateTestData';
 import { User, UserRole } from '@/types';
 
+// Export the individual stores
+export { userStore, deviceStore, requestStore };
+
 // Export a unified dataStore interface to minimize changes in existing code
 export const dataStore = {
   // User methods
