@@ -5,6 +5,7 @@ const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
 const db = require('./models');
+const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
@@ -20,9 +21,30 @@ app.use(cors({
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Session setup
+// Database configuration for session store
+const dbConfig = require('./config/db.config');
+const sessionStore = new MySQLStore({
+  host: dbConfig.HOST,
+  port: dbConfig.PORT,
+  user: dbConfig.USER,
+  password: dbConfig.PASSWORD,
+  database: dbConfig.DB,
+  // The session table name
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data'
+    }
+  }
+});
+
+// Session setup with MySQL session store
 app.use(session({
+  key: 'tecace_session',
   secret: process.env.SESSION_SECRET || 'tecace-device-secret',
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
