@@ -49,8 +49,26 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Tecace Device Management API' });
 });
 
-// Always run in development mode without database connection
-console.log('Running in development mode without database connection');
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+// For local development without a database, we can use NODE_ENV=development
+if (process.env.NODE_ENV === 'development') {
+  console.log('Running in development mode without database connection');
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+} else {
+  // Database sync & server start (for production)
+  db.sequelize.sync()
+    .then(() => {
+      console.log('Database synced');
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    })
+    .catch(err => {
+      console.error('Failed to sync database:', err);
+      console.log('Starting server without database sync...');
+      app.listen(PORT, () => {
+        console.log(`Server running on port ${PORT}`);
+      });
+    });
+}

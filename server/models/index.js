@@ -2,21 +2,26 @@
 const dbConfig = require('../config/db.config');
 const Sequelize = require('sequelize');
 
-// Create a dummy sequelize instance for development mode
-const sequelize = process.env.NODE_ENV === 'development' 
-  ? { define: () => ({}) } 
-  : new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
-      host: dbConfig.HOST,
-      port: dbConfig.PORT,
-      dialect: dbConfig.dialect,
-      operatorsAliases: 0,
-      pool: {
-        max: dbConfig.pool.max,
-        min: dbConfig.pool.min,
-        acquire: dbConfig.pool.acquire,
-        idle: dbConfig.pool.idle
-      }
-    });
+let sequelize;
+
+// Create sequelize instance
+if (process.env.NODE_ENV === 'development') {
+  console.log('Using mock models in development mode');
+  sequelize = { define: () => ({}) };
+} else {
+  sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
+    host: dbConfig.HOST,
+    port: dbConfig.PORT,
+    dialect: dbConfig.dialect,
+    operatorsAliases: 0,
+    pool: {
+      max: dbConfig.pool.max,
+      min: dbConfig.pool.min,
+      acquire: dbConfig.pool.acquire,
+      idle: dbConfig.pool.idle
+    }
+  });
+}
 
 const db = {};
 
@@ -25,8 +30,6 @@ db.sequelize = sequelize;
 
 // In development mode, provide mock implementations
 if (process.env.NODE_ENV === 'development') {
-  console.log('Using mock database models in development mode');
-  
   // Mock models with basic CRUD operations
   const mockModel = {
     findAll: () => Promise.resolve([]),
