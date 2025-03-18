@@ -5,7 +5,7 @@ module.exports = {
   USER: process.env.DB_USER || 'root',
   PASSWORD: process.env.DB_PASSWORD || 'password',
   DB: process.env.DB_NAME || 'tecace_devices',
-  dialect: 'mariadb',
+  dialect: 'mysql', // Changed from mariadb to mysql
   pool: {
     max: 5,
     min: 0,
