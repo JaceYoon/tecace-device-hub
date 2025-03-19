@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -76,6 +75,7 @@ type AuthCheckResponse = { isAuthenticated: boolean; user: User | null };
 type LoginResponse = { success: boolean; user: User; isAuthenticated: boolean };
 type LogoutResponse = { success: boolean };
 type SuccessResponse = { success: boolean };
+type RegisterResponse = { success: boolean; user: User; message?: string };
 
 // Helper function for API calls with dev mode fallback
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -113,6 +113,27 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       localStorage.removeItem('dev-user-logged-in');
       localStorage.removeItem('dev-user-id');
       return { success: true } as unknown as T;
+    }
+    
+    // Simulate registration
+    if (endpoint === '/auth/register' && options.method === 'POST') {
+      const body = JSON.parse((options.body as string) || '{}');
+      // Create a new user with the given details
+      const newUser: User = {
+        id: (mockUsers.length + 1).toString(),
+        name: body.name,
+        email: body.email,
+        role: 'user' as UserRole,
+        avatarUrl: `https://api.dicebear.com/7.x/personas/svg?seed=${body.email}`,
+      };
+      
+      mockUsers.push(newUser);
+      
+      // Set as logged in
+      localStorage.setItem('dev-user-logged-in', 'true');
+      localStorage.setItem('dev-user-id', newUser.id);
+      
+      return { success: true, user: newUser } as unknown as T;
     }
   }
   
@@ -228,6 +249,12 @@ export const authService = {
     
   logout: (): Promise<LogoutResponse> => 
     apiCall<LogoutResponse>('/auth/logout'),
+    
+  register: (name: string, email: string): Promise<RegisterResponse> => 
+    apiCall<RegisterResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email })
+    }),
 };
 
 // Device services

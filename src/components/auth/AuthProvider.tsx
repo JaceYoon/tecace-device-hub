@@ -87,14 +87,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     password: string
   ): Promise<{ success: boolean, message: string, verificationRequired: boolean }> => {
     try {
-      const response = await api.post('/auth/register', {
+      // Define the expected response type explicitly
+      interface RegisterResponse {
+        success: boolean;
+        user?: User;
+        message?: string;
+      }
+      
+      const response = await api.post<RegisterResponse>('/auth/register', {
         name: `${firstName} ${lastName}`,
         email,
         password
       });
       
-      if (response && 'success' in response && response.success) {
-        setUser(response.user as User);
+      if (response && 'success' in response && response.success && response.user) {
+        setUser(response.user);
         toast.success('Account created successfully!');
         return { 
           success: true, 
@@ -105,7 +112,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       return { 
         success: false, 
-        message: 'Registration failed', 
+        message: response.message || 'Registration failed', 
         verificationRequired: false 
       };
     } catch (error: any) {
