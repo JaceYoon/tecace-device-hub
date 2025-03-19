@@ -1,7 +1,11 @@
 
 import { Device, DeviceRequest, User } from '@/types';
 
-const API_URL = 'http://localhost:5000/api';
+// You can override this with an environment variable if needed
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
+// Log the API URL for debugging
+console.log('Using API URL:', API_URL);
 
 // Helper function for API calls
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
@@ -14,6 +18,7 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   };
 
   try {
+    console.log(`Making API request to: ${API_URL}${endpoint}`);
     const response = await fetch(`${API_URL}${endpoint}`, defaultOptions);
     
     // Handle non-2xx responses

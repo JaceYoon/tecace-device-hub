@@ -14,9 +14,14 @@ const userRoutes = require('./routes/user.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// Print environment for debugging
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('CLIENT_URL:', process.env.CLIENT_URL);
+console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
+
 // Middleware
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:8080', // Changed to match Vite's current port in your environment
+  origin: process.env.CLIENT_URL || 'http://localhost:8080',
   credentials: true
 }));
 app.use(express.json());
@@ -75,10 +80,14 @@ app.get('/', (req, res) => {
 // Database sync & server start
 console.log('Connecting to the database...');
 
-// Use force:true to drop existing tables and create new ones
-db.sequelize.sync({ force: true })
+// Determine whether to force sync based on environment and FORCE_DEV_MODE
+const shouldForceSync = process.env.NODE_ENV !== 'production' || process.env.FORCE_DEV_MODE === 'true';
+console.log('Force sync database:', shouldForceSync);
+
+// Use force:true to drop existing tables and create new ones if in development
+db.sequelize.sync({ force: shouldForceSync })
   .then(async () => {
-    console.log('Database synced successfully with force:true - tables were recreated');
+    console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);
 
     // Check if admin account exists, create one if it doesn't
     try {
@@ -104,6 +113,7 @@ db.sequelize.sync({ force: true })
     
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
+      console.log(`API is available at http://localhost:${PORT}/api`);
     });
   })
   .catch(err => {
