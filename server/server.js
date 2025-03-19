@@ -91,9 +91,12 @@ db.sequelize.sync()
           avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin'
         });
         console.log('Default admin account created: admin@tecace.com / admin123');
+      } else {
+        console.log('Admin account already exists, no need to create');
       }
     } catch (error) {
       console.error('Error checking/creating admin account:', error);
+      console.log('ERROR DETAILS:', error.message);
     }
     
     app.listen(PORT, () => {

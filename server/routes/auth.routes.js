@@ -9,6 +9,8 @@ const User = db.user;
 router.post('/login', async (req, res, next) => {
   const { email, password } = req.body;
   
+  console.log('Login attempt for email:', email);
+  
   // Basic validation
   if (!email || !password) {
     return res.status(400).json({ message: 'Email and password are required' });
@@ -19,6 +21,7 @@ router.post('/login', async (req, res, next) => {
     const user = await User.findOne({ where: { email } });
     
     if (!user) {
+      console.log('User not found with email:', email);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
     
@@ -26,14 +29,21 @@ router.post('/login', async (req, res, next) => {
     const isValidPassword = await bcrypt.compare(password, user.password);
     
     if (!isValidPassword) {
+      console.log('Invalid password for user:', email);
       return res.status(401).json({ message: 'Invalid email or password' });
     }
+    
+    console.log('User authenticated successfully:', email);
     
     // Log in the user
     req.login(user, (err) => {
       if (err) {
+        console.error('Login error after authentication:', err);
         return res.status(500).json({ message: 'Login error', error: err });
       }
+      
+      console.log('User session created for:', email);
+      
       return res.json({ 
         success: true, 
         user: {
@@ -104,7 +114,13 @@ router.get('/check', (req, res) => {
   if (req.isAuthenticated()) {
     return res.json({ 
       isAuthenticated: true, 
-      user: req.user 
+      user: {
+        id: req.user.id,
+        name: req.user.name,
+        email: req.user.email,
+        role: req.user.role,
+        avatarUrl: req.user.avatarUrl
+      }
     });
   }
   res.json({ isAuthenticated: false });

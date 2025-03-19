@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '@/types';
 import { toast } from 'sonner';
-import { api } from '@/services/api.service';
+import { api, authService, userService } from '@/services/api.service';
 
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -16,9 +16,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const response = await api.get('/auth/check');
-        if (response.data.isAuthenticated) {
-          setUser(response.data.user);
+        const response = await authService.checkAuth();
+        if (response.isAuthenticated) {
+          setUser(response.user);
         }
       } catch (error) {
         console.error('Authentication check error:', error);
@@ -35,8 +35,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUsers = async () => {
       if (user && (user.role === 'admin')) {
         try {
-          const response = await api.get('/users');
-          setUsers(response.data);
+          const response = await userService.getAll();
+          setUsers(response);
         } catch (error) {
           console.error('Error fetching users:', error);
         }
@@ -49,11 +49,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      const response = await api.post('/auth/login', { email, password });
+      const response = await authService.login(email, password);
       
-      if (response.data.success) {
-        setUser(response.data.user);
-        toast.success(`Welcome back, ${response.data.user.name}!`);
+      if (response.success) {
+        setUser(response.user);
+        toast.success(`Welcome back, ${response.user.name}!`);
         return true;
       }
       
@@ -68,7 +68,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Logout function
   const logout = async () => {
     try {
-      await api.get('/auth/logout');
+      await authService.logout();
       setUser(null);
       toast.info('Logged out successfully');
     } catch (error) {
@@ -91,8 +91,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
       
-      if (response.data.success) {
-        setUser(response.data.user);
+      if (response.success) {
+        setUser(response.user);
         toast.success('Account created successfully!');
         return { 
           success: true, 
@@ -139,19 +139,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Create an async function inside to handle the API call
     const performRoleUpdate = async () => {
       try {
-        const response = await api.put(`/users/${userId}/role`, { role: newRole });
+        // Use 'admin' or 'user' only, as 'manager' is not supported in the backend
+        const role = newRole === 'manager' ? 'admin' : newRole;
+        const response = await userService.updateRole(userId, role);
         
         // Update users list
         setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, role: newRole } : u
+          u.id === userId ? { ...u, role } : u
         ));
         
         // If current user is being updated, update current user
         if (user.id === userId) {
-          setUser(prev => prev ? { ...prev, role: newRole } : null);
+          setUser(prev => prev ? { ...prev, role } : null);
         }
         
-        toast.success(`User role updated to ${newRole}`);
+        toast.success(`User role updated to ${role}`);
         return true;
       } catch (error) {
         console.error('Error updating user role:', error);
