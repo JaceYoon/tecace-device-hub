@@ -9,12 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Clock } from 'lucide-react';
-import { dataStore } from '@/utils/mockData';
 import ExportButton from '@/components/devices/ExportButton';
 import RequestList from '@/components/devices/RequestList';
+import { dataService } from '@/services/data.service';
 
 const DeviceManagement: React.FC = () => {
-  const { user, isAuthenticated, isManager } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all-devices');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -24,13 +24,13 @@ const DeviceManagement: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
-    } else if (!isManager) {
+    } else if (!isAdmin) {
       navigate('/dashboard');
-      toast.error('Access denied. Manager permissions required.');
+      toast.error('Access denied. Admin permissions required.');
     }
     
     setIsLoading(false);
-  }, [isAuthenticated, isManager, navigate]);
+  }, [isAuthenticated, isAdmin, navigate]);
   
   const handleDeviceAdded = () => {
     setShowAddForm(false);
@@ -39,6 +39,29 @@ const DeviceManagement: React.FC = () => {
 
   const handleRequestProcessed = () => {
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleExportAll = async () => {
+    try {
+      const devices = await dataService.getDevices();
+      const users = await dataService.getUsers();
+
+      // Import the utility function
+      const { exportDevicesToExcel } = await import('@/utils/exportUtils');
+      
+      // Export all devices
+      exportDevicesToExcel(
+        devices,
+        users,
+        'Complete_Device_Inventory',
+        true
+      );
+
+      toast.success('Export successful');
+    } catch (error) {
+      console.error('Export error:', error);
+      toast.error('Failed to export devices');
+    }
   };
   
   if (isLoading) {
@@ -52,7 +75,7 @@ const DeviceManagement: React.FC = () => {
     );
   }
   
-  if (!isManager) return null;
+  if (!isAdmin) return null;
   
   return (
     <PageContainer>
@@ -66,12 +89,14 @@ const DeviceManagement: React.FC = () => {
           </div>
           
           <div className="flex gap-2 flex-wrap">
-            <ExportButton 
-              devices={dataStore.getDevices()} 
-              users={dataStore.getUsers()}
-              exportFileName="Complete_Device_Inventory"
+            <Button 
+              onClick={handleExportAll} 
               variant="secondary"
-            />
+              className="flex items-center gap-2"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              Export to Excel
+            </Button>
             
             <Button 
               onClick={() => setShowAddForm(!showAddForm)}
@@ -127,7 +152,7 @@ const DeviceManagement: React.FC = () => {
           <TabsContent value="all-devices" className="animate-slide-up">
             <DeviceList 
               title="All Devices" 
-              showExportButton={true}
+              showExportButton={false}
             />
           </TabsContent>
           
@@ -135,7 +160,7 @@ const DeviceManagement: React.FC = () => {
             <DeviceList 
               title="Assigned Devices" 
               filterByStatus={['assigned']}
-              showExportButton={true}
+              showExportButton={false}
             />
           </TabsContent>
           
@@ -144,7 +169,7 @@ const DeviceManagement: React.FC = () => {
               <DeviceList 
                 title="Devices with Pending Requests" 
                 statusFilter="pending"
-                showExportButton={true}
+                showExportButton={false}
               />
               
               <RequestList 
@@ -158,7 +183,7 @@ const DeviceManagement: React.FC = () => {
             <DeviceList 
               title="Missing & Stolen Devices" 
               filterByStatus={['missing', 'stolen']}
-              showExportButton={true}
+              showExportButton={false}
             />
           </TabsContent>
         </Tabs>

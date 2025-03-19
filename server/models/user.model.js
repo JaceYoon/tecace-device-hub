@@ -6,10 +6,6 @@ module.exports = (sequelize, Sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    atlassianId: {
-      type: Sequelize.STRING,
-      unique: true
-    },
     name: {
       type: Sequelize.STRING,
       allowNull: false
@@ -19,15 +15,16 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false,
       unique: true
     },
+    password: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
     role: {
-      type: Sequelize.ENUM('user', 'manager'),
+      type: Sequelize.ENUM('user', 'admin'),
       defaultValue: 'user'
     },
     avatarUrl: {
       type: Sequelize.STRING
-    },
-    refreshToken: {
-      type: Sequelize.TEXT
     },
     active: {
       type: Sequelize.BOOLEAN,

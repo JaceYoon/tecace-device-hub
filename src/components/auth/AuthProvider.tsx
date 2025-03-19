@@ -2,102 +2,79 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '@/types';
 import { toast } from 'sonner';
+import { api } from '@/services/api.service';
 
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Mock users for development purposes
-const MOCK_USERS: User[] = [
-  {
-    id: 'admin-1',
-    name: 'Admin User',
-    firstName: 'Admin',
-    lastName: 'User',
-    email: 'admin@tecace.com',
-    role: 'admin',
-    avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin'
-  },
-  {
-    id: 'user-1',
-    name: 'Demo User',
-    firstName: 'Demo',
-    lastName: 'User',
-    email: 'demo@tecace.com',
-    role: 'user',
-    avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=demo'
-  }
-];
-
-// In-memory storage for verification codes
-const verificationCodes: Record<string, string> = {};
-
-// Helper function to send a verification email (mock)
-const sendVerificationEmail = (email: string, code: string) => {
-  console.log(`Sending verification code to ${email}: ${code}`);
-  // In a real implementation, this would send an actual email
-  // For now, we'll just show the code in a toast for demo purposes
-  toast.info(`Verification code for ${email}: ${code}`, {
-    duration: 10000, // Keep it visible longer for testing
-    description: "In a real app, this would be sent to your email"
-  });
-};
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Initialize users from localStorage or default to mock users
+  // Load user session on startup
   useEffect(() => {
-    const loadUsers = () => {
+    const checkAuth = async () => {
       try {
-        const savedUsers = localStorage.getItem('tecace_users');
-        if (savedUsers) {
-          setUsers(JSON.parse(savedUsers));
-        } else {
-          // Initialize with mock users if none exist
-          setUsers(MOCK_USERS);
-          localStorage.setItem('tecace_users', JSON.stringify(MOCK_USERS));
-        }
-
-        // Check if user is logged in
-        const loggedInUser = localStorage.getItem('tecace_current_user');
-        if (loggedInUser) {
-          setUser(JSON.parse(loggedInUser));
+        const response = await api.get('/auth/check');
+        if (response.data.isAuthenticated) {
+          setUser(response.data.user);
         }
       } catch (error) {
-        console.error('Error loading users:', error);
-        // Fallback to mock users on error
-        setUsers(MOCK_USERS);
+        console.error('Authentication check error:', error);
       } finally {
         setIsLoading(false);
       }
     };
     
-    loadUsers();
+    checkAuth();
   }, []);
+
+  // Fetch users when user is authenticated
+  useEffect(() => {
+    const fetchUsers = async () => {
+      if (user && (user.role === 'admin')) {
+        try {
+          const response = await api.get('/users');
+          setUsers(response.data);
+        } catch (error) {
+          console.error('Error fetching users:', error);
+        }
+      }
+    };
+    
+    fetchUsers();
+  }, [user]);
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
-    // In a real app, you would hash passwords and not store them in localStorage
-    const foundUser = users.find(u => u.email.toLowerCase() === email.toLowerCase());
-    
-    if (foundUser) {
-      setUser(foundUser);
-      localStorage.setItem('tecace_current_user', JSON.stringify(foundUser));
-      toast.success(`Welcome back, ${foundUser.firstName}!`);
-      return true;
+    try {
+      const response = await api.post('/auth/login', { email, password });
+      
+      if (response.data.success) {
+        setUser(response.data.user);
+        toast.success(`Welcome back, ${response.data.user.name}!`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error('Login error:', error);
+      toast.error('Invalid email or password');
+      return false;
     }
-    
-    toast.error('Invalid email or password');
-    return false;
   };
 
   // Logout function
   const logout = async () => {
-    setUser(null);
-    localStorage.removeItem('tecace_current_user');
-    toast.info('Logged out successfully');
+    try {
+      await api.get('/auth/logout');
+      setUser(null);
+      toast.info('Logged out successfully');
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast.error('Error logging out');
+    }
   };
 
   // Register new user
@@ -107,105 +84,83 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     email: string, 
     password: string
   ): Promise<{ success: boolean, message: string, verificationRequired: boolean }> => {
-    // Validate email domain
-    if (!email.endsWith('@tecace.com')) {
+    try {
+      const response = await api.post('/auth/register', {
+        name: `${firstName} ${lastName}`,
+        email,
+        password
+      });
+      
+      if (response.data.success) {
+        setUser(response.data.user);
+        toast.success('Account created successfully!');
+        return { 
+          success: true, 
+          message: 'Registration successful', 
+          verificationRequired: false 
+        };
+      }
+      
       return { 
         success: false, 
-        message: 'Only @tecace.com email addresses are allowed', 
+        message: 'Registration failed', 
+        verificationRequired: false 
+      };
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      const message = error.response?.data?.message || 'Error creating account';
+      toast.error(message);
+      return { 
+        success: false, 
+        message, 
         verificationRequired: false 
       };
     }
-
-    // Check if email already exists
-    if (users.some(u => u.email.toLowerCase() === email.toLowerCase())) {
-      return { 
-        success: false, 
-        message: 'This email is already registered', 
-        verificationRequired: false 
-      };
-    }
-
-    // Generate verification code
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-    verificationCodes[email] = verificationCode;
-
-    // Send verification email (mock)
-    sendVerificationEmail(email, verificationCode);
-    
-    return { 
-      success: true, 
-      message: 'Verification code sent to your email', 
-      verificationRequired: true 
-    };
   };
 
-  // Verify email with code
+  // Since we don't use verification anymore, this is a simple pass-through
   const verifyEmail = async (
     email: string, 
     code: string, 
     userData: { firstName: string, lastName: string, password: string }
   ): Promise<boolean> => {
-    if (verificationCodes[email] === code) {
-      // Create new user
-      const newUser: User = {
-        id: `user-${Date.now()}`,
-        email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        name: `${userData.firstName} ${userData.lastName}`,
-        role: 'user', // Default role
-        avatarUrl: `https://api.dicebear.com/7.x/personas/svg?seed=${email}`
-      };
-
-      // Add user to the list
-      const updatedUsers = [...users, newUser];
-      setUsers(updatedUsers);
-      localStorage.setItem('tecace_users', JSON.stringify(updatedUsers));
-      
-      // Remove verification code
-      delete verificationCodes[email];
-      
-      // Auto-login the new user
-      setUser(newUser);
-      localStorage.setItem('tecace_current_user', JSON.stringify(newUser));
-      
-      toast.success('Account created successfully!');
-      return true;
-    }
-    
-    toast.error('Invalid verification code');
-    return false;
+    // This is now a no-op since we don't use verification
+    return true;
   };
 
   // Update user role (admin only)
-  const updateUserRole = (userId: string, newRole: 'admin' | 'user' | 'manager'): boolean => {
+  const updateUserRole = async (userId: string, newRole: 'admin' | 'user'): Promise<boolean> => {
     if (user?.role !== 'admin') {
       toast.error('Only admins can update user roles');
       return false;
     }
 
-    const updatedUsers = users.map(u => 
-      u.id === userId ? { ...u, role: newRole } : u
-    );
-    
-    setUsers(updatedUsers);
-    localStorage.setItem('tecace_users', JSON.stringify(updatedUsers));
-    
-    // If the current user is being updated, update the current user as well
-    if (user?.id === userId) {
-      const updatedUser = { ...user, role: newRole };
-      setUser(updatedUser);
-      localStorage.setItem('tecace_current_user', JSON.stringify(updatedUser));
+    try {
+      const response = await api.put(`/users/${userId}/role`, { role: newRole });
+      
+      // Update users list
+      setUsers(prev => prev.map(u => 
+        u.id === userId ? { ...u, role: newRole } : u
+      ));
+      
+      // If current user is being updated, update current user
+      if (user.id === userId) {
+        setUser(prev => prev ? { ...prev, role: newRole } : null);
+      }
+      
+      toast.success(`User role updated to ${newRole}`);
+      return true;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast.error('Failed to update user role');
+      return false;
     }
-    
-    toast.success(`User role updated to ${newRole}`);
-    return true;
   };
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
-  // Check if user is manager (keeping for backward compatibility)
-  const isManager = user?.role === 'manager' || user?.role === 'admin';
+  // For backward compatibility, isManager is true if admin
+  const isManager = user?.role === 'admin';
 
   // Create auth context value
   const contextValue: AuthContextType = {

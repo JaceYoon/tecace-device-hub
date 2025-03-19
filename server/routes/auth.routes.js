@@ -1,11 +1,11 @@
 
 const express = require('express');
 const router = express.Router();
-const passport = require('passport');
+const bcrypt = require('bcrypt');
 const db = require('../models');
 const User = db.user;
 
-// Login route - for local authentication
+// Login route
 router.post('/login', async (req, res, next) => {
   const { email, password } = req.body;
   
@@ -14,83 +14,88 @@ router.post('/login', async (req, res, next) => {
     return res.status(400).json({ message: 'Email and password are required' });
   }
   
-  // Check if we're in forced development mode
-  if (process.env.FORCE_DEV_MODE === 'true') {
-    // Simplified authentication for development
-    if (email.endsWith('@tecace.com')) {
-      // For demo purposes - create a mock user object
-      const user = {
-        id: email === 'admin@tecace.com' ? 'admin-1' : 'user-1',
-        email: email,
-        name: email === 'admin@tecace.com' ? 'Admin User' : 'Demo User',
-        role: email === 'admin@tecace.com' ? 'admin' : 'user'
-      };
-      
-      // Log in the user
-      req.login(user, (err) => {
-        if (err) {
-          return res.status(500).json({ message: 'Login error', error: err });
-        }
-        return res.json({ success: true, user });
-      });
-    } else {
-      return res.status(401).json({ message: 'Invalid credentials' });
+  try {
+    // Find user by email
+    const user = await User.findOne({ where: { email } });
+    
+    if (!user) {
+      return res.status(401).json({ message: 'Invalid email or password' });
     }
-  } else {
-    // In production, check against database
-    try {
-      // Find user by email
-      const user = await User.findOne({ where: { email } });
-      
-      // For simplicity, we're not checking passwords here
-      // In a real application, you would hash passwords and compare them
-      if (user) {
-        req.login(user, (err) => {
-          if (err) {
-            return res.status(500).json({ message: 'Login error', error: err });
-          }
-          return res.json({ 
-            success: true, 
-            user: {
-              id: user.id,
-              name: user.name,
-              email: user.email,
-              role: user.role
-            } 
-          });
-        });
-      } else {
-        // In development mode, create a user if it doesn't exist
-        // This is useful for testing and should be removed in a real app
-        if (email.endsWith('@tecace.com')) {
-          const newUser = await User.create({
-            name: email === 'admin@tecace.com' ? 'Admin User' : 'Demo User',
-            email: email,
-            role: email === 'admin@tecace.com' ? 'manager' : 'user'
-          });
-          
-          req.login(newUser, (err) => {
-            if (err) {
-              return res.status(500).json({ message: 'Login error', error: err });
-            }
-            return res.json({ 
-              success: true, 
-              user: {
-                id: newUser.id,
-                name: newUser.name,
-                email: newUser.email,
-                role: newUser.role
-              } 
-            });
-          });
-        } else {
-          return res.status(401).json({ message: 'Invalid credentials' });
-        }
+    
+    // Check password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ message: 'Invalid email or password' });
+    }
+    
+    // Log in the user
+    req.login(user, (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Login error', error: err });
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      return res.status(500).json({ message: 'Server error', error: error.message });
+      return res.json({ 
+        success: true, 
+        user: {
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role
+        } 
+      });
+    });
+  } catch (error) {
+    console.error('Login error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
+  }
+});
+
+// Register route
+router.post('/register', async (req, res) => {
+  const { name, email, password } = req.body;
+  
+  // Basic validation
+  if (!name || !email || !password) {
+    return res.status(400).json({ message: 'Name, email, and password are required' });
+  }
+  
+  try {
+    // Check if user exists
+    const existingUser = await User.findOne({ where: { email } });
+    
+    if (existingUser) {
+      return res.status(400).json({ message: 'Email already registered' });
     }
+    
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+    
+    // Create user
+    const newUser = await User.create({
+      name,
+      email,
+      password: hashedPassword,
+      role: 'user' // Default role
+    });
+    
+    // Log in the new user
+    req.login(newUser, (err) => {
+      if (err) {
+        return res.status(500).json({ message: 'Login error after registration', error: err });
+      }
+      return res.status(201).json({ 
+        success: true, 
+        user: {
+          id: newUser.id,
+          name: newUser.name,
+          email: newUser.email,
+          role: newUser.role
+        } 
+      });
+    });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
 

@@ -1,9 +1,39 @@
 
 const passport = require('passport');
+const LocalStrategy = require('passport-local').Strategy;
+const bcrypt = require('bcrypt');
 const db = require('../models');
 const User = db.user;
 
 module.exports = () => {
+  // Configure local strategy for authentication
+  passport.use(
+    new LocalStrategy(
+      { usernameField: 'email' },
+      async (email, password, done) => {
+        try {
+          // Find user by email
+          const user = await User.findOne({ where: { email } });
+          
+          if (!user) {
+            return done(null, false, { message: 'Invalid email or password' });
+          }
+          
+          // Verify password
+          const isValidPassword = await bcrypt.compare(password, user.password);
+          
+          if (!isValidPassword) {
+            return done(null, false, { message: 'Invalid email or password' });
+          }
+          
+          return done(null, user);
+        } catch (error) {
+          return done(error);
+        }
+      }
+    )
+  );
+
   // Serialize user
   passport.serializeUser((user, done) => {
     done(null, user.id);
@@ -11,38 +41,15 @@ module.exports = () => {
   
   // Deserialize user
   passport.deserializeUser(async (id, done) => {
-    // Check if we're in forced development mode
-    if (process.env.FORCE_DEV_MODE === 'true') {
-      // Use mock users for development
-      if (id === 'admin-1') {
-        done(null, {
-          id: 'admin-1',
-          name: 'Admin User',
-          email: 'admin@tecace.com',
-          role: 'admin'
-        });
-      } else if (id === 'user-1') {
-        done(null, {
-          id: 'user-1',
-          name: 'Demo User',
-          email: 'demo@tecace.com',
-          role: 'user'
-        });
+    try {
+      const user = await User.findByPk(id);
+      if (user) {
+        done(null, user);
       } else {
         done(new Error('User not found'), null);
       }
-    } else {
-      // In production, fetch user from database
-      try {
-        const user = await User.findByPk(id);
-        if (user) {
-          done(null, user);
-        } else {
-          done(new Error('User not found'), null);
-        }
-      } catch (error) {
-        done(error, null);
-      }
+    } catch (error) {
+      done(error, null);
     }
   });
 };

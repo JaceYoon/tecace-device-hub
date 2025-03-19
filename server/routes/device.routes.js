@@ -2,7 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const deviceController = require('../controllers/device.controller');
-const { isAuthenticated, isManager } = require('../middleware/auth.middleware');
+const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
 // Get all devices
 router.get('/', isAuthenticated, deviceController.findAll);
@@ -11,19 +11,19 @@ router.get('/', isAuthenticated, deviceController.findAll);
 router.get('/:id', isAuthenticated, deviceController.findOne);
 
 // Create a new device
-router.post('/', isAuthenticated, isManager, deviceController.create);
+router.post('/', isAuthenticated, isAdmin, deviceController.create);
 
 // Update a device
-router.put('/:id', isAuthenticated, isManager, deviceController.update);
+router.put('/:id', isAuthenticated, isAdmin, deviceController.update);
 
 // Delete a device
-router.delete('/:id', isAuthenticated, isManager, deviceController.delete);
+router.delete('/:id', isAuthenticated, isAdmin, deviceController.delete);
 
 // Request a device
 router.post('/:id/request', isAuthenticated, deviceController.requestDevice);
 
 // Process a device request
-router.put('/requests/:id', isAuthenticated, isManager, deviceController.processRequest);
+router.put('/requests/:id', isAuthenticated, isAdmin, deviceController.processRequest);
 
 // Get all requests
 router.get('/requests', isAuthenticated, deviceController.findAllRequests);

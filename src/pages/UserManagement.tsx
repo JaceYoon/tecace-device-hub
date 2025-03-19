@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
@@ -22,10 +22,11 @@ import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { User, UserCheck, Shield } from 'lucide-react';
+import { Loader2, User, Shield } from 'lucide-react';
 
 const UserManagement: React.FC = () => {
   const { user, users, isAdmin, updateUserRole } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   
   // Redirect if not admin
@@ -38,7 +39,7 @@ const UserManagement: React.FC = () => {
   
   if (!isAdmin || !user) return null;
   
-  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'manager') => {
+  const handleRoleChange = (userId: string, newRole: 'admin' | 'user') => {
     updateUserRole(userId, newRole);
   };
   
@@ -59,81 +60,83 @@ const UserManagement: React.FC = () => {
           </Badge>
         </div>
         
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[50px]">User</TableHead>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {users.map((userData) => (
-                <TableRow key={userData.id}>
-                  <TableCell>
-                    <Avatar className="h-9 w-9">
-                      {userData.avatarUrl ? (
-                        <AvatarImage src={userData.avatarUrl} alt={userData.name} />
-                      ) : (
-                        <AvatarFallback>
-                          {userData.name.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    {userData.name}
-                    {userData.id === user.id && (
-                      <Badge variant="outline" className="ml-2 text-xs">You</Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{userData.email}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={userData.role === 'admin' ? 'default' : 'outline'}
-                      className={`${
-                        userData.role === 'admin' 
-                          ? 'bg-primary' 
-                          : userData.role === 'manager'
-                          ? 'bg-blue-500/20 text-blue-700'
-                          : 'bg-green-500/20 text-green-700'
-                      }`}
-                    >
-                      {userData.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <Select
-                      defaultValue={userData.role}
-                      onValueChange={(value) => handleRoleChange(
-                        userData.id, 
-                        value as 'admin' | 'user' | 'manager'
-                      )}
-                    >
-                      <SelectTrigger className="w-[110px]">
-                        <SelectValue placeholder="Select role" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="user">User</SelectItem>
-                        <SelectItem value="manager">Manager</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
+        {isLoading ? (
+          <div className="flex items-center justify-center p-8">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : (
+          <div className="rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[50px]">User</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Role</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
+              </TableHeader>
+              <TableBody>
+                {users.map((userData) => (
+                  <TableRow key={userData.id}>
+                    <TableCell>
+                      <Avatar className="h-9 w-9">
+                        {userData.avatarUrl ? (
+                          <AvatarImage src={userData.avatarUrl} alt={userData.name} />
+                        ) : (
+                          <AvatarFallback>
+                            {userData.name.split(' ').map(n => n[0]).join('')}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {userData.name}
+                      {userData.id === user.id && (
+                        <Badge variant="outline" className="ml-2 text-xs">You</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>{userData.email}</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={userData.role === 'admin' ? 'default' : 'outline'}
+                        className={`${
+                          userData.role === 'admin' 
+                            ? 'bg-primary' 
+                            : 'bg-green-500/20 text-green-700'
+                        }`}
+                      >
+                        {userData.role}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Select
+                        defaultValue={userData.role}
+                        onValueChange={(value) => handleRoleChange(
+                          userData.id, 
+                          value as 'admin' | 'user'
+                        )}
+                      >
+                        <SelectTrigger className="w-[110px]">
+                          <SelectValue placeholder="Select role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="user">User</SelectItem>
+                          <SelectItem value="admin">Admin</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
         
         <div className="text-center text-sm text-muted-foreground mt-4">
           <p>
             Total users: {users.length} • 
             Admins: {users.filter(u => u.role === 'admin').length} • 
-            Managers: {users.filter(u => u.role === 'manager').length} • 
             Users: {users.filter(u => u.role === 'user').length}
           </p>
         </div>

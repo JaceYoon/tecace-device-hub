@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
+const bcrypt = require('bcrypt');
 const db = require('./models');
 const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
@@ -54,7 +55,7 @@ app.use(session({
   }
 }));
 
-// Initialize Passport with local strategy
+// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 
@@ -71,31 +72,35 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Tecace Device Management API' });
 });
 
-// Check if the user wants to force development mode
-const forceDevelopmentMode = process.env.FORCE_DEV_MODE === 'true';
+// Database sync & server start
+console.log('Connecting to the database...');
+db.sequelize.sync()
+  .then(async () => {
+    console.log('Database synced successfully');
 
-if (forceDevelopmentMode) {
-  console.log('Running in forced development mode without database connection');
-  app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-  });
-} else {
-  // Database sync & server start
-  console.log('Attempting to connect to the database...');
-  db.sequelize.sync()
-    .then(() => {
-      console.log('Database synced successfully');
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-      });
-    })
-    .catch(err => {
-      console.error('Failed to sync database:', err);
-      console.log('ERROR DETAILS:', err.message);
-      console.log('If you want to run without a database connection, set FORCE_DEV_MODE=true in your .env file');
-      // We'll still start the server so the application can function
-      app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT} (without database sync)`);
-      });
+    // Check if admin account exists, create one if it doesn't
+    try {
+      const adminCount = await db.user.count({ where: { role: 'admin' } });
+      if (adminCount === 0) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await db.user.create({
+          name: 'Administrator',
+          email: 'admin@tecace.com',
+          password: hashedPassword,
+          role: 'admin',
+          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin'
+        });
+        console.log('Default admin account created: admin@tecace.com / admin123');
+      }
+    } catch (error) {
+      console.error('Error checking/creating admin account:', error);
+    }
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
     });
-}
+  })
+  .catch(err => {
+    console.error('Failed to sync database:', err);
+    console.log('ERROR DETAILS:', err.message);
+  });
