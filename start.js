@@ -5,6 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 console.log('🚀 Starting Tecace Device Management System...');
+console.log('ℹ️  You can run this script with: node start.js');
 
 // Function to handle process output
 const handleProcess = (process, name) => {
@@ -34,6 +35,7 @@ handleProcess(frontend, 'FRONTEND');
 
 console.log('✅ Both services started successfully!');
 console.log('⚠️ Press Ctrl+C to stop both services');
+console.log('📝 Access the application at: http://localhost:8080');
 
 // Handle script termination
 process.on('SIGINT', () => {

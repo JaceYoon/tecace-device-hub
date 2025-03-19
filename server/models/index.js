@@ -11,12 +11,17 @@ console.log('Connecting to database with config:', {
   dialect: dbConfig.dialect
 });
 
+// Configure logging function to be more selective
+const loggingFunction = process.env.NODE_ENV === 'development' && process.env.SQL_LOG === 'true' 
+  ? console.log 
+  : false;
+
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   port: dbConfig.PORT,
   dialect: dbConfig.dialect,
   operatorsAliases: 0,
-  logging: console.log, // Enable SQL logging
+  logging: loggingFunction, // Controlled SQL logging
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
