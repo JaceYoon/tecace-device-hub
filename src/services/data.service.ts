@@ -1,11 +1,9 @@
-
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 import { deviceStore, userStore, requestStore } from '@/utils/data';
-import { useAuth } from '@/components/auth/AuthProvider';
 
 // Setting to false to use the API by default
-const USE_LOCAL_STORAGE = false;
+const USE_LOCAL_STORAGE = true;
 
 /**
  * This service acts as a facade over both the API and localStorage implementations

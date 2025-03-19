@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -52,8 +51,14 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Filter devices based on filters
   const filteredDevices = devices.filter(device => {
-    // If user is not a manager, don't show missing/stolen devices
-    if (!isManager && (device.status === 'missing' || device.status === 'stolen')) {
+    // If filterByStatus is provided, use it directly (for admins viewing missing/stolen)
+    if (props.filterByStatus && props.filterByStatus.length > 0) {
+      if (!props.filterByStatus.includes(device.status)) {
+        return false;
+      }
+    } 
+    // Otherwise, if user is not a manager, don't show missing/stolen devices
+    else if (!isManager && (device.status === 'missing' || device.status === 'stolen')) {
       return false;
     }
 
@@ -86,12 +91,6 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // Filter by assigned to user
     if (props.filterByAssignedToUser && device.assignedTo !== props.filterByAssignedToUser) {
-      return false;
-    }
-
-    // Filter by allowed statuses
-    if (props.filterByStatus && props.filterByStatus.length > 0 &&
-        !props.filterByStatus.includes(device.status)) {
       return false;
     }
 

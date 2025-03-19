@@ -42,7 +42,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const missingCount = devices.filter(d => d.status === 'missing').length;
   const stolenCount = devices.filter(d => d.status === 'stolen').length;
   const pendingCount = devices.filter(d => d.requestedBy).length;
-  const totalCount = devices.length;
   
   const StatusCard = ({ 
     icon: Icon, 
@@ -56,7 +55,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
     color: string
   }) => (
     <Card className={`${color} hover:shadow-md transition-all`}>
-      <CardContent className="p-4 flex items-center justify-between">
+      <CardContent className="p-4 flex items-center">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-full bg-white/20">
             <Icon className="h-5 w-5 text-white" />
@@ -65,9 +64,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
             <div className="text-2xl font-bold">{count}</div>
             <div className="text-xs font-medium opacity-90">{label}</div>
           </div>
-        </div>
-        <div className="text-xs text-white/70 font-medium">
-          {totalCount > 0 ? Math.round((count / totalCount) * 100) : 0}%
         </div>
       </CardContent>
     </Card>
