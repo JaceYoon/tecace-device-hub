@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { AuthContextType, User } from '@/types';
+import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import api, { authService, userService } from '@/services/api.service';
 
@@ -17,8 +17,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       try {
         const response = await authService.checkAuth();
-        if (response.isAuthenticated) {
-          setUser(response.user);
+        if (response && 'isAuthenticated' in response && response.isAuthenticated) {
+          setUser(response.user as User);
         }
       } catch (error) {
         console.error('Authentication check error:', error);
@@ -36,7 +36,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (user && (user.role === 'admin')) {
         try {
           const response = await userService.getAll();
-          setUsers(response);
+          if (Array.isArray(response)) {
+            setUsers(response);
+          }
         } catch (error) {
           console.error('Error fetching users:', error);
         }
@@ -51,8 +53,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       const response = await authService.login(email, password);
       
-      if (response.success) {
-        setUser(response.user);
+      if (response && 'success' in response && response.success) {
+        setUser(response.user as User);
         toast.success(`Welcome back, ${response.user.name}!`);
         return true;
       }
@@ -91,8 +93,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         password
       });
       
-      if (response.success) {
-        setUser(response.user);
+      if (response && 'success' in response && response.success) {
+        setUser(response.user as User);
         toast.success('Account created successfully!');
         return { 
           success: true, 
@@ -129,7 +131,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Update user role (admin only)
-  const updateUserRole = (userId: string, newRole: 'admin' | 'user' | 'manager'): boolean => {
+  const updateUserRole = (userId: string, newRole: UserRole): boolean => {
     if (user?.role !== 'admin') {
       toast.error('Only admins can update user roles');
       return false;
@@ -140,16 +142,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Use 'admin' or 'user' only, as 'manager' is not supported in the backend
         const role = newRole === 'manager' ? 'admin' : newRole;
-        const response = await userService.updateRole(userId, role);
+        const response = await userService.updateRole(userId, role as 'admin' | 'user');
         
         // Update users list
         setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, role } : u
+          u.id === userId ? { ...u, role: role as UserRole } : u
         ));
         
         // If current user is being updated, update current user
-        if (user.id === userId) {
-          setUser(prev => prev ? { ...prev, role } : null);
+        if (user && user.id === userId) {
+          setUser(prev => prev ? { ...prev, role: role as UserRole } : null);
         }
         
         toast.success(`User role updated to ${role}`);

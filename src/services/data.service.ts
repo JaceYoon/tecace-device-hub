@@ -19,7 +19,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.getAll();
+      const devices = await deviceService.getAll();
+      return Array.isArray(devices) ? devices : [];
     } catch (error) {
       console.error('Error fetching devices from API, falling back to localStorage', error);
       return deviceStore.getDevices();
@@ -32,7 +33,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.getById(id);
+      const device = await deviceService.getById(id);
+      return device || undefined;
     } catch (error) {
       console.error('Error fetching device from API, falling back to localStorage', error);
       return deviceStore.getDeviceById(id);
@@ -45,7 +47,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.create(device);
+      const newDevice = await deviceService.create(device);
+      return newDevice;
     } catch (error) {
       console.error('Error adding device to API, falling back to localStorage', error);
       return deviceStore.addDevice(device);
@@ -58,7 +61,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.update(id, updates);
+      const updatedDevice = await deviceService.update(id, updates);
+      return updatedDevice;
     } catch (error) {
       console.error('Error updating device in API, falling back to localStorage', error);
       return deviceStore.updateDevice(id, updates);
@@ -71,8 +75,8 @@ export const dataService = {
     }
     
     try {
-      await deviceService.delete(id);
-      return true;
+      const result = await deviceService.delete(id);
+      return !!result;
     } catch (error) {
       console.error('Error deleting device from API, falling back to localStorage', error);
       return deviceStore.deleteDevice(id);
@@ -86,7 +90,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.getAllRequests();
+      const requests = await deviceService.getAllRequests();
+      return Array.isArray(requests) ? requests : [];
     } catch (error) {
       console.error('Error fetching requests from API, falling back to localStorage', error);
       return requestStore.getRequests();
@@ -99,7 +104,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.requestDevice(request.deviceId, request.type);
+      const newRequest = await deviceService.requestDevice(request.deviceId, request.type);
+      return newRequest;
     } catch (error) {
       console.error('Error adding request to API, falling back to localStorage', error);
       return requestStore.addRequest(request);
@@ -112,7 +118,8 @@ export const dataService = {
     }
     
     try {
-      return await deviceService.processRequest(id, status);
+      const processedRequest = await deviceService.processRequest(id, status);
+      return processedRequest;
     } catch (error) {
       console.error('Error processing request in API, falling back to localStorage', error);
       return requestStore.processRequest(id, status, managerId);
@@ -126,7 +133,8 @@ export const dataService = {
     }
     
     try {
-      return await userService.getAll();
+      const users = await userService.getAll();
+      return Array.isArray(users) ? users : [];
     } catch (error) {
       console.error('Error fetching users from API, falling back to localStorage', error);
       return userStore.getUsers();
@@ -139,7 +147,8 @@ export const dataService = {
     }
     
     try {
-      return await userService.getById(id);
+      const user = await userService.getById(id);
+      return user || undefined;
     } catch (error) {
       console.error('Error fetching user from API, falling back to localStorage', error);
       return userStore.getUserById(id);

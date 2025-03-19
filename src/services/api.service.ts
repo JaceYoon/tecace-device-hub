@@ -1,5 +1,5 @@
 
-import { Device, DeviceRequest, User } from '@/types';
+import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
@@ -13,31 +13,25 @@ console.log('Using API URL:', API_URL);
 console.log('Running in development mode with mock data');
 
 // Mock data for development mode
-const mockUsers = [
+const mockUsers: User[] = [
   {
     id: '1',
     name: 'Admin User',
     email: 'admin@tecace.com',
-    role: 'admin',
+    role: 'admin' as UserRole,
     avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin',
-    active: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
   },
   {
     id: '2',
     name: 'Regular User',
     email: 'user@tecace.com',
-    role: 'user',
+    role: 'user' as UserRole,
     avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=user',
-    active: true,
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
   }
 ];
 
 // Mock device data
-const mockDevices = [
+const mockDevices: Device[] = [
   {
     id: '1',
     name: 'iPhone 13 Pro',
@@ -46,8 +40,9 @@ const mockDevices = [
     imei: '123456789012345',
     status: 'available',
     notes: 'New device',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    addedBy: '1',
+    createdAt: new Date(),
+    updatedAt: new Date()
   },
   {
     id: '2',
@@ -56,22 +51,23 @@ const mockDevices = [
     serialNumber: 'MACBOOKM1-001',
     imei: '',
     status: 'assigned',
-    assignedToId: '1',
+    assignedTo: '1',
     notes: 'Assigned to admin',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
+    addedBy: '1',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ];
 
 // Mock request data
-const mockRequests = [
+const mockRequests: DeviceRequest[] = [
   {
     id: '1',
     type: 'assign',
     status: 'pending',
     deviceId: '1',
     userId: '2',
-    requestedAt: new Date().toISOString()
+    requestedAt: new Date(),
   }
 ];
 
@@ -135,13 +131,13 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       const body = JSON.parse((options.body as string) || '{}');
       const userId = localStorage.getItem('dev-user-id') || '1';
       
-      const newRequest = {
+      const newRequest: DeviceRequest = {
         id: (mockRequests.length + 1).toString(),
         type: body.type,
         status: 'pending',
         deviceId,
         userId,
-        requestedAt: new Date().toISOString()
+        requestedAt: new Date(),
       };
       
       mockRequests.push(newRequest);
@@ -155,24 +151,35 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
       
       if (request) {
         request.status = body.status;
-        request.processedAt = new Date().toISOString();
-        request.processedById = localStorage.getItem('dev-user-id') || '1';
+        // Add required properties if they don't exist
+        const processedAt = new Date();
+        const processedById = localStorage.getItem('dev-user-id') || '1';
+        
+        // Add these to our request object
+        const updatedRequest = {
+          ...request,
+          processedAt,
+          processedBy: processedById
+        };
+        
+        // Update the original request in the array
+        Object.assign(request, updatedRequest);
         
         if (body.status === 'approved' && request.type === 'assign') {
           const device = mockDevices.find(d => d.id === request.deviceId);
           if (device) {
             device.status = 'assigned';
-            device.assignedToId = request.userId;
+            device.assignedTo = request.userId;
           }
         } else if (body.status === 'approved' && request.type === 'release') {
           const device = mockDevices.find(d => d.id === request.deviceId);
           if (device) {
             device.status = 'available';
-            device.assignedToId = undefined;
+            device.assignedTo = undefined;
           }
         }
         
-        return request;
+        return updatedRequest;
       }
       
       return null;
@@ -216,34 +223,34 @@ export const authService = {
 
 // Device services
 export const deviceService = {
-  getAll: () => apiCall('/devices'),
-  getById: (id: string) => apiCall(`/devices/${id}`),
-  create: (device: Partial<Device>) => apiCall('/devices', { 
+  getAll: (): Promise<Device[]> => apiCall('/devices'),
+  getById: (id: string): Promise<Device | null> => apiCall(`/devices/${id}`),
+  create: (device: Partial<Device>): Promise<Device> => apiCall('/devices', { 
     method: 'POST', 
     body: JSON.stringify(device) 
   }),
-  update: (id: string, device: Partial<Device>) => apiCall(`/devices/${id}`, { 
+  update: (id: string, device: Partial<Device>): Promise<Device | null> => apiCall(`/devices/${id}`, { 
     method: 'PUT', 
     body: JSON.stringify(device) 
   }),
-  delete: (id: string) => apiCall(`/devices/${id}`, { method: 'DELETE' }),
-  requestDevice: (id: string, type: 'assign' | 'release') => apiCall(`/devices/${id}/request`, { 
+  delete: (id: string): Promise<boolean> => apiCall(`/devices/${id}`, { method: 'DELETE' }),
+  requestDevice: (id: string, type: 'assign' | 'release'): Promise<DeviceRequest> => apiCall(`/devices/${id}/request`, { 
     method: 'POST', 
     body: JSON.stringify({ type }) 
   }),
-  processRequest: (id: string, status: 'approved' | 'rejected') => apiCall(`/devices/requests/${id}`, { 
+  processRequest: (id: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> => apiCall(`/devices/requests/${id}`, { 
     method: 'PUT', 
     body: JSON.stringify({ status }) 
   }),
-  getAllRequests: () => apiCall('/devices/requests'),
+  getAllRequests: (): Promise<DeviceRequest[]> => apiCall('/devices/requests'),
 };
 
 // User services
 export const userService = {
-  getAll: () => apiCall('/users'),
-  getCurrentUser: () => apiCall('/users/me'),
-  getById: (id: string) => apiCall(`/users/${id}`),
-  updateRole: (id: string, role: 'user' | 'admin') => apiCall(`/users/${id}/role`, { 
+  getAll: (): Promise<User[]> => apiCall('/users'),
+  getCurrentUser: (): Promise<User | null> => apiCall('/users/me'),
+  getById: (id: string): Promise<User | null> => apiCall(`/users/${id}`),
+  updateRole: (id: string, role: 'user' | 'admin'): Promise<User | null> => apiCall(`/users/${id}/role`, { 
     method: 'PUT', 
     body: JSON.stringify({ role }) 
   }),
