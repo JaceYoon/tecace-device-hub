@@ -74,9 +74,11 @@ app.get('/', (req, res) => {
 
 // Database sync & server start
 console.log('Connecting to the database...');
-db.sequelize.sync()
+
+// Use force:true to drop existing tables and create new ones
+db.sequelize.sync({ force: true })
   .then(async () => {
-    console.log('Database synced successfully');
+    console.log('Database synced successfully with force:true - tables were recreated');
 
     // Check if admin account exists, create one if it doesn't
     try {
@@ -88,7 +90,8 @@ db.sequelize.sync()
           email: 'admin@tecace.com',
           password: hashedPassword,
           role: 'admin',
-          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin'
+          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin',
+          active: true
         });
         console.log('Default admin account created: admin@tecace.com / admin123');
       } else {
