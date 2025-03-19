@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User } from '@/types';
 
 const API_URL = 'http://localhost:5000/api';
@@ -68,8 +69,24 @@ export const userService = {
   getAll: () => apiCall('/users'),
   getCurrentUser: () => apiCall('/users/me'),
   getById: (id: string) => apiCall(`/users/${id}`),
-  updateRole: (id: string, role: 'user' | 'manager') => apiCall(`/users/${id}/role`, { 
+  updateRole: (id: string, role: 'user' | 'admin') => apiCall(`/users/${id}/role`, { 
     method: 'PUT', 
     body: JSON.stringify({ role }) 
   }),
+};
+
+// Export the api object that contains all methods
+export const api = {
+  get: (endpoint: string) => apiCall(endpoint),
+  post: (endpoint: string, data: any) => apiCall(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  put: (endpoint: string, data: any) => apiCall(endpoint, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: (endpoint: string) => apiCall(endpoint, {
+    method: 'DELETE'
+  })
 };

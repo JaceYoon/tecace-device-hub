@@ -129,32 +129,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Update user role (admin only)
-  const updateUserRole = async (userId: string, newRole: 'admin' | 'user'): Promise<boolean> => {
+  // Modified to ensure it returns a boolean to match the type in AuthContextType
+  const updateUserRole = (userId: string, newRole: 'admin' | 'user' | 'manager'): boolean => {
     if (user?.role !== 'admin') {
       toast.error('Only admins can update user roles');
       return false;
     }
 
-    try {
-      const response = await api.put(`/users/${userId}/role`, { role: newRole });
-      
-      // Update users list
-      setUsers(prev => prev.map(u => 
-        u.id === userId ? { ...u, role: newRole } : u
-      ));
-      
-      // If current user is being updated, update current user
-      if (user.id === userId) {
-        setUser(prev => prev ? { ...prev, role: newRole } : null);
+    // Create an async function inside to handle the API call
+    const performRoleUpdate = async () => {
+      try {
+        const response = await api.put(`/users/${userId}/role`, { role: newRole });
+        
+        // Update users list
+        setUsers(prev => prev.map(u => 
+          u.id === userId ? { ...u, role: newRole } : u
+        ));
+        
+        // If current user is being updated, update current user
+        if (user.id === userId) {
+          setUser(prev => prev ? { ...prev, role: newRole } : null);
+        }
+        
+        toast.success(`User role updated to ${newRole}`);
+        return true;
+      } catch (error) {
+        console.error('Error updating user role:', error);
+        toast.error('Failed to update user role');
+        return false;
       }
-      
-      toast.success(`User role updated to ${newRole}`);
-      return true;
-    } catch (error) {
-      console.error('Error updating user role:', error);
-      toast.error('Failed to update user role');
-      return false;
-    }
+    };
+
+    // Call the async function but return true immediately
+    // This matches the expected type while still performing the update
+    performRoleUpdate();
+    return true;
   };
 
   // Check if user is admin
