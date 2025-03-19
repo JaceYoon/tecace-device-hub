@@ -14,7 +14,7 @@ interface StatusSummaryProps {
 const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isManager } = useAuth();
+  const { isAdmin } = useAuth();
   
   const fetchDevices = async () => {
     try {
@@ -103,7 +103,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
           label="Pending Requests" 
           color="bg-amber-500" 
         />
-        {isManager && (
+        {isAdmin && (
           <>
             <StatusCard 
               icon={AlertCircle} 

@@ -17,7 +17,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const { isManager } = useAuth();
+  const { isManager, isAdmin } = useAuth();
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
@@ -57,8 +57,8 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
         return false;
       }
     } 
-    // Otherwise, if user is not a manager, don't show missing/stolen devices
-    else if (!isManager && (device.status === 'missing' || device.status === 'stolen')) {
+    // Otherwise, if user is not an admin, don't show missing/stolen devices
+    else if (!isAdmin && (device.status === 'missing' || device.status === 'stolen')) {
       return false;
     }
 

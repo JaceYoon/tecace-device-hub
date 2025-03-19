@@ -29,7 +29,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
                                                  className,
                                                  refreshTrigger,
                                                }) => {
-  const { isManager } = useAuth();
+  const { isAdmin } = useAuth();
   
   // Determine what statuses to filter by default
   let defaultFilterStatuses = undefined;
@@ -37,11 +37,11 @@ const DeviceList: React.FC<DeviceListProps> = ({
   if (filterByStatus) {
     // Use provided filter status directly
     defaultFilterStatuses = filterByStatus;
-  } else if (!isManager) {
-    // Non-managers only see available and assigned by default
+  } else if (!isAdmin) {
+    // Non-admins only see available and assigned by default
     defaultFilterStatuses = ['available', 'assigned'];
   }
-  // For managers with no specific filter, don't restrict by status
+  // For admins with no specific filter, don't restrict by status
   
   const {
     users,

@@ -14,7 +14,7 @@ router.get('/:id', isAuthenticated, deviceController.findOne);
 router.post('/', isAuthenticated, isAdmin, deviceController.create);
 
 // Update a device
-router.put('/:id', isAuthenticated, isAdmin, deviceController.update);
+router.put('/:id', isAuthenticated, deviceController.update);
 
 // Delete a device
 router.delete('/:id', isAuthenticated, isAdmin, deviceController.delete);

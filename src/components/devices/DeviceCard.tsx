@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -33,7 +32,7 @@ interface DeviceCardProps {
 }
 
 const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], className }) => {
-  const { user, isManager } = useAuth();
+  const { user, isManager, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -68,21 +67,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
     showConfirmation(
         "Request Device",
         `Are you sure you want to request ${device.name}?`,
-        () => {
+        async () => {
           try {
-            // Create request
-            dataService.addRequest({
+            // First create the request through the request endpoint
+            const request = await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
               status: 'pending',
               type: 'assign',
             });
 
-            // Update device requestedBy field
-            dataService.updateDevice(device.id, {
-              requestedBy: user.id
-            });
-
+            // Don't update the device directly since this is restricted to admins
             toast.success('Device requested successfully', {
               description: 'Your request has been submitted for approval'
             });
@@ -103,15 +98,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
         `Are you sure you want to release ${device.name}?`,
         () => {
           try {
-            // Direct self-service return without manager approval
-            dataService.updateDevice(device.id, {
-              assignedTo: undefined,
-              status: 'available'
+            // Create a release request instead of directly updating the device
+            dataService.addRequest({
+              deviceId: device.id,
+              userId: user.id,
+              status: 'pending',
+              type: 'release',
             });
 
-            toast.success('Device returned successfully', {
-              description: `${device.name} has been returned to inventory`,
-              icon: <Check className="h-4 w-4" />
+            toast.success('Device return requested', {
+              description: `Your request to return ${device.name} has been submitted for approval`,
+              icon: <Clock className="h-4 w-4" />
             });
             if (onAction) onAction();
           } catch (error) {
@@ -123,7 +120,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   };
 
   const handleStatusChange = (newStatus: 'missing' | 'stolen' | 'available') => {
-    if (!isManager) return;
+    if (!isAdmin) return;
 
     showConfirmation(
         `Mark as ${newStatus}`,
@@ -144,7 +141,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   };
 
   const handleDeleteDevice = async () => {
-    if (!isManager) return;
+    if (!isAdmin) return;
 
     showConfirmation(
         "Delete Device",
@@ -205,7 +202,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-1">
-                {isManager && (
+                {isAdmin && (
                     <DeviceEditDialog device={device} onDeviceUpdated={onAction} />
                 )}
                 <StatusBadge status={device.status} />
@@ -272,7 +269,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           </CardContent>
 
           <CardFooter className="pt-2 flex flex-col space-y-2">
-            {isManager ? (
+            {isAdmin ? (
                 <div className="grid grid-cols-2 gap-2 w-full">
                   {(device.status === 'available' || device.status === 'assigned') && (
                       <Button
