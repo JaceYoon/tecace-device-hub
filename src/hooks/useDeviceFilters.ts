@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
@@ -16,6 +18,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const { isManager } = useAuth();
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
@@ -49,6 +52,11 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Filter devices based on filters
   const filteredDevices = devices.filter(device => {
+    // If user is not a manager, don't show missing/stolen devices
+    if (!isManager && (device.status === 'missing' || device.status === 'stolen')) {
+      return false;
+    }
+
     // Filter by search query
     if (searchQuery && !device.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
@@ -57,8 +65,13 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     }
 
     // Filter by status
-    if (statusFilter !== 'all' && device.status !== statusFilter) {
-      return false;
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'pending') {
+        // Special case for "pending" - it's not a device status, but a filter for requested devices
+        if (!device.requestedBy) return false;
+      } else if (device.status !== statusFilter) {
+        return false;
+      }
     }
 
     // Filter by type

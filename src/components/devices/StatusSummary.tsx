@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { dataStore } from '@/utils/data';
+import { dataService } from '@/services/data.service';
 import { Device } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface StatusSummaryProps {
   onRefresh?: () => void;
@@ -13,11 +14,12 @@ interface StatusSummaryProps {
 const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isManager } = useAuth();
   
-  const fetchDevices = () => {
+  const fetchDevices = async () => {
     try {
       setLoading(true);
-      const allDevices = dataStore.getDevices();
+      const allDevices = await dataService.getDevices();
       setDevices(allDevices);
     } catch (error) {
       console.error('Error fetching devices for status summary:', error);
@@ -105,18 +107,22 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
           label="Pending Requests" 
           color="bg-amber-500" 
         />
-        <StatusCard 
-          icon={AlertCircle} 
-          count={missingCount} 
-          label="Missing" 
-          color="bg-orange-500" 
-        />
-        <StatusCard 
-          icon={ShieldAlert} 
-          count={stolenCount} 
-          label="Stolen" 
-          color="bg-red-500" 
-        />
+        {isManager && (
+          <>
+            <StatusCard 
+              icon={AlertCircle} 
+              count={missingCount} 
+              label="Missing" 
+              color="bg-orange-500" 
+            />
+            <StatusCard 
+              icon={ShieldAlert} 
+              count={stolenCount} 
+              label="Stolen" 
+              color="bg-red-500" 
+            />
+          </>
+        )}
       </div>
     </div>
   );

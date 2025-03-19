@@ -12,6 +12,7 @@ import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Cloc
 import ExportButton from '@/components/devices/ExportButton';
 import RequestList from '@/components/devices/RequestList';
 import { dataService } from '@/services/data.service';
+import StatusSummary from '@/components/devices/StatusSummary';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -39,6 +40,10 @@ const DeviceManagement: React.FC = () => {
   };
 
   const handleRequestProcessed = () => {
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -114,6 +119,9 @@ const DeviceManagement: React.FC = () => {
               </Button>
             </div>
           </div>
+
+          {/* Status Summary */}
+          <StatusSummary onRefresh={handleRefresh} />
 
           {/* Add Device Form */}
           {showAddForm && (

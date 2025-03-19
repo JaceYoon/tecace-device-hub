@@ -1,8 +1,10 @@
+
 import React from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
 import DeviceFilters from './DeviceFilters';
 import DeviceGrid from './DeviceGrid';
 import DeviceListHeader from './DeviceListHeader';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface DeviceListProps {
   title?: string;
@@ -27,6 +29,8 @@ const DeviceList: React.FC<DeviceListProps> = ({
                                                  className,
                                                  refreshTrigger,
                                                }) => {
+  const { isManager } = useAuth();
+  
   const {
     users,
     filteredDevices,
@@ -41,7 +45,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   } = useDeviceFilters({
     filterByAvailable,
     filterByAssignedToUser,
-    filterByStatus,
+    filterByStatus: filterByStatus || (isManager ? undefined : ['available', 'assigned']),
     refreshTrigger
   });
 
