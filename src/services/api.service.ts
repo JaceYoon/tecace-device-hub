@@ -1,13 +1,60 @@
 
 import { Device, DeviceRequest, User } from '@/types';
+import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
+// Development mode flag - will be set to true if we can't connect to the backend
+let devMode = false;
+
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
 
-// Helper function for API calls
+// Helper function to check if the backend is available
+const checkBackendAvailability = async () => {
+  try {
+    const response = await fetch(`${API_URL}/`, { 
+      method: 'GET',
+      mode: 'no-cors',
+      cache: 'no-cache',
+    });
+    return true;
+  } catch (error) {
+    console.warn('Backend not available, switching to development mode');
+    devMode = true;
+    return false;
+  }
+};
+
+// Check backend availability when the app starts
+checkBackendAvailability();
+
+// Mock data for development mode
+const mockUsers = [
+  {
+    id: '1',
+    name: 'Admin User',
+    email: 'admin@tecace.com',
+    role: 'admin',
+    avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin',
+    active: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  },
+  {
+    id: '2',
+    name: 'Regular User',
+    email: 'user@tecace.com',
+    role: 'user',
+    avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=user',
+    active: true,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString()
+  }
+];
+
+// Helper function for API calls with dev mode fallback
 const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   const defaultOptions: RequestInit = {
     credentials: 'include',
@@ -18,6 +65,65 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
   };
 
   try {
+    // If we're in dev mode and it's an auth request, simulate auth
+    if (devMode && endpoint.startsWith('/auth')) {
+      console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
+      
+      // Simulate login
+      if (endpoint === '/auth/login' && options.method === 'POST') {
+        const body = JSON.parse((options.body as string) || '{}');
+        const user = mockUsers.find(u => u.email === body.email);
+        
+        if (user && (body.password === 'admin123' || body.password === 'password')) {
+          return { success: true, user, isAuthenticated: true };
+        } else {
+          throw new Error('Invalid email or password');
+        }
+      }
+      
+      // Simulate auth check
+      if (endpoint === '/auth/check') {
+        const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+        const userId = localStorage.getItem('dev-user-id') || '1';
+        const user = isLoggedIn ? mockUsers.find(u => u.id === userId) || mockUsers[0] : null;
+        
+        return { isAuthenticated: isLoggedIn, user };
+      }
+      
+      // Simulate logout
+      if (endpoint === '/auth/logout') {
+        localStorage.removeItem('dev-user-logged-in');
+        localStorage.removeItem('dev-user-id');
+        return { success: true };
+      }
+      
+      return { success: true };
+    }
+    
+    // If we're in dev mode and it's a device request, return mock data
+    if (devMode && endpoint.startsWith('/devices')) {
+      console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
+      return { success: true, devices: [] };
+    }
+    
+    // If we're in dev mode and it's a user request, return mock users
+    if (devMode && endpoint.startsWith('/users')) {
+      console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
+      
+      if (endpoint === '/users/me') {
+        const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+        const userId = localStorage.getItem('dev-user-id') || '1';
+        return isLoggedIn ? mockUsers.find(u => u.id === userId) || mockUsers[0] : null;
+      }
+      
+      if (endpoint === '/users') {
+        return mockUsers;
+      }
+      
+      return { success: true };
+    }
+    
+    // Real API call if we're not in dev mode
     console.log(`Making API request to: ${API_URL}${endpoint}`);
     const response = await fetch(`${API_URL}${endpoint}`, defaultOptions);
     
@@ -36,6 +142,20 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     return response;
   } catch (error) {
     console.error(`API call error for ${endpoint}:`, error);
+    
+    // If we get a connection error and we're not in dev mode yet,
+    // enable dev mode and retry the request
+    if (!devMode && error instanceof Error && 
+        (error.message.includes('Failed to fetch') || 
+         error.message.includes('Network Error'))) {
+      console.warn('Connection error, switching to development mode');
+      devMode = true;
+      toast.warning('Backend server not detected. Running in offline mode.');
+      
+      // Retry the call now that we're in dev mode
+      return apiCall(endpoint, options);
+    }
+    
     throw error;
   }
 };
@@ -43,10 +163,22 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
 // Auth services
 export const authService = {
   checkAuth: () => apiCall('/auth/check'),
-  login: (email: string, password: string) => apiCall('/auth/login', {
-    method: 'POST',
-    body: JSON.stringify({ email, password })
-  }),
+  login: (email: string, password: string) => {
+    const result = apiCall('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    });
+    
+    // For dev mode, save login state
+    result.then(data => {
+      if (data.success && devMode) {
+        localStorage.setItem('dev-user-logged-in', 'true');
+        localStorage.setItem('dev-user-id', data.user.id);
+      }
+    }).catch(() => {});
+    
+    return result;
+  },
   logout: () => apiCall('/auth/logout'),
 };
 
