@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -57,15 +58,15 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
         return false;
       }
     } 
-    // Otherwise, if user is not an admin, don't show missing/stolen devices
-    else if (!isAdmin && (device.status === 'missing' || device.status === 'stolen')) {
+    // Don't filter out missing/stolen for admin users
+    else if (!isAdmin && !isManager && (device.status === 'missing' || device.status === 'stolen')) {
       return false;
     }
 
     // Filter by search query
     if (searchQuery && !device.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !device.imei.toLowerCase().includes(searchQuery.toLowerCase())) {
+        !(device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()))) {
       return false;
     }
 

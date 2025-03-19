@@ -14,12 +14,13 @@ interface StatusSummaryProps {
 const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { isAdmin, isManager } = useAuth();
   
   const fetchDevices = async () => {
     try {
       setLoading(true);
       const allDevices = await dataService.getDevices();
+      console.log('StatusSummary - fetched devices:', allDevices);
       setDevices(allDevices);
     } catch (error) {
       console.error('Error fetching devices for status summary:', error);
@@ -103,7 +104,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
           label="Pending Requests" 
           color="bg-amber-500" 
         />
-        {isAdmin && (
+        {(isAdmin || isManager) && (
           <>
             <StatusCard 
               icon={AlertCircle} 

@@ -25,7 +25,7 @@ router.post('/:id/request', isAuthenticated, deviceController.requestDevice);
 // Process a device request
 router.put('/requests/:id', isAuthenticated, isAdmin, deviceController.processRequest);
 
-// Get all requests
+// Get all requests - Fixed endpoint
 router.get('/requests', isAuthenticated, deviceController.findAllRequests);
 
 module.exports = router;
