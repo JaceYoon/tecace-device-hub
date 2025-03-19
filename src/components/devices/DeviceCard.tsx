@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -5,11 +6,11 @@ import { Button } from '@/components/ui/button';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
-import { 
-  AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu, 
+import {
+  AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
   Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit
 } from 'lucide-react';
-import { dataStore } from '@/utils/data';
+import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import DeviceEditDialog from './DeviceEditDialog';
@@ -34,23 +35,24 @@ interface DeviceCardProps {
 const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], className }) => {
   const { user, isManager } = useAuth();
   const [expanded, setExpanded] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean,
     title: string,
     description: string,
     action: () => void
   }>({ isOpen: false, title: '', description: '', action: () => {} });
-  
+
   const isDeviceOwner = device.assignedTo === user?.id;
   const hasRequested = device.requestedBy === user?.id;
   const isRequested = !!device.requestedBy;
   const assignedUser = users.find(u => u.id === device.assignedTo);
   const requestedByUser = users.find(u => u.id === device.requestedBy);
-  
+
   const formatDate = (date: Date) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
-  
+
   const showConfirmation = (title: string, description: string, action: () => void) => {
     setConfirmDialog({
       isOpen: true,
@@ -59,329 +61,344 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       action
     });
   };
-  
+
   const handleRequestDevice = () => {
     if (!user) return;
-    
+
     showConfirmation(
-      "Request Device",
-      `Are you sure you want to request ${device.name}?`,
-      () => {
-        try {
-          // Create request
-          dataStore.addRequest({
-            deviceId: device.id,
-            userId: user.id,
-            status: 'pending',
-            type: 'assign',
-          });
-          
-          // Update device requestedBy field
-          dataStore.updateDevice(device.id, {
-            requestedBy: user.id
-          });
-          
-          toast.success('Device requested successfully', {
-            description: 'Your request has been submitted for approval'
-          });
-          if (onAction) onAction();
-        } catch (error) {
-          console.error('Error requesting device:', error);
-          toast.error('Failed to request device');
-        }
-      }
-    );
-  };
-  
-  const handleReleaseDevice = () => {
-    if (!user) return;
-    
-    showConfirmation(
-      "Release Device",
-      `Are you sure you want to release ${device.name}?`,
-      () => {
-        try {
-          // Direct self-service return without manager approval
-          dataStore.updateDevice(device.id, {
-            assignedTo: undefined,
-            status: 'available'
-          });
-          
-          toast.success('Device returned successfully', {
-            description: `${device.name} has been returned to inventory`,
-            icon: <Check className="h-4 w-4" />
-          });
-          if (onAction) onAction();
-        } catch (error) {
-          console.error('Error releasing device:', error);
-          toast.error('Failed to release device');
-        }
-      }
-    );
-  };
-  
-  const handleStatusChange = (newStatus: 'missing' | 'stolen' | 'available') => {
-    if (!isManager) return;
-    
-    showConfirmation(
-      `Mark as ${newStatus}`,
-      `Are you sure you want to mark this device as ${newStatus}?`,
-      () => {
-        try {
-          dataStore.updateDevice(device.id, { status: newStatus });
-          toast.success(`Device marked as ${newStatus}`, {
-            description: `The status of ${device.name} has been updated`
-          });
-          if (onAction) onAction();
-        } catch (error) {
-          console.error('Error updating device status:', error);
-          toast.error('Failed to update device status');
-        }
-      }
-    );
-  };
-  
-  const handleDeleteDevice = () => {
-    if (!isManager) return;
-    
-    showConfirmation(
-      "Delete Device",
-      "Are you sure you want to permanently delete this device? This action cannot be undone.",
-      () => {
-        try {
-          const success = dataStore.deleteDevice(device.id);
-          if (success) {
-            toast.success('Device deleted', {
-              description: `${device.name} has been permanently removed`
+        "Request Device",
+        `Are you sure you want to request ${device.name}?`,
+        () => {
+          try {
+            // Create request
+            dataService.addRequest({
+              deviceId: device.id,
+              userId: user.id,
+              status: 'pending',
+              type: 'assign',
+            });
+
+            // Update device requestedBy field
+            dataService.updateDevice(device.id, {
+              requestedBy: user.id
+            });
+
+            toast.success('Device requested successfully', {
+              description: 'Your request has been submitted for approval'
             });
             if (onAction) onAction();
-          } else {
-            toast.error('Failed to delete device');
+          } catch (error) {
+            console.error('Error requesting device:', error);
+            toast.error('Failed to request device');
           }
-        } catch (error) {
-          console.error('Error deleting device:', error);
-          toast.error('Failed to delete device');
         }
-      }
     );
   };
-  
+
+  const handleReleaseDevice = () => {
+    if (!user) return;
+
+    showConfirmation(
+        "Release Device",
+        `Are you sure you want to release ${device.name}?`,
+        () => {
+          try {
+            // Direct self-service return without manager approval
+            dataService.updateDevice(device.id, {
+              assignedTo: undefined,
+              status: 'available'
+            });
+
+            toast.success('Device returned successfully', {
+              description: `${device.name} has been returned to inventory`,
+              icon: <Check className="h-4 w-4" />
+            });
+            if (onAction) onAction();
+          } catch (error) {
+            console.error('Error releasing device:', error);
+            toast.error('Failed to release device');
+          }
+        }
+    );
+  };
+
+  const handleStatusChange = (newStatus: 'missing' | 'stolen' | 'available') => {
+    if (!isManager) return;
+
+    showConfirmation(
+        `Mark as ${newStatus}`,
+        `Are you sure you want to mark this device as ${newStatus}?`,
+        () => {
+          try {
+            dataService.updateDevice(device.id, { status: newStatus });
+            toast.success(`Device marked as ${newStatus}`, {
+              description: `The status of ${device.name} has been updated`
+            });
+            if (onAction) onAction();
+          } catch (error) {
+            console.error('Error updating device status:', error);
+            toast.error('Failed to update device status');
+          }
+        }
+    );
+  };
+
+  const handleDeleteDevice = async () => {
+    if (!isManager) return;
+
+    showConfirmation(
+        "Delete Device",
+        "Are you sure you want to permanently delete this device? This action cannot be undone.",
+        async () => {
+          try {
+            setIsDeleting(true);
+            console.log('Deleting device:', device.id);
+            const success = await dataService.deleteDevice(device.id);
+            setIsDeleting(false);
+
+            if (success) {
+              toast.success('Device deleted', {
+                description: `${device.name} has been permanently removed`
+              });
+              if (onAction) onAction();
+            } else {
+              toast.error('Failed to delete device');
+            }
+          } catch (error) {
+            console.error('Error deleting device:', error);
+            setIsDeleting(false);
+            toast.error('Failed to delete device');
+          }
+        }
+    );
+  };
+
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
-  
+
   return (
-    <>
-      <Card className={cn(
-        "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1",
-        {
-          "border-red-300 bg-red-50/40": device.status === 'stolen',
-          "border-amber-300 bg-amber-50/40": device.status === 'missing',
-          "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
-        },
-        className
-      )}>
-        <CardHeader className="pb-2">
-          <div className="flex justify-between items-start">
-            <div>
-              <button 
-                onClick={() => setExpanded(!expanded)} 
-                className="flex items-center text-left w-full"
-              >
-                <CardTitle className="text-lg font-medium">{device.name}</CardTitle>
-                {expanded ? 
-                  <ChevronDown className="h-4 w-4 ml-2" /> : 
-                  <ChevronRight className="h-4 w-4 ml-2" />
-                }
-              </button>
-              <CardDescription className="flex items-center gap-1 mt-1">
-                <Smartphone className="h-3.5 w-3.5" />
-                {device.type}
-              </CardDescription>
-            </div>
-            <div className="flex flex-col items-end gap-1">
-              {isManager && (
-                <DeviceEditDialog device={device} onDeviceUpdated={onAction} />
-              )}
-              <StatusBadge status={device.status} />
-              {isRequested && (
-                <span className="text-xs text-amber-600 flex items-center mt-1">
+      <>
+        <Card className={cn(
+            "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1",
+            {
+              "border-red-300 bg-red-50/40": device.status === 'stolen',
+              "border-amber-300 bg-amber-50/40": device.status === 'missing',
+              "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
+            },
+            className
+        )}>
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <button
+                    onClick={() => setExpanded(!expanded)}
+                    className="flex items-center text-left w-full"
+                >
+                  <CardTitle className="text-lg font-medium">{device.name}</CardTitle>
+                  {expanded ?
+                      <ChevronDown className="h-4 w-4 ml-2" /> :
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                  }
+                </button>
+                <CardDescription className="flex items-center gap-1 mt-1">
+                  <Smartphone className="h-3.5 w-3.5" />
+                  {device.type}
+                </CardDescription>
+              </div>
+              <div className="flex flex-col items-end gap-1">
+                {isManager && (
+                    <DeviceEditDialog device={device} onDeviceUpdated={onAction} />
+                )}
+                <StatusBadge status={device.status} />
+                {isRequested && (
+                    <span className="text-xs text-amber-600 flex items-center mt-1">
                   <Clock className="h-3 w-3 mr-1" />
                   Request Pending
                 </span>
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        
-        <CardContent className="pb-3 space-y-3">
-          <div className="space-y-2 text-sm">
-            <div className="flex items-start">
-              <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-              <div>
-                <p className="text-muted-foreground">Serial Number</p>
-                <p className="font-mono text-xs">{device.serialNumber}</p>
+                )}
               </div>
             </div>
-            
-            <div className="flex items-start">
-              <Cpu className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-              <div>
-                <p className="text-muted-foreground">IMEI</p>
-                <p className="font-mono text-xs">{device.imei}</p>
-              </div>
-            </div>
+          </CardHeader>
 
-            {expanded && (
-              <>
-                {assignedUser && (
-                  <div className="flex items-start">
-                    <UserIcon className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-muted-foreground">Assigned to</p>
-                      <p className="text-sm">{assignedUser.name}</p>
-                    </div>
-                  </div>
-                )}
-                
-                {requestedByUser && (
-                  <div className="flex items-start">
-                    <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-muted-foreground">Requested by</p>
-                      <p className="text-sm">{requestedByUser.name}</p>
-                    </div>
-                  </div>
-                )}
-                
-                <div className="flex items-start">
-                  <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-muted-foreground">Last updated</p>
-                    <p className="text-xs">{formatDate(device.updatedAt)}</p>
-                  </div>
+          <CardContent className="pb-3 space-y-3">
+            <div className="space-y-2 text-sm">
+              <div className="flex items-start">
+                <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-muted-foreground">Serial Number</p>
+                  <p className="font-mono text-xs">{device.serialNumber}</p>
                 </div>
-              </>
-            )}
-          </div>
-        </CardContent>
-        
-        <CardFooter className="pt-2 flex flex-col space-y-2">
-          {isManager ? (
-            <div className="grid grid-cols-2 gap-2 w-full">
-              {(device.status === 'available' || device.status === 'assigned') && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => handleStatusChange('missing')}
-                  className="text-xs"
-                >
-                  Mark Missing
-                </Button>
+              </div>
+
+              <div className="flex items-start">
+                <Cpu className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-muted-foreground">IMEI</p>
+                  <p className="font-mono text-xs">{device.imei}</p>
+                </div>
+              </div>
+
+              {expanded && (
+                  <>
+                    {assignedUser && (
+                        <div className="flex items-start">
+                          <UserIcon className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-muted-foreground">Assigned to</p>
+                            <p className="text-sm">{assignedUser.name}</p>
+                          </div>
+                        </div>
+                    )}
+
+                    {requestedByUser && (
+                        <div className="flex items-start">
+                          <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-muted-foreground">Requested by</p>
+                            <p className="text-sm">{requestedByUser.name}</p>
+                          </div>
+                        </div>
+                    )}
+
+                    <div className="flex items-start">
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-muted-foreground">Last updated</p>
+                        <p className="text-xs">{formatDate(device.updatedAt)}</p>
+                      </div>
+                    </div>
+                  </>
               )}
-              
-              {(device.status === 'available' || device.status === 'assigned') && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => handleStatusChange('stolen')}
-                  className="text-xs text-destructive"
-                >
-                  Mark Stolen
-                </Button>
-              )}
-              
-              {(device.status === 'missing' || device.status === 'stolen') && (
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={() => handleStatusChange('available')}
-                  className="text-xs col-span-2"
-                >
-                  Mark as Available
-                </Button>
-              )}
-              
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={handleDeleteDevice}
-                className="text-xs col-span-2 mt-2"
-              >
-                <Trash2 className="h-4 w-4 mr-1" />
-                Delete Device
-              </Button>
             </div>
-          ) : (
-            <>
-              {device.status === 'available' && !isRequested && (
-                <Button 
-                  className="w-full" 
-                  size="sm" 
-                  onClick={handleRequestDevice}
-                >
-                  Request Device
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
-              )}
-              
-              {hasRequested && (
-                <Button 
-                  variant="secondary" 
-                  className="w-full" 
-                  size="sm" 
-                  disabled
-                >
-                  <Clock className="h-4 w-4 mr-1" />
-                  Request Pending
-                </Button>
-              )}
-              
-              {isRequestedByOthers && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  size="sm" 
-                  disabled
-                >
-                  <Clock className="h-4 w-4 mr-1" />
-                  Already Requested
-                </Button>
-              )}
-              
-              {isDeviceOwner && (
-                <Button 
-                  variant="outline" 
-                  className="w-full" 
-                  size="sm" 
-                  onClick={handleReleaseDevice}
-                >
-                  Return Device
-                </Button>
-              )}
-            </>
-          )}
-        </CardFooter>
-      </Card>
-      
-      <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({...prev, isOpen: false}))}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmDialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              confirmDialog.action();
-              setConfirmDialog(prev => ({...prev, isOpen: false}));
-            }}>
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </>
+          </CardContent>
+
+          <CardFooter className="pt-2 flex flex-col space-y-2">
+            {isManager ? (
+                <div className="grid grid-cols-2 gap-2 w-full">
+                  {(device.status === 'available' || device.status === 'assigned') && (
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange('missing')}
+                          className="text-xs"
+                      >
+                        Mark Missing
+                      </Button>
+                  )}
+
+                  {(device.status === 'available' || device.status === 'assigned') && (
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange('stolen')}
+                          className="text-xs text-destructive"
+                      >
+                        Mark Stolen
+                      </Button>
+                  )}
+
+                  {(device.status === 'missing' || device.status === 'stolen') && (
+                      <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleStatusChange('available')}
+                          className="text-xs col-span-2"
+                      >
+                        Mark as Available
+                      </Button>
+                  )}
+
+                  <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteDevice}
+                      className="text-xs col-span-2 mt-2"
+                      disabled={isDeleting}
+                  >
+                    {isDeleting ? (
+                        <>
+                          <Clock className="h-4 w-4 mr-1 animate-spin" />
+                          Deleting...
+                        </>
+                    ) : (
+                        <>
+                          <Trash2 className="h-4 w-4 mr-1" />
+                          Delete Device
+                        </>
+                    )}
+                  </Button>
+                </div>
+            ) : (
+                <>
+                  {device.status === 'available' && !isRequested && (
+                      <Button
+                          className="w-full"
+                          size="sm"
+                          onClick={handleRequestDevice}
+                      >
+                        Request Device
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
+                  )}
+
+                  {hasRequested && (
+                      <Button
+                          variant="secondary"
+                          className="w-full"
+                          size="sm"
+                          disabled
+                      >
+                        <Clock className="h-4 w-4 mr-1" />
+                        Request Pending
+                      </Button>
+                  )}
+
+                  {isRequestedByOthers && (
+                      <Button
+                          variant="outline"
+                          className="w-full"
+                          size="sm"
+                          disabled
+                      >
+                        <Clock className="h-4 w-4 mr-1" />
+                        Already Requested
+                      </Button>
+                  )}
+
+                  {isDeviceOwner && (
+                      <Button
+                          variant="outline"
+                          className="w-full"
+                          size="sm"
+                          onClick={handleReleaseDevice}
+                      >
+                        Return Device
+                      </Button>
+                  )}
+                </>
+            )}
+          </CardFooter>
+        </Card>
+
+        <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({...prev, isOpen: false}))}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+              <AlertDialogDescription>
+                {confirmDialog.description}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => {
+                confirmDialog.action();
+                setConfirmDialog(prev => ({...prev, isOpen: false}));
+              }}>
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </>
   );
 };
 

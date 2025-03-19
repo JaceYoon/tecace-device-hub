@@ -22,7 +22,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle
-  }
+  },
+  dialectOptions: dbConfig.dialectOptions
 });
 
 const db = {};
@@ -50,11 +51,19 @@ db.request.belongsTo(db.device, { foreignKey: 'deviceId' });
 
 // Test the database connection
 sequelize.authenticate()
-  .then(() => {
-    console.log('Database connection has been established successfully.');
-  })
-  .catch(err => {
-    console.error('Unable to connect to the database:', err);
-  });
+    .then(() => {
+      console.log('Database connection has been established successfully.');
+    })
+    .catch(err => {
+      console.error('Unable to connect to the database:', err);
+      console.error('Please verify your MariaDB installation and credentials.');
+      console.error('Connection details:', {
+        host: dbConfig.HOST,
+        port: dbConfig.PORT,
+        user: dbConfig.USER,
+        database: dbConfig.DB,
+        dialect: dbConfig.dialect
+      });
+    });
 
 module.exports = db;

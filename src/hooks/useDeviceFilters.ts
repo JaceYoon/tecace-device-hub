@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -7,6 +6,7 @@ interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
   filterByAssignedToUser?: string;
   filterByStatus?: string[];
+  refreshTrigger?: number;
 }
 
 export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
@@ -16,14 +16,14 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  
+
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
-    devices.map(device => device.type)
-      .filter(Boolean)
-      .sort()
+      devices.map(device => device.type)
+          .filter(Boolean)
+          .sort()
   )];
-  
+
   // Fetch devices and users
   const fetchData = async () => {
     setLoading(true);
@@ -32,7 +32,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
         dataService.getDevices(),
         dataService.getUsers()
       ]);
-      
+
       setDevices(devicesData);
       setUsers(usersData);
     } catch (error) {
@@ -41,12 +41,12 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       setLoading(false);
     }
   };
-  
-  // Fetch data on component mount
+
+  // Fetch data on component mount and when refreshTrigger changes
   useEffect(() => {
     fetchData();
-  }, []);
-  
+  }, [props.refreshTrigger]);
+
   // Filter devices based on filters
   const filteredDevices = devices.filter(device => {
     // Filter by search query
@@ -55,36 +55,36 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
         !device.imei.toLowerCase().includes(searchQuery.toLowerCase())) {
       return false;
     }
-    
+
     // Filter by status
     if (statusFilter !== 'all' && device.status !== statusFilter) {
       return false;
     }
-    
+
     // Filter by type
     if (typeFilter !== 'all' && device.type !== typeFilter) {
       return false;
     }
-    
+
     // Filter by available only
     if (props.filterByAvailable && device.status !== 'available') {
       return false;
     }
-    
+
     // Filter by assigned to user
     if (props.filterByAssignedToUser && device.assignedTo !== props.filterByAssignedToUser) {
       return false;
     }
-    
+
     // Filter by allowed statuses
-    if (props.filterByStatus && props.filterByStatus.length > 0 && 
+    if (props.filterByStatus && props.filterByStatus.length > 0 &&
         !props.filterByStatus.includes(device.status)) {
       return false;
     }
-    
+
     return true;
   });
-  
+
   return {
     devices,
     users,

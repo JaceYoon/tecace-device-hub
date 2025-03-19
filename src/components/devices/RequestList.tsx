@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DeviceRequest, User, Device } from '@/types';
 import { dataStore } from '@/utils/data';
@@ -15,14 +14,16 @@ interface RequestListProps {
   userId?: string;
   showExportButton?: boolean;
   onRequestProcessed?: () => void;
+  refreshTrigger?: number;
 }
 
 const RequestList: React.FC<RequestListProps> = ({
-  title = 'Requests',
-  userId,
-  showExportButton = false,
-  onRequestProcessed,
-}) => {
+                                                   title = 'Requests',
+                                                   userId,
+                                                   showExportButton = false,
+                                                   onRequestProcessed,
+                                                   refreshTrigger = 0,
+                                                 }) => {
   const { isManager } = useAuth();
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [devices, setDevices] = useState<{[key: string]: Device}>({});
@@ -33,35 +34,35 @@ const RequestList: React.FC<RequestListProps> = ({
     try {
       // Get all requests
       let allRequests = dataStore.getRequests();
-      
+
       // Filter requests if userId provided
       if (userId) {
         allRequests = allRequests.filter(req => req.userId === userId);
       }
-      
+
       setRequests(allRequests);
-      
+
       // Create maps for faster lookup
       const deviceMap: {[key: string]: Device} = {};
       const userMap: {[key: string]: User} = {};
-      
+
       allRequests.forEach(request => {
         if (!deviceMap[request.deviceId]) {
           const device = dataStore.getDeviceById(request.deviceId);
           if (device) deviceMap[request.deviceId] = device;
         }
-        
+
         if (!userMap[request.userId]) {
           const user = dataStore.getUserById(request.userId);
           if (user) userMap[request.userId] = user;
         }
-        
+
         if (request.processedBy && !userMap[request.processedBy]) {
           const user = dataStore.getUserById(request.processedBy);
           if (user) userMap[request.processedBy] = user;
         }
       });
-      
+
       setDevices(deviceMap);
       setUsers(userMap);
     } catch (error) {
@@ -74,30 +75,30 @@ const RequestList: React.FC<RequestListProps> = ({
 
   useEffect(() => {
     loadData();
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
   const handleCancelRequest = (requestId: string) => {
     try {
       const request = dataStore.getRequestById(requestId);
       if (!request) return;
-      
+
       // Only the user who made the request can cancel it
       if (request.userId !== userId) {
         toast.error('You can only cancel your own requests');
         return;
       }
-      
+
       // Update request status to 'rejected'
       dataStore.processRequest(requestId, 'rejected', userId || '');
-      
+
       // Clear the requestedBy field on the device
       const device = dataStore.getDeviceById(request.deviceId);
       if (device) {
         dataStore.updateDevice(request.deviceId, { requestedBy: undefined });
       }
-      
+
       toast.success('Request cancelled successfully');
-      
+
       // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
       loadData();
@@ -109,11 +110,11 @@ const RequestList: React.FC<RequestListProps> = ({
 
   const handleProcessRequest = (requestId: string, approve: boolean) => {
     if (!isManager) return;
-    
+
     try {
       dataStore.processRequest(requestId, approve ? 'approved' : 'rejected', userId || '');
       toast.success(`Request ${approve ? 'approved' : 'rejected'} successfully`);
-      
+
       // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
       loadData();
@@ -138,102 +139,102 @@ const RequestList: React.FC<RequestListProps> = ({
 
   if (loading) {
     return (
-      <div className="py-8 text-center">
-        <Clock className="h-6 w-6 animate-spin mx-auto" />
-        <p className="mt-2 text-muted-foreground">Loading requests...</p>
-      </div>
+        <div className="py-8 text-center">
+          <Clock className="h-6 w-6 animate-spin mx-auto" />
+          <p className="mt-2 text-muted-foreground">Loading requests...</p>
+        </div>
     );
   }
 
   if (requests.length === 0) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="py-8 text-center">
-            <Package className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
-            <p className="mt-4 text-muted-foreground">No requests found</p>
-          </div>
-        </CardContent>
-      </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{title}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="py-8 text-center">
+              <Package className="h-12 w-12 mx-auto text-muted-foreground opacity-20" />
+              <p className="mt-4 text-muted-foreground">No requests found</p>
+            </div>
+          </CardContent>
+        </Card>
     );
   }
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-4">{title}</h2>
-      <div className="space-y-4">
-        {requests.map(request => {
-          const device = devices[request.deviceId];
-          const user = users[request.userId];
-          const processor = request.processedBy ? users[request.processedBy] : null;
-          
-          if (!device || !user) return null;
-          
-          const isPending = request.status === 'pending';
-          const isMyRequest = userId === request.userId;
-          
-          return (
-            <Card key={request.id} className="overflow-hidden">
-              <CardContent className="p-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <div className="font-medium">{device.name}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {request.type === 'assign' ? 'Request to assign' : 'Request to release'}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      Requested {formatDistanceToNow(new Date(request.requestedAt), { addSuffix: true })}
-                    </div>
-                    {request.processedAt && (
-                      <div className="text-xs text-muted-foreground">
-                        Processed {formatDistanceToNow(new Date(request.processedAt), { addSuffix: true })}
-                        {processor && ` by ${processor.name}`}
+      <div>
+        <h2 className="text-xl font-semibold mb-4">{title}</h2>
+        <div className="space-y-4">
+          {requests.map(request => {
+            const device = devices[request.deviceId];
+            const user = users[request.userId];
+            const processor = request.processedBy ? users[request.processedBy] : null;
+
+            if (!device || !user) return null;
+
+            const isPending = request.status === 'pending';
+            const isMyRequest = userId === request.userId;
+
+            return (
+                <Card key={request.id} className="overflow-hidden">
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <div className="font-medium">{device.name}</div>
+                        <div className="text-sm text-muted-foreground">
+                          {request.type === 'assign' ? 'Request to assign' : 'Request to release'}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Requested {formatDistanceToNow(new Date(request.requestedAt), { addSuffix: true })}
+                        </div>
+                        {request.processedAt && (
+                            <div className="text-xs text-muted-foreground">
+                              Processed {formatDistanceToNow(new Date(request.processedAt), { addSuffix: true })}
+                              {processor && ` by ${processor.name}`}
+                            </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  
-                  <div className="flex flex-col items-end">
-                    {getStatusBadge(request.status)}
-                    
-                    {isPending && isMyRequest && (
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        className="mt-2"
-                        onClick={() => handleCancelRequest(request.id)}
-                      >
-                        Cancel Request
-                      </Button>
-                    )}
-                    
-                    {isPending && isManager && (
-                      <div className="flex gap-2 mt-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          onClick={() => handleProcessRequest(request.id, false)}
-                        >
-                          Reject
-                        </Button>
-                        <Button 
-                          size="sm"
-                          onClick={() => handleProcessRequest(request.id, true)}
-                        >
-                          Approve
-                        </Button>
+
+                      <div className="flex flex-col items-end">
+                        {getStatusBadge(request.status)}
+
+                        {isPending && isMyRequest && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="mt-2"
+                                onClick={() => handleCancelRequest(request.id)}
+                            >
+                              Cancel Request
+                            </Button>
+                        )}
+
+                        {isPending && isManager && (
+                            <div className="flex gap-2 mt-2">
+                              <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleProcessRequest(request.id, false)}
+                              >
+                                Reject
+                              </Button>
+                              <Button
+                                  size="sm"
+                                  onClick={() => handleProcessRequest(request.id, true)}
+                              >
+                                Approve
+                              </Button>
+                            </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          );
-        })}
+                    </div>
+                  </CardContent>
+                </Card>
+            );
+          })}
+        </div>
       </div>
-    </div>
   );
 };
 
