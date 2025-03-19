@@ -2,7 +2,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User } from '@/types';
 import { toast } from 'sonner';
-import { api, authService, userService } from '@/services/api.service';
+import api, { authService, userService } from '@/services/api.service';
 
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -129,7 +129,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   // Update user role (admin only)
-  // Modified to ensure it returns a boolean to match the type in AuthContextType
   const updateUserRole = (userId: string, newRole: 'admin' | 'user' | 'manager'): boolean => {
     if (user?.role !== 'admin') {
       toast.error('Only admins can update user roles');

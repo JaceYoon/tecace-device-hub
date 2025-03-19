@@ -13,21 +13,26 @@ const apiCall = async (endpoint: string, options: RequestInit = {}) => {
     ...options,
   };
 
-  const response = await fetch(`${API_URL}${endpoint}`, defaultOptions);
-  
-  // Handle non-2xx responses
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-    throw new Error(error.message || 'Request failed');
+  try {
+    const response = await fetch(`${API_URL}${endpoint}`, defaultOptions);
+    
+    // Handle non-2xx responses
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
+      throw new Error(error.message || 'Request failed');
+    }
+    
+    // Parse JSON if the response has content
+    const contentType = response.headers.get('content-type');
+    if (contentType && contentType.includes('application/json')) {
+      return response.json();
+    }
+    
+    return response;
+  } catch (error) {
+    console.error(`API call error for ${endpoint}:`, error);
+    throw error;
   }
-  
-  // Parse JSON if the response has content
-  const contentType = response.headers.get('content-type');
-  if (contentType && contentType.includes('application/json')) {
-    return response.json();
-  }
-  
-  return response;
 };
 
 // Auth services
@@ -77,6 +82,9 @@ export const userService = {
 
 // Export the api object that contains all methods
 export const api = {
+  auth: authService,
+  devices: deviceService,
+  users: userService,
   get: (endpoint: string) => apiCall(endpoint),
   post: (endpoint: string, data: any) => apiCall(endpoint, {
     method: 'POST',
@@ -90,3 +98,5 @@ export const api = {
     method: 'DELETE'
   })
 };
+
+export default api;
