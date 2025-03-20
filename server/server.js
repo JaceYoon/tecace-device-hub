@@ -18,6 +18,7 @@ const PORT = process.env.PORT || 5000;
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('CLIENT_URL:', process.env.CLIENT_URL);
 console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
+console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
 
 // Middleware
 app.use(cors({
@@ -80,11 +81,11 @@ app.get('/', (req, res) => {
 // Database sync & server start
 console.log('Connecting to the database...');
 
-// Determine whether to force sync based on environment and FORCE_DEV_MODE
-const shouldForceSync = process.env.NODE_ENV !== 'production' || process.env.FORCE_DEV_MODE === 'true';
+// Determine whether to force sync based on RESET_DATABASE environment variable
+const shouldForceSync = process.env.RESET_DATABASE === 'true';
 console.log('Force sync database:', shouldForceSync);
 
-// Use force:true to drop existing tables and create new ones if in development
+// Use force:true to drop existing tables and create new ones if RESET_DATABASE is true
 db.sequelize.sync({ force: shouldForceSync })
   .then(async () => {
     console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);

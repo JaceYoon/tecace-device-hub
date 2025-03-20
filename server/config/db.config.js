@@ -9,11 +9,10 @@ module.exports = {
   dialectOptions: {
     // Improved connection options for MariaDB
     connectTimeout: 60000, // Increase connection timeout even more
-    trace: true, // Enable tracing for detailed errors
     supportBigNumbers: true,
     bigNumberStrings: true,
-    // Debug options
-    debug: true,
+    // Debug options - disable for production
+    debug: process.env.NODE_ENV === 'development' && process.env.DB_DEBUG === 'true',
     // Try to handle various authentication methods
     authPlugins: {
       mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'password' }),

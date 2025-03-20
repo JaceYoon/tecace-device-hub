@@ -30,7 +30,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   onTypeChange,
   deviceTypes,
 }) => {
-  const { isManager } = useAuth();
+  const { isAdmin, isManager } = useAuth();
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -56,7 +56,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           <SelectItem value="available">Available</SelectItem>
           <SelectItem value="assigned">Assigned</SelectItem>
           <SelectItem value="pending">Request Pending</SelectItem>
-          {isManager && (
+          {(isAdmin || isManager) && (
             <>
               <SelectItem value="missing">Missing</SelectItem>
               <SelectItem value="stolen">Stolen</SelectItem>
@@ -74,9 +74,10 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">All Types</SelectItem>
-          {deviceTypes.map(type => (
-            <SelectItem key={type} value={type}>{type}</SelectItem>
-          ))}
+          {deviceTypes.map(type => {
+            if (type === 'all') return null;
+            return <SelectItem key={type} value={type}>{type}</SelectItem>;
+          })}
         </SelectContent>
       </Select>
     </div>

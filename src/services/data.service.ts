@@ -19,6 +19,7 @@ export const dataService = {
 
     try {
       const devices = await deviceService.getAll();
+      console.log('Fetched devices from API:', devices);
       return Array.isArray(devices) ? devices : [];
     } catch (error) {
       console.error('Error fetching devices from API, falling back to localStorage', error);
@@ -94,6 +95,7 @@ export const dataService = {
 
     try {
       const requests = await deviceService.getAllRequests();
+      console.log('Fetched requests from API:', requests);
       return Array.isArray(requests) ? requests : [];
     } catch (error) {
       console.error('Error fetching requests from API, falling back to localStorage', error);

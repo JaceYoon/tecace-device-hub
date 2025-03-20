@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface UseDeviceFiltersProps {
   filterByAvailable?: boolean;
@@ -16,12 +18,13 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
+  const { isManager, isAdmin, user } = useAuth();
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
-      devices.map(device => device.type)
-          .filter(Boolean)
-          .sort()
+    devices.map(device => device.type)
+      .filter(Boolean)
+      .sort()
   )];
 
   // Fetch devices and users
@@ -33,6 +36,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
         dataService.getUsers()
       ]);
 
+      console.log("Fetched devices for useDeviceFilters:", devicesData);
       setDevices(devicesData);
       setUsers(usersData);
     } catch (error) {
@@ -49,16 +53,37 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Filter devices based on filters
   const filteredDevices = devices.filter(device => {
-    // Filter by search query
-    if (searchQuery && !device.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !device.imei.toLowerCase().includes(searchQuery.toLowerCase())) {
+    // For non-admin/manager users, always hide missing/stolen devices
+    if (!isAdmin && !isManager && ['missing', 'stolen'].includes(device.status)) {
       return false;
     }
 
-    // Filter by status
-    if (statusFilter !== 'all' && device.status !== statusFilter) {
+    // If specific status filter is provided via props
+    if (props.filterByStatus && props.filterByStatus.length > 0) {
+      if (!props.filterByStatus.includes(device.status)) {
+        // Special handling for pending requests
+        if (props.filterByStatus.includes('pending') && device.requestedBy) {
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
+    // Filter by search query
+    if (searchQuery && !device.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        !(device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()))) {
       return false;
+    }
+
+    // Filter by status dropdown
+    if (statusFilter !== 'all') {
+      if (statusFilter === 'pending') {
+        if (!device.requestedBy) return false;
+      } else if (device.status !== statusFilter) {
+        return false;
+      }
     }
 
     // Filter by type
@@ -73,12 +98,6 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // Filter by assigned to user
     if (props.filterByAssignedToUser && device.assignedTo !== props.filterByAssignedToUser) {
-      return false;
-    }
-
-    // Filter by allowed statuses
-    if (props.filterByStatus && props.filterByStatus.length > 0 &&
-        !props.filterByStatus.includes(device.status)) {
       return false;
     }
 

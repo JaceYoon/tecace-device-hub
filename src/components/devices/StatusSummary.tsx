@@ -1,10 +1,11 @@
 
 import React, { useState, useEffect } from 'react';
-import { dataStore } from '@/utils/data';
-import { Device } from '@/types';
+import { dataService } from '@/services/data.service';
+import { Device, DeviceRequest } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface StatusSummaryProps {
   onRefresh?: () => void;
@@ -12,26 +13,34 @@ interface StatusSummaryProps {
 
 const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
+  const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const { isAdmin, isManager } = useAuth();
   
-  const fetchDevices = () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const allDevices = dataStore.getDevices();
+      const [allDevices, allRequests] = await Promise.all([
+        dataService.getDevices(),
+        dataService.getRequests()
+      ]);
+      console.log('StatusSummary - fetched devices:', allDevices.length);
+      console.log('StatusSummary - fetched requests:', allRequests.length);
       setDevices(allDevices);
+      setRequests(allRequests);
     } catch (error) {
-      console.error('Error fetching devices for status summary:', error);
+      console.error('Error fetching data for status summary:', error);
     } finally {
       setLoading(false);
     }
   };
   
   useEffect(() => {
-    fetchDevices();
+    fetchData();
   }, []);
   
   const handleRefresh = () => {
-    fetchDevices();
+    fetchData();
     if (onRefresh) onRefresh();
   };
   
@@ -39,8 +48,9 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const assignedCount = devices.filter(d => d.status === 'assigned').length;
   const missingCount = devices.filter(d => d.status === 'missing').length;
   const stolenCount = devices.filter(d => d.status === 'stolen').length;
-  const pendingCount = devices.filter(d => d.requestedBy).length;
-  const totalCount = devices.length;
+  
+  // Count pending requests from the requests data, not from devices
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
   
   const StatusCard = ({ 
     icon: Icon, 
@@ -54,7 +64,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
     color: string
   }) => (
     <Card className={`${color} hover:shadow-md transition-all`}>
-      <CardContent className="p-4 flex items-center justify-between">
+      <CardContent className="p-4 flex items-center">
         <div className="flex items-center gap-3">
           <div className="p-2 rounded-full bg-white/20">
             <Icon className="h-5 w-5 text-white" />
@@ -63,9 +73,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
             <div className="text-2xl font-bold">{count}</div>
             <div className="text-xs font-medium opacity-90">{label}</div>
           </div>
-        </div>
-        <div className="text-xs text-white/70 font-medium">
-          {totalCount > 0 ? Math.round((count / totalCount) * 100) : 0}%
         </div>
       </CardContent>
     </Card>
@@ -105,18 +112,22 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
           label="Pending Requests" 
           color="bg-amber-500" 
         />
-        <StatusCard 
-          icon={AlertCircle} 
-          count={missingCount} 
-          label="Missing" 
-          color="bg-orange-500" 
-        />
-        <StatusCard 
-          icon={ShieldAlert} 
-          count={stolenCount} 
-          label="Stolen" 
-          color="bg-red-500" 
-        />
+        {(isAdmin || isManager) && (
+          <>
+            <StatusCard 
+              icon={AlertCircle} 
+              count={missingCount} 
+              label="Missing" 
+              color="bg-orange-500" 
+            />
+            <StatusCard 
+              icon={ShieldAlert} 
+              count={stolenCount} 
+              label="Stolen" 
+              color="bg-red-500" 
+            />
+          </>
+        )}
       </div>
     </div>
   );
