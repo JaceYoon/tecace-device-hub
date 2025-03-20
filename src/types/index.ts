@@ -15,11 +15,13 @@ export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen';
 
 export interface Device {
   id: string;
-  name: string;
-  type: string;
+  project: string;
+  deviceType: string;
   imei: string;
   serialNumber: string;
   status: DeviceStatus;
+  deviceStatus?: string;
+  receivedDate?: Date;
   assignedTo?: string; // Changed from User to string (user ID)
   addedBy: string; // Changed from User to string (user ID)
   notes?: string;

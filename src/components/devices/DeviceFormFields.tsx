@@ -3,6 +3,7 @@ import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectContent,
@@ -10,19 +11,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CalendarIcon } from 'lucide-react';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface DeviceFormFieldsProps {
   deviceData: {
-    name: string;
-    type: string;
+    project: string;
+    deviceType: string;
     imei: string;
     serialNumber: string;
     status?: string;
+    deviceStatus?: string;
+    receivedDate?: Date;
     notes?: string;
   };
   deviceTypes: string[];
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (value: string, field: string) => void;
+  handleDateChange: (date: Date | undefined, field: string) => void;
   isEditMode?: boolean;
 }
 
@@ -31,16 +40,17 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   deviceTypes, 
   handleChange, 
   handleSelectChange,
+  handleDateChange,
   isEditMode = false
 }) => {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Label htmlFor="name">Device Name *</Label>
+        <Label htmlFor="project">Project *</Label>
         <Input
-          id="name"
-          name="name"
-          value={deviceData.name}
+          id="project"
+          name="project"
+          value={deviceData.project}
           onChange={handleChange}
           placeholder="e.g. iPhone 13 Pro"
           required
@@ -48,10 +58,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="type">Device Type *</Label>
+        <Label htmlFor="deviceType">Device Type *</Label>
         <Select
-          value={deviceData.type}
-          onValueChange={(value) => handleSelectChange(value, 'type')}
+          value={deviceData.deviceType}
+          onValueChange={(value) => handleSelectChange(value, 'deviceType')}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select device type" />
@@ -66,7 +76,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       
       {isEditMode && (
         <div className="space-y-2">
-          <Label htmlFor="status">Device Status *</Label>
+          <Label htmlFor="status">Assignment Status *</Label>
           <Select
             value={deviceData.status}
             onValueChange={(value) => handleSelectChange(value, 'status')}
@@ -83,6 +93,45 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           </Select>
         </div>
       )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="deviceStatus">Device Status</Label>
+          <Input
+            id="deviceStatus"
+            name="deviceStatus"
+            value={deviceData.deviceStatus || ''}
+            onChange={handleChange}
+            placeholder="e.g. Working, Damaged, etc."
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="receivedDate">Received Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal",
+                  !deviceData.receivedDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {deviceData.receivedDate ? format(deviceData.receivedDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0">
+              <Calendar
+                mode="single"
+                selected={deviceData.receivedDate}
+                onSelect={(date) => handleDateChange(date, 'receivedDate')}
+                initialFocus
+              />
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">

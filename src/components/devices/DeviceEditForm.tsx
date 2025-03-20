@@ -20,11 +20,13 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [deviceData, setDeviceData] = useState({
-    name: device.name,
-    type: device.type,
+    project: device.project,
+    deviceType: device.deviceType,
     imei: device.imei,
     serialNumber: device.serialNumber,
     status: device.status,
+    deviceStatus: device.deviceStatus || '',
+    receivedDate: device.receivedDate,
     notes: device.notes || '',
   });
   
@@ -53,6 +55,13 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       [field]: value,
     }));
   };
+
+  const handleDateChange = (date: Date | undefined, field: string) => {
+    setDeviceData(prev => ({
+      ...prev,
+      [field]: date,
+    }));
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,10 +71,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { name, type, imei, serialNumber, status, notes } = deviceData;
+    const { project, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
-    if (!name || !type || !imei || !serialNumber) {
+    if (!project || !deviceType || !imei || !serialNumber) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -75,17 +84,19 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     try {
       // Update the device using the service
       const updatedDevice = await dataService.updateDevice(device.id, {
-        name,
-        type,
+        project,
+        deviceType,
         imei,
         serialNumber,
         status,
+        deviceStatus: deviceStatus || undefined,
+        receivedDate,
         notes: notes || undefined,
       });
       
       if (updatedDevice) {
         toast.success('Device updated successfully', {
-          description: `${name} has been updated`
+          description: `${project} has been updated`
         });
         
         // Notify parent
@@ -121,6 +132,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
             deviceTypes={deviceTypes}
             handleChange={handleChange}
             handleSelectChange={handleSelectChange}
+            handleDateChange={handleDateChange}
             isEditMode={true}
           />
         </CardContent>

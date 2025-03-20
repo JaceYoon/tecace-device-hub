@@ -11,10 +11,12 @@ interface UseDeviceFormProps {
 export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = {}) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deviceData, setDeviceData] = useState({
-    name: '',
-    type: 'Smartphone',
+    project: '',
+    deviceType: 'Smartphone',
     imei: '',
     serialNumber: '',
+    deviceStatus: '',
+    receivedDate: undefined as Date | undefined,
     notes: '',
   });
   
@@ -43,14 +45,21 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       [field]: value,
     }));
   };
+
+  const handleDateChange = (date: Date | undefined, field: string) => {
+    setDeviceData(prev => ({
+      ...prev,
+      [field]: date,
+    }));
+  };
   
   const handleSubmit = async (e: React.FormEvent, userId: string) => {
     e.preventDefault();
     
-    const { name, type, imei, serialNumber, notes } = deviceData;
+    const { project, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
-    if (!name || !type || !imei || !serialNumber) {
+    if (!project || !deviceType || !imei || !serialNumber) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -60,25 +69,29 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     try {
       // Add the device using the service
       const newDevice = await dataService.addDevice({
-        name,
-        type,
+        project,
+        deviceType,
         imei,
         serialNumber,
         status: 'available',
+        deviceStatus: deviceStatus || undefined,
+        receivedDate: receivedDate || undefined,
         addedBy: userId,
         notes: notes || undefined,
       });
       
       toast.success('Device added successfully', {
-        description: `${name} has been added to the inventory`
+        description: `${project} has been added to the inventory`
       });
       
       // Reset form
       setDeviceData({
-        name: '',
-        type: 'Smartphone',
+        project: '',
+        deviceType: 'Smartphone',
         imei: '',
         serialNumber: '',
+        deviceStatus: '',
+        receivedDate: undefined,
         notes: '',
       });
       
@@ -100,6 +113,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     isSubmitting,
     handleChange,
     handleSelectChange,
+    handleDateChange,
     handleSubmit,
   };
 };

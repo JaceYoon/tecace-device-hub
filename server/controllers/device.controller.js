@@ -8,22 +8,24 @@ const Op = db.Sequelize.Op;
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { name, type, imei, serialNumber, notes } = req.body;
+    const { project, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
 
     console.log('Creating device with data:', req.body);
 
     // Validate request
-    if (!name || !type || !imei || !serialNumber) {
+    if (!project || !deviceType || !imei || !serialNumber) {
       console.log('Validation failed: Missing required fields');
       return res.status(400).json({ message: 'Required fields missing' });
     }
 
     // Create device
     const device = await Device.create({
-      name,
-      type,
+      project,
+      deviceType,
       imei,
       serialNumber,
+      deviceStatus,
+      receivedDate,
       notes,
       addedById: req.user.id,
       status: 'available'
@@ -41,11 +43,11 @@ exports.create = async (req, res) => {
 // Find all devices
 exports.findAll = async (req, res) => {
   try {
-    const { name, type, status } = req.query;
+    const { project, deviceType, status } = req.query;
     let condition = {};
 
-    if (name) condition.name = { [Op.like]: `%${name}%` };
-    if (type) condition.type = type;
+    if (project) condition.project = { [Op.like]: `%${project}%` };
+    if (deviceType) condition.deviceType = deviceType;
     if (status) condition.status = status;
 
     // Regular users shouldn't see missing/stolen devices, but managers and admins should
@@ -141,7 +143,7 @@ exports.findOne = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { name, type, imei, serialNumber, status, notes, assignedToId } = req.body;
+    const { project, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId } = req.body;
 
     const device = await Device.findByPk(req.params.id);
 
@@ -151,11 +153,13 @@ exports.update = async (req, res) => {
 
     // Update device
     await device.update({
-      name: name || device.name,
-      type: type || device.type,
+      project: project || device.project,
+      deviceType: deviceType || device.deviceType,
       imei: imei || device.imei,
       serialNumber: serialNumber || device.serialNumber,
       status: status || device.status,
+      deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
+      receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
     });

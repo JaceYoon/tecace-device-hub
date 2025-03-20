@@ -6,11 +6,11 @@ module.exports = (sequelize, Sequelize) => {
       primaryKey: true,
       autoIncrement: true
     },
-    name: {
+    project: {
       type: Sequelize.STRING,
       allowNull: false
     },
-    type: {
+    deviceType: {
       type: Sequelize.STRING,
       allowNull: false
     },
@@ -25,6 +25,14 @@ module.exports = (sequelize, Sequelize) => {
     status: {
       type: Sequelize.ENUM('available', 'assigned', 'missing', 'stolen'),
       defaultValue: 'available'
+    },
+    deviceStatus: {
+      type: Sequelize.STRING,
+      allowNull: true
+    },
+    receivedDate: {
+      type: Sequelize.DATE,
+      allowNull: true
     },
     notes: {
       type: Sequelize.TEXT

@@ -21,6 +21,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
     isSubmitting,
     handleChange,
     handleSelectChange,
+    handleDateChange,
     handleSubmit
   } = useDeviceForm({ onDeviceAdded, onCancel });
   
@@ -46,6 +47,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
             deviceTypes={deviceTypes}
             handleChange={handleChange}
             handleSelectChange={handleSelectChange}
+            handleDateChange={handleDateChange}
           />
         </CardContent>
         
