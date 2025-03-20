@@ -8,22 +8,21 @@ module.exports = {
   dialect: 'mariadb',
   dialectOptions: {
     // Improved connection options for MariaDB
-    connectTimeout: 60000, // Increase connection timeout
+    connectTimeout: 30000, // Reduced connection timeout
     supportBigNumbers: true,
     bigNumberStrings: true,
-    // Debug options - enable for development
-    debug: process.env.NODE_ENV === 'development' && process.env.DB_DEBUG === 'true',
+    // Debug options - always enable for troubleshooting
+    debug: true,
     // Try to handle various authentication methods
     authPlugins: {
-      mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' }),
-      mysql_clear_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' }),
-      caching_sha2_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' })
+      mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' })
     }
   },
   pool: {
     max: 5,
     min: 0,
-    acquire: 60000, // Increase acquire timeout to 60 seconds
+    acquire: 30000, // Reduce acquire timeout to 30 seconds
     idle: 10000
-  }
+  },
+  logging: console.log // Always log SQL queries for debugging
 };

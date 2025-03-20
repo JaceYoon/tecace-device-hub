@@ -1,10 +1,9 @@
-
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 import { deviceStore, userStore, requestStore } from '@/utils/data';
 
-// Setting to true to use mock data when API fails
-const USE_LOCAL_STORAGE = true;
+// Setting to false to force API calls instead of local storage
+const USE_LOCAL_STORAGE = false;
 
 /**
  * This service acts as a facade over both the API and localStorage implementations
@@ -42,16 +41,19 @@ export const dataService = {
   },
 
   addDevice: async (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> => {
-    if (USE_LOCAL_STORAGE) {
-      return deviceStore.addDevice(device);
-    }
-
+    // Force API usage for create operations, regardless of USE_LOCAL_STORAGE setting
     try {
+      console.log('Sending device to API:', device);
       const newDevice = await deviceService.create(device);
+      console.log('API response for device creation:', newDevice);
       return newDevice;
     } catch (error) {
-      console.error('Error adding device to API, falling back to localStorage', error);
-      return deviceStore.addDevice(device);
+      console.error('Error adding device to API:', error);
+      if (USE_LOCAL_STORAGE) {
+        console.log('Falling back to localStorage');
+        return deviceStore.addDevice(device);
+      }
+      throw error; // Re-throw if we're not using localStorage fallback
     }
   },
 

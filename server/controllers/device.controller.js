@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -10,7 +9,7 @@ exports.create = async (req, res) => {
   try {
     const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
 
-    console.log('Creating device with data:', req.body);
+    console.log('Creating device with data:', JSON.stringify(req.body, null, 2));
 
     // Validate request
     if (!project || !type || !projectGroup) {
@@ -18,8 +17,8 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Required fields missing (project, type, projectGroup)' });
     }
 
-    // Create device
-    const device = await Device.create({
+    // Create device with explicit null handling for optional fields
+    const deviceData = {
       project,
       projectGroup,
       type,
@@ -30,6 +29,13 @@ exports.create = async (req, res) => {
       notes: notes || null,
       addedById: req.user ? req.user.id : null,
       status: 'available'
+    };
+
+    console.log('Final device data being sent to database:', JSON.stringify(deviceData, null, 2));
+    
+    // Create device with explicit transaction for better error handling
+    const device = await db.sequelize.transaction(async (t) => {
+      return await Device.create(deviceData, { transaction: t });
     });
 
     console.log('Device created successfully:', device.id);
@@ -37,6 +43,10 @@ exports.create = async (req, res) => {
     res.status(201).json(device);
   } catch (err) {
     console.error('Error creating device:', err);
+    console.error('Error details:', err.message);
+    if (err.name === 'SequelizeValidationError') {
+      console.error('Validation errors:', err.errors);
+    }
     res.status(500).json({ message: err.message });
   }
 };
