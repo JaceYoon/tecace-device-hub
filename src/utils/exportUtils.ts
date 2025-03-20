@@ -1,49 +1,129 @@
-
 import * as XLSX from 'xlsx';
 import { Device, DeviceRequest } from '@/types';
 
 export const exportDevicesToExcel = (devices: Device[], filename: string = 'devices.xlsx') => {
-  const worksheet = XLSX.utils.json_to_sheet(
-    devices.map(device => ({
-      ID: device.id,
-      Project: device.project,
-      'Device Type': device.type,
-      IMEI: device.imei,
-      'Serial Number': device.serialNumber,
-      Status: device.status,
-      'Device Status': device.deviceStatus || '',
-      'Received Date': device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
-      'Return Date': device.returnDate ? new Date(device.returnDate).toLocaleDateString() : '',
-      Assigned: device.assignedTo || 'No',
-      Notes: device.notes || '',
-      'Created At': new Date(device.createdAt).toLocaleDateString(),
-      'Updated At': new Date(device.updatedAt).toLocaleDateString(),
-    }))
-  );
+  // If no devices, just return
+  if (!devices || devices.length === 0) {
+    return;
+  }
 
-  // Set column widths
-  const maxWidth = 20;
-  const colWidths = [
-    { wch: 10 }, // ID
-    { wch: maxWidth }, // Project
-    { wch: maxWidth }, // Device Type
-    { wch: 15 }, // IMEI
-    { wch: 15 }, // Serial Number
-    { wch: 10 }, // Status
-    { wch: 15 }, // Device Status
-    { wch: 15 }, // Received Date
-    { wch: 15 }, // Return Date
-    { wch: 10 }, // Assigned
-    { wch: maxWidth }, // Notes
-    { wch: 12 }, // Created At
-    { wch: 12 }, // Updated At
+  // Create a new workbook
+  const workbook = XLSX.utils.book_new();
+  
+  // Group devices by project
+  const devicesByProject = devices.reduce((acc, device) => {
+    const project = device.project;
+    if (!acc[project]) {
+      acc[project] = [];
+    }
+    acc[project].push(device);
+    return acc;
+  }, {} as Record<string, Device[]>);
+  
+  // Define headers and their widths
+  const headers = [
+    'Project', 'Device Type', 'IMEI', 'S/N', 'Notes', 'Received Date', 'Device Status', 'Returned Date'
   ];
   
+  const colWidths = [
+    { wch: 20 }, // Project
+    { wch: 20 }, // Device Type
+    { wch: 20 }, // IMEI
+    { wch: 20 }, // S/N
+    { wch: 30 }, // Notes
+    { wch: 15 }, // Received Date
+    { wch: 20 }, // Device Status
+    { wch: 15 }, // Returned Date
+  ];
+  
+  // Create worksheet data
+  const wsData: any[] = [];
+  
+  // Add header row with styling
+  wsData.push(headers);
+  
+  // Process each project group
+  Object.entries(devicesByProject).forEach(([project, projectDevices]) => {
+    // Add device rows for this project
+    projectDevices.forEach(device => {
+      wsData.push([
+        device.project,
+        device.type,
+        device.imei,
+        device.serialNumber,
+        device.notes || '',
+        device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+        device.deviceStatus || '',
+        device.returnDate ? new Date(device.returnDate).toLocaleDateString() : ''
+      ]);
+    });
+    
+    // Add summary row for this project
+    wsData.push([
+      `${project}`,
+      '',
+      `Total devices = ${projectDevices.length}`,
+      '',
+      '',
+      '',
+      '',
+      ''
+    ]);
+    
+    // Add empty row for spacing between project groups
+    wsData.push(Array(headers.length).fill(''));
+  });
+  
+  // Create the worksheet
+  const worksheet = XLSX.utils.aoa_to_sheet(wsData);
+  
+  // Set column widths
   worksheet['!cols'] = colWidths;
-
-  const workbook = XLSX.utils.book_new();
+  
+  // Style headers
+  const headerStyle = {
+    fill: { fgColor: { rgb: "CCCCCC" } },
+    font: { bold: true },
+    alignment: { horizontal: "center" }
+  };
+  
+  // Style project summary rows
+  const summaryStyle = {
+    fill: { fgColor: { rgb: "B4C6E7" } },
+    font: { bold: true, color: { rgb: "000000" } }
+  };
+  
+  // Apply styles
+  let rowIndex = 0;
+  wsData.forEach((row, idx) => {
+    // Apply header style
+    if (idx === 0) {
+      for (let i = 0; i < headers.length; i++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: i });
+        worksheet[cellAddress].s = headerStyle;
+      }
+    }
+    
+    // Apply summary style - check if this is a summary row (contains 'Total devices')
+    const thirdCell = row[2];
+    if (typeof thirdCell === 'string' && thirdCell.includes('Total devices')) {
+      for (let i = 0; i < headers.length; i++) {
+        const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: i });
+        if (!worksheet[cellAddress]) {
+          worksheet[cellAddress] = { v: '', s: summaryStyle };
+        } else {
+          worksheet[cellAddress].s = summaryStyle;
+        }
+      }
+    }
+    
+    rowIndex++;
+  });
+  
+  // Add the worksheet to the workbook
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Devices');
   
+  // Write to file
   XLSX.writeFile(workbook, filename);
 };
 

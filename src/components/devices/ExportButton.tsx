@@ -18,7 +18,7 @@ interface ExportButtonProps {
 const ExportButton: React.FC<ExportButtonProps> = ({
   devices,
   users,
-  exportFileName = 'Device_List',
+  exportFileName = 'Device_Inventory',
   variant = 'outline',
   className,
 }) => {
@@ -26,7 +26,12 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
   const handleExport = () => {
     try {
-      exportDevicesToExcel(devices, exportFileName);
+      if (devices.length === 0) {
+        toast.warning('No devices to export');
+        return;
+      }
+      
+      exportDevicesToExcel(devices, `${exportFileName}.xlsx`);
       toast.success('Device list exported successfully!');
     } catch (error) {
       console.error('Export failed:', error);
