@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -93,7 +94,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       
       showConfirmation(
         "Request Device",
-        `Are you sure you want to request ${device.name}?`,
+        `Are you sure you want to request ${device.project}?`,
         async () => {
           try {
             // First create the request through the request endpoint
@@ -128,7 +129,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
 
     showConfirmation(
         "Release Device",
-        `Are you sure you want to release ${device.name}?`,
+        `Are you sure you want to release ${device.project}?`,
         () => {
           try {
             // Create a release request instead of directly updating the device
@@ -140,7 +141,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
             });
 
             toast.success('Device return requested', {
-              description: `Your request to return ${device.name} has been submitted for approval`,
+              description: `Your request to return ${device.project} has been submitted for approval`,
               icon: <Clock className="h-4 w-4" />
             });
             if (onAction) onAction();
@@ -162,7 +163,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           try {
             dataService.updateDevice(device.id, { status: newStatus });
             toast.success(`Device marked as ${newStatus}`, {
-              description: `The status of ${device.name} has been updated`
+              description: `The status of ${device.project} has been updated`
             });
             if (onAction) onAction();
           } catch (error) {
@@ -188,7 +189,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
 
             if (success) {
               toast.success('Device deleted', {
-                description: `${device.name} has been permanently removed`
+                description: `${device.project} has been permanently removed`
               });
               if (onAction) onAction();
             } else {
@@ -223,7 +224,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                     onClick={() => setExpanded(!expanded)}
                     className="flex items-center text-left w-full"
                 >
-                  <CardTitle className="text-lg font-medium">{device.name}</CardTitle>
+                  <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
                   {expanded ?
                       <ChevronDown className="h-4 w-4 ml-2" /> :
                       <ChevronRight className="h-4 w-4 ml-2" />
@@ -231,7 +232,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 </button>
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Smartphone className="h-3.5 w-3.5" />
-                  {device.type}
+                  {device.deviceType}
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-1">

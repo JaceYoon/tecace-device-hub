@@ -50,7 +50,6 @@ const DeviceManagement: React.FC = () => {
   const handleExportAll = async () => {
     try {
       const devices = await dataService.getDevices();
-      const users = await dataService.getUsers();
 
       // Import the utility function
       const { exportDevicesToExcel } = await import('@/utils/exportUtils');
@@ -58,9 +57,7 @@ const DeviceManagement: React.FC = () => {
       // Export all devices
       exportDevicesToExcel(
           devices,
-          users,
-          'Complete_Device_Inventory',
-          true
+          'Complete_Device_Inventory'
       );
 
       toast.success('Export successful');

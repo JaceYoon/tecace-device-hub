@@ -138,7 +138,7 @@ const Dashboard: React.FC = () => {
                             className="flex items-center justify-between border-b pb-4 last:border-b-0 last:pb-0"
                         >
                           <div>
-                            <p className="font-medium">{request.device?.name || 'Unknown Device'}</p>
+                            <p className="font-medium">{request.device?.project || 'Unknown Device'}</p>
                             <p className="text-sm text-muted-foreground">
                               {request.type === 'assign' ? 'Assignment' : 'Release'} request from {request.user?.name || 'Unknown User'}
                             </p>

@@ -26,7 +26,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
 
   const handleExport = () => {
     try {
-      exportDevicesToExcel(devices, users, exportFileName, isManager);
+      exportDevicesToExcel(devices, exportFileName);
       toast.success('Device list exported successfully!');
     } catch (error) {
       console.error('Export failed:', error);

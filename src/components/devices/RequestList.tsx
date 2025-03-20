@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DeviceRequest, User, Device } from '@/types';
 import { dataStore } from '@/utils/data';
@@ -181,7 +182,7 @@ const RequestList: React.FC<RequestListProps> = ({
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium">{device.name}</div>
+                        <div className="font-medium">{device.project}</div>
                         <div className="text-sm text-muted-foreground">
                           {request.type === 'assign' ? 'Request to assign' : 'Request to release'}
                         </div>
