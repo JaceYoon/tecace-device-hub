@@ -7,6 +7,9 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 // Get all devices
 router.get('/', isAuthenticated, deviceController.findAll);
 
+// Get all requests
+router.get('/requests/all', isAuthenticated, deviceController.findAllRequests);
+
 // Get a single device
 router.get('/:id', isAuthenticated, deviceController.findOne);
 
@@ -24,8 +27,5 @@ router.post('/:id/request', isAuthenticated, deviceController.requestDevice);
 
 // Process a device request
 router.put('/requests/:id', isAuthenticated, isAdmin, deviceController.processRequest);
-
-// Get all requests - Fixed endpoint
-router.get('/requests', isAuthenticated, deviceController.findAllRequests);
 
 module.exports = router;

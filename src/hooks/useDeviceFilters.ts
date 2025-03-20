@@ -36,6 +36,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
         dataService.getUsers()
       ]);
 
+      console.log("Fetched devices for useDeviceFilters:", devicesData);
       setDevices(devicesData);
       setUsers(usersData);
     } catch (error) {
@@ -52,13 +53,13 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Filter devices based on filters
   const filteredDevices = devices.filter(device => {
-    // If filterByStatus is provided, use it directly (for admins viewing missing/stolen)
+    // If filterByStatus is provided, use it directly
     if (props.filterByStatus && props.filterByStatus.length > 0) {
       if (!props.filterByStatus.includes(device.status)) {
         return false;
       }
     } 
-    // Don't filter out missing/stolen for admin users
+    // For regular users, hide missing/stolen devices
     else if (!isAdmin && !isManager && (device.status === 'missing' || device.status === 'stolen')) {
       return false;
     }

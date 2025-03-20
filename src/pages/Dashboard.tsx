@@ -37,14 +37,20 @@ const Dashboard: React.FC = () => {
       try {
         setIsLoading(true);
         const fetchData = async () => {
-          const allRequests = await dataService.getRequests();
-          setRequests(allRequests);
-          setIsLoading(false);
+          try {
+            const allRequests = await dataService.getRequests();
+            console.log("Dashboard: Fetched requests:", allRequests);
+            setRequests(allRequests);
+          } catch (error) {
+            console.error('Error fetching requests:', error);
+            toast.error('Failed to load requests');
+          } finally {
+            setIsLoading(false);
+          }
         };
         fetchData();
       } catch (error) {
-        console.error('Error fetching requests:', error);
-        toast.error('Failed to load requests');
+        console.error('Error in request fetching effect:', error);
         setIsLoading(false);
       }
     }

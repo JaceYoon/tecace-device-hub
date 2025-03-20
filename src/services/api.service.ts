@@ -326,7 +326,7 @@ export const deviceService = {
       }),
 
   getAllRequests: (): Promise<DeviceRequest[]> =>
-      apiCall<DeviceRequest[]>('/devices/requests'),
+      apiCall<DeviceRequest[]>('/devices/requests/all'),
 };
 
 // User services
