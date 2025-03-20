@@ -13,7 +13,6 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const [deviceData, setDeviceData] = useState({
     project: '',
     type: 'Smartphone',
-    deviceName: '',
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -57,7 +56,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const handleSubmit = async (e: React.FormEvent, userId: string) => {
     e.preventDefault();
     
-    const { project, type, deviceName, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, type, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
     if (!project || !type || !imei || !serialNumber) {
@@ -72,7 +71,6 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       const newDevice = await dataService.addDevice({
         project,
         type,
-        deviceName: deviceName || undefined,
         imei,
         serialNumber,
         status: 'available',
@@ -90,7 +88,6 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       setDeviceData({
         project: '',
         type: 'Smartphone',
-        deviceName: '',
         imei: '',
         serialNumber: '',
         deviceStatus: '',

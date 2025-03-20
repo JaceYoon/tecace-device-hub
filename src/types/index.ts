@@ -17,7 +17,6 @@ export interface Device {
   id: string;
   project: string;
   type: string;
-  deviceName?: string;
   imei: string;
   serialNumber: string;
   status: DeviceStatus;

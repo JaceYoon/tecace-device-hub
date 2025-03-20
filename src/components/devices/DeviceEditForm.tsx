@@ -22,7 +22,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   const [deviceData, setDeviceData] = useState({
     project: device.project,
     type: device.type,
-    deviceName: device.deviceName || '',
     imei: device.imei,
     serialNumber: device.serialNumber,
     status: device.status,
@@ -72,7 +71,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, type, deviceName, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, type, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
     if (!project || !type || !imei || !serialNumber) {
@@ -87,7 +86,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         type,
-        deviceName: deviceName || undefined,
         imei,
         serialNumber,
         status,

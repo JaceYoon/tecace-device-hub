@@ -21,7 +21,6 @@ interface DeviceFormFieldsProps {
   deviceData: {
     project: string;
     type: string;
-    deviceName?: string;
     imei: string;
     serialNumber: string;
     status?: string;
@@ -75,17 +74,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </Select>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="deviceName">Device Name</Label>
-        <Input
-          id="deviceName"
-          name="deviceName"
-          value={deviceData.deviceName || ''}
-          onChange={handleChange}
-          placeholder="e.g. iPhone 13 Pro Max"
-        />
-      </div>
-      
       {isEditMode && (
         <div className="space-y-2">
           <Label htmlFor="status">Assignment Status *</Label>

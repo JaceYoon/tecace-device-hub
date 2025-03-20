@@ -14,10 +14,6 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false
     },
-    deviceName: {
-      type: Sequelize.STRING,
-      allowNull: true
-    },
     imei: {
       type: Sequelize.STRING,
       unique: true
