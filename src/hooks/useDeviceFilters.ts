@@ -22,7 +22,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
-    devices.map(device => device.type)
+    devices.map(device => device.deviceType)
       .filter(Boolean)
       .sort()
   )];
@@ -72,7 +72,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     }
 
     // Filter by search query
-    if (searchQuery && !device.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
+    if (searchQuery && !device.project.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !(device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()))) {
       return false;
@@ -89,7 +89,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     }
 
     // Filter by type
-    if (typeFilter !== 'all' && device.type !== typeFilter) {
+    if (typeFilter !== 'all' && device.deviceType !== typeFilter) {
       return false;
     }
 

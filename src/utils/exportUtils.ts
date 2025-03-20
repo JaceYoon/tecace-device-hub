@@ -1,50 +1,65 @@
-
-import { Device, User } from '@/types';
 import * as XLSX from 'xlsx';
+import { Device, DeviceRequest } from '@/types';
 
-// Helper to get user name from ID
-const getUserNameById = (userId: string | undefined, users: User[]): string => {
-  if (!userId) return 'Unassigned';
-  const user = users.find((u) => u.id === userId);
-  return user ? user.name : 'Unknown User';
-};
+export const exportDevicesToExcel = (devices: Device[], filename: string = 'devices.xlsx') => {
+  const worksheet = XLSX.utils.json_to_sheet(
+    devices.map(device => ({
+      ID: device.id,
+      Project: device.project,
+      'Device Type': device.deviceType,
+      IMEI: device.imei,
+      'Serial Number': device.serialNumber,
+      Status: device.status,
+      'Device Status': device.deviceStatus || '',
+      'Received Date': device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+      Assigned: device.assignedTo || 'No',
+      Notes: device.notes || '',
+      'Created At': new Date(device.createdAt).toLocaleDateString(),
+      'Updated At': new Date(device.updatedAt).toLocaleDateString(),
+    }))
+  );
 
-export const exportDevicesToExcel = (
-  devices: Device[],
-  users: User[],
-  fileName: string,
-  isManager: boolean = false
-): void => {
-  // Filter devices for non-managers (exclude missing/stolen)
-  const filteredDevices = isManager 
-    ? devices 
-    : devices.filter(device => !['missing', 'stolen'].includes(device.status));
+  // Set column widths
+  const maxWidth = 20;
+  const colWidths = [
+    { wch: 10 }, // ID
+    { wch: maxWidth }, // Project
+    { wch: maxWidth }, // Device Type
+    { wch: 15 }, // IMEI
+    { wch: 15 }, // Serial Number
+    { wch: 10 }, // Status
+    { wch: 15 }, // Device Status
+    { wch: 15 }, // Received Date
+    { wch: 10 }, // Assigned
+    { wch: maxWidth }, // Notes
+    { wch: 12 }, // Created At
+    { wch: 12 }, // Updated At
+  ];
+  
+  worksheet['!cols'] = colWidths;
 
-  // Create worksheet data
-  const worksheetData = filteredDevices.map((device) => ({
-    'Device Name': device.name,
-    'Device Type': device.type,
-    'IMEI': device.imei,
-    'Serial Number': device.serialNumber,
-    'Status': device.status.charAt(0).toUpperCase() + device.status.slice(1),
-    'Current Owner': getUserNameById(device.assignedTo, users),
-    ...(isManager && {
-      'Added By': getUserNameById(device.addedBy, users),
-      'Added Date': new Date(device.createdAt).toLocaleDateString(),
-      'Last Updated': new Date(device.updatedAt).toLocaleDateString(),
-      'Notes': device.notes || ''
-    })
-  }));
-
-  // Create workbook and worksheet
-  const worksheet = XLSX.utils.json_to_sheet(worksheetData);
   const workbook = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Devices');
+  
+  XLSX.writeFile(workbook, filename);
+};
 
-  // Generate file name with timestamp
-  const timestamp = new Date().toISOString().replace(/[:.]/g, '-').substring(0, 19);
-  const fullFileName = `${fileName}_${timestamp}.xlsx`;
+export const exportRequestsToExcel = (requests: DeviceRequest[], filename: string = 'requests.xlsx') => {
+  const worksheet = XLSX.utils.json_to_sheet(
+    requests.map(request => ({
+      ID: request.id,
+      'Device ID': request.deviceId,
+      'User ID': request.userId,
+      Status: request.status,
+      Type: request.type,
+      'Requested At': new Date(request.requestedAt).toLocaleDateString(),
+      'Processed At': request.processedAt ? new Date(request.processedAt).toLocaleDateString() : '',
+      'Processed By': request.processedBy || '',
+    }))
+  );
 
-  // Export to file
-  XLSX.writeFile(workbook, fullFileName);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Requests');
+  
+  XLSX.writeFile(workbook, filename);
 };
