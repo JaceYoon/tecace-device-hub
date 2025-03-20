@@ -25,10 +25,10 @@ exports.create = async (req, res) => {
       type,
       imei: imei || null,
       serialNumber: serialNumber || null,
-      deviceStatus,
-      receivedDate,
-      notes,
-      addedById: req.user.id,
+      deviceStatus: deviceStatus || null,
+      receivedDate: receivedDate || null,
+      notes: notes || null,
+      addedById: req.user ? req.user.id : null,
       status: 'available'
     });
 

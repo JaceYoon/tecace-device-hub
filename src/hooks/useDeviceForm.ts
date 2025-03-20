@@ -70,6 +70,19 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     setIsSubmitting(true);
     
     try {
+      console.log('Adding device with data:', {
+        project,
+        projectGroup,
+        type,
+        imei: imei || undefined,
+        serialNumber: serialNumber || undefined,
+        status: 'available',
+        deviceStatus: deviceStatus || undefined,
+        receivedDate: receivedDate || undefined,
+        addedBy: userId,
+        notes: notes || undefined,
+      });
+      
       // Add the device using the service
       const newDevice = await dataService.addDevice({
         project,
@@ -83,6 +96,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         addedBy: userId,
         notes: notes || undefined,
       });
+      
+      console.log('Device added:', newDevice);
       
       toast.success('Device added successfully', {
         description: `${project} has been added to the inventory`

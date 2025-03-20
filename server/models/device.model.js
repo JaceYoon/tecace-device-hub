@@ -43,7 +43,33 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true
     },
     notes: {
-      type: Sequelize.TEXT
+      type: Sequelize.TEXT,
+      allowNull: true
+    },
+    // Add fields for foreign keys
+    addedById: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    assignedToId: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
+    },
+    requestedBy: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'users',
+        key: 'id'
+      }
     }
   });
   

@@ -1,12 +1,11 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to true if you want to use mock data instead of real API
-let devMode = true;
+// Development mode flag - set to false to use real API
+let devMode = false;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
