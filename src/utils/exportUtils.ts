@@ -8,7 +8,6 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
       ID: device.id,
       Project: device.project,
       'Device Type': device.type,
-      'Device Name': device.deviceName || '',
       IMEI: device.imei,
       'Serial Number': device.serialNumber,
       Status: device.status,
@@ -28,7 +27,6 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     { wch: 10 }, // ID
     { wch: maxWidth }, // Project
     { wch: maxWidth }, // Device Type
-    { wch: maxWidth }, // Device Name
     { wch: 15 }, // IMEI
     { wch: 15 }, // Serial Number
     { wch: 10 }, // Status
