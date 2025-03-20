@@ -31,7 +31,7 @@ export const mockDevices: Device[] = [
   {
     id: '1',
     project: 'iPhone 13 Pro',
-    deviceType: 'Smartphone',
+    type: 'Smartphone',
     imei: '123456789012345',
     serialNumber: 'ABCD1234XYZ',
     status: 'available',
@@ -44,7 +44,7 @@ export const mockDevices: Device[] = [
   {
     id: '2',
     project: 'MacBook Pro M1',
-    deviceType: 'Laptop',
+    type: 'Laptop',
     imei: '987654321098765',
     serialNumber: 'MBP20221234',
     status: 'assigned',
@@ -58,7 +58,7 @@ export const mockDevices: Device[] = [
   {
     id: '3',
     project: 'iPad Air',
-    deviceType: 'Tablet',
+    type: 'Tablet',
     imei: '567890123456789',
     serialNumber: 'IPAD2022987',
     status: 'missing',
@@ -72,7 +72,7 @@ export const mockDevices: Device[] = [
   {
     id: '4',
     project: 'Samsung Galaxy S22',
-    deviceType: 'Smartphone',
+    type: 'Smartphone',
     imei: '678901234567890',
     serialNumber: 'SGS22ABC123',
     status: 'stolen',
@@ -86,7 +86,7 @@ export const mockDevices: Device[] = [
   {
     id: '5',
     project: 'Dell XPS 13',
-    deviceType: 'Laptop',
+    type: 'Laptop',
     imei: '345678901234567',
     serialNumber: 'XPS13DEF456',
     status: 'available',

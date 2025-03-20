@@ -232,7 +232,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 </button>
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Smartphone className="h-3.5 w-3.5" />
-                  {device.deviceType}
+                  {device.type}
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-1">
