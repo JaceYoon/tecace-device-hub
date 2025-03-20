@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -31,36 +30,33 @@ const Dashboard: React.FC = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  // Fetch requests
   useEffect(() => {
-    if (user) {
+    if (!isAuthenticated || !user) {
+      setIsLoading(false);
+      return;
+    }
+
+    const fetchData = async () => {
       try {
         setIsLoading(true);
-        const fetchData = async () => {
-          try {
-            const allRequests = await dataService.getRequests();
-            console.log("Dashboard: Fetched requests:", allRequests);
-            setRequests(allRequests);
-          } catch (error) {
-            console.error('Error fetching requests:', error);
-            toast.error('Failed to load requests');
-          } finally {
-            setIsLoading(false);
-          }
-        };
-        fetchData();
+        const allRequests = await dataService.getRequests();
+        console.log("Dashboard: Fetched requests:", allRequests);
+        setRequests(allRequests);
       } catch (error) {
-        console.error('Error in request fetching effect:', error);
+        console.error('Error fetching requests:', error);
+        toast.error('Failed to load requests');
+      } finally {
         setIsLoading(false);
       }
-    }
-  }, [user, refreshTrigger]);
+    };
+    
+    fetchData();
+  }, [user, refreshTrigger, isAuthenticated]);
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
   };
 
-  // Process request (manager only)
   const handleProcessRequest = async (requestId: string, approve: boolean) => {
     if (!isManager || !user) return;
 
@@ -79,12 +75,14 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  if (!isAuthenticated) {
+    return null;
+  }
+
   if (!user) return null;
 
-  // Safe filter for pending requests
   const pendingRequests = requests.filter(request => request.status === 'pending') || [];
 
-  // Get my devices
   const myDeviceFilter = user.id;
 
   if (isLoading) {
@@ -110,10 +108,8 @@ const Dashboard: React.FC = () => {
             </div>
           </div>
 
-          {/* Status Summary */}
           <StatusSummary onRefresh={handleRefresh} />
 
-          {/* Manager: Pending Requests Section */}
           {isManager && pendingRequests.length > 0 && (
               <div className="rounded-lg border p-4 animate-slide-up">
                 <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
@@ -163,7 +159,6 @@ const Dashboard: React.FC = () => {
               </div>
           )}
 
-          {/* Device Tabs */}
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-4 w-full max-w-md mb-8">
               <TabsTrigger value="available" className="flex items-center gap-1">

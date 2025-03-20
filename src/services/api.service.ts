@@ -66,6 +66,14 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error(`API error response: ${response.status}`, errorData);
+        
+        // If unauthorized and on an authenticated endpoint, don't show error toast
+        if (response.status === 401 && 
+            (endpoint.startsWith('/devices') || 
+             endpoint.startsWith('/users'))) {
+          throw new Error(errorData.message || `Unauthorized`);
+        }
+        
         throw new Error(errorData.message || `API error: ${response.status}`);
       }
 
@@ -74,7 +82,12 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       return data as T;
     } catch (error) {
       console.error(`API error for ${endpoint}:`, error);
-      toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
+      
+      // Only show toast for non-auth related errors
+      if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
+        toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
+      }
+      
       throw error;
     }
   }

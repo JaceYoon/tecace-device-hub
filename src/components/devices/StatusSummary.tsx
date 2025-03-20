@@ -15,9 +15,14 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, isManager } = useAuth();
+  const { isAdmin, isManager, isAuthenticated } = useAuth();
   
   const fetchData = async () => {
+    if (!isAuthenticated) {
+      setLoading(false);
+      return;
+    }
+    
     try {
       setLoading(true);
       const [allDevices, allRequests] = await Promise.all([
@@ -37,12 +42,17 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [isAuthenticated]);
   
   const handleRefresh = () => {
     fetchData();
     if (onRefresh) onRefresh();
   };
+  
+  // If not authenticated, don't show anything
+  if (!isAuthenticated) {
+    return null;
+  }
   
   const availableCount = devices.filter(d => d.status === 'available' && !d.requestedBy).length;
   const assignedCount = devices.filter(d => d.status === 'assigned').length;
