@@ -22,9 +22,9 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
-      devices.map(device => device.type)
-          .filter(Boolean)
-          .sort()
+    devices.map(device => device.type)
+      .filter(Boolean)
+      .sort()
   )];
 
   // Fetch devices and users
@@ -53,15 +53,16 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Filter devices based on filters
   const filteredDevices = devices.filter(device => {
-    // If filterByStatus is provided, use it directly
+    // For non-admin/manager users, always hide missing/stolen devices
+    if (!isAdmin && !isManager && ['missing', 'stolen'].includes(device.status)) {
+      return false;
+    }
+
+    // If specific status filter is provided via props
     if (props.filterByStatus && props.filterByStatus.length > 0) {
       if (!props.filterByStatus.includes(device.status)) {
         return false;
       }
-    } 
-    // For regular users, hide missing/stolen devices
-    else if (!isAdmin && !isManager && (device.status === 'missing' || device.status === 'stolen')) {
-      return false;
     }
 
     // Filter by search query
@@ -71,10 +72,9 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       return false;
     }
 
-    // Filter by status
+    // Filter by status dropdown
     if (statusFilter !== 'all') {
       if (statusFilter === 'pending') {
-        // Special case for "pending" - it's not a device status, but a filter for requested devices
         if (!device.requestedBy) return false;
       } else if (device.status !== statusFilter) {
         return false;

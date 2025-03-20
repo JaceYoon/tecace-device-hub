@@ -149,7 +149,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       return (device || null) as unknown as T;
     }
 
-    if (endpoint === '/devices/requests') {
+    if (endpoint === '/devices/requests/all') {
       return mockRequests as unknown as T;
     }
 
@@ -266,85 +266,85 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 // Auth services
 export const authService = {
   checkAuth: (): Promise<AuthCheckResponse> =>
-      apiCall<AuthCheckResponse>('/auth/check'),
+    apiCall<AuthCheckResponse>('/auth/check'),
 
   login: (email: string, password: string): Promise<LoginResponse> =>
-      apiCall<LoginResponse>('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password })
-      }),
+    apiCall<LoginResponse>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email, password })
+    }),
 
   logout: (): Promise<LogoutResponse> =>
-      apiCall<LogoutResponse>('/auth/logout'),
+    apiCall<LogoutResponse>('/auth/logout'),
 
   register: (name: string, email: string): Promise<RegisterResponse> =>
-      apiCall<RegisterResponse>('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email })
-      }),
+    apiCall<RegisterResponse>('/auth/register', {
+      method: 'POST',
+      body: JSON.stringify({ name, email })
+    }),
 };
 
 // Device services
 export const deviceService = {
   getAll: (): Promise<Device[]> =>
-      apiCall<Device[]>('/devices'),
+    apiCall<Device[]>('/devices'),
 
   getById: (id: string): Promise<Device | null> =>
-      apiCall<Device | null>(`/devices/${id}`),
+    apiCall<Device | null>(`/devices/${id}`),
 
   create: (device: Partial<Device>): Promise<Device> =>
-      apiCall<Device>('/devices', {
-        method: 'POST',
-        body: JSON.stringify(device)
-      }),
+    apiCall<Device>('/devices', {
+      method: 'POST',
+      body: JSON.stringify(device)
+    }),
 
   update: (id: string, device: Partial<Device>): Promise<Device | null> =>
-      apiCall<Device | null>(`/devices/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify(device)
-      }),
+    apiCall<Device | null>(`/devices/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(device)
+    }),
 
   delete: (id: string): Promise<boolean> => {
     console.log('Calling delete API for device ID:', id);
     return apiCall<SuccessResponse>(`/devices/${id}`, { method: 'DELETE' })
-        .then(resp => {
-          console.log('Delete API response:', resp);
-          return !!resp.success;
-        });
+      .then(resp => {
+        console.log('Delete API response:', resp);
+        return !!resp.success;
+      });
   },
 
   requestDevice: (id: string, type: 'assign' | 'release'): Promise<DeviceRequest> =>
-      apiCall<DeviceRequest>(`/devices/${id}/request`, {
-        method: 'POST',
-        body: JSON.stringify({ type })
-      }),
+    apiCall<DeviceRequest>(`/devices/${id}/request`, {
+      method: 'POST',
+      body: JSON.stringify({ type })
+    }),
 
   processRequest: (id: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
-      apiCall<DeviceRequest | null>(`/devices/requests/${id}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      }),
+    apiCall<DeviceRequest | null>(`/devices/requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    }),
 
   getAllRequests: (): Promise<DeviceRequest[]> =>
-      apiCall<DeviceRequest[]>('/devices/requests/all'),
+    apiCall<DeviceRequest[]>('/devices/requests/all'),
 };
 
 // User services
 export const userService = {
   getAll: (): Promise<User[]> =>
-      apiCall<User[]>('/users'),
+    apiCall<User[]>('/users'),
 
   getCurrentUser: (): Promise<User | null> =>
-      apiCall<User | null>('/users/me'),
+    apiCall<User | null>('/users/me'),
 
   getById: (id: string): Promise<User | null> =>
-      apiCall<User | null>(`/users/${id}`),
+    apiCall<User | null>(`/users/${id}`),
 
   updateRole: (id: string, role: 'user' | 'admin'): Promise<User | null> =>
-      apiCall<User | null>(`/users/${id}/role`, {
-        method: 'PUT',
-        body: JSON.stringify({ role })
-      }),
+    apiCall<User | null>(`/users/${id}/role`, {
+      method: 'PUT',
+      body: JSON.stringify({ role })
+    }),
 };
 
 // Export the api object that contains all methods
