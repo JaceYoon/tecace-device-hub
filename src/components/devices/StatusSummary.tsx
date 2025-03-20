@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
-import { Device } from '@/types';
+import { Device, DeviceRequest } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,28 +13,34 @@ interface StatusSummaryProps {
 
 const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
+  const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAdmin, isManager } = useAuth();
   
-  const fetchDevices = async () => {
+  const fetchData = async () => {
     try {
       setLoading(true);
-      const allDevices = await dataService.getDevices();
-      console.log('StatusSummary - fetched devices:', allDevices);
+      const [allDevices, allRequests] = await Promise.all([
+        dataService.getDevices(),
+        dataService.getRequests()
+      ]);
+      console.log('StatusSummary - fetched devices:', allDevices.length);
+      console.log('StatusSummary - fetched requests:', allRequests.length);
       setDevices(allDevices);
+      setRequests(allRequests);
     } catch (error) {
-      console.error('Error fetching devices for status summary:', error);
+      console.error('Error fetching data for status summary:', error);
     } finally {
       setLoading(false);
     }
   };
   
   useEffect(() => {
-    fetchDevices();
+    fetchData();
   }, []);
   
   const handleRefresh = () => {
-    fetchDevices();
+    fetchData();
     if (onRefresh) onRefresh();
   };
   
@@ -42,7 +48,9 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const assignedCount = devices.filter(d => d.status === 'assigned').length;
   const missingCount = devices.filter(d => d.status === 'missing').length;
   const stolenCount = devices.filter(d => d.status === 'stolen').length;
-  const pendingCount = devices.filter(d => d.requestedBy).length;
+  
+  // Count pending requests from the requests data, not from devices
+  const pendingCount = requests.filter(r => r.status === 'pending').length;
   
   const StatusCard = ({ 
     icon: Icon, 

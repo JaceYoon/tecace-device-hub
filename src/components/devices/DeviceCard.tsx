@@ -35,6 +35,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   const { user, isManager, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean,
     title: string,
@@ -61,10 +62,36 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
     });
   };
 
-  const handleRequestDevice = () => {
+  const handleRequestDevice = async () => {
     if (!user) return;
+    
+    // Prevent requesting if this device is already requested by anyone
+    if (isRequested) {
+      toast.error('This device is already requested', {
+        description: 'Please wait until the current request is processed'
+      });
+      return;
+    }
 
-    showConfirmation(
+    // Check if user has already requested other devices
+    try {
+      setIsProcessing(true);
+      const requests = await dataService.getRequests();
+      const userPendingRequests = requests.filter(
+        req => req.userId === user.id && 
+               req.status === 'pending' && 
+               req.type === 'assign'
+      );
+      
+      if (userPendingRequests.some(req => req.deviceId === device.id)) {
+        toast.error('You have already requested this device', {
+          description: 'Please wait for your current request to be processed'
+        });
+        setIsProcessing(false);
+        return;
+      }
+      
+      showConfirmation(
         "Request Device",
         `Are you sure you want to request ${device.name}?`,
         async () => {
@@ -77,7 +104,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
               type: 'assign',
             });
 
-            // Don't update the device directly since this is restricted to admins
             toast.success('Device requested successfully', {
               description: 'Your request has been submitted for approval'
             });
@@ -85,9 +111,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           } catch (error) {
             console.error('Error requesting device:', error);
             toast.error('Failed to request device');
+          } finally {
+            setIsProcessing(false);
           }
         }
-    );
+      );
+    } catch (error) {
+      console.error('Error checking existing requests:', error);
+      setIsProcessing(false);
+      toast.error('Failed to process your request');
+    }
   };
 
   const handleReleaseDevice = () => {
@@ -331,9 +364,19 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                           className="w-full"
                           size="sm"
                           onClick={handleRequestDevice}
+                          disabled={isProcessing}
                       >
-                        Request Device
-                        <ChevronRight className="h-4 w-4 ml-1" />
+                        {isProcessing ? (
+                          <>
+                            <Clock className="h-4 w-4 mr-1 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>
+                            Request Device
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                          </>
+                        )}
                       </Button>
                   )}
 
