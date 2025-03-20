@@ -22,6 +22,7 @@ export interface Device {
   status: DeviceStatus;
   deviceStatus?: string;
   receivedDate?: Date;
+  returnDate?: Date;
   assignedTo?: string; // Changed from User to string (user ID)
   addedBy: string; // Changed from User to string (user ID)
   notes?: string;

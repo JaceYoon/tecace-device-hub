@@ -13,6 +13,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
       Status: device.status,
       'Device Status': device.deviceStatus || '',
       'Received Date': device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+      'Return Date': device.returnDate ? new Date(device.returnDate).toLocaleDateString() : '',
       Assigned: device.assignedTo || 'No',
       Notes: device.notes || '',
       'Created At': new Date(device.createdAt).toLocaleDateString(),
@@ -31,6 +32,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     { wch: 10 }, // Status
     { wch: 15 }, // Device Status
     { wch: 15 }, // Received Date
+    { wch: 15 }, // Return Date
     { wch: 10 }, // Assigned
     { wch: maxWidth }, // Notes
     { wch: 12 }, // Created At
