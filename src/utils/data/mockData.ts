@@ -31,6 +31,7 @@ export const mockDevices: Device[] = [
   {
     id: '1',
     project: 'iPhone 13 Pro',
+    projectGroup: 'Eureka',  // Added projectGroup
     type: 'Smartphone',
     imei: '123456789012345',
     serialNumber: 'ABCD1234XYZ',
@@ -44,6 +45,7 @@ export const mockDevices: Device[] = [
   {
     id: '2',
     project: 'MacBook Pro M1',
+    projectGroup: 'Eureka',  // Added projectGroup
     type: 'Laptop',
     imei: '987654321098765',
     serialNumber: 'MBP20221234',
@@ -58,6 +60,7 @@ export const mockDevices: Device[] = [
   {
     id: '3',
     project: 'iPad Air',
+    projectGroup: 'Eureka',  // Added projectGroup
     type: 'Tablet',
     imei: '567890123456789',
     serialNumber: 'IPAD2022987',
@@ -72,6 +75,7 @@ export const mockDevices: Device[] = [
   {
     id: '4',
     project: 'Samsung Galaxy S22',
+    projectGroup: 'Eureka',  // Added projectGroup
     type: 'Smartphone',
     imei: '678901234567890',
     serialNumber: 'SGS22ABC123',
@@ -86,6 +90,7 @@ export const mockDevices: Device[] = [
   {
     id: '5',
     project: 'Dell XPS 13',
+    projectGroup: 'Eureka',  // Added projectGroup
     type: 'Laptop',
     imei: '345678901234567',
     serialNumber: 'XPS13DEF456',
