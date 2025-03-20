@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -24,15 +25,19 @@ const Dashboard: React.FC = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Redirect to login if not authenticated
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
     }
   }, [isAuthenticated, navigate]);
 
+  // Only fetch data if user is authenticated
   useEffect(() => {
+    // Exit early if not authenticated
     if (!isAuthenticated || !user) {
       setIsLoading(false);
+      setRequests([]);
       return;
     }
 
@@ -44,7 +49,10 @@ const Dashboard: React.FC = () => {
         setRequests(allRequests);
       } catch (error) {
         console.error('Error fetching requests:', error);
-        toast.error('Failed to load requests');
+        // Only show toast for errors not related to auth
+        if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
+          toast.error('Failed to load requests');
+        }
       } finally {
         setIsLoading(false);
       }
@@ -75,12 +83,14 @@ const Dashboard: React.FC = () => {
     }
   };
 
+  // If not authenticated, show nothing (redirect will happen)
   if (!isAuthenticated) {
     return null;
   }
 
   if (!user) return null;
 
+  // Only get pending requests if we have requests
   const pendingRequests = requests.filter(request => request.status === 'pending') || [];
 
   const myDeviceFilter = user.id;

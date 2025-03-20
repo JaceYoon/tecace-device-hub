@@ -3,8 +3,8 @@ import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 import { deviceStore, userStore, requestStore } from '@/utils/data';
 
-// Setting to false to use the API by default
-const USE_LOCAL_STORAGE = false;
+// Setting to true to use mock data when API fails
+const USE_LOCAL_STORAGE = true;
 
 /**
  * This service acts as a facade over both the API and localStorage implementations

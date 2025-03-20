@@ -15,10 +15,13 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, isManager, isAuthenticated } = useAuth();
+  const { isAdmin, isManager, isAuthenticated, user } = useAuth();
   
   const fetchData = async () => {
-    if (!isAuthenticated) {
+    // Exit immediately if not authenticated
+    if (!isAuthenticated || !user) {
+      setDevices([]);
+      setRequests([]);
       setLoading(false);
       return;
     }
@@ -35,14 +38,25 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
       setRequests(allRequests);
     } catch (error) {
       console.error('Error fetching data for status summary:', error);
+      // Clear data on error to prevent stale data display
+      setDevices([]);
+      setRequests([]);
     } finally {
       setLoading(false);
     }
   };
   
   useEffect(() => {
-    fetchData();
-  }, [isAuthenticated]);
+    // Only fetch if authenticated
+    if (isAuthenticated) {
+      fetchData();
+    } else {
+      // Reset data if not authenticated
+      setDevices([]);
+      setRequests([]);
+      setLoading(false);
+    }
+  }, [isAuthenticated, user]);
   
   const handleRefresh = () => {
     fetchData();

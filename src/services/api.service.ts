@@ -1,11 +1,12 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to false to use real API
-let devMode = false;
+// Development mode flag - set to true if you want to use mock data instead of real API
+let devMode = true;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -62,18 +63,22 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         credentials: 'include', // Important for cookies/session
       });
 
-      // Handle non-OK responses
+      // Check for auth-related endpoints
+      const isAuthEndpoint = endpoint.startsWith('/auth');
+      
+      // Handle unauthorized responses differently for non-auth endpoints
+      if (response.status === 401 && !isAuthEndpoint) {
+        const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
+        console.error(`API error response: ${response.status}`, errorData);
+        
+        // Just throw the error, but with a specific message that we can check for
+        throw new Error(errorData.message || 'Unauthorized - Please log in');
+      }
+      
+      // Handle other non-OK responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error(`API error response: ${response.status}`, errorData);
-        
-        // If unauthorized and on an authenticated endpoint, don't show error toast
-        if (response.status === 401 && 
-            (endpoint.startsWith('/devices') || 
-             endpoint.startsWith('/users'))) {
-          throw new Error(errorData.message || `Unauthorized`);
-        }
-        
         throw new Error(errorData.message || `API error: ${response.status}`);
       }
 
@@ -83,8 +88,10 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     } catch (error) {
       console.error(`API error for ${endpoint}:`, error);
       
-      // Only show toast for non-auth related errors
-      if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
+      // Only show toast for non-auth related errors and non-auth endpoints
+      if (!(error instanceof Error && 
+          (error.message.includes('Unauthorized') || 
+           error.message.includes('Failed to fetch')))) {
         toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
       }
       
@@ -148,6 +155,12 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
       return { success: true, user: newUser } as unknown as T;
     }
+  }
+
+  // Check if user is logged in for non-auth endpoints in dev mode
+  const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+  if (!isLoggedIn && !endpoint.startsWith('/auth')) {
+    throw new Error('Unauthorized - Please log in');
   }
 
   // Device endpoints
