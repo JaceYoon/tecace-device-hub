@@ -12,7 +12,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deviceData, setDeviceData] = useState({
     project: '',
-    projectGroup: 'Eureka', // Default value set to "Eureka"
+    projectGroup: '',
     type: 'Smartphone',
     imei: '',
     serialNumber: '',
@@ -106,7 +106,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       // Reset form
       setDeviceData({
         project: '',
-        projectGroup: 'Eureka',
+        projectGroup: '',
         type: 'Smartphone',
         imei: '',
         serialNumber: '',

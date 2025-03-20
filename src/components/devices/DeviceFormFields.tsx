@@ -117,7 +117,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             name="deviceStatus"
             value={deviceData.deviceStatus || ''}
             onChange={handleChange}
-            placeholder="e.g. Working, Damaged, etc."
+            placeholder="e.g. Mukundan or Matt"
           />
         </div>
 
