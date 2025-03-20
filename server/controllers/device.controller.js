@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -48,10 +47,13 @@ exports.findAll = async (req, res) => {
     if (type) condition.type = type;
     if (status) condition.status = status;
 
-    // Regular users shouldn't see missing/stolen devices (unless they're managers)
-    if (req.user.role !== 'manager') {
+    // Regular users shouldn't see missing/stolen devices, but managers and admins should
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') {
       condition.status = { [Op.notIn]: ['missing', 'stolen'] };
     }
+
+    console.log("User role:", req.user.role);
+    console.log("Applying filter condition:", condition);
 
     const devices = await Device.findAll({
       where: condition,
@@ -61,8 +63,10 @@ exports.findAll = async (req, res) => {
       ]
     });
 
+    console.log(`Found ${devices.length} devices`);
     res.json(devices);
   } catch (err) {
+    console.error("Error fetching devices:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -251,9 +255,12 @@ exports.findAllRequests = async (req, res) => {
     let condition = {};
 
     // Regular users should only see their own requests
-    if (req.user.role !== 'manager') {
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') {
       condition.userId = req.user.id;
     }
+
+    console.log("User role for requests:", req.user.role);
+    console.log("Request condition:", condition);
 
     const requests = await Request.findAll({
       where: condition,
@@ -265,8 +272,10 @@ exports.findAllRequests = async (req, res) => {
       order: [['createdAt', 'DESC']]
     });
 
+    console.log(`Found ${requests.length} requests`);
     res.json(requests);
   } catch (err) {
+    console.error("Error fetching requests:", err);
     res.status(500).json({ message: err.message });
   }
 };

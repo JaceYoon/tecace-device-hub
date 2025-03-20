@@ -4,7 +4,7 @@ const router = express.Router();
 const deviceController = require('../controllers/device.controller');
 const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
-// Get all requests - Must be before /:id route to avoid conflict
+// Get all requests endpoint must be before /:id route to avoid conflict
 router.get('/requests/all', isAuthenticated, deviceController.findAllRequests);
 
 // Get all devices

@@ -18,7 +18,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [loading, setLoading] = useState(true);
-  const { isManager, isAdmin } = useAuth();
+  const { isManager, isAdmin, user } = useAuth();
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
@@ -61,7 +61,12 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     // If specific status filter is provided via props
     if (props.filterByStatus && props.filterByStatus.length > 0) {
       if (!props.filterByStatus.includes(device.status)) {
-        return false;
+        // Special handling for pending requests
+        if (props.filterByStatus.includes('pending') && device.requestedBy) {
+          return true;
+        } else {
+          return false;
+        }
       }
     }
 

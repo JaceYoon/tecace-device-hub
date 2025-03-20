@@ -325,8 +325,10 @@ export const deviceService = {
       body: JSON.stringify({ status })
     }),
 
-  getAllRequests: (): Promise<DeviceRequest[]> =>
-    apiCall<DeviceRequest[]>('/devices/requests/all'),
+  getAllRequests: (): Promise<DeviceRequest[]> => {
+    console.log('Fetching all device requests');
+    return apiCall<DeviceRequest[]>('/devices/requests/all');
+  },
 };
 
 // User services
