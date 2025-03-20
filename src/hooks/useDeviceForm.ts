@@ -12,7 +12,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deviceData, setDeviceData] = useState({
     project: '',
-    deviceType: 'Smartphone',
+    type: 'Smartphone',
+    deviceName: '',
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -56,10 +57,10 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const handleSubmit = async (e: React.FormEvent, userId: string) => {
     e.preventDefault();
     
-    const { project, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, type, deviceName, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
-    if (!project || !deviceType || !imei || !serialNumber) {
+    if (!project || !type || !imei || !serialNumber) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -70,7 +71,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       // Add the device using the service
       const newDevice = await dataService.addDevice({
         project,
-        deviceType,
+        type,
+        deviceName: deviceName || undefined,
         imei,
         serialNumber,
         status: 'available',
@@ -87,7 +89,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       // Reset form
       setDeviceData({
         project: '',
-        deviceType: 'Smartphone',
+        type: 'Smartphone',
+        deviceName: '',
         imei: '',
         serialNumber: '',
         deviceStatus: '',

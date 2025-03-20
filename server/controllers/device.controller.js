@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -8,12 +7,12 @@ const Op = db.Sequelize.Op;
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { project, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
+    const { project, type, deviceName, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
 
     console.log('Creating device with data:', req.body);
 
     // Validate request
-    if (!project || !deviceType || !imei || !serialNumber) {
+    if (!project || !type || !imei || !serialNumber) {
       console.log('Validation failed: Missing required fields');
       return res.status(400).json({ message: 'Required fields missing' });
     }
@@ -21,7 +20,8 @@ exports.create = async (req, res) => {
     // Create device
     const device = await Device.create({
       project,
-      deviceType,
+      type,
+      deviceName,
       imei,
       serialNumber,
       deviceStatus,
@@ -43,11 +43,11 @@ exports.create = async (req, res) => {
 // Find all devices
 exports.findAll = async (req, res) => {
   try {
-    const { project, deviceType, status } = req.query;
+    const { project, type, status } = req.query;
     let condition = {};
 
     if (project) condition.project = { [Op.like]: `%${project}%` };
-    if (deviceType) condition.deviceType = deviceType;
+    if (type) condition.type = type;
     if (status) condition.status = status;
 
     // Regular users shouldn't see missing/stolen devices, but managers and admins should
@@ -143,7 +143,7 @@ exports.findOne = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId } = req.body;
+    const { project, type, deviceName, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId } = req.body;
 
     const device = await Device.findByPk(req.params.id);
 
@@ -154,7 +154,8 @@ exports.update = async (req, res) => {
     // Update device
     await device.update({
       project: project || device.project,
-      deviceType: deviceType || device.deviceType,
+      type: type || device.type,
+      deviceName: deviceName !== undefined ? deviceName : device.deviceName,
       imei: imei || device.imei,
       serialNumber: serialNumber || device.serialNumber,
       status: status || device.status,

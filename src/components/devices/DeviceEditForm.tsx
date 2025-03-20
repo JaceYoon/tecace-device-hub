@@ -21,7 +21,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   
   const [deviceData, setDeviceData] = useState({
     project: device.project,
-    deviceType: device.deviceType,
+    type: device.type,
+    deviceName: device.deviceName || '',
     imei: device.imei,
     serialNumber: device.serialNumber,
     status: device.status,
@@ -71,10 +72,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, type, deviceName, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
-    if (!project || !deviceType || !imei || !serialNumber) {
+    if (!project || !type || !imei || !serialNumber) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -85,7 +86,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       // Update the device using the service
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
-        deviceType,
+        type,
+        deviceName: deviceName || undefined,
         imei,
         serialNumber,
         status,

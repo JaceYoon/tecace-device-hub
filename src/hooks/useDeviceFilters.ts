@@ -22,7 +22,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
   // Get unique device types from the devices array
   const deviceTypes = ['all', ...new Set(
-    devices.map(device => device.deviceType)
+    devices.map(device => device.type)
       .filter(Boolean)
       .sort()
   )];
@@ -89,7 +89,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     }
 
     // Filter by type
-    if (typeFilter !== 'all' && device.deviceType !== typeFilter) {
+    if (typeFilter !== 'all' && device.type !== typeFilter) {
       return false;
     }
 

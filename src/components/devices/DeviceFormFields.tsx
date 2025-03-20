@@ -20,7 +20,8 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 interface DeviceFormFieldsProps {
   deviceData: {
     project: string;
-    deviceType: string;
+    type: string;
+    deviceName?: string;
     imei: string;
     serialNumber: string;
     status?: string;
@@ -58,10 +59,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
       
       <div className="space-y-2">
-        <Label htmlFor="deviceType">Device Type *</Label>
+        <Label htmlFor="type">Device Type *</Label>
         <Select
-          value={deviceData.deviceType}
-          onValueChange={(value) => handleSelectChange(value, 'deviceType')}
+          value={deviceData.type}
+          onValueChange={(value) => handleSelectChange(value, 'type')}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select device type" />
@@ -72,6 +73,17 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="deviceName">Device Name</Label>
+        <Input
+          id="deviceName"
+          name="deviceName"
+          value={deviceData.deviceName || ''}
+          onChange={handleChange}
+          placeholder="e.g. iPhone 13 Pro Max"
+        />
       </div>
       
       {isEditMode && (
