@@ -12,6 +12,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deviceData, setDeviceData] = useState({
     project: '',
+    projectGroup: 'Eureka', // Default value set to "Eureka"
     type: 'Smartphone',
     imei: '',
     serialNumber: '',
@@ -26,6 +27,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     'Laptop',
     'Desktop',
     'Smartwatch',
+    'C-Type',
+    'Lunchbox',
     'Box',
     'Accessory',
     'Other',
@@ -56,10 +59,10 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const handleSubmit = async (e: React.FormEvent, userId: string) => {
     e.preventDefault();
     
-    const { project, type, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
-    if (!project || !type || !imei || !serialNumber) {
+    if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -70,9 +73,10 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       // Add the device using the service
       const newDevice = await dataService.addDevice({
         project,
+        projectGroup,
         type,
-        imei,
-        serialNumber,
+        imei: imei || undefined,
+        serialNumber: serialNumber || undefined,
         status: 'available',
         deviceStatus: deviceStatus || undefined,
         receivedDate: receivedDate || undefined,
@@ -87,6 +91,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       // Reset form
       setDeviceData({
         project: '',
+        projectGroup: 'Eureka',
         type: 'Smartphone',
         imei: '',
         serialNumber: '',

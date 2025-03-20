@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 interface DeviceFormFieldsProps {
   deviceData: {
     project: string;
+    projectGroup: string;
     type: string;
     imei: string;
     serialNumber: string;
@@ -45,16 +46,30 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 }) => {
   return (
     <div className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="project">Project *</Label>
-        <Input
-          id="project"
-          name="project"
-          value={deviceData.project}
-          onChange={handleChange}
-          placeholder="e.g. iPhone 13 Pro"
-          required
-        />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <Label htmlFor="project">Project *</Label>
+          <Input
+            id="project"
+            name="project"
+            value={deviceData.project}
+            onChange={handleChange}
+            placeholder="e.g. E1, E2, E3"
+            required
+          />
+        </div>
+        
+        <div className="space-y-2">
+          <Label htmlFor="projectGroup">Project Group *</Label>
+          <Input
+            id="projectGroup"
+            name="projectGroup"
+            value={deviceData.projectGroup}
+            onChange={handleChange}
+            placeholder="e.g. Eureka"
+            required
+          />
+        </div>
       </div>
       
       <div className="space-y-2">
@@ -135,26 +150,24 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="imei">IMEI Number *</Label>
+          <Label htmlFor="imei">IMEI Number</Label>
           <Input
             id="imei"
             name="imei"
             value={deviceData.imei}
             onChange={handleChange}
             placeholder="15-digit IMEI number"
-            required
           />
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="serialNumber">Serial Number *</Label>
+          <Label htmlFor="serialNumber">Serial Number</Label>
           <Input
             id="serialNumber"
             name="serialNumber"
             value={deviceData.serialNumber}
             onChange={handleChange}
             placeholder="Device serial number"
-            required
           />
         </div>
       </div>

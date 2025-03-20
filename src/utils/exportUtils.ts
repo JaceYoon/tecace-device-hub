@@ -1,3 +1,4 @@
+
 import * as XLSX from 'xlsx';
 import { Device, DeviceRequest } from '@/types';
 
@@ -10,30 +11,29 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
   // Create a new workbook
   const workbook = XLSX.utils.book_new();
   
-  // Group devices by project
-  const devicesByProject = devices.reduce((acc, device) => {
-    const project = device.project;
-    if (!acc[project]) {
-      acc[project] = [];
+  // Group devices by projectGroup
+  const devicesByProjectGroup = devices.reduce((acc, device) => {
+    const projectGroup = device.projectGroup || 'Unknown';
+    if (!acc[projectGroup]) {
+      acc[projectGroup] = [];
     }
-    acc[project].push(device);
+    acc[projectGroup].push(device);
     return acc;
   }, {} as Record<string, Device[]>);
   
   // Define headers and their widths
   const headers = [
-    'Project', 'Device Type', 'IMEI', 'S/N', 'Notes', 'Received Date', 'Device Status', 'Returned Date'
+    'Project', 'Type', 'IMEI', 'S/N', 'Device Status', 'Received Date', 'Assigned To'
   ];
   
   const colWidths = [
-    { wch: 20 }, // Project
-    { wch: 20 }, // Device Type
-    { wch: 20 }, // IMEI
-    { wch: 20 }, // S/N
-    { wch: 30 }, // Notes
+    { wch: 15 }, // Project
+    { wch: 15 }, // Type
+    { wch: 18 }, // IMEI
+    { wch: 15 }, // S/N
+    { wch: 30 }, // Device Status
     { wch: 15 }, // Received Date
-    { wch: 20 }, // Device Status
-    { wch: 15 }, // Returned Date
+    { wch: 15 }, // Assigned To
   ];
   
   // Create worksheet data
@@ -43,29 +43,27 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
   wsData.push(headers);
   
   // Process each project group
-  Object.entries(devicesByProject).forEach(([project, projectDevices]) => {
-    // Add device rows for this project
-    projectDevices.forEach(device => {
+  Object.entries(devicesByProjectGroup).forEach(([projectGroup, groupDevices]) => {
+    // Add device rows for this project group
+    groupDevices.forEach(device => {
       wsData.push([
         device.project,
         device.type,
-        device.imei,
-        device.serialNumber,
-        device.notes || '',
-        device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+        device.imei || '',
+        device.serialNumber || '',
         device.deviceStatus || '',
-        device.returnDate ? new Date(device.returnDate).toLocaleDateString() : ''
+        device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+        device.assignedTo || ''
       ]);
     });
     
-    // Add summary row for this project
+    // Add summary row for this project group
     wsData.push([
-      `${project}`,
-      '',
-      `Total devices = ${projectDevices.length}`,
+      `${projectGroup}`,
       '',
       '',
       '',
+      `Total devices = ${groupDevices.length}`,
       '',
       ''
     ]);
@@ -87,10 +85,10 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     alignment: { horizontal: "center" }
   };
   
-  // Style project summary rows
+  // Style project summary rows - blue with orange text
   const summaryStyle = {
-    fill: { fgColor: { rgb: "B4C6E7" } },
-    font: { bold: true, color: { rgb: "000000" } }
+    fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue background
+    font: { bold: true, color: { rgb: "E36C09" } } // Orange text
   };
   
   // Apply styles
@@ -105,8 +103,8 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     }
     
     // Apply summary style - check if this is a summary row (contains 'Total devices')
-    const thirdCell = row[2];
-    if (typeof thirdCell === 'string' && thirdCell.includes('Total devices')) {
+    const fifthCell = row[4];
+    if (typeof fifthCell === 'string' && fifthCell.includes('Total devices')) {
       for (let i = 0; i < headers.length; i++) {
         const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: i });
         if (!worksheet[cellAddress]) {

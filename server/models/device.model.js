@@ -10,17 +10,21 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false
     },
+    projectGroup: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
     type: {
       type: Sequelize.STRING,
       allowNull: false
     },
     imei: {
       type: Sequelize.STRING,
-      unique: true
+      allowNull: true
     },
     serialNumber: {
       type: Sequelize.STRING,
-      unique: true
+      allowNull: true
     },
     status: {
       type: Sequelize.ENUM('available', 'assigned', 'missing', 'stolen'),

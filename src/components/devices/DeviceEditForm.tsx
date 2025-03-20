@@ -21,9 +21,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   
   const [deviceData, setDeviceData] = useState({
     project: device.project,
+    projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
-    imei: device.imei,
-    serialNumber: device.serialNumber,
+    imei: device.imei || '',
+    serialNumber: device.serialNumber || '',
     status: device.status,
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
@@ -36,6 +37,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     'Laptop',
     'Desktop',
     'Smartwatch',
+    'C-Type',
+    'Lunchbox',
     'Box',
     'Accessory',
     'Other',
@@ -71,10 +74,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, type, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
-    if (!project || !type || !imei || !serialNumber) {
+    if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -85,6 +88,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       // Update the device using the service
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
+        projectGroup,
         type,
         imei,
         serialNumber,

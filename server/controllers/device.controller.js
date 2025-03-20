@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -7,23 +8,23 @@ const Op = db.Sequelize.Op;
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { project, type, deviceName, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
 
     console.log('Creating device with data:', req.body);
 
     // Validate request
-    if (!project || !type || !imei || !serialNumber) {
+    if (!project || !type || !projectGroup) {
       console.log('Validation failed: Missing required fields');
-      return res.status(400).json({ message: 'Required fields missing' });
+      return res.status(400).json({ message: 'Required fields missing (project, type, projectGroup)' });
     }
 
     // Create device
     const device = await Device.create({
       project,
+      projectGroup,
       type,
-      deviceName,
-      imei,
-      serialNumber,
+      imei: imei || null,
+      serialNumber: serialNumber || null,
       deviceStatus,
       receivedDate,
       notes,
@@ -43,10 +44,11 @@ exports.create = async (req, res) => {
 // Find all devices
 exports.findAll = async (req, res) => {
   try {
-    const { project, type, status } = req.query;
+    const { project, type, status, projectGroup } = req.query;
     let condition = {};
 
     if (project) condition.project = { [Op.like]: `%${project}%` };
+    if (projectGroup) condition.projectGroup = { [Op.like]: `%${projectGroup}%` };
     if (type) condition.type = type;
     if (status) condition.status = status;
 
@@ -143,7 +145,7 @@ exports.findOne = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, type, deviceName, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId } = req.body;
 
     const device = await Device.findByPk(req.params.id);
 
@@ -154,10 +156,10 @@ exports.update = async (req, res) => {
     // Update device
     await device.update({
       project: project || device.project,
+      projectGroup: projectGroup || device.projectGroup,
       type: type || device.type,
-      deviceName: deviceName !== undefined ? deviceName : device.deviceName,
-      imei: imei || device.imei,
-      serialNumber: serialNumber || device.serialNumber,
+      imei: imei !== undefined ? imei : device.imei,
+      serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
       status: status || device.status,
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
