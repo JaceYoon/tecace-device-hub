@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -63,8 +64,34 @@ exports.findAll = async (req, res) => {
       ]
     });
 
+    // Get all pending requests to identify devices with requests
+    const pendingRequests = await Request.findAll({
+      where: { status: 'pending' }
+    });
+
+    // Map device IDs with pending requests
+    const deviceIdsWithPendingRequests = pendingRequests.map(req => req.deviceId);
+    
+    // Mark devices with pending requests
+    const devicesWithRequestInfo = devices.map(device => {
+      const deviceJson = device.toJSON();
+      
+      // Check if this device has pending requests
+      const hasPendingRequest = deviceIdsWithPendingRequests.includes(deviceJson.id);
+      
+      // If has pending request, find the user who requested it
+      if (hasPendingRequest) {
+        const request = pendingRequests.find(req => req.deviceId === deviceJson.id);
+        if (request) {
+          deviceJson.requestedBy = request.userId;
+        }
+      }
+      
+      return deviceJson;
+    });
+
     console.log(`Found ${devices.length} devices`);
-    res.json(devices);
+    res.json(devicesWithRequestInfo);
   } catch (err) {
     console.error("Error fetching devices:", err);
     res.status(500).json({ message: err.message });
@@ -90,7 +117,22 @@ exports.findOne = async (req, res) => {
       return res.status(403).json({ message: 'Access denied' });
     }
 
-    res.json(device);
+    // Check if device has pending requests
+    const pendingRequest = await Request.findOne({
+      where: { 
+        deviceId: device.id,
+        status: 'pending'
+      }
+    });
+
+    const deviceJson = device.toJSON();
+    
+    // If device has a pending request, add the requestedBy information
+    if (pendingRequest) {
+      deviceJson.requestedBy = pendingRequest.userId;
+    }
+
+    res.json(deviceJson);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
@@ -173,6 +215,18 @@ exports.requestDevice = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
+    // Check if there's already a pending request for this device
+    const existingRequest = await Request.findOne({
+      where: {
+        deviceId: device.id,
+        status: 'pending'
+      }
+    });
+
+    if (existingRequest) {
+      return res.status(400).json({ message: 'There is already a pending request for this device' });
+    }
+
     // Validate request
     if (type === 'assign' && device.status !== 'available') {
       return res.status(400).json({ message: 'Device is not available' });
@@ -188,6 +242,12 @@ exports.requestDevice = async (req, res) => {
       deviceId: device.id,
       userId: req.user.id
     });
+
+    // Update the device to indicate it has a pending request
+    if (type === 'assign') {
+      device.requestedBy = req.user.id;
+      await device.save();
+    }
 
     res.status(201).json(request);
   } catch (err) {
@@ -233,14 +293,22 @@ exports.processRequest = async (req, res) => {
       if (request.type === 'assign') {
         await device.update({
           status: 'assigned',
-          assignedToId: request.userId
+          assignedToId: request.userId,
+          requestedBy: null
         });
       } else if (request.type === 'release') {
         await device.update({
           status: 'available',
-          assignedToId: null
+          assignedToId: null,
+          requestedBy: null
         });
       }
+    } else {
+      // If rejected, just clear the requestedBy field
+      const device = await Device.findByPk(request.deviceId);
+      await device.update({
+        requestedBy: null
+      });
     }
 
     res.json(request);

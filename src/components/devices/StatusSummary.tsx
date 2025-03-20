@@ -44,12 +44,12 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
     if (onRefresh) onRefresh();
   };
   
-  const availableCount = devices.filter(d => d.status === 'available').length;
+  const availableCount = devices.filter(d => d.status === 'available' && !d.requestedBy).length;
   const assignedCount = devices.filter(d => d.status === 'assigned').length;
   const missingCount = devices.filter(d => d.status === 'missing').length;
   const stolenCount = devices.filter(d => d.status === 'stolen').length;
   
-  // Count pending requests from the requests data, not from devices
+  // Count pending requests directly from the requests data
   const pendingCount = requests.filter(r => r.status === 'pending').length;
   
   const StatusCard = ({ 

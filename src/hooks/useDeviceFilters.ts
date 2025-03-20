@@ -60,13 +60,14 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // If specific status filter is provided via props
     if (props.filterByStatus && props.filterByStatus.length > 0) {
-      if (!props.filterByStatus.includes(device.status)) {
-        // Special handling for pending requests
-        if (props.filterByStatus.includes('pending') && device.requestedBy) {
+      // For 'pending' status, include devices with requestedBy value
+      if (props.filterByStatus.includes('pending')) {
+        if (device.requestedBy || props.filterByStatus.includes(device.status)) {
           return true;
-        } else {
-          return false;
         }
+        return false;
+      } else if (!props.filterByStatus.includes(device.status)) {
+        return false;
       }
     }
 
@@ -80,6 +81,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     // Filter by status dropdown
     if (statusFilter !== 'all') {
       if (statusFilter === 'pending') {
+        // If filtering for pending devices, show devices with requestedBy value
         if (!device.requestedBy) return false;
       } else if (device.status !== statusFilter) {
         return false;
@@ -91,8 +93,8 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       return false;
     }
 
-    // Filter by available only
-    if (props.filterByAvailable && device.status !== 'available') {
+    // Filter by available only - but exclude devices with pending requests
+    if (props.filterByAvailable && (device.status !== 'available' || device.requestedBy)) {
       return false;
     }
 
