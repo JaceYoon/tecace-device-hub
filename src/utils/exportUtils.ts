@@ -27,25 +27,25 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     'Project', 'Device Type', 'IMEI', 'S/N', 'Notes', 'Received Date', 'Device Status', 'Returned Date'
   ];
   
-  // Define column widths
+  // Define column widths with updated values
   worksheet.columns = [
-    { header: headers[0], key: 'project', width: 20 },
-    { header: headers[1], key: 'type', width: 15 },
-    { header: headers[2], key: 'imei', width: 18 },
-    { header: headers[3], key: 'sn', width: 15 },
-    { header: headers[4], key: 'notes', width: 30 },
-    { header: headers[5], key: 'receivedDate', width: 15 },
-    { header: headers[6], key: 'deviceStatus', width: 20 },
-    { header: headers[7], key: 'returnedDate', width: 15 }
+    { header: headers[0], key: 'project', width: 32.5 },
+    { header: headers[1], key: 'type', width: 18.5 },
+    { header: headers[2], key: 'imei', width: 22.8 },
+    { header: headers[3], key: 'sn', width: 20 },
+    { header: headers[4], key: 'notes', width: 33.3 },
+    { header: headers[5], key: 'receivedDate', width: 17.9 },
+    { header: headers[6], key: 'deviceStatus', width: 33.5 },
+    { header: headers[7], key: 'returnedDate', width: 22.5 }
   ];
   
-  // Style the header row with darker gray and white text
+  // Style the header row with a8a4a4 background and white text
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FF555555' } // Darker gray background
+      fgColor: { argb: 'FFA8A4A4' } // Updated to #a8a4a4 background
     };
     cell.font = {
       bold: true,
@@ -176,19 +176,8 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     
     rowIndex++;
     
-    // Add empty row for spacing between project groups
-    const spacingRow = worksheet.addRow([]);
-    // Add borders to all cells in the spacing row
-    for (let col = 1; col <= headers.length; col++) {
-      const cell = worksheet.getCell(rowIndex, col);
-      cell.border = {
-        top: { style: 'thin', color: { argb: 'FF000000' } },
-        bottom: { style: 'thin', color: { argb: 'FF000000' } },
-        left: { style: 'thin', color: { argb: 'FF000000' } },
-        right: { style: 'thin', color: { argb: 'FF000000' } }
-      };
-    }
-    rowIndex++;
+    // Remove the empty row after the project group row as requested
+    // Instead, go directly to the next project group
   });
   
   // Generate and download the Excel file
