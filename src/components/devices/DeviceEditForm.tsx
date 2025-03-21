@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader2, Save } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
 import { Device, DeviceTypeCategory } from '@/types';
@@ -23,7 +23,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
-    deviceType: device.deviceType || '' as DeviceTypeCategory, // Changed from 'none' to empty string
+    deviceType: device.deviceType || 'none' as DeviceTypeCategory, // Changed from empty string to 'none'
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,
@@ -86,12 +86,15 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
+      // Convert 'none' back to proper device type value for storage
+      const finalDeviceType = deviceType === 'none' ? '' : deviceType;
+      
       // Update the device using the service
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
         type,
-        deviceType: deviceType || undefined, // Changed from checking for 'none'
+        deviceType: finalDeviceType || undefined,
         imei,
         serialNumber,
         status,
@@ -123,14 +126,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   };
   
   return (
-    <Card className="animate-slide-up shadow-soft">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Save className="h-5 w-5" />
-          Edit Device
-        </CardTitle>
-      </CardHeader>
-      
+    <Card className="animate-slide-up shadow-soft border-none">
       <form onSubmit={handleSubmit}>
         <CardContent>
           <DeviceFormFields

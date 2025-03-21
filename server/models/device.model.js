@@ -1,3 +1,4 @@
+
 module.exports = (sequelize, Sequelize) => {
   const Device = sequelize.define('device', {
     id: {
@@ -18,9 +19,9 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     deviceType: {
-      type: Sequelize.ENUM('C-Type', 'Lunchbox', ''),
+      type: Sequelize.ENUM('C-Type', 'Lunchbox', 'none', ''),
       allowNull: true,
-      defaultValue: ''
+      defaultValue: 'none'
     },
     imei: {
       type: Sequelize.STRING,

@@ -95,8 +95,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               <SelectValue placeholder="Select device category" />
             </SelectTrigger>
             <SelectContent>
-              {/* Removed 'none' option */}
-              <SelectItem value="">Select a category</SelectItem>
+              {/* Replace empty value with a non-empty string */}
+              <SelectItem value="none">Select a category</SelectItem>
               <SelectItem value="C-Type">C-Type</SelectItem>
               <SelectItem value="Lunchbox">Lunchbox</SelectItem>
             </SelectContent>

@@ -73,9 +73,10 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   Object.entries(devicesByProjectGroup).forEach(([projectGroup, groupDevices]) => {
     // Add device rows for this project group
     groupDevices.forEach(device => {
+      // Fixed: Using type check for 'none' or empty string instead of direct comparison
       // Always use deviceType for the "Device Type" column
-      // If deviceType is empty, fall back to type
-      const displayType = device.deviceType && device.deviceType !== '' ? device.deviceType : device.type;
+      // If deviceType is empty or 'none', fall back to type
+      const displayType = (device.deviceType && device.deviceType !== 'none') ? device.deviceType : device.type;
       
       const dataRow = worksheet.addRow({
         project: device.project, // Using project name instead of projectGroup
@@ -292,4 +293,3 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     }, 0);
   });
 };
-
