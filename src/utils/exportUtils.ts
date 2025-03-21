@@ -2,7 +2,7 @@
 import * as XLSX from 'xlsx';
 import { Device, DeviceRequest } from '@/types';
 
-export const exportDevicesToExcel = (devices: Device[], filename: string = 'devices.xlsx') => {
+export const exportDevicesToExcel = (devices: Device[], filename: string = 'Complete_Device_Inventory2.xlsx') => {
   // If no devices, just return
   if (!devices || devices.length === 0) {
     return;
@@ -62,11 +62,11 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     // Add empty row for spacing
     wsData.push(Array(headers.length).fill(''));
     
-    // Add summary row for this project group
+    // Add project group summary row with Total devices count
     wsData.push([
       projectGroup, // Project group name
-      '', '', '', '',
       `Total devices = ${groupDevices.length}`,
+      '', '', '', '',
       '', ''
     ]);
     
@@ -121,6 +121,9 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
   let inGroupHeader = false;
   let currentGroup = '';
 
+  // Track rows that need merged cells
+  const merges = [];
+
   wsData.forEach((row, idx) => {
     // Header row
     if (idx === 0) {
@@ -131,7 +134,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
       }
     } 
     // Check if this is a summary row (contains 'Total devices')
-    else if (row[5] && typeof row[5] === 'string' && row[5].includes('Total devices')) {
+    else if (row[1] && typeof row[1] === 'string' && row[1].includes('Total devices')) {
       currentGroup = row[0] || currentGroup;
       
       // Apply summary row style
@@ -140,6 +143,15 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
         if (!worksheet[cellAddress]) worksheet[cellAddress] = { v: '' };
         worksheet[cellAddress].s = summaryRowStyle;
       }
+      
+      // Merge cells for the project group name (column A)
+      merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 0 } });
+      
+      // Merge cells for "Total devices = X" across columns B-F (1-5)
+      merges.push({ s: { r: rowIndex, c: 1 }, e: { r: rowIndex, c: 5 } });
+      
+      // Merge cells for the empty space in columns G-H (6-7)
+      merges.push({ s: { r: rowIndex, c: 6 }, e: { r: rowIndex, c: 7 } });
       
       // Set the next row as the group header
       inGroupHeader = true;
@@ -161,27 +173,16 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     rowIndex++;
   });
   
-  // Create a merged cell for each group's total devices count
-  const merges = [];
-  rowIndex = 0;
-  
-  wsData.forEach((row, idx) => {
-    if (row[5] && typeof row[5] === 'string' && row[5].includes('Total devices')) {
-      // Merge cells for "Total devices = X" across columns E-G
-      merges.push({ s: { r: rowIndex, c: 4 }, e: { r: rowIndex, c: 6 } });
-      
-      // Merge cells for project group name across columns A-D
-      merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 3 } });
-    }
-    rowIndex++;
-  });
-  
+  // Set the merged cells in the worksheet
   worksheet['!merges'] = merges;
   
   // Add the worksheet to the workbook
   XLSX.utils.book_append_sheet(workbook, worksheet, 'Devices');
   
-  // Write to file
+  // Add autofilter to the header row
+  worksheet['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(headers.length - 1)}1` };
+  
+  // Write to file with the specified filename
   XLSX.writeFile(workbook, filename);
 };
 
