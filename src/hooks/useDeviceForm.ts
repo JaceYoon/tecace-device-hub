@@ -15,7 +15,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     project: '',
     projectGroup: '',
     type: 'Smartphone',
-    deviceType: 'none' as DeviceTypeCategory, // Changed from empty string to 'none'
+    deviceType: 'none' as DeviceTypeCategory,
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -76,7 +76,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project,
         projectGroup,
         type,
-        deviceType: deviceType === 'none' ? undefined : deviceType, // Convert 'none' to undefined
+        deviceType: deviceType === 'none' ? undefined : deviceType,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -91,7 +91,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project,
         projectGroup,
         type,
-        deviceType: deviceType === 'none' ? undefined : deviceType, // Convert 'none' to undefined
+        deviceType: deviceType === 'none' ? undefined : deviceType,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -112,7 +112,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project: '',
         projectGroup: '',
         type: 'Smartphone',
-        deviceType: 'none' as DeviceTypeCategory, // Reset to 'none' instead of empty string
+        deviceType: 'none' as DeviceTypeCategory,
         imei: '',
         serialNumber: '',
         deviceStatus: '',
