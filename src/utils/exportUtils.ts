@@ -182,8 +182,32 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   // Add autofilter to the header row
   worksheet['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(headers.length - 1)}1` };
   
-  // Write to file with the specified filename
-  XLSX.writeFile(workbook, filename);
+  // Generate the XLSX file as a binary string
+  const xlsxOutput = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
+  
+  // Convert binary string to ArrayBuffer
+  const buffer = new ArrayBuffer(xlsxOutput.length);
+  const view = new Uint8Array(buffer);
+  for (let i = 0; i < xlsxOutput.length; i++) {
+    view[i] = xlsxOutput.charCodeAt(i) & 0xFF;
+  }
+  
+  // Create Blob and download
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  
+  // Create a download link and trigger it
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  
+  // Clean up
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 0);
 };
 
 export const exportRequestsToExcel = (requests: DeviceRequest[], filename: string = 'requests.xlsx') => {
