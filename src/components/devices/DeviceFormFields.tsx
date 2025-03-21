@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -95,7 +94,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               <SelectValue placeholder="Select device category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">None</SelectItem>
+              <SelectItem value="none">None</SelectItem>
               <SelectItem value="C-Type">C-Type</SelectItem>
               <SelectItem value="Lunchbox">Lunchbox</SelectItem>
             </SelectContent>
