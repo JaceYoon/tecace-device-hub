@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
@@ -15,7 +14,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     project: '',
     projectGroup: '',
     type: 'Smartphone',
-    deviceType: 'none' as DeviceTypeCategory, // Changed from empty string to 'none'
+    deviceType: 'C-Type' as DeviceTypeCategory,
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -71,14 +70,11 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     setIsSubmitting(true);
     
     try {
-      // Convert 'none' back to proper device type value for storage
-      const finalDeviceType = deviceType === 'none' ? '' : deviceType;
-      
       console.log('Adding device with data:', {
         project,
         projectGroup,
         type,
-        deviceType: finalDeviceType || undefined,
+        deviceType,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -92,7 +88,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project,
         projectGroup,
         type,
-        deviceType: finalDeviceType || undefined,
+        deviceType,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -112,7 +108,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project: '',
         projectGroup: '',
         type: 'Smartphone',
-        deviceType: 'none' as DeviceTypeCategory,
+        deviceType: 'C-Type' as DeviceTypeCategory,
         imei: '',
         serialNumber: '',
         deviceStatus: '',

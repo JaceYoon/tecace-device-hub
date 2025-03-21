@@ -2,7 +2,14 @@
 import React, { useState } from 'react';
 import { Device } from '@/types';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader } from '@/components/ui/dialog';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogTrigger, 
+  DialogTitle, 
+  DialogHeader,
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { Edit } from 'lucide-react';
 import DeviceEditForm from './DeviceEditForm';
 
@@ -31,6 +38,9 @@ const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ device, onDeviceUpd
       <DialogContent className="sm:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Edit Device</DialogTitle>
+          <DialogDescription>
+            Make changes to the device details below.
+          </DialogDescription>
         </DialogHeader>
         <DeviceEditForm 
           device={device} 

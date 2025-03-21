@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -23,7 +22,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
-    deviceType: device.deviceType || 'none' as DeviceTypeCategory, // Changed from empty string to 'none'
+    deviceType: device.deviceType || 'C-Type' as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,
@@ -77,7 +76,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
     
-    // Basic validation
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
       return;
@@ -86,15 +84,11 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
-      // Convert 'none' back to proper device type value for storage
-      const finalDeviceType = deviceType === 'none' ? '' : deviceType;
-      
-      // Update the device using the service
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
         type,
-        deviceType: finalDeviceType || undefined,
+        deviceType,
         imei,
         serialNumber,
         status,
@@ -108,7 +102,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
           description: `${project} has been updated`
         });
         
-        // Notify parent
         if (onDeviceUpdated) {
           onDeviceUpdated();
         }

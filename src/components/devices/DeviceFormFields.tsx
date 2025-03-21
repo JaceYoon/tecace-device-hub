@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -86,7 +85,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="deviceType">Device Category</Label>
+          <Label htmlFor="deviceType">Device Category *</Label>
           <Select 
             value={deviceData.deviceType}
             onValueChange={(value) => handleSelectChange(value, 'deviceType')}
@@ -95,8 +94,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               <SelectValue placeholder="Select device category" />
             </SelectTrigger>
             <SelectContent>
-              {/* Replace empty value with a non-empty string */}
-              <SelectItem value="none">Select a category</SelectItem>
               <SelectItem value="C-Type">C-Type</SelectItem>
               <SelectItem value="Lunchbox">Lunchbox</SelectItem>
             </SelectContent>
