@@ -40,17 +40,17 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     { header: headers[7], key: 'returnedDate', width: 15 }
   ];
   
-  // Style the header row
+  // Style the header row with darker gray and white text
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FFD0D0D0' } // Gray background
+      fgColor: { argb: 'FF555555' } // Darker gray background
     };
     cell.font = {
       bold: true,
-      color: { argb: 'FF000000' }
+      color: { argb: 'FFFFFFFF' } // White text
     };
     cell.border = {
       top: { style: 'thin', color: { argb: 'FF000000' } },
@@ -110,18 +110,41 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
       '', ''
     ]);
     
-    // Style summary row with light blue background and orange text
+    // Style summary row with #9C5700 color and centered text
+    // Make projectGroup non-bold and "Total devices" partially bold
     summaryRow.eachCell((cell, colNumber) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFB4C6E7' } // Light blue background
+        fgColor: { argb: 'FF9C5700' } // Orange color as requested (#9C5700)
       };
+      
+      // Set default font color to white for better contrast
       cell.font = {
-        bold: true,
-        color: { argb: 'FFE36C09' } // Orange text
+        color: { argb: 'FFFFFFFF' }, // White text
+        bold: false // Default to non-bold
       };
-      cell.alignment = { horizontal: 'left' };
+      
+      // Cell alignment to center
+      cell.alignment = { horizontal: 'center' };
+      
+      // Add borders to all cells
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+      
+      // Special formatting for "Total devices = X" cell
+      if (colNumber === 2) {
+        // This is a workaround since Excel doesn't support partial text formatting in a cell
+        // We'll make the cell bold and rely on the visual appearance
+        cell.font = {
+          color: { argb: 'FFFFFFFF' }, // White text
+          bold: true
+        };
+      }
     });
     
     // Merge cells for "Total devices = X" (columns B-F)
@@ -173,23 +196,25 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     { header: 'Processed By', key: 'processedBy', width: 20 }
   ];
   
-  // Style the header row
+  // Style the header row with darker gray and white text
   const headerRow = worksheet.getRow(1);
   headerRow.eachCell((cell) => {
     cell.fill = {
       type: 'pattern',
       pattern: 'solid',
-      fgColor: { argb: 'FFD0D0D0' } // Gray background
+      fgColor: { argb: 'FF555555' } // Darker gray background
     };
     cell.font = {
-      bold: true
+      bold: true,
+      color: { argb: 'FFFFFFFF' } // White text
     };
     cell.border = {
-      top: { style: 'thin' },
-      bottom: { style: 'thin' },
-      left: { style: 'thin' },
-      right: { style: 'thin' }
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
     };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
   });
   
   // Add request data
@@ -211,10 +236,10 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     if (rowIndex > 1) { // Skip header row which is already styled
       row.eachCell(cell => {
         cell.border = {
-          top: { style: 'thin' },
-          bottom: { style: 'thin' },
-          left: { style: 'thin' },
-          right: { style: 'thin' }
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
         };
       });
     }
