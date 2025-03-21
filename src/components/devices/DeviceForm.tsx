@@ -32,7 +32,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
   };
   
   return (
-    <Card className="animate-slide-up shadow-soft">
+    <Card className="w-full shadow-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Plus className="h-5 w-5" />

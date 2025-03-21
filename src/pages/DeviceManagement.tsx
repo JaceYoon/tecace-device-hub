@@ -111,7 +111,7 @@ const DeviceManagement: React.FC = () => {
         <StatusSummary onRefresh={handleRefresh} />
 
         {showAddForm && (
-          <div className="animate-slide-up">
+          <div className="mb-8">
             <DeviceForm
               onDeviceAdded={handleDeviceAdded}
               onCancel={() => setShowAddForm(false)}
