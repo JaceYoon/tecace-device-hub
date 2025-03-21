@@ -28,6 +28,7 @@ interface DeviceFormFieldsProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (value: string, field: string) => void;
   handleDateChange: (date: Date | undefined, field: string) => void;
+  isEditMode?: boolean;
 }
 
 const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
@@ -36,6 +37,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleChange,
   handleSelectChange,
   handleDateChange,
+  isEditMode = false,
 }) => {
   return (
     <div className="grid grid-cols-1 gap-6 mb-6">
