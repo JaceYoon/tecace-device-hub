@@ -31,24 +31,9 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // Prepare devices with user information
-      const devicesWithNames = devices.map(device => {
-        let assignedTo = '';
-        
-        if (device.assignedTo) {
-          const user = users.find(u => u.id === device.assignedTo);
-          if (user) {
-            assignedTo = user.name;
-          }
-        }
-        
-        return {
-          ...device,
-          assignedTo
-        };
-      });
-      
-      exportDevicesToExcel(devicesWithNames, `${exportFileName}.xlsx`);
+      // We no longer need to manually replace the assignedTo ID with name
+      // since the exportDevicesToExcel function will handle the formatting
+      exportDevicesToExcel(devices, `${exportFileName}.xlsx`);
       toast.success('Device list exported successfully!');
     } catch (error) {
       console.error('Export failed:', error);
