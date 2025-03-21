@@ -18,7 +18,7 @@ interface ExportButtonProps {
 const ExportButton: React.FC<ExportButtonProps> = ({
   devices,
   users,
-  exportFileName = 'Device_Inventory',
+  exportFileName = 'Complete_Device_Inventory2',
   variant = 'outline',
   className,
 }) => {
@@ -31,8 +31,7 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // We no longer need to manually replace the assignedTo ID with name
-      // since the exportDevicesToExcel function will handle the formatting
+      // Export with the correct filename
       exportDevicesToExcel(devices, `${exportFileName}.xlsx`);
       toast.success('Device list exported successfully!');
     } catch (error) {
