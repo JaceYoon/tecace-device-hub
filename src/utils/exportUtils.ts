@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest } from '@/types';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
@@ -74,7 +73,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   Object.entries(devicesByProjectGroup).forEach(([projectGroup, groupDevices]) => {
     // Add device rows for this project group
     groupDevices.forEach(device => {
-      // Use deviceType if available, otherwise fall back to type
+      // Always use deviceType for the "Device Type" column
       const displayType = device.deviceType || device.type;
       
       const dataRow = worksheet.addRow({
@@ -292,3 +291,4 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     }, 0);
   });
 };
+
