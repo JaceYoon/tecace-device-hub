@@ -16,12 +16,14 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { DeviceTypeCategory } from '@/types';
 
 interface DeviceFormFieldsProps {
   deviceData: {
     project: string;
     projectGroup: string;
     type: string;
+    deviceType?: DeviceTypeCategory;
     imei: string;
     serialNumber: string;
     status?: string;
@@ -85,6 +87,23 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             {deviceTypes.map(type => (
               <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="deviceType">Specific Device Type</Label>
+        <Select
+          value={deviceData.deviceType || ''}
+          onValueChange={(value) => handleSelectChange(value, 'deviceType')}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select specific device type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="">None</SelectItem>
+            <SelectItem value="C-Type">C-Type</SelectItem>
+            <SelectItem value="Lunchbox">Lunchbox</SelectItem>
           </SelectContent>
         </Select>
       </div>

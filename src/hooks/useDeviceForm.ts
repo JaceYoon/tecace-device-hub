@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
+import { DeviceTypeCategory } from '@/types';
 
 interface UseDeviceFormProps {
   onDeviceAdded?: () => void;
@@ -14,6 +15,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     project: '',
     projectGroup: '',
     type: 'Smartphone',
+    deviceType: '' as DeviceTypeCategory,
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -59,7 +61,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const handleSubmit = async (e: React.FormEvent, userId: string) => {
     e.preventDefault();
     
-    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
     if (!project || !type || !projectGroup) {
@@ -74,6 +76,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project,
         projectGroup,
         type,
+        deviceType: deviceType || undefined,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -88,6 +91,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project,
         projectGroup,
         type,
+        deviceType: deviceType || undefined,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -108,6 +112,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project: '',
         projectGroup: '',
         type: 'Smartphone',
+        deviceType: '',
         imei: '',
         serialNumber: '',
         deviceStatus: '',

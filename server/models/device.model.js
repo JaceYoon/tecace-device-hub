@@ -18,6 +18,10 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: false
     },
+    deviceType: {
+      type: Sequelize.ENUM('C-Type', 'Lunchbox', ''),
+      allowNull: true
+    },
     imei: {
       type: Sequelize.STRING,
       allowNull: true
