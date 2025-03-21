@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest } from '@/types';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
@@ -99,7 +98,26 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     });
     
     // Add empty row for spacing
-    worksheet.addRow([]);
+    const emptyRow = worksheet.addRow([]);
+    // Add borders to the empty row
+    emptyRow.eachCell((cell) => {
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    });
+    // Add borders to all cells in the empty row
+    for (let col = 1; col <= headers.length; col++) {
+      const cell = worksheet.getCell(rowIndex, col);
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    }
     rowIndex++;
     
     // Add project group summary row with Total devices count
@@ -110,23 +128,25 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
       '', ''
     ]);
     
-    // Style summary row with #9C5700 color and centered text
-    // Make projectGroup non-bold and "Total devices" partially bold
+    // Set row height for summary row
+    summaryRow.height = 70;
+    
+    // Style summary row with #b8c4e4 background and #9C5700 text
     summaryRow.eachCell((cell, colNumber) => {
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FF9C5700' } // Orange color as requested (#9C5700)
+        fgColor: { argb: 'FFB8C4E4' } // Light blue background (#b8c4e4)
       };
       
-      // Set default font color to white for better contrast
+      // Set default font color to #9C5700
       cell.font = {
-        color: { argb: 'FFFFFFFF' }, // White text
+        color: { argb: 'FF9C5700' }, // Orange text (#9C5700)
         bold: false // Default to non-bold
       };
       
       // Cell alignment to center
-      cell.alignment = { horizontal: 'center' };
+      cell.alignment = { horizontal: 'center', vertical: 'middle' };
       
       // Add borders to all cells
       cell.border = {
@@ -139,9 +159,10 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
       // Special formatting for "Total devices = X" cell
       if (colNumber === 2) {
         // This is a workaround since Excel doesn't support partial text formatting in a cell
-        // We'll make the cell bold and rely on the visual appearance
+        // We'll make the "Total devices" part bold but keep the "= X" part non-bold
+        // Since Excel doesn't support mixed formatting in a single cell, we'll rely on visual appearance
         cell.font = {
-          color: { argb: 'FFFFFFFF' }, // White text
+          color: { argb: 'FF9C5700' }, // Orange text (#9C5700)
           bold: true
         };
       }
@@ -156,7 +177,17 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     rowIndex++;
     
     // Add empty row for spacing between project groups
-    worksheet.addRow([]);
+    const spacingRow = worksheet.addRow([]);
+    // Add borders to all cells in the spacing row
+    for (let col = 1; col <= headers.length; col++) {
+      const cell = worksheet.getCell(rowIndex, col);
+      cell.border = {
+        top: { style: 'thin', color: { argb: 'FF000000' } },
+        bottom: { style: 'thin', color: { argb: 'FF000000' } },
+        left: { style: 'thin', color: { argb: 'FF000000' } },
+        right: { style: 'thin', color: { argb: 'FF000000' } }
+      };
+    }
     rowIndex++;
   });
   
@@ -175,7 +206,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     // Clean up
     setTimeout(() => {
       document.body.removeChild(a);
-      URL.revokeObjectURL(url); // Fixed: changed revoObjectURL to revokeObjectURL
+      URL.revokeObjectURL(url);
     }, 0);
   });
 };
@@ -264,7 +295,7 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     
     setTimeout(() => {
       document.body.removeChild(a);
-      URL.revokeObjectURL(url); // Fixed: changed from revoObjectURL to revokeObjectURL
+      URL.revokeObjectURL(url);
     }, 0);
   });
 };
