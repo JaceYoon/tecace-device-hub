@@ -1,4 +1,3 @@
-
 module.exports = (sequelize, Sequelize) => {
   const Device = sequelize.define('device', {
     id: {
@@ -20,7 +19,8 @@ module.exports = (sequelize, Sequelize) => {
     },
     deviceType: {
       type: Sequelize.ENUM('C-Type', 'Lunchbox', ''),
-      allowNull: true
+      allowNull: true,
+      defaultValue: ''
     },
     imei: {
       type: Sequelize.STRING,
@@ -50,7 +50,6 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: true
     },
-    // Add fields for foreign keys
     addedById: {
       type: Sequelize.INTEGER,
       allowNull: true,
