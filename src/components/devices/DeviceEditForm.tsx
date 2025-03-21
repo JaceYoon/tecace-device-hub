@@ -23,7 +23,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
-    deviceType: device.deviceType || 'none' as DeviceTypeCategory,
+    deviceType: device.deviceType || '' as DeviceTypeCategory, // Changed from 'none' to empty string
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,
@@ -91,7 +91,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         project,
         projectGroup,
         type,
-        deviceType: deviceType === 'none' ? undefined : deviceType,
+        deviceType: deviceType || undefined, // Changed from checking for 'none'
         imei,
         serialNumber,
         status,

@@ -74,7 +74,8 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     // Add device rows for this project group
     groupDevices.forEach(device => {
       // Always use deviceType for the "Device Type" column
-      const displayType = device.deviceType || device.type;
+      // If deviceType is empty, fall back to type
+      const displayType = device.deviceType && device.deviceType !== '' ? device.deviceType : device.type;
       
       const dataRow = worksheet.addRow({
         project: device.project, // Using project name instead of projectGroup

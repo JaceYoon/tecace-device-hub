@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
@@ -15,7 +14,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     project: '',
     projectGroup: '',
     type: 'Smartphone',
-    deviceType: 'none' as DeviceTypeCategory,
+    deviceType: '' as DeviceTypeCategory,
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -63,7 +62,6 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes } = deviceData;
     
-    // Basic validation
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
       return;
@@ -76,7 +74,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project,
         projectGroup,
         type,
-        deviceType: deviceType === 'none' ? undefined : deviceType,
+        deviceType: deviceType || undefined,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -86,12 +84,11 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         notes: notes || undefined,
       });
       
-      // Add the device using the service
       const newDevice = await dataService.addDevice({
         project,
         projectGroup,
         type,
-        deviceType: deviceType === 'none' ? undefined : deviceType,
+        deviceType: deviceType || undefined,
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         status: 'available',
@@ -107,12 +104,11 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         description: `${project} has been added to the inventory`
       });
       
-      // Reset form
       setDeviceData({
         project: '',
         projectGroup: '',
         type: 'Smartphone',
-        deviceType: 'none' as DeviceTypeCategory,
+        deviceType: '' as DeviceTypeCategory,
         imei: '',
         serialNumber: '',
         deviceStatus: '',
@@ -120,7 +116,6 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         notes: '',
       });
       
-      // Notify parent component
       if (onDeviceAdded) {
         onDeviceAdded();
       }
