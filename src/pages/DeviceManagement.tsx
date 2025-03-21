@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -13,6 +12,7 @@ import ExportButton from '@/components/devices/ExportButton';
 import RequestList from '@/components/devices/RequestList';
 import { dataService } from '@/services/data.service';
 import StatusSummary from '@/components/devices/StatusSummary';
+import { exportDevicesToExcel } from '@/utils/exportUtils';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -50,16 +50,7 @@ const DeviceManagement: React.FC = () => {
   const handleExportAll = async () => {
     try {
       const devices = await dataService.getDevices();
-
-      // Import the utility function
-      const { exportDevicesToExcel } = await import('@/utils/exportUtils');
-
-      // Export all devices
-      exportDevicesToExcel(
-          devices,
-          'Complete_Device_Inventory'
-      );
-
+      exportDevicesToExcel(devices, 'Complete_Device_Inventory2.xlsx');
       toast.success('Export successful');
     } catch (error) {
       console.error('Export error:', error);
@@ -117,10 +108,8 @@ const DeviceManagement: React.FC = () => {
             </div>
           </div>
 
-          {/* Status Summary */}
           <StatusSummary onRefresh={handleRefresh} />
 
-          {/* Add Device Form */}
           {showAddForm && (
               <div className="animate-slide-up">
                 <DeviceForm
@@ -130,7 +119,6 @@ const DeviceManagement: React.FC = () => {
               </div>
           )}
 
-          {/* Device Tabs */}
           <Tabs
               defaultValue={activeTab}
               onValueChange={setActiveTab}

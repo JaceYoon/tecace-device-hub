@@ -31,8 +31,9 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // Export with the correct filename
-      exportDevicesToExcel(devices, `${exportFileName}.xlsx`);
+      // Make sure the filename has the .xlsx extension
+      const filename = exportFileName.endsWith('.xlsx') ? exportFileName : `${exportFileName}.xlsx`;
+      exportDevicesToExcel(devices, filename);
       toast.success('Device list exported successfully!');
     } catch (error) {
       console.error('Export failed:', error);

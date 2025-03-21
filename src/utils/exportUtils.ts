@@ -1,6 +1,7 @@
 
-import * as XLSX from 'xlsx';
 import { Device, DeviceRequest } from '@/types';
+import ExcelJS from 'exceljs';
+import * as XLSX from 'xlsx';
 
 export const exportDevicesToExcel = (devices: Device[], filename: string = 'Complete_Device_Inventory2.xlsx') => {
   // If no devices, just return
@@ -9,7 +10,8 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   }
 
   // Create a new workbook
-  const workbook = XLSX.utils.book_new();
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Devices');
   
   // Group devices by projectGroup
   const devicesByProjectGroup = devices.reduce((acc, device) => {
@@ -21,211 +23,223 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     return acc;
   }, {} as Record<string, Device[]>);
   
-  // Define headers and their widths
+  // Define headers
   const headers = [
     'Project', 'Device Type', 'IMEI', 'S/N', 'Notes', 'Received Date', 'Device Status', 'Returned Date'
   ];
   
-  const colWidths = [
-    { wch: 20 }, // Project
-    { wch: 15 }, // Device Type
-    { wch: 18 }, // IMEI
-    { wch: 15 }, // S/N
-    { wch: 30 }, // Notes
-    { wch: 15 }, // Received Date
-    { wch: 20 }, // Device Status
-    { wch: 15 }, // Returned Date
+  // Define column widths
+  worksheet.columns = [
+    { header: headers[0], key: 'project', width: 20 },
+    { header: headers[1], key: 'type', width: 15 },
+    { header: headers[2], key: 'imei', width: 18 },
+    { header: headers[3], key: 'sn', width: 15 },
+    { header: headers[4], key: 'notes', width: 30 },
+    { header: headers[5], key: 'receivedDate', width: 15 },
+    { header: headers[6], key: 'deviceStatus', width: 20 },
+    { header: headers[7], key: 'returnedDate', width: 15 }
   ];
   
-  // Create worksheet data
-  const wsData: any[] = [];
+  // Style the header row
+  const headerRow = worksheet.getRow(1);
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD0D0D0' } // Gray background
+    };
+    cell.font = {
+      bold: true,
+      color: { argb: 'FF000000' }
+    };
+    cell.border = {
+      top: { style: 'thin', color: { argb: 'FF000000' } },
+      bottom: { style: 'thin', color: { argb: 'FF000000' } },
+      left: { style: 'thin', color: { argb: 'FF000000' } },
+      right: { style: 'thin', color: { argb: 'FF000000' } }
+    };
+    cell.alignment = { horizontal: 'center', vertical: 'middle' };
+  });
   
-  // Add header row
-  wsData.push(headers);
+  // Add autofilter to the header row
+  worksheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: headers.length }
+  };
+  
+  // Current row index (starting after header)
+  let rowIndex = 2;
   
   // Process each project group
   Object.entries(devicesByProjectGroup).forEach(([projectGroup, groupDevices]) => {
-    // Add device rows for this project group - displaying project name instead of projectGroup
+    // Add device rows for this project group
     groupDevices.forEach(device => {
-      wsData.push([
-        device.project, // Using project name instead of projectGroup
-        device.type,
-        device.imei || '',
-        device.serialNumber || '',
-        device.notes || '',
-        device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
-        device.deviceStatus || '',
-        '' // Placeholder for returned date (not in our data model yet)
-      ]);
+      const dataRow = worksheet.addRow({
+        project: device.project, // Using project name instead of projectGroup
+        type: device.type,
+        imei: device.imei || '',
+        sn: device.serialNumber || '',
+        notes: device.notes || '',
+        receivedDate: device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+        deviceStatus: device.deviceStatus || '',
+        returnedDate: '' // Placeholder for returned date
+      });
+      
+      // Style data row cells with borders
+      dataRow.eachCell((cell) => {
+        cell.border = {
+          top: { style: 'thin', color: { argb: 'FF000000' } },
+          bottom: { style: 'thin', color: { argb: 'FF000000' } },
+          left: { style: 'thin', color: { argb: 'FF000000' } },
+          right: { style: 'thin', color: { argb: 'FF000000' } }
+        };
+      });
+      
+      rowIndex++;
     });
     
     // Add empty row for spacing
-    wsData.push(Array(headers.length).fill(''));
+    worksheet.addRow([]);
+    rowIndex++;
     
     // Add project group summary row with Total devices count
-    wsData.push([
+    const summaryRow = worksheet.addRow([
       projectGroup, // Project group name
       `Total devices = ${groupDevices.length}`,
       '', '', '', '',
       '', ''
     ]);
     
-    // Add empty row for spacing between project groups
-    wsData.push(Array(headers.length).fill(''));
-  });
-  
-  // Create the worksheet
-  const worksheet = XLSX.utils.aoa_to_sheet(wsData);
-  
-  // Set column widths
-  worksheet['!cols'] = colWidths;
-  
-  // Style configuration
-  const headerStyle = {
-    fill: { fgColor: { rgb: "D0D0D0" } }, // Gray header
-    font: { bold: true, color: { rgb: "000000" } },
-    border: {
-      top: { style: 'thin', color: { rgb: "000000" } },
-      bottom: { style: 'thin', color: { rgb: "000000" } },
-      left: { style: 'thin', color: { rgb: "000000" } },
-      right: { style: 'thin', color: { rgb: "000000" } }
-    },
-    alignment: { horizontal: "center", vertical: "center" }
-  };
-  
-  const cellBorderStyle = {
-    border: {
-      top: { style: 'thin', color: { rgb: "000000" } },
-      bottom: { style: 'thin', color: { rgb: "000000" } },
-      left: { style: 'thin', color: { rgb: "000000" } },
-      right: { style: 'thin', color: { rgb: "000000" } }
-    }
-  };
-  
-  // Project group summary style - light blue with orange text
-  const summaryRowStyle = {
-    fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue background
-    font: { bold: true, color: { rgb: "E36C09" } }, // Orange text
-    alignment: { horizontal: "left" }
-  };
-  
-  // Project group header style - light blue background
-  const groupHeaderStyle = {
-    fill: { fgColor: { rgb: "B4C6E7" } }, // Light blue background  
-    font: { bold: true, color: { rgb: "996633" } }, // Brown text
-    alignment: { horizontal: "center" }
-  };
-  
-  // Apply styles to each cell
-  let rowIndex = 0;
-  let inGroupHeader = false;
-  let currentGroup = '';
-
-  // Track rows that need merged cells
-  const merges = [];
-
-  wsData.forEach((row, idx) => {
-    // Header row
-    if (idx === 0) {
-      for (let i = 0; i < headers.length; i++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: i });
-        if (!worksheet[cellAddress]) worksheet[cellAddress] = { v: '' };
-        worksheet[cellAddress].s = headerStyle;
-      }
-    } 
-    // Check if this is a summary row (contains 'Total devices')
-    else if (row[1] && typeof row[1] === 'string' && row[1].includes('Total devices')) {
-      currentGroup = row[0] || currentGroup;
-      
-      // Apply summary row style
-      for (let i = 0; i < headers.length; i++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: i });
-        if (!worksheet[cellAddress]) worksheet[cellAddress] = { v: '' };
-        worksheet[cellAddress].s = summaryRowStyle;
-      }
-      
-      // Merge cells for the project group name (column A)
-      merges.push({ s: { r: rowIndex, c: 0 }, e: { r: rowIndex, c: 0 } });
-      
-      // Merge cells for "Total devices = X" across columns B-F (1-5)
-      merges.push({ s: { r: rowIndex, c: 1 }, e: { r: rowIndex, c: 5 } });
-      
-      // Merge cells for the empty space in columns G-H (6-7)
-      merges.push({ s: { r: rowIndex, c: 6 }, e: { r: rowIndex, c: 7 } });
-      
-      // Set the next row as the group header
-      inGroupHeader = true;
-    }
-    // Apply group header style to the entire row after a summary row
-    else if (inGroupHeader && row.every(cell => cell === '')) {
-      inGroupHeader = false;
-    }
-    // Normal data rows - add borders
-    else if (row.some(cell => cell !== '')) {
-      for (let i = 0; i < headers.length; i++) {
-        const cellAddress = XLSX.utils.encode_cell({ r: rowIndex, c: i });
-        if (worksheet[cellAddress]) {
-          worksheet[cellAddress].s = cellBorderStyle;
-        }
-      }
-    }
+    // Style summary row with light blue background and orange text
+    summaryRow.eachCell((cell, colNumber) => {
+      cell.fill = {
+        type: 'pattern',
+        pattern: 'solid',
+        fgColor: { argb: 'FFB4C6E7' } // Light blue background
+      };
+      cell.font = {
+        bold: true,
+        color: { argb: 'FFE36C09' } // Orange text
+      };
+      cell.alignment = { horizontal: 'left' };
+    });
     
+    // Merge cells for "Total devices = X" (columns B-F)
+    worksheet.mergeCells(rowIndex, 2, rowIndex, 6);
+    
+    // Merge cells for empty space (columns G-H)
+    worksheet.mergeCells(rowIndex, 7, rowIndex, 8);
+    
+    rowIndex++;
+    
+    // Add empty row for spacing between project groups
+    worksheet.addRow([]);
     rowIndex++;
   });
   
-  // Set the merged cells in the worksheet
-  worksheet['!merges'] = merges;
-  
-  // Add the worksheet to the workbook
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Devices');
-  
-  // Add autofilter to the header row
-  worksheet['!autofilter'] = { ref: `A1:${XLSX.utils.encode_col(headers.length - 1)}1` };
-  
-  // Generate the XLSX file as a binary string
-  const xlsxOutput = XLSX.write(workbook, { bookType: 'xlsx', type: 'binary' });
-  
-  // Convert binary string to ArrayBuffer
-  const buffer = new ArrayBuffer(xlsxOutput.length);
-  const view = new Uint8Array(buffer);
-  for (let i = 0; i < xlsxOutput.length; i++) {
-    view[i] = xlsxOutput.charCodeAt(i) & 0xFF;
-  }
-  
-  // Create Blob and download
-  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = URL.createObjectURL(blob);
-  
-  // Create a download link and trigger it
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
-  document.body.appendChild(a);
-  a.click();
-  
-  // Clean up
-  setTimeout(() => {
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  }, 0);
+  // Generate and download the Excel file
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    
+    // Create a download link and trigger it
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.endsWith('.xlsx') ? filename : `${filename}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    
+    // Clean up
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url); // Fixed: changed revoObjectURL to revokeObjectURL
+    }, 0);
+  });
 };
 
 export const exportRequestsToExcel = (requests: DeviceRequest[], filename: string = 'requests.xlsx') => {
-  const worksheet = XLSX.utils.json_to_sheet(
-    requests.map(request => ({
-      ID: request.id,
-      'Device ID': request.deviceId,
-      'User ID': request.userId,
-      Status: request.status,
-      Type: request.type,
-      'Requested At': new Date(request.requestedAt).toLocaleDateString(),
-      'Processed At': request.processedAt ? new Date(request.processedAt).toLocaleDateString() : '',
-      'Processed By': request.processedBy || '',
-    }))
-  );
-
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Requests');
+  const workbook = new ExcelJS.Workbook();
+  const worksheet = workbook.addWorksheet('Requests');
   
-  XLSX.writeFile(workbook, filename);
+  // Define headers and columns
+  worksheet.columns = [
+    { header: 'ID', key: 'id', width: 10 },
+    { header: 'Device ID', key: 'deviceId', width: 15 },
+    { header: 'User ID', key: 'userId', width: 15 },
+    { header: 'Status', key: 'status', width: 15 },
+    { header: 'Type', key: 'type', width: 15 },
+    { header: 'Requested At', key: 'requestedAt', width: 20 },
+    { header: 'Processed At', key: 'processedAt', width: 20 },
+    { header: 'Processed By', key: 'processedBy', width: 20 }
+  ];
+  
+  // Style the header row
+  const headerRow = worksheet.getRow(1);
+  headerRow.eachCell((cell) => {
+    cell.fill = {
+      type: 'pattern',
+      pattern: 'solid',
+      fgColor: { argb: 'FFD0D0D0' } // Gray background
+    };
+    cell.font = {
+      bold: true
+    };
+    cell.border = {
+      top: { style: 'thin' },
+      bottom: { style: 'thin' },
+      left: { style: 'thin' },
+      right: { style: 'thin' }
+    };
+  });
+  
+  // Add request data
+  requests.forEach(request => {
+    worksheet.addRow({
+      id: request.id,
+      deviceId: request.deviceId,
+      userId: request.userId,
+      status: request.status,
+      type: request.type,
+      requestedAt: new Date(request.requestedAt).toLocaleDateString(),
+      processedAt: request.processedAt ? new Date(request.processedAt).toLocaleDateString() : '',
+      processedBy: request.processedBy || ''
+    });
+  });
+  
+  // Add borders to all data cells
+  worksheet.eachRow((row, rowIndex) => {
+    if (rowIndex > 1) { // Skip header row which is already styled
+      row.eachCell(cell => {
+        cell.border = {
+          top: { style: 'thin' },
+          bottom: { style: 'thin' },
+          left: { style: 'thin' },
+          right: { style: 'thin' }
+        };
+      });
+    }
+  });
+  
+  // Add autofilter
+  worksheet.autoFilter = {
+    from: { row: 1, column: 1 },
+    to: { row: 1, column: 8 }
+  };
+  
+  // Generate and download the Excel file
+  workbook.xlsx.writeBuffer().then(buffer => {
+    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+    const url = URL.createObjectURL(blob);
+    
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    
+    setTimeout(() => {
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url); // Fixed: changed from revoObjectURL to revokeObjectURL
+    }, 0);
+  });
 };
