@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Save } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
-import { Device } from '@/types';
+import { Device, DeviceTypeCategory } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
@@ -23,6 +23,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
+    deviceType: device.deviceType || '' as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,
@@ -74,7 +75,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
     
     // Basic validation
     if (!project || !type || !projectGroup) {
@@ -90,6 +91,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         project,
         projectGroup,
         type,
+        deviceType,
         imei,
         serialNumber,
         status,

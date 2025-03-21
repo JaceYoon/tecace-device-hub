@@ -12,12 +12,14 @@ export interface User {
 }
 
 export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen';
+export type DeviceTypeCategory = 'C-Type' | 'Lunchbox' | '';
 
 export interface Device {
   id: string;
   project: string;
   projectGroup: string;
   type: string;
+  deviceType?: DeviceTypeCategory;
   imei?: string;
   serialNumber?: string;
   status: DeviceStatus;
