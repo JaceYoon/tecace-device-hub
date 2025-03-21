@@ -73,11 +73,8 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   Object.entries(devicesByProjectGroup).forEach(([projectGroup, groupDevices]) => {
     // Add device rows for this project group
     groupDevices.forEach(device => {
-      // Only use deviceType if it's one of the special categories (C-Type or Lunchbox)
-      // Otherwise fall back to the type field
-      const displayType = device.deviceType && device.deviceType !== 'none' && device.deviceType !== '' 
-        ? device.deviceType 
-        : device.type;
+      // Always use deviceType for the "Device Type" column
+      const displayType = device.deviceType || device.type;
       
       const dataRow = worksheet.addRow({
         project: device.project, // Using project name instead of projectGroup
@@ -294,3 +291,4 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     }, 0);
   });
 };
+
