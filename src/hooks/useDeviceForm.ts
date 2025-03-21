@@ -112,7 +112,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project: '',
         projectGroup: '',
         type: 'Smartphone',
-        deviceType: '',
+        deviceType: '' as DeviceTypeCategory,
         imei: '',
         serialNumber: '',
         deviceStatus: '',
