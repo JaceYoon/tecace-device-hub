@@ -152,7 +152,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     // Clean up
     setTimeout(() => {
       document.body.removeChild(a);
-      URL.revoObjectURL(url);
+      URL.revokeObjectURL(url); // Fixed: changed revoObjectURL to revokeObjectURL
     }, 0);
   });
 };
@@ -239,7 +239,7 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
     
     setTimeout(() => {
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      URL.revokeObjectURL(url); // Fixed: changed from revoObjectURL to revokeObjectURL
     }, 0);
   });
 };
