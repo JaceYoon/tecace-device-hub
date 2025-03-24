@@ -9,7 +9,6 @@ import NotFound from './pages/NotFound';
 import DeviceManagement from './pages/DeviceManagement';
 import UserManagement from './pages/UserManagement';
 import ProfilePage from './pages/ProfilePage';
-import Navbar from './components/layout/Navbar';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { ThemeProvider } from 'next-themes';
 
@@ -30,7 +29,6 @@ function App() {
         <AuthProvider>
           <Router>
             <div className="min-h-screen flex flex-col">
-              <Navbar />
               <div className="flex-1">
                 <Routes>
                   <Route path="/" element={<Index />} />

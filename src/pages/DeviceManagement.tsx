@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -28,10 +27,9 @@ const DeviceManagement: React.FC = () => {
       return;
     }
     
-    // Only redirect if the user is not a manager or admin
+    // Only redirect if the user is not a manager or admin - but don't show toast
     if (!isManager && !isAdmin) {
       navigate('/dashboard');
-      // Remove toast so it doesn't show if access works
     }
 
     setIsLoading(false);
