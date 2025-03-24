@@ -25,7 +25,7 @@ router.delete('/:id', isAuthenticated, isAdmin, deviceController.delete);
 // Request a device
 router.post('/:id/request', isAuthenticated, deviceController.requestDevice);
 
-// Process a device request - modified to use custom middleware
+// Process a device request
 router.put('/requests/:id', isAuthenticated, deviceController.processRequest);
 
 // Cancel a device request (only the requester can cancel)
