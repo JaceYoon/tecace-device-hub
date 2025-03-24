@@ -334,6 +334,50 @@ exports.processRequest = async (req, res) => {
   }
 };
 
+// Cancel a device request
+exports.cancelRequest = async (req, res) => {
+  try {
+    const request = await Request.findByPk(req.params.id, {
+      include: [
+        { model: Device }
+      ]
+    });
+
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
+    }
+
+    if (request.status !== 'pending') {
+      return res.status(400).json({ message: 'Only pending requests can be cancelled' });
+    }
+
+    // Users can only cancel their own requests
+    if (request.userId !== req.user.id) {
+      return res.status(403).json({ message: 'You can only cancel your own requests' });
+    }
+
+    // Update request
+    await request.update({
+      status: 'cancelled',
+      processedById: req.user.id,
+      processedAt: new Date()
+    });
+
+    // Clear the requestedBy field on the device
+    const device = await Device.findByPk(request.deviceId);
+    if (device) {
+      await device.update({
+        requestedBy: null
+      });
+    }
+
+    res.json(request);
+  } catch (err) {
+    console.error("Error cancelling request:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Find all requests
 exports.findAllRequests = async (req, res) => {
   try {
