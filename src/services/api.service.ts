@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -26,6 +27,9 @@ export const setUserLoggedOut = () => {
   localStorage.removeItem('dev-user-logged-in');
   localStorage.removeItem('dev-user-id');
 };
+
+// Import the store data directly instead of using require()
+import { deviceStore, userStore, requestStore } from '../utils/data';
 
 // Helper function for API calls with dev mode fallback
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
@@ -129,9 +133,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
   
-  // Import the store data
-  const { deviceStore, userStore, requestStore } = require('../utils/data');
-  
   // Based on the endpoint, return appropriate data from stores
   if (endpoint === '/devices') {
     return deviceStore.getDevices() as unknown as T;
@@ -153,6 +154,95 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   
   if (endpoint === '/devices/requests/all') {
     return requestStore.getRequests() as unknown as T;
+  }
+  
+  // Auth endpoints handling for dev mode
+  if (endpoint === '/auth/check') {
+    const isAuthenticated = localStorage.getItem('dev-user-logged-in') === 'true';
+    const userId = localStorage.getItem('dev-user-id');
+    
+    if (isAuthenticated && userId) {
+      const user = userStore.getUserById(userId);
+      return { isAuthenticated: true, user } as unknown as T;
+    }
+    
+    return { isAuthenticated: false, user: null } as unknown as T;
+  }
+  
+  if (endpoint === '/auth/login' && options.method === 'POST') {
+    try {
+      const body = JSON.parse(options.body as string);
+      const { email, password } = body;
+      
+      const users = userStore.getUsers();
+      const user = users.find(u => u.email === email);
+      
+      if (user) {
+        // In dev mode, accept any password for demo users
+        localStorage.setItem('dev-user-logged-in', 'true');
+        localStorage.setItem('dev-user-id', user.id);
+        resetLoggedOutState();
+        return { 
+          success: true, 
+          user, 
+          isAuthenticated: true 
+        } as unknown as T;
+      }
+    } catch (error) {
+      console.error('Error parsing login body:', error);
+    }
+    
+    return { 
+      success: false, 
+      message: 'Invalid email or password' 
+    } as unknown as T;
+  }
+  
+  if (endpoint === '/auth/logout') {
+    localStorage.removeItem('dev-user-logged-in');
+    localStorage.removeItem('dev-user-id');
+    setUserLoggedOut();
+    return { success: true } as unknown as T;
+  }
+  
+  if (endpoint === '/auth/register' && options.method === 'POST') {
+    try {
+      const body = JSON.parse(options.body as string);
+      const { name, email, password } = body;
+      
+      // Check if user already exists
+      const users = userStore.getUsers();
+      if (users.some(u => u.email === email)) {
+        return { 
+          success: false, 
+          message: 'Email already registered' 
+        } as unknown as T;
+      }
+      
+      // Create new user with required fields only
+      const newUser = userStore.addUser({
+        id: `user-${Date.now()}`,
+        name,
+        email,
+        role: 'user' as UserRole
+      });
+      
+      // Log in the new user
+      localStorage.setItem('dev-user-logged-in', 'true');
+      localStorage.setItem('dev-user-id', newUser.id);
+      resetLoggedOutState();
+      
+      return { 
+        success: true, 
+        user: newUser 
+      } as unknown as T;
+    } catch (error) {
+      console.error('Error parsing register body:', error);
+      return { 
+        success: false, 
+        message: 'Invalid registration data' 
+      } as unknown as T;
+    }
   }
   
   // Default fallback for unknown endpoints in dev mode
