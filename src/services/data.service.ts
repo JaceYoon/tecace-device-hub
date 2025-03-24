@@ -18,7 +18,8 @@ export const dataService = {
       console.log('Fetched devices from API:', devices);
       return Array.isArray(devices) ? devices : [];
     } catch (error) {
-      console.error('Error fetching devices from API, falling back to localStorage', error);
+      console.error('Error fetching devices from API', error);
+      // Do NOT fall back to localStorage
       return [];
     }
   },
@@ -41,7 +42,7 @@ export const dataService = {
       return newDevice;
     } catch (error) {
       console.error('Error adding device to API:', error);
-      throw error; // Re-throw the error instead of silently falling back
+      throw error; // Re-throw the error
     }
   },
 
@@ -51,7 +52,7 @@ export const dataService = {
       return updatedDevice;
     } catch (error) {
       console.error('Error updating device in API', error);
-      throw error; // Re-throw the error instead of silently falling back
+      throw error;
     }
   },
 
@@ -60,10 +61,10 @@ export const dataService = {
       console.log('Deleting device with ID:', id);
       const result = await deviceService.delete(id);
       console.log('Delete API response:', result);
-      return true; // Return true if no errors were thrown
+      return true;
     } catch (error) {
       console.error('Error deleting device from API:', error);
-      throw error; // Re-throw the error instead of silently falling back
+      throw error;
     }
   },
 
@@ -85,7 +86,7 @@ export const dataService = {
         
         return {
           ...request,
-          deviceName: device?.project || 'Unknown Device', // Using project instead of name
+          deviceName: device?.project || 'Unknown Device',
           userName: user?.name || 'Unknown User',
           requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
           processedAt: request.processedAt ? new Date(request.processedAt) : undefined

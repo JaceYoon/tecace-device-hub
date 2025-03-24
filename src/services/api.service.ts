@@ -40,6 +40,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       ...options.headers,
     };
 
+    // Log the request for debugging
+    console.log(`API Request: ${options.method || 'GET'} ${API_URL}${endpoint}`);
+    
     // Make the API call with a timeout of 15000ms (15 seconds) - increased timeout
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -56,6 +59,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     // Check for auth-related endpoints
     const isAuthEndpoint = endpoint.startsWith('/auth');
+    
+    // Log status for debugging
+    console.log(`API Response status: ${response.status} for ${endpoint}`);
     
     // Handle unauthorized responses differently for non-auth endpoints
     if (response.status === 401 && !isAuthEndpoint) {
