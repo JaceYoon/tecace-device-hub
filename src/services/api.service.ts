@@ -362,6 +362,34 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
     }
   }
 
+  // New method for cancelling a request by the requester
+  if (endpoint.includes('/requests/') && endpoint.includes('/cancel')) {
+    const requestId = endpoint.split('/')[3];
+    const body = JSON.parse((options.body as string) || '{}');
+    const userId = body.userId;
+    
+    // Find the request
+    const request = mockRequests.find(r => r.id === requestId);
+    
+    // Check if the user making the request is the same user who created it
+    if (request && request.userId === userId) {
+      // Update the request
+      request.status = 'cancelled';
+      request.processedAt = new Date();
+      request.processedBy = userId;
+      
+      // If there's a device with requestedBy field matching this user, clear it
+      const device = mockDevices.find(d => d.id === request.deviceId);
+      if (device && device.requestedBy === userId) {
+        device.requestedBy = undefined;
+      }
+      
+      return request as unknown as T;
+    }
+    
+    return null as unknown as T;
+  }
+
   // Default success response
   return { success: true } as unknown as T;
 }
@@ -432,6 +460,13 @@ export const deviceService = {
       method: 'PUT',
       body: JSON.stringify({ status })
     }),
+
+  cancelRequest: (requestId: string, userId: string): Promise<DeviceRequest | null> => {
+    return apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
+      method: 'PUT',
+      body: JSON.stringify({ userId })
+    });
+  },
 
   getAllRequests: (): Promise<DeviceRequest[]> =>
     apiCall<DeviceRequest[]>('/devices/requests/all'),

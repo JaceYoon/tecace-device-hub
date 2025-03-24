@@ -34,7 +34,7 @@ export interface Device {
   requestedBy?: string; // Added requestedBy field as string (user ID)
 }
 
-export type RequestStatus = 'pending' | 'approved' | 'rejected';
+export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 
 export interface DeviceRequest {
   id: string;

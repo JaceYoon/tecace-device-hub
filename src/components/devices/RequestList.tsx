@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { DeviceRequest, User, Device } from '@/types';
+import { DeviceRequest, User, Device, RequestStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
@@ -34,11 +34,9 @@ const RequestList: React.FC<RequestListProps> = ({
   const loadData = async () => {
     try {
       setLoading(true);
-      // Get all requests using dataService
       const allRequests = await dataService.getRequests();
       console.log("RequestList: Fetched requests:", allRequests);
 
-      // Filter requests if userId provided
       let filteredRequests = allRequests;
       if (userId) {
         filteredRequests = allRequests.filter(req => req.userId === userId);
@@ -46,17 +44,14 @@ const RequestList: React.FC<RequestListProps> = ({
 
       setRequests(filteredRequests);
 
-      // Create maps for faster lookup
       const deviceMap: {[key: string]: Device} = {};
       const userMap: {[key: string]: User} = {};
 
-      // Fetch all devices and users in one batch
       const [allDevices, allUsers] = await Promise.all([
         dataService.getDevices(),
         dataService.getUsers()
       ]);
 
-      // Create lookup maps
       allDevices.forEach(device => {
         deviceMap[device.id] = device;
       });
@@ -87,7 +82,6 @@ const RequestList: React.FC<RequestListProps> = ({
         return;
       }
 
-      // Only the user who made the request can cancel it
       if (user && request.userId !== user.id) {
         toast.error('You can only cancel your own requests');
         return;
@@ -95,28 +89,24 @@ const RequestList: React.FC<RequestListProps> = ({
 
       console.log('Cancelling request:', requestId);
       
-      // Use the user's own ID as the processedBy since they're cancelling their own request
-      const result = await dataService.processRequest(requestId, 'rejected', user?.id || '');
+      const result = await dataService.cancelRequest(requestId, user?.id || '');
       
       if (!result) {
         toast.error('Failed to cancel request');
         return;
       }
 
-      // Show success message
       toast.success('Request cancelled successfully');
       
-      // Update local state to reflect the cancelled request
+      // The result has a status of 'cancelled' which is now a valid RequestStatus
       setRequests(prevRequests => 
         prevRequests.map(req => 
-          req.id === requestId ? { ...req, status: 'rejected' } : req
+          req.id === requestId ? { ...req, status: 'cancelled' as RequestStatus } : req
         )
       );
 
-      // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
       
-      // Force reload data after a short delay to ensure all updates are reflected
       setTimeout(() => {
         loadData();
       }, 500);
@@ -133,10 +123,8 @@ const RequestList: React.FC<RequestListProps> = ({
       await dataService.processRequest(requestId, approve ? 'approved' : 'rejected', user.id);
       toast.success(`Request ${approve ? 'approved' : 'rejected'} successfully`);
 
-      // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
       
-      // Force reload data after a short delay to ensure all updates are reflected
       setTimeout(() => {
         loadData();
       }, 500);
@@ -154,6 +142,8 @@ const RequestList: React.FC<RequestListProps> = ({
         return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200"><PackageCheck className="h-3 w-3 mr-1" /> Approved</Badge>;
       case 'rejected':
         return <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200"><ShieldAlert className="h-3 w-3 mr-1" /> Rejected</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200"><AlertTriangle className="h-3 w-3 mr-1" /> Cancelled</Badge>;
       default:
         return <Badge variant="outline"><AlertTriangle className="h-3 w-3 mr-1" /> Unknown</Badge>;
     }
