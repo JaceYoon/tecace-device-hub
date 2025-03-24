@@ -133,8 +133,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
   
-  // Since we now directly import the stores, we can use them directly
-  
   // Based on the endpoint, return appropriate data from stores
   if (endpoint === '/devices') {
     return deviceStore.getDevices() as unknown as T;
@@ -221,12 +219,12 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
         } as unknown as T;
       }
       
-      // Create new user
+      // Create new user with required fields only
       const newUser = userStore.addUser({
+        id: `user-${Date.now()}`,
         name,
         email,
-        password,
-        role: 'user'
+        role: 'user' as UserRole
       });
       
       // Log in the new user

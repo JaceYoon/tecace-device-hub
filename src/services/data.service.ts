@@ -113,7 +113,7 @@ export const dataService = {
         
         return {
           ...request,
-          deviceName: device?.name || 'Unknown Device',
+          deviceName: device?.project || 'Unknown Device', // Using project instead of name
           userName: user?.name || 'Unknown User',
           requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
           processedAt: request.processedAt ? new Date(request.processedAt) : undefined
