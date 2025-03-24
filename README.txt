@@ -154,6 +154,11 @@ After starting the server for the first time, a default admin account is created
   - On Windows, try using `node start.js` from a terminal with admin privileges
   - Make sure npm is properly installed and available in your PATH
   - As an alternative, start the frontend and backend separately as described in the "Start the application" section
+- If you get "Error: spawn EINVAL" when running start.js, it means invalid arguments were provided:
+  - This can happen due to path issues, environment variables, or system-specific configurations
+  - The most reliable solution is to start the frontend and backend separately:
+    - For backend: `cd server && node server.js`
+    - For frontend: `npm run dev`
 
 ## Environment Variables
 
