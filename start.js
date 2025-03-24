@@ -66,9 +66,13 @@ const server = startProcess('node', ['server.js'], { cwd: serverPath }, 'SERVER'
 const isWindows = process.platform === 'win32';
 const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 
-// Start the frontend dev server
+// Start the frontend dev server with the working directory explicitly set to the project root
 console.log('🖥️ Starting frontend development server...');
-const frontend = startProcess(npmCmd, ['run', 'dev'], { cwd: __dirname }, 'FRONTEND');
+const frontend = startProcess(npmCmd, ['run', 'dev'], { 
+  cwd: __dirname,
+  shell: true, // Use shell to ensure compatibility across platforms
+  env: { ...process.env, FORCE_COLOR: "1" } // Enable color output
+}, 'FRONTEND');
 
 if (server || frontend) {
   console.log('✅ Started services successfully!');
