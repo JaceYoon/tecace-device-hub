@@ -6,18 +6,25 @@ import {
   DialogContent, 
   DialogHeader, 
   DialogTitle,
-  DialogFooter
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
 import { Device } from '@/types';
 import DeviceEditForm from './DeviceEditForm';
-import { DeviceDialogDescription } from './DeviceEditDialog';
 
 interface DeviceEditDialogProps {
   device: Device;
   onDeviceUpdated?: () => void;
 }
+
+// Create the DialogDescription component
+const DeviceDialogDescription: React.FC = () => (
+  <DialogDescription>
+    Edit device information and properties below.
+  </DialogDescription>
+);
 
 export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ 
   device, 
@@ -38,7 +45,7 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
         
         <DeviceEditForm 
           device={device} 
-          onSuccess={onDeviceUpdated} 
+          onDeviceUpdated={onDeviceUpdated} 
         />
         
         <DialogFooter className="mt-4">
@@ -49,16 +56,5 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
   );
 };
 
-// We need to add this file to fix the Missing `Description` warning
-// Note: Since we can't edit this file directly, we're creating a wrapper component for it
-export const DeviceDialogDescription: React.FC = () => (
-  <DialogDescription>
-    Edit device information and properties below.
-  </DialogDescription>
-);
-
-// Add import for DialogDescription
-import { DialogDescription } from '@/components/ui/dialog';
-
-// Add default export to fix the error
+// Add default export
 export default DeviceEditDialog;
