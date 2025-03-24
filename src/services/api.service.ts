@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -10,47 +11,6 @@ let devMode = false;
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
 console.log('Development mode with mock data:', devMode ? 'enabled' : 'disabled');
-
-// Mock data for development mode
-const mockUsers: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@tecace.com',
-    role: 'admin' as UserRole,
-    avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin',
-  },
-  {
-    id: '2',
-    name: 'Regular User',
-    email: 'user@tecace.com',
-    role: 'user' as UserRole,
-    avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=user',
-  }
-];
-
-// Empty mock device data
-const mockDevices: Device[] = [];
-
-// Empty mock request data
-const mockRequests: DeviceRequest[] = [];
-
-// Define return types for different API endpoints
-type AuthCheckResponse = { isAuthenticated: boolean; user: User | null };
-type LoginResponse = { success: boolean; user: User; isAuthenticated: boolean };
-type LogoutResponse = { success: boolean };
-type SuccessResponse = { success: boolean };
-type RegisterResponse = { success: boolean; user: User; message?: string };
-
-// Enable dev mode when API is unavailable
-const enableDevModeIfNeeded = () => {
-  // Only enable if it wasn't already enabled
-  if (!devMode) {
-    console.log('Backend server appears to be unavailable, enabling development mode with mock data');
-    devMode = true;
-    toast.info('Backend server unavailable. Using mock data instead. Please ensure your database server is running.');
-  }
-};
 
 // Track if user is logged out
 let userLoggedOut = false;
@@ -87,9 +47,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
       console.log(`Making API call to: ${API_URL}${endpoint}`, { method: options.method || 'GET' });
 
-      // Make the API call with a timeout of 8000ms (8 seconds) - increased timeout
+      // Make the API call with a timeout of 15000ms (15 seconds) - increased timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
       
       // Make the API call
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -138,11 +98,11 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
            error.message.includes('ECONNREFUSED') ||
            error.message.includes('AbortError') || 
            error.message.includes('NetworkError'))) {
-        // Enable dev mode for future calls
-        enableDevModeIfNeeded();
-        
         // Show a more informative toast
         toast.error('Unable to connect to the server. Please ensure your database and backend server are running.');
+        
+        // Don't enable dev mode, show an explicit error instead
+        throw new Error('Cannot connect to the server. Please check that your backend server is running at ' + API_URL);
       } else if (
         // Only show toast for non-auth related errors and non-network errors
         // and not for 401 errors after logout
@@ -150,11 +110,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         !userLoggedOut
       ) {
         toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
-      }
-      
-      // For connection errors or after logout, try the dev mode path
-      if (devMode || userLoggedOut) {
-        return handleDevModeCall<T>(endpoint, options);
       }
       
       throw error;
@@ -165,264 +120,38 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   return handleDevModeCall<T>(endpoint, options);
 }
 
-// Handle API calls in dev mode
+// // Handle API calls in dev mode
 function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
-
-  // Auth endpoints
-  if (endpoint.startsWith('/auth')) {
-    // Simulate login
-    if (endpoint === '/auth/login' && options.method === 'POST') {
-      const body = JSON.parse((options.body as string) || '{}');
-      const user = mockUsers.find(u => u.email === body.email);
-
-      // In dev mode, accept any password for existing users
-      if (user) {
-        localStorage.setItem('dev-user-logged-in', 'true');
-        localStorage.setItem('dev-user-id', user.id);
-        userLoggedOut = false; // Reset logged out state on login
-        return { success: true, user, isAuthenticated: true } as unknown as T;
-      } else {
-        throw new Error('Invalid email or password');
-      }
-    }
-
-    // Simulate auth check
-    if (endpoint === '/auth/check') {
-      const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true' && !userLoggedOut;
-      const userId = localStorage.getItem('dev-user-id') || '1';
-      const user = isLoggedIn ? mockUsers.find(u => u.id === userId) || mockUsers[0] : null;
-
-      return { isAuthenticated: isLoggedIn, user } as unknown as T;
-    }
-
-    // Simulate logout
-    if (endpoint === '/auth/logout') {
-      localStorage.removeItem('dev-user-logged-in');
-      localStorage.removeItem('dev-user-id');
-      userLoggedOut = true;
-      return { success: true } as unknown as T;
-    }
-
-    // Simulate registration
-    if (endpoint === '/auth/register' && options.method === 'POST') {
-      const body = JSON.parse((options.body as string) || '{}');
-      // Create a new user with the given details
-      const newUser: User = {
-        id: (mockUsers.length + 1).toString(),
-        name: body.name,
-        email: body.email,
-        role: 'user' as UserRole,
-        avatarUrl: `https://api.dicebear.com/7.x/personas/svg?seed=${body.email}`,
-      };
-
-      mockUsers.push(newUser);
-
-      // Set as logged in
-      localStorage.setItem('dev-user-logged-in', 'true');
-      localStorage.setItem('dev-user-id', newUser.id);
-      userLoggedOut = false;
-
-      return { success: true, user: newUser } as unknown as T;
-    }
-  }
-
-  // Skip API calls for protected routes if user is logged out
-  if (userLoggedOut && !endpoint.startsWith('/auth')) {
-    console.log(`User is logged out, skipping API call to ${endpoint}`);
-    if (endpoint.startsWith('/devices') || endpoint.startsWith('/users')) {
-      return [] as unknown as T; // Return empty array for collection endpoints
-    }
-    return { success: false } as unknown as T;
-  }
-
-  // Check if user is logged in for non-auth endpoints in dev mode
-  const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true' && !userLoggedOut;
-  if (!isLoggedIn && !endpoint.startsWith('/auth')) {
-    console.log(`User not logged in for ${endpoint}`);
-    throw new Error('Unauthorized - Please log in');
-  }
-
-  // Device endpoints
-  if (endpoint.startsWith('/devices')) {
-    if (endpoint === '/devices') {
-      return mockDevices as unknown as T;
-    }
-
-    if (endpoint.startsWith('/devices/') && !endpoint.includes('/request')) {
-      const id = endpoint.split('/')[2];
-      const device = mockDevices.find(d => d.id === id);
-      return (device || null) as unknown as T;
-    }
-
-    if (endpoint === '/devices/requests/all') {
-      return mockRequests as unknown as T;
-    }
-
-    if (endpoint.includes('/request')) {
-      const deviceId = endpoint.split('/')[2];
-      const body = JSON.parse((options.body as string) || '{}');
-      const userId = localStorage.getItem('dev-user-id') || '1';
-
-      const newRequest: DeviceRequest = {
-        id: (mockRequests.length + 1).toString(),
-        type: body.type,
-        status: 'pending',
-        deviceId,
-        userId,
-        requestedAt: new Date(),
-      };
-
-      mockRequests.push(newRequest);
-      return newRequest as unknown as T;
-    }
-
-    if (endpoint.startsWith('/devices/requests/')) {
-      const id = endpoint.split('/')[3];
-      const body = JSON.parse((options.body as string) || '{}');
-      const request = mockRequests.find(r => r.id === id);
-
-      if (request) {
-        request.status = body.status;
-        // Add required properties for processed requests
-        const processedAt = new Date();
-        const processedById = localStorage.getItem('dev-user-id') || '1';
-
-        // Add these to our request object with proper type handling
-        const updatedRequest: DeviceRequest = {
-          ...request,
-          processedAt,
-          processedBy: processedById
-        };
-
-        // Update the original request in the array
-        Object.assign(request, updatedRequest);
-
-        if (body.status === 'approved' && request.type === 'assign') {
-          const device = mockDevices.find(d => d.id === request.deviceId);
-          if (device) {
-            device.status = 'assigned';
-            device.assignedTo = request.userId;
-          }
-        } else if (body.status === 'approved' && request.type === 'release') {
-          const device = mockDevices.find(d => d.id === request.deviceId);
-          if (device) {
-            device.status = 'available';
-            device.assignedTo = undefined;
-          }
-        }
-
-        return updatedRequest as unknown as T;
-      }
-
-      return null as unknown as T;
-    }
-
-    // Handle device creation in dev mode
-    if (endpoint === '/devices' && options.method === 'POST') {
-      const deviceData = JSON.parse((options.body as string) || '{}');
-      const newDevice: Device = {
-        ...deviceData,
-        id: (mockDevices.length + 1).toString(),
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-
-      mockDevices.push(newDevice);
-      return newDevice as unknown as T;
-    }
-
-    // Handle device deletion in dev mode
-    if (endpoint.startsWith('/devices/') && options.method === 'DELETE') {
-      const id = endpoint.split('/')[2];
-      const index = mockDevices.findIndex(d => d.id === id);
-
-      if (index !== -1) {
-        mockDevices.splice(index, 1);
-        return { success: true } as unknown as T;
-      }
-
-      return { success: false } as unknown as T;
-    }
-  }
-
-  // User endpoints
-  if (endpoint.startsWith('/users')) {
-    if (endpoint === '/users') {
-      return mockUsers as unknown as T;
-    }
-
-    if (endpoint === '/users/me') {
-      const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
-      const userId = localStorage.getItem('dev-user-id') || '1';
-      return (isLoggedIn ? mockUsers.find(u => u.id === userId) || mockUsers[0] : null) as unknown as T;
-    }
-
-    if (endpoint.startsWith('/users/')) {
-      const id = endpoint.split('/')[2];
-      const user = mockUsers.find(u => u.id === id);
-      return (user || null) as unknown as T;
-    }
-  }
-
-  // New method for cancelling a request by the requester
-  if (endpoint.includes('/requests/') && endpoint.includes('/cancel')) {
-    const requestId = endpoint.split('/')[3];
-    const body = JSON.parse((options.body as string) || '{}');
-    const userId = body.userId;
-    
-    // Find the request
-    const request = mockRequests.find(r => r.id === requestId);
-    
-    // Check if the user making the request is the same user who created it
-    if (request && request.userId === userId) {
-      // Update the request
-      request.status = 'cancelled';
-      request.processedAt = new Date();
-      request.processedBy = userId;
-      
-      // If there's a device with requestedBy field matching this user, clear it
-      const device = mockDevices.find(d => d.id === request.deviceId);
-      if (device && device.requestedBy === userId) {
-        device.requestedBy = undefined;
-      }
-      
-      return request as unknown as T;
-    }
-    
-    return null as unknown as T;
-  }
-
-  // Default success response
-  return { success: true } as unknown as T;
+  throw new Error('Dev mode is disabled. Please ensure your backend server is running.');
 }
 
 // Auth services
 export const authService = {
-  checkAuth: (): Promise<AuthCheckResponse> =>
-    apiCall<AuthCheckResponse>('/auth/check'),
+  checkAuth: (): Promise<{ isAuthenticated: boolean; user: User | null }> =>
+    apiCall<{ isAuthenticated: boolean; user: User | null }>('/auth/check'),
 
-  login: (email: string, password: string): Promise<LoginResponse> => {
+  login: (email: string, password: string): Promise<{ success: boolean; user: User; isAuthenticated: boolean }> => {
     // Reset logged out state on login attempt
     resetLoggedOutState();
-    return apiCall<LoginResponse>('/auth/login', {
+    return apiCall<{ success: boolean; user: User; isAuthenticated: boolean }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
     });
   },
 
-  logout: (): Promise<LogoutResponse> => {
+  logout: (): Promise<{ success: boolean }> => {
     // Set user as logged out first
     setUserLoggedOut();
-    return apiCall<LogoutResponse>('/auth/logout');
+    return apiCall<{ success: boolean }>('/auth/logout');
   },
 
-  register: (name: string, email: string): Promise<RegisterResponse> => {
+  register: (name: string, email: string, password: string): Promise<{ success: boolean; user: User; message?: string }> => {
     // Reset logged out state on registration
     resetLoggedOutState();
-    return apiCall<RegisterResponse>('/auth/register', {
+    return apiCall<{ success: boolean; user: User; message?: string }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email })
+      body: JSON.stringify({ name, email, password })
     });
   },
 };
@@ -447,8 +176,8 @@ export const deviceService = {
       body: JSON.stringify(updates)
     }),
 
-  delete: (id: string): Promise<SuccessResponse> =>
-    apiCall<SuccessResponse>(`/devices/${id}`, {
+  delete: (id: string): Promise<{ success: boolean }> =>
+    apiCall<{ success: boolean }>(`/devices/${id}`, {
       method: 'DELETE'
     }),
 

@@ -8,9 +8,10 @@ module.exports = {
   dialect: 'mariadb',
   dialectOptions: {
     // Improved connection options for MariaDB
-    connectTimeout: 60000, // Increased connection timeout
+    connectTimeout: 120000, // Increased connection timeout to 2 minutes
     supportBigNumbers: true,
     bigNumberStrings: true,
+    trace: true, // Enable trace for debugging
     // Debug options - but don't log binary data
     debug: process.env.DB_DEBUG === 'true',
     // Try to handle various authentication methods
@@ -19,15 +20,27 @@ module.exports = {
     }
   },
   pool: {
-    max: 5,
+    max: 10, // Increased max connections
     min: 0,
-    acquire: 60000, // Increased acquire timeout to 60 seconds
-    idle: 10000
+    acquire: 120000, // Increased acquire timeout to 2 minutes
+    idle: 30000 // Increased idle timeout
   },
   logging: process.env.SQL_LOG === 'true' ? (sql) => {
     // Only log SQL statements, not binary protocol messages
     if (!sql.includes('Quit') && !sql.startsWith('--') && !sql.includes('+--') && !sql.match(/\|\s+\d\s+\d\s+\d/)) {
       console.log(sql);
     }
-  } : false
+  } : false,
+  retry: {
+    match: [
+      /ETIMEDOUT/,
+      /ECONNREFUSED/,
+      /ECONNRESET/,
+      /ESOCKETTIMEDOUT/,
+      /PROTOCOL_CONNECTION_LOST/,
+      /PROTOCOL_SEQUENCE_TIMEOUT/,
+      /ER_LOCK_DEADLOCK/
+    ],
+    max: 5 // Maximum retry attempts
+  }
 };
