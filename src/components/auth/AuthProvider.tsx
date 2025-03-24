@@ -23,6 +23,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       } catch (error) {
         console.error('Authentication check error:', error);
+        // Try to use localStorage as fallback
+        const storedUser = localStorage.getItem('tecace_current_user');
+        if (storedUser) {
+          try {
+            setUser(JSON.parse(storedUser) as User);
+          } catch (e) {
+            console.error('Error parsing stored user:', e);
+          }
+        }
       } finally {
         setIsLoading(false);
       }
@@ -34,7 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch users when user is authenticated
   useEffect(() => {
     const fetchUsers = async () => {
-      if (user && (user.role === 'admin')) {
+      if (user && (user.role === 'admin' || user.role === 'manager')) {
         try {
           // Try to fetch from API first
           try {
@@ -66,6 +75,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (response && 'success' in response && response.success) {
         setUser(response.user as User);
+        
+        // Store user in localStorage as a fallback
+        localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
+        
         toast.success(`Welcome back, ${response.user.name}!`);
         return true;
       }
@@ -73,6 +86,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return false;
     } catch (error) {
       console.error('Login error:', error);
+      
+      // Attempt to retrieve user from localStorage as fallback
+      try {
+        const localUsers = userStore.getUsers();
+        const matchingUser = localUsers.find(u => 
+          u.email.toLowerCase() === email.toLowerCase()
+        );
+        
+        if (matchingUser) {
+          setUser(matchingUser);
+          localStorage.setItem('tecace_current_user', JSON.stringify(matchingUser));
+          toast.success(`Welcome back, ${matchingUser.name}! (Local mode)`);
+          return true;
+        }
+      } catch (fallbackError) {
+        console.error('Local login fallback failed:', fallbackError);
+      }
+      
       toast.error('Invalid email or password');
       return false;
     }
@@ -83,9 +114,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       await authService.logout();
       setUser(null);
+      // Clear localStorage user
+      localStorage.removeItem('tecace_current_user');
       toast.info('Logged out successfully');
     } catch (error) {
       console.error('Logout error:', error);
+      // Still clear local state even if API fails
+      setUser(null);
+      localStorage.removeItem('tecace_current_user');
       toast.error('Error logging out');
     }
   };
@@ -113,6 +149,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (response && 'success' in response && response.success && response.user) {
         setUser(response.user);
+        localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
         toast.success('Account created successfully!');
         return { 
           success: true, 
@@ -128,6 +165,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       };
     } catch (error: any) {
       console.error('Registration error:', error);
+      
+      // Try to register in localStorage
+      try {
+        const newUser: User = {
+          id: `user-${Date.now()}`,
+          name: `${firstName} ${lastName}`,
+          email,
+          role: 'user'
+        };
+        
+        userStore.addUser(newUser);
+        setUser(newUser);
+        localStorage.setItem('tecace_current_user', JSON.stringify(newUser));
+        toast.success('Account created successfully! (Local mode)');
+        return { 
+          success: true, 
+          message: 'Registration successful', 
+          verificationRequired: false 
+        };
+      } catch (fallbackError) {
+        console.error('Local registration fallback failed:', fallbackError);
+      }
+      
       const message = error.response?.data?.message || 'Error creating account';
       toast.error(message);
       return { 
@@ -172,7 +232,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             
             // If current user is being updated, update current user
             if (user && user.id === userId) {
-              setUser(prev => prev ? { ...prev, role: role as UserRole } : null);
+              const updatedUser = { ...user, role: role as UserRole };
+              setUser(updatedUser);
+              localStorage.setItem('tecace_current_user', JSON.stringify(updatedUser));
             }
             
             toast.success(`User role updated to ${role}`);
@@ -192,7 +254,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           
           // If current user is being updated, update current user
           if (user && user.id === userId) {
-            setUser(prev => prev ? { ...prev, role: role as UserRole } : null);
+            const updatedUser = { ...user, role: role as UserRole };
+            setUser(updatedUser);
+            localStorage.setItem('tecace_current_user', JSON.stringify(updatedUser));
           }
           
           toast.success(`User role updated to ${role}`);
@@ -217,7 +281,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
   // For backward compatibility, isManager is true if admin
-  const isManager = user?.role === 'admin';
+  const isManager = user?.role === 'admin' || user?.role === 'manager';
 
   // Create auth context value
   const contextValue: AuthContextType = {
