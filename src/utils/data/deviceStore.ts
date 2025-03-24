@@ -42,6 +42,8 @@ class DeviceStore {
       id: `device-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       createdAt: new Date(),
       updatedAt: new Date(),
+      // Ensure project field is set
+      project: device.project || device.projectGroup || 'Unknown Project',
     };
     this.devices.push(newDevice);
 

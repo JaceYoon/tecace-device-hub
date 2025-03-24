@@ -149,6 +149,27 @@ const RequestList: React.FC<RequestListProps> = ({
     }
   };
 
+  // Helper function to safely format dates
+  const formatDate = (dateValue: Date | string | undefined) => {
+    if (!dateValue) return 'Unknown';
+    
+    // Handle string dates
+    const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+    
+    // Validate the date
+    if (!(date instanceof Date) || isNaN(date.getTime())) {
+      console.warn('Invalid date:', dateValue);
+      return 'Invalid date';
+    }
+    
+    try {
+      return formatDistanceToNow(date, { addSuffix: true });
+    } catch (error) {
+      console.error('Error formatting date:', error, dateValue);
+      return 'Date error';
+    }
+  };
+
   if (loading) {
     return (
         <div className="py-8 text-center">
@@ -180,46 +201,26 @@ const RequestList: React.FC<RequestListProps> = ({
         <div className="space-y-4">
           {requests.map(request => {
             const device = devices[request.deviceId];
-            const user = users[request.userId];
+            const requestUser = users[request.userId];
             const processor = request.processedBy ? users[request.processedBy] : null;
 
-            if (!device || !user) return null;
+            const deviceName = device ? device.project || 'Unknown' : 'Unknown Device';
+            const userName = requestUser ? requestUser.name || 'Unknown' : 'Unknown User';
 
             const isPending = request.status === 'pending';
             const isMyRequest = userId === request.userId;
-
-            // Safely format dates with validation
-            const formatDate = (dateValue: Date | string | undefined) => {
-              if (!dateValue) return '';
-              
-              // Convert string dates to Date objects if needed
-              const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
-              
-              // Validate the date is valid before formatting
-              if (!(date instanceof Date) || isNaN(date.getTime())) {
-                console.warn('Invalid date:', dateValue);
-                return 'Invalid date';
-              }
-              
-              try {
-                return formatDistanceToNow(date, { addSuffix: true });
-              } catch (error) {
-                console.error('Error formatting date:', error, dateValue);
-                return 'Date error';
-              }
-            };
 
             return (
                 <Card key={request.id} className="overflow-hidden">
                   <CardContent className="p-4">
                     <div className="flex justify-between items-start">
                       <div>
-                        <div className="font-medium">{device.project}</div>
+                        <div className="font-medium">{deviceName}</div>
                         <div className="text-sm text-muted-foreground">
                           {request.type === 'assign' ? 'Request to assign' : 'Request to release'} 
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Requested {formatDate(request.requestedAt)}
+                          Requested by {userName} {formatDate(request.requestedAt)}
                         </div>
                         {request.processedAt && (
                             <div className="text-xs text-muted-foreground">
