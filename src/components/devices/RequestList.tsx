@@ -34,6 +34,8 @@ const RequestList: React.FC<RequestListProps> = ({
   const loadData = async () => {
     try {
       setLoading(true);
+      
+      // Get all requests first to determine which devices/users we need details for
       const allRequests = await dataService.getRequests();
       console.log("RequestList: Fetched requests:", allRequests);
 
@@ -44,14 +46,24 @@ const RequestList: React.FC<RequestListProps> = ({
 
       setRequests(filteredRequests);
 
+      // Create sets of unique device IDs and user IDs needed
+      const deviceIds = new Set(filteredRequests.map(req => req.deviceId));
+      const userIds = new Set<string>();
+      
+      // Add all user IDs (both requesters and processors)
+      filteredRequests.forEach(req => {
+        if (req.userId) userIds.add(req.userId);
+        if (req.processedBy) userIds.add(req.processedBy);
+      });
+
       const deviceMap: {[key: string]: Device} = {};
       const userMap: {[key: string]: User} = {};
 
-      const [allDevices, allUsers] = await Promise.all([
-        dataService.getDevices(),
-        dataService.getUsers()
-      ]);
+      // Fetch all devices and users at once
+      const allDevices = await dataService.getDevices();
+      const allUsers = await dataService.getUsers();
 
+      // Only store what we need in our maps
       allDevices.forEach(device => {
         deviceMap[device.id] = device;
       });
@@ -204,8 +216,9 @@ const RequestList: React.FC<RequestListProps> = ({
             const requestUser = users[request.userId];
             const processor = request.processedBy ? users[request.processedBy] : null;
 
-            const deviceName = device ? device.project || 'Unknown' : 'Unknown Device';
-            const userName = requestUser ? requestUser.name || 'Unknown' : 'Unknown User';
+            // Get device name with fallback (prefer project, then projectGroup, then fallback)
+            const deviceName = device ? (device.project || device.projectGroup || 'Unknown Device') : 'Unknown Device';
+            const userName = requestUser ? requestUser.name || 'Unknown User' : 'Unknown User';
 
             const isPending = request.status === 'pending';
             const isMyRequest = userId === request.userId;
