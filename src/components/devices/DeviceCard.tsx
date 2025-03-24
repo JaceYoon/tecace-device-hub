@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,7 +65,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   const handleRequestDevice = async () => {
     if (!user) return;
     
-    // Prevent requesting if this device is already requested by anyone
     if (isRequested) {
       toast.error('This device is already requested', {
         description: 'Please wait until the current request is processed'
@@ -74,7 +72,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
       return;
     }
 
-    // Check if user has already requested other devices
     try {
       setIsProcessing(true);
       const requests = await dataService.getRequests();
@@ -97,7 +94,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
         `Are you sure you want to request ${device.project}?`,
         async () => {
           try {
-            // First create the request through the request endpoint
             const request = await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
@@ -132,7 +128,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
         `Are you sure you want to release ${device.project}?`,
         () => {
           try {
-            // Create a release request instead of directly updating the device
             dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
@@ -233,6 +228,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Smartphone className="h-3.5 w-3.5" />
                   {device.type}
+                  {assignedUser && (
+                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
+                      Assigned to: {assignedUser.name}
+                    </span>
+                  )}
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-1">
