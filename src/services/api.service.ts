@@ -4,7 +4,7 @@ import { toast } from 'sonner';
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to true to use mock data when server is unavailable
+// Development mode flag - set to false by default to always try API first
 let devMode = false;
 
 // Log the API URL for debugging
@@ -48,7 +48,7 @@ const enableDevModeIfNeeded = () => {
   if (!devMode) {
     console.log('Backend server appears to be unavailable, enabling development mode with mock data');
     devMode = true;
-    toast.info('Backend server unavailable. Using mock data instead.');
+    toast.info('Backend server unavailable. Using mock data instead. Please ensure your database server is running.');
   }
 };
 
@@ -87,9 +87,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
       console.log(`Making API call to: ${API_URL}${endpoint}`, { method: options.method || 'GET' });
 
-      // Make the API call with a timeout of 5000ms (5 seconds)
+      // Make the API call with a timeout of 8000ms (8 seconds) - increased timeout
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
       
       // Make the API call
       const response = await fetch(`${API_URL}${endpoint}`, {
@@ -140,6 +140,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
            error.message.includes('NetworkError'))) {
         // Enable dev mode for future calls
         enableDevModeIfNeeded();
+        
+        // Show a more informative toast
+        toast.error('Unable to connect to the server. Please ensure your database and backend server are running.');
       } else if (
         // Only show toast for non-auth related errors and non-network errors
         // and not for 401 errors after logout
