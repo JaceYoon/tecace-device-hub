@@ -1,8 +1,13 @@
 
 // Custom starter script for Tecace Device Management System
-const { spawn } = require('child_process');
-const path = require('path');
-const fs = require('fs');
+import { spawn } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import fs from 'fs';
+
+// Get the current directory
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 console.log('🚀 Starting Tecace Device Management System...');
 console.log('ℹ️  You can run this script with: node start.js');
