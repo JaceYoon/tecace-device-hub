@@ -101,12 +101,24 @@ export const dataService = {
       const requests = await deviceService.getAllRequests();
       console.log('Fetched requests from API:', requests);
       
-      // Ensure dates are properly formatted as Date objects
-      const formattedRequests = requests.map(request => ({
-        ...request,
-        requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
-        processedAt: request.processedAt ? new Date(request.processedAt) : undefined
-      }));
+      // Get devices and users to resolve names
+      const devices = await dataService.getDevices();
+      const users = await dataService.getUsers();
+      
+      // Ensure dates are properly formatted as Date objects and resolve references
+      const formattedRequests = requests.map(request => {
+        // Find the device and user for this request
+        const device = devices.find(d => d.id === request.deviceId);
+        const user = users.find(u => u.id === request.userId);
+        
+        return {
+          ...request,
+          deviceName: device?.name || 'Unknown Device',
+          userName: user?.name || 'Unknown User',
+          requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
+          processedAt: request.processedAt ? new Date(request.processedAt) : undefined
+        };
+      });
       
       return Array.isArray(formattedRequests) ? formattedRequests : [];
     } catch (error) {
@@ -179,12 +191,33 @@ export const dataService = {
 
   // User methods
   getUsers: async (): Promise<User[]> => {
-    // Always use localStorage for users to prevent unauthorized errors
+    // Try API first, fallback to localStorage
+    try {
+      if (!USE_LOCAL_STORAGE) {
+        const users = await userService.getAll();
+        console.log('Fetched users from API:', users);
+        return Array.isArray(users) ? users : [];
+      }
+    } catch (error) {
+      console.error('Error fetching users from API, using localStorage', error);
+    }
+    
+    // Always fallback to localStorage for users
     return userStore.getUsers();
   },
 
   getUserById: async (id: string): Promise<User | undefined> => {
-    // Always use localStorage for users to prevent unauthorized errors
+    // Try API first, fallback to localStorage
+    try {
+      if (!USE_LOCAL_STORAGE) {
+        const user = await userService.getById(id);
+        return user || undefined;
+      }
+    } catch (error) {
+      console.error('Error fetching user from API, using localStorage', error);
+    }
+    
+    // Always fallback to localStorage for users
     return userStore.getUserById(id);
   }
 };
