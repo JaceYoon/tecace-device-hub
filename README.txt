@@ -73,9 +73,19 @@ cd ..
 
 ### Step 4: Start the application
 
-**Recommended approach (separate terminals):**
+**Single command startup (recommended):**
 
-For the most reliable startup experience, start each service in a separate terminal:
+The easiest way to start both the backend and frontend is with the convenience script:
+
+```bash
+node start.js
+```
+
+This script will start both the backend server and the frontend development server in a single terminal window.
+
+**If you encounter issues with the single command:**
+
+You can start each service in separate terminals:
 
 ```bash
 # Terminal 1: Start the backend
@@ -85,16 +95,6 @@ node server.js
 # Terminal 2: Start the frontend
 npm run dev
 ```
-
-**Alternative approach (convenience script):**
-
-You can try using the convenience script to start both frontend and backend:
-
-```bash
-node start.js
-```
-
-If you encounter issues with the start script, fall back to the separate terminals approach.
 
 ## Default Admin Account
 
@@ -156,15 +156,13 @@ After starting the server for the first time, a default admin account is created
 - For CORS issues, check the CORS configuration in `server.js`
 - For authentication issues, ensure the session is configured properly
 - If you encounter issues with ES modules vs. CommonJS, check that your start.js script matches your project configuration (type: "module" in package.json)
-- If you get "Error: spawn npm ENOENT" when running start.js, it means npm executable is not found in your PATH:
-  - On Windows, try using `node start.js` from a terminal with admin privileges
-  - Make sure npm is properly installed and available in your PATH
-  - As an alternative, start the frontend and backend separately as described in the "Start the application" section
-- If you get "Error: spawn EINVAL" when running start.js, it means invalid arguments were provided:
-  - This can happen due to path issues, environment variables, or system-specific configurations
-  - The most reliable solution is to start the frontend and backend separately:
-    - For backend: `cd server && node server.js`
-    - For frontend: `npm run dev`
+- If you get "Error: spawn npm ENOENT" when running start.js:
+  - On Windows, ensure npm is properly installed and in your PATH
+  - The script automatically uses npm.cmd on Windows, which should resolve most issues
+  - If problems persist, try the separate terminal approach described above
+- If you get "Error: spawn EINVAL" when running start.js:
+  - The script now uses `shell: true` which should resolve most EINVAL errors
+  - If problems persist, try the separate terminal approach described above
 
 ## Environment Variables
 
