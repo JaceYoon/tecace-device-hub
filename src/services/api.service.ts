@@ -1,10 +1,11 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to false to use real API
+// Development mode flag - set to true to use mock data when server is unavailable
 let devMode = false;
 
 // Log the API URL for debugging
@@ -42,9 +43,19 @@ type LogoutResponse = { success: boolean };
 type SuccessResponse = { success: boolean };
 type RegisterResponse = { success: boolean; user: User; message?: string };
 
+// Enable dev mode when API is unavailable
+const enableDevModeIfNeeded = () => {
+  // Only enable if it wasn't already enabled
+  if (!devMode) {
+    console.log('Backend server appears to be unavailable, enabling development mode with mock data');
+    devMode = true;
+    toast.info('Backend server unavailable. Using mock data instead.');
+  }
+};
+
 // Helper function for API calls with dev mode fallback
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
-  // In production mode, make actual API calls
+  // Try actual API call if not in dev mode
   if (!devMode) {
     try {
       // Prepare headers
@@ -55,12 +66,19 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
       console.log(`Making API call to: ${API_URL}${endpoint}`, { method: options.method || 'GET' });
 
+      // Make the API call with a timeout of 5000ms (5 seconds)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      
       // Make the API call
       const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
         headers,
         credentials: 'include', // Important for cookies/session
+        signal: controller.signal
       });
+      
+      clearTimeout(timeoutId);
 
       // Check for auth-related endpoints
       const isAuthEndpoint = endpoint.startsWith('/auth');
@@ -87,18 +105,34 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     } catch (error) {
       console.error(`API error for ${endpoint}:`, error);
       
-      // Only show toast for non-auth related errors and non-auth endpoints
-      if (!(error instanceof Error && 
-          (error.message.includes('Unauthorized') || 
-           error.message.includes('Failed to fetch')))) {
+      // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
+      if (error instanceof Error && 
+          (error.message.includes('Failed to fetch') || 
+           error.message.includes('ECONNREFUSED') ||
+           error.message.includes('AbortError') || 
+           error.message.includes('NetworkError'))) {
+        // Enable dev mode for future calls
+        enableDevModeIfNeeded();
+      } else if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
+        // Only show toast for non-auth related errors and non-network errors
         toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
+      }
+      
+      // For connection errors, try the dev mode path
+      if (devMode) {
+        return handleDevModeCall<T>(endpoint, options);
       }
       
       throw error;
     }
   }
 
-  // Below is the dev mode implementation with mock data
+  // If already in dev mode
+  return handleDevModeCall<T>(endpoint, options);
+}
+
+// Handle API calls in dev mode
+function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
 
   // Auth endpoints
