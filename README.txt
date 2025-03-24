@@ -150,6 +150,10 @@ After starting the server for the first time, a default admin account is created
 - For CORS issues, check the CORS configuration in `server.js`
 - For authentication issues, ensure the session is configured properly
 - If you encounter issues with ES modules vs. CommonJS, check that your start.js script matches your project configuration (type: "module" in package.json)
+- If you get "Error: spawn npm ENOENT" when running start.js, it means npm executable is not found in your PATH:
+  - On Windows, try using `node start.js` from a terminal with admin privileges
+  - Make sure npm is properly installed and available in your PATH
+  - As an alternative, start the frontend and backend separately as described in the "Start the application" section
 
 ## Environment Variables
 

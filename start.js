@@ -25,6 +25,16 @@ const handleProcess = (process, name) => {
   process.on('close', (code) => {
     console.log(`[${name}] process exited with code ${code}`);
   });
+  
+  process.on('error', (err) => {
+    console.error(`[${name}] Failed to start process: ${err.message}`);
+    if (err.code === 'ENOENT') {
+      console.error(`[${name}] The command was not found. Please ensure that ${name === 'FRONTEND' ? 'npm' : 'node'} is installed and available in your PATH.`);
+      if (name === 'FRONTEND') {
+        console.error('[FRONTEND] As an alternative, you can run "npm run dev" directly from your terminal.');
+      }
+    }
+  });
 };
 
 // Start the backend server
@@ -33,9 +43,13 @@ const serverPath = path.join(__dirname, 'server');
 const server = spawn('node', ['server.js'], { cwd: serverPath });
 handleProcess(server, 'SERVER');
 
+// Determine the npm executable based on OS
+const isWindows = process.platform === 'win32';
+const npmCmd = isWindows ? 'npm.cmd' : 'npm';
+
 // Start the frontend dev server
 console.log('🖥️ Starting frontend development server...');
-const frontend = spawn('npm', ['run', 'dev'], { cwd: __dirname });
+const frontend = spawn(npmCmd, ['run', 'dev'], { cwd: __dirname });
 handleProcess(frontend, 'FRONTEND');
 
 console.log('✅ Both services started successfully!');
