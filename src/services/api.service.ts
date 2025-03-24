@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -53,8 +52,30 @@ const enableDevModeIfNeeded = () => {
   }
 };
 
+// Track if user is logged out
+let userLoggedOut = false;
+
+// Reset logged out state
+export const resetLoggedOutState = () => {
+  userLoggedOut = false;
+};
+
+// Set user as logged out
+export const setUserLoggedOut = () => {
+  userLoggedOut = true;
+  // Also clear any stored auth data in localStorage
+  localStorage.removeItem('dev-user-logged-in');
+  localStorage.removeItem('dev-user-id');
+};
+
 // Helper function for API calls with dev mode fallback
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  // If user is logged out, don't make API calls for protected endpoints
+  if (userLoggedOut && !endpoint.startsWith('/auth')) {
+    console.log(`User logged out, skipping API call to ${endpoint}`);
+    return handleDevModeCall<T>(endpoint, options);
+  }
+
   // Try actual API call if not in dev mode
   if (!devMode) {
     try {
@@ -85,6 +106,12 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       
       // Handle unauthorized responses differently for non-auth endpoints
       if (response.status === 401 && !isAuthEndpoint) {
+        // If we get 401 after logout, don't show error
+        if (userLoggedOut) {
+          console.log('Got 401 after logout, as expected');
+          return handleDevModeCall<T>(endpoint, options);
+        }
+        
         const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
         console.error(`API error response: ${response.status}`, errorData);
         
@@ -113,13 +140,17 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
            error.message.includes('NetworkError'))) {
         // Enable dev mode for future calls
         enableDevModeIfNeeded();
-      } else if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
+      } else if (
         // Only show toast for non-auth related errors and non-network errors
+        // and not for 401 errors after logout
+        !(error instanceof Error && error.message.includes('Unauthorized')) ||
+        !userLoggedOut
+      ) {
         toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
       }
       
-      // For connection errors, try the dev mode path
-      if (devMode) {
+      // For connection errors or after logout, try the dev mode path
+      if (devMode || userLoggedOut) {
         return handleDevModeCall<T>(endpoint, options);
       }
       
@@ -146,6 +177,7 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
       if (user) {
         localStorage.setItem('dev-user-logged-in', 'true');
         localStorage.setItem('dev-user-id', user.id);
+        userLoggedOut = false; // Reset logged out state on login
         return { success: true, user, isAuthenticated: true } as unknown as T;
       } else {
         throw new Error('Invalid email or password');
@@ -154,7 +186,7 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
 
     // Simulate auth check
     if (endpoint === '/auth/check') {
-      const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+      const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true' && !userLoggedOut;
       const userId = localStorage.getItem('dev-user-id') || '1';
       const user = isLoggedIn ? mockUsers.find(u => u.id === userId) || mockUsers[0] : null;
 
@@ -165,6 +197,7 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
     if (endpoint === '/auth/logout') {
       localStorage.removeItem('dev-user-logged-in');
       localStorage.removeItem('dev-user-id');
+      userLoggedOut = true;
       return { success: true } as unknown as T;
     }
 
@@ -185,14 +218,25 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
       // Set as logged in
       localStorage.setItem('dev-user-logged-in', 'true');
       localStorage.setItem('dev-user-id', newUser.id);
+      userLoggedOut = false;
 
       return { success: true, user: newUser } as unknown as T;
     }
   }
 
+  // Skip API calls for protected routes if user is logged out
+  if (userLoggedOut && !endpoint.startsWith('/auth')) {
+    console.log(`User is logged out, skipping API call to ${endpoint}`);
+    if (endpoint.startsWith('/devices') || endpoint.startsWith('/users')) {
+      return [] as unknown as T; // Return empty array for collection endpoints
+    }
+    return { success: false } as unknown as T;
+  }
+
   // Check if user is logged in for non-auth endpoints in dev mode
-  const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+  const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true' && !userLoggedOut;
   if (!isLoggedIn && !endpoint.startsWith('/auth')) {
+    console.log(`User not logged in for ${endpoint}`);
     throw new Error('Unauthorized - Please log in');
   }
 
@@ -327,23 +371,32 @@ export const authService = {
   checkAuth: (): Promise<AuthCheckResponse> =>
     apiCall<AuthCheckResponse>('/auth/check'),
 
-  login: (email: string, password: string): Promise<LoginResponse> =>
-    apiCall<LoginResponse>('/auth/login', {
+  login: (email: string, password: string): Promise<LoginResponse> => {
+    // Reset logged out state on login attempt
+    resetLoggedOutState();
+    return apiCall<LoginResponse>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
-    }),
+    });
+  },
 
-  logout: (): Promise<LogoutResponse> =>
-    apiCall<LogoutResponse>('/auth/logout'),
+  logout: (): Promise<LogoutResponse> => {
+    // Set user as logged out first
+    setUserLoggedOut();
+    return apiCall<LogoutResponse>('/auth/logout');
+  },
 
-  register: (name: string, email: string): Promise<RegisterResponse> =>
-    apiCall<RegisterResponse>('/auth/register', {
+  register: (name: string, email: string): Promise<RegisterResponse> => {
+    // Reset logged out state on registration
+    resetLoggedOutState();
+    return apiCall<RegisterResponse>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ name, email })
-    }),
+    });
+  },
 };
 
-// Device services
+// Define and export deviceService
 export const deviceService = {
   getAll: (): Promise<Device[]> =>
     apiCall<Device[]>('/devices'),
@@ -351,43 +404,37 @@ export const deviceService = {
   getById: (id: string): Promise<Device | null> =>
     apiCall<Device | null>(`/devices/${id}`),
 
-  create: (device: Partial<Device>): Promise<Device> =>
+  create: (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> =>
     apiCall<Device>('/devices', {
       method: 'POST',
       body: JSON.stringify(device)
     }),
 
-  update: (id: string, device: Partial<Device>): Promise<Device | null> =>
+  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> =>
     apiCall<Device | null>(`/devices/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(device)
+      body: JSON.stringify(updates)
     }),
 
-  delete: (id: string): Promise<boolean> => {
-    console.log('Calling delete API for device ID:', id);
-    return apiCall<SuccessResponse>(`/devices/${id}`, { method: 'DELETE' })
-      .then(resp => {
-        console.log('Delete API response:', resp);
-        return !!resp.success;
-      });
-  },
+  delete: (id: string): Promise<SuccessResponse> =>
+    apiCall<SuccessResponse>(`/devices/${id}`, {
+      method: 'DELETE'
+    }),
 
-  requestDevice: (id: string, type: 'assign' | 'release'): Promise<DeviceRequest> =>
-    apiCall<DeviceRequest>(`/devices/${id}/request`, {
+  requestDevice: (deviceId: string, type: 'assign' | 'release'): Promise<DeviceRequest> =>
+    apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ type })
     }),
 
-  processRequest: (id: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
-    apiCall<DeviceRequest | null>(`/devices/requests/${id}`, {
+  processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
+    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
       method: 'PUT',
       body: JSON.stringify({ status })
     }),
 
-  getAllRequests: (): Promise<DeviceRequest[]> => {
-    console.log('Fetching all device requests');
-    return apiCall<DeviceRequest[]>('/devices/requests/all');
-  },
+  getAllRequests: (): Promise<DeviceRequest[]> =>
+    apiCall<DeviceRequest[]>('/devices/requests/all'),
 };
 
 // User services

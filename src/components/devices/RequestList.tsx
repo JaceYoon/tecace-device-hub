@@ -82,7 +82,10 @@ const RequestList: React.FC<RequestListProps> = ({
   const handleCancelRequest = async (requestId: string) => {
     try {
       const request = requests.find(req => req.id === requestId);
-      if (!request) return;
+      if (!request) {
+        toast.error('Request not found');
+        return;
+      }
 
       // Only the user who made the request can cancel it
       if (user && request.userId !== user.id) {
@@ -90,14 +93,33 @@ const RequestList: React.FC<RequestListProps> = ({
         return;
       }
 
-      // Update request status to 'rejected'
-      await dataService.processRequest(requestId, 'rejected', user?.id || '');
+      console.log('Cancelling request:', requestId);
+      
+      // Use the user's own ID as the processedBy since they're cancelling their own request
+      const result = await dataService.processRequest(requestId, 'rejected', user?.id || '');
+      
+      if (!result) {
+        toast.error('Failed to cancel request');
+        return;
+      }
 
+      // Show success message
       toast.success('Request cancelled successfully');
+      
+      // Update local state to reflect the cancelled request
+      setRequests(prevRequests => 
+        prevRequests.map(req => 
+          req.id === requestId ? { ...req, status: 'rejected' } : req
+        )
+      );
 
       // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
-      loadData();
+      
+      // Force reload data after a short delay to ensure all updates are reflected
+      setTimeout(() => {
+        loadData();
+      }, 500);
     } catch (error) {
       console.error('Error cancelling request:', error);
       toast.error('Failed to cancel request');
@@ -113,7 +135,11 @@ const RequestList: React.FC<RequestListProps> = ({
 
       // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
-      loadData();
+      
+      // Force reload data after a short delay to ensure all updates are reflected
+      setTimeout(() => {
+        loadData();
+      }, 500);
     } catch (error) {
       console.error('Error processing request:', error);
       toast.error('Failed to process request');
@@ -179,7 +205,7 @@ const RequestList: React.FC<RequestListProps> = ({
                       <div>
                         <div className="font-medium">{device.project}</div>
                         <div className="text-sm text-muted-foreground">
-                          {request.type === 'assign' ? 'Request to assign' : 'Request to release'}
+                          {request.type === 'assign' ? 'Request to assign' : 'Request to release'} 
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Requested {formatDistanceToNow(new Date(request.requestedAt), { addSuffix: true })}
