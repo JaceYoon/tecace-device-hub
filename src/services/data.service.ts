@@ -13,71 +13,49 @@ const USE_LOCAL_STORAGE = false;
 export const dataService = {
   // Device methods
   getDevices: async (): Promise<Device[]> => {
-    if (USE_LOCAL_STORAGE) {
-      return deviceStore.getDevices();
-    }
-
     try {
       const devices = await deviceService.getAll();
       console.log('Fetched devices from API:', devices);
       return Array.isArray(devices) ? devices : [];
     } catch (error) {
       console.error('Error fetching devices from API, falling back to localStorage', error);
-      return deviceStore.getDevices();
+      return [];
     }
   },
 
   getDeviceById: async (id: string): Promise<Device | undefined> => {
-    if (USE_LOCAL_STORAGE) {
-      return deviceStore.getDeviceById(id);
-    }
-
     try {
       const device = await deviceService.getById(id);
       return device || undefined;
     } catch (error) {
-      console.error('Error fetching device from API, falling back to localStorage', error);
-      return deviceStore.getDeviceById(id);
+      console.error('Error fetching device from API', error);
+      return undefined;
     }
   },
 
   addDevice: async (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> => {
     try {
-      if (USE_LOCAL_STORAGE) {
-        console.log('Using localStorage for device creation');
-        return deviceStore.addDevice(device);
-      }
-      
       console.log('Sending device to API:', device);
       const newDevice = await deviceService.create(device);
       console.log('API response for device creation:', newDevice);
       return newDevice;
     } catch (error) {
       console.error('Error adding device to API:', error);
-      console.log('Falling back to localStorage');
-      return deviceStore.addDevice(device);
+      throw error; // Re-throw the error instead of silently falling back
     }
   },
 
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
-    if (USE_LOCAL_STORAGE) {
-      return deviceStore.updateDevice(id, updates);
-    }
-
     try {
       const updatedDevice = await deviceService.update(id, updates);
       return updatedDevice;
     } catch (error) {
-      console.error('Error updating device in API, falling back to localStorage', error);
-      return deviceStore.updateDevice(id, updates);
+      console.error('Error updating device in API', error);
+      throw error; // Re-throw the error instead of silently falling back
     }
   },
 
   deleteDevice: async (id: string): Promise<boolean> => {
-    if (USE_LOCAL_STORAGE) {
-      return deviceStore.deleteDevice(id);
-    }
-
     try {
       console.log('Deleting device with ID:', id);
       const result = await deviceService.delete(id);
@@ -85,18 +63,12 @@ export const dataService = {
       return true; // Return true if no errors were thrown
     } catch (error) {
       console.error('Error deleting device from API:', error);
-      // Try localStorage as a fallback
-      const localResult = deviceStore.deleteDevice(id);
-      return localResult;
+      throw error; // Re-throw the error instead of silently falling back
     }
   },
 
   // Request methods
   getRequests: async (): Promise<DeviceRequest[]> => {
-    if (USE_LOCAL_STORAGE) {
-      return requestStore.getRequests();
-    }
-
     try {
       const requests = await deviceService.getAllRequests();
       console.log('Fetched requests from API:', requests);
@@ -122,16 +94,12 @@ export const dataService = {
       
       return Array.isArray(formattedRequests) ? formattedRequests : [];
     } catch (error) {
-      console.error('Error fetching requests from API, falling back to localStorage', error);
-      return requestStore.getRequests();
+      console.error('Error fetching requests from API', error);
+      return [];
     }
   },
 
   addRequest: async (request: Omit<DeviceRequest, 'id' | 'requestedAt'>): Promise<DeviceRequest> => {
-    if (USE_LOCAL_STORAGE) {
-      return requestStore.addRequest(request);
-    }
-
     try {
       const newRequest = await deviceService.requestDevice(request.deviceId, request.type);
       // Ensure dates are properly formatted
@@ -141,16 +109,12 @@ export const dataService = {
         processedAt: newRequest.processedAt ? new Date(newRequest.processedAt) : undefined
       };
     } catch (error) {
-      console.error('Error adding request to API, falling back to localStorage', error);
-      return requestStore.addRequest(request);
+      console.error('Error adding request to API', error);
+      throw error; // Re-throw the error instead of silently falling back
     }
   },
 
   processRequest: async (id: string, status: 'approved' | 'rejected', managerId: string): Promise<DeviceRequest | null> => {
-    if (USE_LOCAL_STORAGE) {
-      return requestStore.processRequest(id, status, managerId);
-    }
-
     try {
       const processedRequest = await deviceService.processRequest(id, status);
       if (!processedRequest) return null;
@@ -162,17 +126,13 @@ export const dataService = {
         processedAt: processedRequest.processedAt ? new Date(processedRequest.processedAt) : undefined
       };
     } catch (error) {
-      console.error('Error processing request in API, falling back to localStorage', error);
-      return requestStore.processRequest(id, status, managerId);
+      console.error('Error processing request in API', error);
+      throw error; // Re-throw the error instead of silently falling back
     }
   },
 
   // Special method for cancellation by the requester
   cancelRequest: async (id: string, userId: string): Promise<DeviceRequest | null> => {
-    if (USE_LOCAL_STORAGE) {
-      return requestStore.cancelRequest(id, userId);
-    }
-
     try {
       const cancelledRequest = await deviceService.cancelRequest(id);
       if (!cancelledRequest) return null;
@@ -184,40 +144,30 @@ export const dataService = {
         processedAt: cancelledRequest.processedAt ? new Date(cancelledRequest.processedAt) : undefined
       };
     } catch (error) {
-      console.error('Error cancelling request in API, falling back to localStorage', error);
-      return requestStore.cancelRequest(id, userId);
+      console.error('Error cancelling request in API', error);
+      throw error; // Re-throw the error instead of silently falling back
     }
   },
 
   // User methods
   getUsers: async (): Promise<User[]> => {
-    // Try API first, fallback to localStorage
     try {
-      if (!USE_LOCAL_STORAGE) {
-        const users = await userService.getAll();
-        console.log('Fetched users from API:', users);
-        return Array.isArray(users) ? users : [];
-      }
+      const users = await userService.getAll();
+      console.log('Fetched users from API:', users);
+      return Array.isArray(users) ? users : [];
     } catch (error) {
-      console.error('Error fetching users from API, using localStorage', error);
+      console.error('Error fetching users from API', error);
+      return [];
     }
-    
-    // Always fallback to localStorage for users if API fails
-    return userStore.getUsers();
   },
 
   getUserById: async (id: string): Promise<User | undefined> => {
-    // Try API first, fallback to localStorage
     try {
-      if (!USE_LOCAL_STORAGE) {
-        const user = await userService.getById(id);
-        return user || undefined;
-      }
+      const user = await userService.getById(id);
+      return user || undefined;
     } catch (error) {
-      console.error('Error fetching user from API, using localStorage', error);
+      console.error('Error fetching user from API', error);
+      return undefined;
     }
-    
-    // Always fallback to localStorage for users if API fails
-    return userStore.getUserById(id);
   }
 };

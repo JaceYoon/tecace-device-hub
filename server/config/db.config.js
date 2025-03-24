@@ -11,9 +11,9 @@ module.exports = {
     connectTimeout: 120000, // Increased connection timeout to 2 minutes
     supportBigNumbers: true,
     bigNumberStrings: true,
-    trace: process.env.DB_DEBUG === 'true', // Only enable trace when DB_DEBUG is true
+    trace: false, // Always disable trace
     // Debug options - but don't log binary data
-    debug: process.env.DB_DEBUG === 'true',
+    debug: false, // Always disable debug
     // Try to handle various authentication methods
     authPlugins: {
       mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' })
@@ -25,12 +25,7 @@ module.exports = {
     acquire: 120000, // Increased acquire timeout to 2 minutes
     idle: 30000 // Increased idle timeout
   },
-  logging: process.env.SQL_LOG === 'true' ? (sql) => {
-    // Only log SQL statements, not binary protocol messages
-    if (!sql.includes('Quit') && !sql.startsWith('--') && !sql.includes('+--') && !sql.match(/\|\s+\d\s+\d\s+\d/)) {
-      console.log(sql);
-    }
-  } : false,
+  logging: false, // Always disable logging
   retry: {
     match: [
       /ETIMEDOUT/,

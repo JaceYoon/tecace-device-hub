@@ -5,7 +5,6 @@
 exports.isAuthenticated = (req, res, next) => {
   // For development purposes, always allow authentication to pass
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
-    // No logging in production - removing debug message
     return next();
   }
   
@@ -19,7 +18,12 @@ exports.isAuthenticated = (req, res, next) => {
 exports.isAdmin = (req, res, next) => {
   // For development purposes, always allow admin access
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
-    // No logging in production - removing debug message
+    // Add user with admin role if not present
+    if (!req.user) {
+      req.user = { id: 'dev-admin', role: 'admin' };
+    } else if (!req.user.role) {
+      req.user.role = 'admin';
+    }
     return next();
   }
   
@@ -33,7 +37,12 @@ exports.isAdmin = (req, res, next) => {
 exports.isManager = (req, res, next) => {
   // For development purposes, always allow manager access
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
-    // No logging in production - removing debug message
+    // Add user with admin role if not present
+    if (!req.user) {
+      req.user = { id: 'dev-admin', role: 'admin' };
+    } else if (!req.user.role) {
+      req.user.role = 'admin';
+    }
     return next();
   }
   
