@@ -1,37 +1,45 @@
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from '@/components/ui/sonner';
+
 import Index from './pages/Index';
-import LoginPage from './components/auth/LoginPage';
 import Dashboard from './pages/Dashboard';
+import NotFound from './pages/NotFound';
 import DeviceManagement from './pages/DeviceManagement';
 import UserManagement from './pages/UserManagement';
-import NotFound from './pages/NotFound';
 import ProfilePage from './pages/ProfilePage';
+import Navbar from './components/layout/Navbar';
 import { AuthProvider } from './components/auth/AuthProvider';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Initialize Query Client
-const queryClient = new QueryClient();
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 5 * 60 * 1000, // 5 minutes
+    },
+  },
+});
 
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <Router>
+          <Navbar />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/login" element={<LoginPage />} />
             <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/manage" element={<DeviceManagement />} />
             <Route path="/device-management" element={<DeviceManagement />} />
             <Route path="/user-management" element={<UserManagement />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/login" element={<Index />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Toaster position="top-right" />
         </Router>
       </AuthProvider>
-      <Toaster richColors />
     </QueryClientProvider>
   );
 }

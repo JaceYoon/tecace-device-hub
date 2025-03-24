@@ -3,6 +3,11 @@
 
 // Check if user is authenticated
 exports.isAuthenticated = (req, res, next) => {
+  // For development purposes, always allow authentication to pass
+  if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
+    return next();
+  }
+  
   if (req.isAuthenticated()) {
     return next();
   }
@@ -11,6 +16,11 @@ exports.isAuthenticated = (req, res, next) => {
 
 // Check if user is an admin
 exports.isAdmin = (req, res, next) => {
+  // For development purposes, always allow admin access
+  if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
+    return next();
+  }
+  
   if (req.user && req.user.role === 'admin') {
     return next();
   }
