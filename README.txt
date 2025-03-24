@@ -79,7 +79,7 @@ You can use the convenience script to start both frontend and backend:
 node start.js
 ```
 
-Or start them separately:
+If you encounter issues with the start script, you can start both services separately:
 
 ```bash
 # Start the backend (from the root directory)
@@ -149,6 +149,7 @@ After starting the server for the first time, a default admin account is created
 - If you encounter connection issues with the database, verify your database credentials in the `.env` file
 - For CORS issues, check the CORS configuration in `server.js`
 - For authentication issues, ensure the session is configured properly
+- If you encounter issues with ES modules vs. CommonJS, check that your start.js script matches your project configuration (type: "module" in package.json)
 
 ## Environment Variables
 
