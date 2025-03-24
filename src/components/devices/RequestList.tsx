@@ -35,7 +35,7 @@ const RequestList: React.FC<RequestListProps> = ({
     try {
       setLoading(true);
       
-      // Get all requests first to determine which devices/users we need details for
+      // Get all requests first
       const allRequests = await dataService.getRequests();
       console.log("RequestList: Fetched requests:", allRequests);
 
@@ -46,34 +46,25 @@ const RequestList: React.FC<RequestListProps> = ({
 
       setRequests(filteredRequests);
 
-      // Create sets of unique device IDs and user IDs needed
-      const deviceIds = new Set(filteredRequests.map(req => req.deviceId));
-      const userIds = new Set<string>();
-      
-      // Add all user IDs (both requesters and processors)
-      filteredRequests.forEach(req => {
-        if (req.userId) userIds.add(req.userId);
-        if (req.processedBy) userIds.add(req.processedBy);
-      });
-
-      const deviceMap: {[key: string]: Device} = {};
-      const userMap: {[key: string]: User} = {};
-
-      // Fetch all devices and users at once
+      // Get all devices and users for reference
       const allDevices = await dataService.getDevices();
       const allUsers = await dataService.getUsers();
-
-      // Only store what we need in our maps
+      
+      // Create maps for faster lookups
+      const deviceMap: {[key: string]: Device} = {};
+      const userMap: {[key: string]: User} = {};
+      
       allDevices.forEach(device => {
         deviceMap[device.id] = device;
       });
-
+      
       allUsers.forEach(user => {
         userMap[user.id] = user;
       });
-
+      
       setDevices(deviceMap);
       setUsers(userMap);
+      
     } catch (error) {
       console.error('Error loading request data:', error);
       toast.error('Failed to load request data');
@@ -219,6 +210,7 @@ const RequestList: React.FC<RequestListProps> = ({
             // Get device name with fallback (prefer project, then projectGroup, then fallback)
             const deviceName = device ? (device.project || device.projectGroup || 'Unknown Device') : 'Unknown Device';
             const userName = requestUser ? requestUser.name || 'Unknown User' : 'Unknown User';
+            const serialNumber = device ? device.serialNumber || 'N/A' : 'N/A';
 
             const isPending = request.status === 'pending';
             const isMyRequest = userId === request.userId;
@@ -234,6 +226,9 @@ const RequestList: React.FC<RequestListProps> = ({
                         </div>
                         <div className="text-xs text-muted-foreground">
                           Requested by {userName} {formatDate(request.requestedAt)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Serial: {serialNumber}
                         </div>
                         {request.processedAt && (
                             <div className="text-xs text-muted-foreground">

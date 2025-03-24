@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -15,7 +16,7 @@ import StatusSummary from '@/components/devices/StatusSummary';
 import { exportDevicesToExcel } from '@/utils/exportUtils';
 
 const DeviceManagement: React.FC = () => {
-  const { user, isAuthenticated, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin, isManager } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all-devices');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -25,13 +26,17 @@ const DeviceManagement: React.FC = () => {
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/');
-    } else if (!isAdmin) {
+      return;
+    }
+    
+    // Only redirect if the user is not a manager or admin
+    if (!isManager && !isAdmin) {
       navigate('/dashboard');
-      toast.error('Access denied. Admin permissions required.');
+      toast.error('Access denied. Admin or manager permissions required.');
     }
 
     setIsLoading(false);
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, isManager, isAdmin, navigate]);
 
   const handleDeviceAdded = () => {
     setShowAddForm(false);
@@ -69,7 +74,8 @@ const DeviceManagement: React.FC = () => {
     );
   }
 
-  if (!isAdmin) return null;
+  // If user is not authorized, return null (redirection happens in useEffect)
+  if (!isManager && !isAdmin) return null;
 
   return (
     <PageContainer>
