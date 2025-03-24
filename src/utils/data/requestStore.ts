@@ -57,6 +57,8 @@ class RequestStore {
     if (requestIndex === -1) return null;
     
     const request = this.requests[requestIndex];
+
+    console.log(`Processing request ${id} with status ${status} by user ${managerId}`);
     
     // Update request
     this.requests[requestIndex] = {

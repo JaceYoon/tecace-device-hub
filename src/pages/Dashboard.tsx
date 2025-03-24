@@ -20,7 +20,7 @@ import {
 const Dashboard: React.FC = () => {
   const { user, isAuthenticated, isManager, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('available');
+  const [activeTab, setActiveTab] = useState('my-devices'); // Changed default tab to my-devices
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -116,6 +116,15 @@ const Dashboard: React.FC = () => {
                 Welcome back, {user.name}
               </p>
             </div>
+            <Button 
+              onClick={handleRefresh} 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <Clock className="h-4 w-4" />
+              Refresh
+            </Button>
           </div>
 
           <StatusSummary onRefresh={handleRefresh} />
@@ -171,13 +180,13 @@ const Dashboard: React.FC = () => {
 
           <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid grid-cols-4 w-full max-w-md mb-8">
-              <TabsTrigger value="available" className="flex items-center gap-1">
-                <Shield className="h-4 w-4" />
-                Available
-              </TabsTrigger>
               <TabsTrigger value="my-devices" className="flex items-center gap-1">
                 <PackageCheck className="h-4 w-4" />
                 My Devices
+              </TabsTrigger>
+              <TabsTrigger value="available" className="flex items-center gap-1">
+                <Shield className="h-4 w-4" />
+                Available
               </TabsTrigger>
               <TabsTrigger value="requests" className="flex items-center gap-1">
                 <Clock className="h-4 w-4" />
@@ -189,20 +198,20 @@ const Dashboard: React.FC = () => {
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="available" className="animate-slide-up">
-              <DeviceList
-                  title="Available Devices"
-                  filterByAvailable={true}
-                  showExportButton={false}
-                  refreshTrigger={refreshTrigger}
-              />
-            </TabsContent>
-
             <TabsContent value="my-devices" className="animate-slide-up">
               <DeviceList
                   title="My Devices"
                   filterByAssignedToUser={myDeviceFilter}
                   showControls={false}
+                  showExportButton={false}
+                  refreshTrigger={refreshTrigger}
+              />
+            </TabsContent>
+
+            <TabsContent value="available" className="animate-slide-up">
+              <DeviceList
+                  title="Available Devices"
+                  filterByAvailable={true}
                   showExportButton={false}
                   refreshTrigger={refreshTrigger}
               />
