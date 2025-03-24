@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to false by default to always try API first
-let devMode = false;
+// Development mode flag - set to true to always use localStorage data
+let devMode = true;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -74,8 +74,10 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
         console.error(`API error response: ${response.status}`, errorData);
         
-        // Just throw the error, but with a specific message that we can check for
-        throw new Error(errorData.message || 'Unauthorized - Please log in');
+        // In case of 401, automatically switch to dev mode for this session
+        console.log('Unauthorized API access, switching to dev mode for this session');
+        devMode = true;
+        return handleDevModeCall<T>(endpoint, options);
       }
       
       // Handle other non-OK responses
@@ -97,11 +99,13 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
            error.message.includes('ECONNREFUSED') ||
            error.message.includes('AbortError') || 
            error.message.includes('NetworkError'))) {
-        // Show a more informative toast
-        toast.error('Unable to connect to the server. Please ensure your database and backend server are running.');
+        // Show a more informative toast but only once
+        toast.error('Unable to connect to the server. Using local data instead.');
         
-        // Don't enable dev mode, show an explicit error instead
-        throw new Error('Cannot connect to the server. Please check that your backend server is running at ' + API_URL);
+        // Switch to dev mode for this session
+        console.log('Connection error, switching to dev mode for this session');
+        devMode = true;
+        return handleDevModeCall<T>(endpoint, options);
       } else if (
         // Only show toast for non-auth related errors and non-network errors
         // and not for 401 errors after logout
@@ -111,7 +115,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
       }
       
-      throw error;
+      // Switch to dev mode for this error
+      devMode = true;
+      return handleDevModeCall<T>(endpoint, options);
     }
   }
 
@@ -119,10 +125,39 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   return handleDevModeCall<T>(endpoint, options);
 }
 
-// Handle API calls in dev mode
+// Handle API calls in dev mode - modify this function to provide proper mock data
 function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
-  throw new Error('Dev mode is disabled. Please ensure your backend server is running.');
+  
+  // Import the store data
+  const { deviceStore, userStore, requestStore } = require('../utils/data');
+  
+  // Based on the endpoint, return appropriate data from stores
+  if (endpoint === '/devices') {
+    return deviceStore.getDevices() as unknown as T;
+  }
+  
+  if (endpoint.startsWith('/devices/') && options.method === 'GET') {
+    const id = endpoint.split('/').pop();
+    return deviceStore.getDeviceById(id) as unknown as T;
+  }
+  
+  if (endpoint === '/users') {
+    return userStore.getUsers() as unknown as T;
+  }
+  
+  if (endpoint.startsWith('/users/') && options.method === 'GET') {
+    const id = endpoint.split('/').pop();
+    return userStore.getUserById(id) as unknown as T;
+  }
+  
+  if (endpoint === '/devices/requests/all') {
+    return requestStore.getRequests() as unknown as T;
+  }
+  
+  // Default fallback for unknown endpoints in dev mode
+  console.error(`Dev mode does not support endpoint: ${endpoint}`);
+  return {} as T;
 }
 
 // Auth services

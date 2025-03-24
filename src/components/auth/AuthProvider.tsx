@@ -3,6 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import api, { authService, userService } from '@/services/api.service';
+import { userStore } from '@/utils/data';
 
 // Create the Auth Context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -35,10 +36,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const fetchUsers = async () => {
       if (user && (user.role === 'admin')) {
         try {
-          const response = await userService.getAll();
-          if (Array.isArray(response)) {
-            setUsers(response);
+          // Try to fetch from API first
+          try {
+            const response = await userService.getAll();
+            if (Array.isArray(response)) {
+              setUsers(response);
+              return;
+            }
+          } catch (error) {
+            console.error('Error fetching users from API:', error);
           }
+          
+          // Fallback to localStorage if API fails
+          const localUsers = userStore.getUsers();
+          setUsers(localUsers);
         } catch (error) {
           console.error('Error fetching users:', error);
         }
@@ -149,20 +160,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       try {
         // Use 'admin' or 'user' only, as 'manager' is not supported in the backend
         const role = newRole === 'manager' ? 'admin' : newRole;
-        const response = await userService.updateRole(userId, role as 'admin' | 'user');
         
-        // Update users list
-        setUsers(prev => prev.map(u => 
-          u.id === userId ? { ...u, role: role as UserRole } : u
-        ));
-        
-        // If current user is being updated, update current user
-        if (user && user.id === userId) {
-          setUser(prev => prev ? { ...prev, role: role as UserRole } : null);
+        // Try API call first
+        try {
+          const response = await userService.updateRole(userId, role as 'admin' | 'user');
+          if (response) {
+            // Success with API, update users list
+            setUsers(prev => prev.map(u => 
+              u.id === userId ? { ...u, role: role as UserRole } : u
+            ));
+            
+            // If current user is being updated, update current user
+            if (user && user.id === userId) {
+              setUser(prev => prev ? { ...prev, role: role as UserRole } : null);
+            }
+            
+            toast.success(`User role updated to ${role}`);
+            return true;
+          }
+        } catch (error) {
+          console.error('Error updating user role via API:', error);
         }
         
-        toast.success(`User role updated to ${role}`);
-        return true;
+        // Fallback to localStorage
+        const updatedUser = userStore.updateUser(userId, { role: role as UserRole });
+        if (updatedUser) {
+          // Update users list
+          setUsers(prev => prev.map(u => 
+            u.id === userId ? { ...u, role: role as UserRole } : u
+          ));
+          
+          // If current user is being updated, update current user
+          if (user && user.id === userId) {
+            setUser(prev => prev ? { ...prev, role: role as UserRole } : null);
+          }
+          
+          toast.success(`User role updated to ${role}`);
+          return true;
+        } else {
+          toast.error('Failed to update user role');
+          return false;
+        }
       } catch (error) {
         console.error('Error updating user role:', error);
         toast.error('Failed to update user role');

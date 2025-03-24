@@ -1,4 +1,3 @@
-
 import { Device } from '@/types';
 
 class DeviceStore {
@@ -13,6 +12,22 @@ class DeviceStore {
     if (storedDevices) {
       try {
         this.devices = JSON.parse(storedDevices);
+        
+        // Ensure all devices have the project field set correctly
+        this.devices = this.devices.map(device => {
+          if (!device.project && device.projectGroup) {
+            // If project is missing but projectGroup exists, use that
+            return { ...device, project: device.projectGroup };
+          }
+          // Make sure project is never undefined or empty
+          if (!device.project) {
+            return { ...device, project: 'Unknown Project' };
+          }
+          return device;
+        });
+        
+        // Save the corrected data back to localStorage
+        localStorage.setItem('tecace_devices', JSON.stringify(this.devices));
       } catch (error) {
         console.error('Error parsing stored devices:', error);
         this.devices = [];
@@ -42,7 +57,7 @@ class DeviceStore {
       id: `device-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       createdAt: new Date(),
       updatedAt: new Date(),
-      // Ensure project field is set
+      // Ensure project field is set - prefer project, fallback to projectGroup
       project: device.project || device.projectGroup || 'Unknown Project',
     };
     this.devices.push(newDevice);
@@ -60,7 +75,9 @@ class DeviceStore {
     this.devices[index] = {
       ...this.devices[index],
       ...updates,
-      updatedAt: new Date()
+      updatedAt: new Date(),
+      // If updating project to undefined/null, keep the old project value
+      project: updates.project || this.devices[index].project || this.devices[index].projectGroup || 'Unknown Project'
     };
 
     // Persist to localStorage
@@ -84,3 +101,4 @@ class DeviceStore {
 }
 
 export const deviceStore = new DeviceStore();
+

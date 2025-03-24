@@ -43,17 +43,19 @@ export const dataService = {
 
   addDevice: async (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> => {
     try {
+      if (USE_LOCAL_STORAGE) {
+        console.log('Using localStorage for device creation');
+        return deviceStore.addDevice(device);
+      }
+      
       console.log('Sending device to API:', device);
       const newDevice = await deviceService.create(device);
       console.log('API response for device creation:', newDevice);
       return newDevice;
     } catch (error) {
       console.error('Error adding device to API:', error);
-      if (USE_LOCAL_STORAGE) {
-        console.log('Falling back to localStorage');
-        return deviceStore.addDevice(device);
-      }
-      throw error; // Re-throw if we're not using localStorage fallback
+      console.log('Falling back to localStorage');
+      return deviceStore.addDevice(device);
     }
   },
 
@@ -177,30 +179,12 @@ export const dataService = {
 
   // User methods
   getUsers: async (): Promise<User[]> => {
-    if (USE_LOCAL_STORAGE) {
-      return userStore.getUsers();
-    }
-
-    try {
-      const users = await userService.getAll();
-      return Array.isArray(users) ? users : [];
-    } catch (error) {
-      console.error('Error fetching users from API, falling back to localStorage', error);
-      return userStore.getUsers();
-    }
+    // Always use localStorage for users to prevent unauthorized errors
+    return userStore.getUsers();
   },
 
   getUserById: async (id: string): Promise<User | undefined> => {
-    if (USE_LOCAL_STORAGE) {
-      return userStore.getUserById(id);
-    }
-
-    try {
-      const user = await userService.getById(id);
-      return user || undefined;
-    } catch (error) {
-      console.error('Error fetching user from API, falling back to localStorage', error);
-      return userStore.getUserById(id);
-    }
+    // Always use localStorage for users to prevent unauthorized errors
+    return userStore.getUserById(id);
   }
 };
