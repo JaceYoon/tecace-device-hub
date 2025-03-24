@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 import { deviceStore, userStore, requestStore } from '@/utils/data';
@@ -41,7 +42,6 @@ export const dataService = {
   },
 
   addDevice: async (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> => {
-    // Force API usage for create operations, regardless of USE_LOCAL_STORAGE setting
     try {
       console.log('Sending device to API:', device);
       const newDevice = await deviceService.create(device);
@@ -98,7 +98,15 @@ export const dataService = {
     try {
       const requests = await deviceService.getAllRequests();
       console.log('Fetched requests from API:', requests);
-      return Array.isArray(requests) ? requests : [];
+      
+      // Ensure dates are properly formatted as Date objects
+      const formattedRequests = requests.map(request => ({
+        ...request,
+        requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
+        processedAt: request.processedAt ? new Date(request.processedAt) : undefined
+      }));
+      
+      return Array.isArray(formattedRequests) ? formattedRequests : [];
     } catch (error) {
       console.error('Error fetching requests from API, falling back to localStorage', error);
       return requestStore.getRequests();
@@ -112,7 +120,12 @@ export const dataService = {
 
     try {
       const newRequest = await deviceService.requestDevice(request.deviceId, request.type);
-      return newRequest;
+      // Ensure dates are properly formatted
+      return {
+        ...newRequest,
+        requestedAt: newRequest.requestedAt ? new Date(newRequest.requestedAt) : new Date(),
+        processedAt: newRequest.processedAt ? new Date(newRequest.processedAt) : undefined
+      };
     } catch (error) {
       console.error('Error adding request to API, falling back to localStorage', error);
       return requestStore.addRequest(request);
@@ -126,7 +139,14 @@ export const dataService = {
 
     try {
       const processedRequest = await deviceService.processRequest(id, status);
-      return processedRequest;
+      if (!processedRequest) return null;
+      
+      // Ensure dates are properly formatted
+      return {
+        ...processedRequest,
+        requestedAt: processedRequest.requestedAt ? new Date(processedRequest.requestedAt) : new Date(),
+        processedAt: processedRequest.processedAt ? new Date(processedRequest.processedAt) : undefined
+      };
     } catch (error) {
       console.error('Error processing request in API, falling back to localStorage', error);
       return requestStore.processRequest(id, status, managerId);
@@ -136,18 +156,22 @@ export const dataService = {
   // Special method for cancellation by the requester
   cancelRequest: async (id: string, userId: string): Promise<DeviceRequest | null> => {
     if (USE_LOCAL_STORAGE) {
-      // For localStorage, we're using processRequest with status='rejected'
-      return requestStore.processRequest(id, 'rejected', userId);
+      return requestStore.cancelRequest(id, userId);
     }
 
     try {
-      // Use the new cancelRequest method from deviceService
-      const cancelledRequest = await deviceService.cancelRequest(id, userId);
-      return cancelledRequest;
+      const cancelledRequest = await deviceService.cancelRequest(id);
+      if (!cancelledRequest) return null;
+      
+      // Ensure dates are properly formatted
+      return {
+        ...cancelledRequest,
+        requestedAt: cancelledRequest.requestedAt ? new Date(cancelledRequest.requestedAt) : new Date(),
+        processedAt: cancelledRequest.processedAt ? new Date(cancelledRequest.processedAt) : undefined
+      };
     } catch (error) {
       console.error('Error cancelling request in API, falling back to localStorage', error);
-      // Fallback to localStorage implementation
-      return requestStore.processRequest(id, 'rejected', userId);
+      return requestStore.cancelRequest(id, userId);
     }
   },
 

@@ -26,5 +26,6 @@ export const dataStore = {
   getRequests: requestStore.getRequests.bind(requestStore),
   getRequestById: requestStore.getRequestById.bind(requestStore),
   addRequest: requestStore.addRequest.bind(requestStore),
-  processRequest: requestStore.processRequest.bind(requestStore)
+  processRequest: requestStore.processRequest.bind(requestStore),
+  cancelRequest: requestStore.cancelRequest.bind(requestStore)
 };

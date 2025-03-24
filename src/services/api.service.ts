@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -120,7 +119,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   return handleDevModeCall<T>(endpoint, options);
 }
 
-// // Handle API calls in dev mode
+// Handle API calls in dev mode
 function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   console.log(`DEV MODE: Simulating API request to: ${endpoint}`);
   throw new Error('Dev mode is disabled. Please ensure your backend server is running.');
@@ -193,12 +192,10 @@ export const deviceService = {
       body: JSON.stringify({ status })
     }),
 
-  cancelRequest: (requestId: string, userId: string): Promise<DeviceRequest | null> => {
-    return apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
-      method: 'PUT',
-      body: JSON.stringify({ userId })
-    });
-  },
+  cancelRequest: (requestId: string): Promise<DeviceRequest | null> =>
+    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
+      method: 'PUT'
+    }),
 
   getAllRequests: (): Promise<DeviceRequest[]> =>
     apiCall<DeviceRequest[]>('/devices/requests/all'),

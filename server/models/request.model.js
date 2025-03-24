@@ -14,6 +14,10 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.ENUM('pending', 'approved', 'rejected', 'cancelled'),
       defaultValue: 'pending'
     },
+    requestedAt: {
+      type: Sequelize.DATE,
+      defaultValue: Sequelize.NOW
+    },
     processedAt: {
       type: Sequelize.DATE,
       allowNull: true
