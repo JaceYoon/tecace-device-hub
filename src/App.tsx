@@ -11,6 +11,7 @@ import UserManagement from './pages/UserManagement';
 import ProfilePage from './pages/ProfilePage';
 import Navbar from './components/layout/Navbar';
 import { AuthProvider } from './components/auth/AuthProvider';
+import { ThemeProvider } from 'next-themes';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -24,23 +25,29 @@ const queryClient = new QueryClient({
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <Router>
-          <Navbar />
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/device-management" element={<DeviceManagement />} />
-            <Route path="/user-management" element={<UserManagement />} />
-            <Route path="/profile" element={<ProfilePage />} />
-            <Route path="/login" element={<Index />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          <Toaster position="top-right" />
-        </Router>
-      </AuthProvider>
-    </QueryClientProvider>
+    <ThemeProvider attribute="class" defaultTheme="light">
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <Router>
+            <div className="min-h-screen flex flex-col">
+              <Navbar />
+              <div className="flex-1">
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/dashboard" element={<Dashboard />} />
+                  <Route path="/device-management" element={<DeviceManagement />} />
+                  <Route path="/user-management" element={<UserManagement />} />
+                  <Route path="/profile" element={<ProfilePage />} />
+                  <Route path="/login" element={<Index />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </div>
+              <Toaster position="top-right" />
+            </div>
+          </Router>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ThemeProvider>
   );
 }
 

@@ -8,7 +8,7 @@ import RequestList from '@/components/devices/RequestList';
 import StatusSummary from '@/components/devices/StatusSummary';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { dataService } from '@/services/data.service';
-import { DeviceRequest } from '@/types';
+import { DeviceRequest, Device, User } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -22,6 +22,8 @@ const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('available');
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
+  const [devices, setDevices] = useState<{[key: string]: Device}>({});
+  const [users, setUsers] = useState<{[key: string]: User}>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -44,6 +46,25 @@ const Dashboard: React.FC = () => {
         const allRequests = await dataService.getRequests();
         console.log("Dashboard: Fetched requests:", allRequests);
         setRequests(allRequests);
+        
+        // Fetch devices and users for the requests
+        const allDevices = await dataService.getDevices();
+        const allUsers = await dataService.getUsers();
+        
+        // Create maps for faster lookups
+        const deviceMap: {[key: string]: Device} = {};
+        const userMap: {[key: string]: User} = {};
+        
+        allDevices.forEach(device => {
+          deviceMap[device.id] = device;
+        });
+        
+        allUsers.forEach(user => {
+          userMap[user.id] = user;
+        });
+        
+        setDevices(deviceMap);
+        setUsers(userMap);
       } catch (error) {
         console.error('Error fetching requests:', error);
         if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
@@ -135,18 +156,26 @@ const Dashboard: React.FC = () => {
 
                 <div className="space-y-4">
                   {pendingRequests.map(request => {
+                    const device = devices[request.deviceId];
+                    const requestUser = users[request.userId];
+                    
+                    // Get device name with fallback
+                    const deviceName = device ? (device.project || device.projectGroup || 'Unknown Device') : 'Unknown Device';
+                    const userName = requestUser ? requestUser.name || 'Unknown User' : 'Unknown User';
+                    const serialNumber = device ? device.serialNumber : 'N/A';
+                    
                     return (
                         <div
                             key={request.id}
                             className="flex items-center justify-between border-b pb-4 last:border-b-0 last:pb-0"
                         >
                           <div>
-                            <p className="font-medium">{request.device?.project || 'Unknown Device'}</p>
+                            <p className="font-medium">{deviceName}</p>
                             <p className="text-sm text-muted-foreground">
-                              {request.type === 'assign' ? 'Assignment' : 'Release'} request from {request.user?.name || 'Unknown User'}
+                              {request.type === 'assign' ? 'Assignment' : 'Release'} request from {userName}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              Serial: {request.device?.serialNumber || 'N/A'}
+                              Serial: {serialNumber}
                             </p>
                           </div>
 
@@ -235,7 +264,7 @@ const Dashboard: React.FC = () => {
               <div className="flex justify-center pt-4">
                 <Button
                     variant="outline"
-                    onClick={() => navigate('/manage')}
+                    onClick={() => navigate('/device-management')}
                     className="flex items-center gap-2"
                 >
                   Go to Device Management
