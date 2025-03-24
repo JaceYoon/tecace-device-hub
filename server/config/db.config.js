@@ -11,7 +11,7 @@ module.exports = {
     connectTimeout: 120000, // Increased connection timeout to 2 minutes
     supportBigNumbers: true,
     bigNumberStrings: true,
-    trace: true, // Enable trace for debugging
+    trace: process.env.DB_DEBUG === 'true', // Only enable trace when DB_DEBUG is true
     // Debug options - but don't log binary data
     debug: process.env.DB_DEBUG === 'true',
     // Try to handle various authentication methods

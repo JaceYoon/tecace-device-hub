@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to true to always use localStorage data
-let devMode = true;
+// Development mode flag - set to false to always use real backend API
+let devMode = false;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -48,8 +48,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         ...options.headers,
       };
 
-      console.log(`Making API call to: ${API_URL}${endpoint}`, { method: options.method || 'GET' });
-
       // Make the API call with a timeout of 15000ms (15 seconds) - increased timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 15000);
@@ -78,7 +76,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
         const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
         console.error(`API error response: ${response.status}`, errorData);
         
-        // In case of 401, automatically switch to dev mode for this session
+        // In case of 401, switch to dev mode for this session
         console.log('Unauthorized API access, switching to dev mode for this session');
         devMode = true;
         return handleDevModeCall<T>(endpoint, options);
@@ -208,7 +206,7 @@ function handleDevModeCall<T>(endpoint: string, options: RequestInit = {}): T {
   if (endpoint === '/auth/register' && options.method === 'POST') {
     try {
       const body = JSON.parse(options.body as string);
-      const { name, email, password } = body;
+      const { name, email } = body;
       
       // Check if user already exists
       const users = userStore.getUsers();

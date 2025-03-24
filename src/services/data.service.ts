@@ -3,8 +3,8 @@ import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 import { deviceStore, userStore, requestStore } from '@/utils/data';
 
-// Setting to true to force use of localStorage when API calls fail with auth errors
-const USE_LOCAL_STORAGE = true;
+// Setting to false to force use of the API
+const USE_LOCAL_STORAGE = false;
 
 /**
  * This service acts as a facade over both the API and localStorage implementations
@@ -202,7 +202,7 @@ export const dataService = {
       console.error('Error fetching users from API, using localStorage', error);
     }
     
-    // Always fallback to localStorage for users
+    // Always fallback to localStorage for users if API fails
     return userStore.getUsers();
   },
 
@@ -217,7 +217,7 @@ export const dataService = {
       console.error('Error fetching user from API, using localStorage', error);
     }
     
-    // Always fallback to localStorage for users
+    // Always fallback to localStorage for users if API fails
     return userStore.getUserById(id);
   }
 };
