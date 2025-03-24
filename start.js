@@ -47,6 +47,7 @@ const handleProcess = (process, name) => {
 // Start processes with error handling
 const startProcess = (command, args, options, name) => {
   try {
+    console.log(`[${name}] Starting with command: ${command} ${args.join(' ')}`);
     const process = spawn(command, args, options);
     handleProcess(process, name);
     return process;
@@ -59,6 +60,7 @@ const startProcess = (command, args, options, name) => {
 
 // Start the backend server
 console.log('📡 Starting backend server...');
+console.log('[SERVER] Running in directory:', path.join(__dirname, 'server'));
 const serverPath = path.join(__dirname, 'server');
 const server = startProcess('node', ['server.js'], { cwd: serverPath }, 'SERVER');
 
@@ -68,6 +70,7 @@ const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 
 // Start the frontend dev server with the working directory explicitly set to the project root
 console.log('🖥️ Starting frontend development server...');
+console.log('[FRONTEND] Running in directory:', __dirname);
 const frontend = startProcess(npmCmd, ['run', 'dev'], { 
   cwd: __dirname,
   shell: true, // Use shell to ensure compatibility across platforms
@@ -78,6 +81,8 @@ if (server || frontend) {
   console.log('✅ Started services successfully!');
   console.log('⚠️ Press Ctrl+C to stop all services');
   console.log('📝 Access the application at: http://localhost:8080');
+  console.log('📝 Backend API running at: http://localhost:5000');
+  console.log('🔍 If the app shows connection errors, don\'t worry - it will switch to development mode automatically');
 } else {
   console.log('⚠️ Failed to start some services. See errors above.');
   console.log('📝 Manual startup instructions:');
