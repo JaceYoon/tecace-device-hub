@@ -1,16 +1,17 @@
 
-import React, { useState } from 'react';
-import { Device } from '@/types';
-import { Button } from '@/components/ui/button';
+import React from 'react';
 import { 
   Dialog, 
-  DialogContent, 
   DialogTrigger, 
-  DialogTitle, 
-  DialogHeader,
-  DialogDescription 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle,
+  DialogFooter,
+  DialogDescription
 } from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
+import { Device } from '@/types';
 import DeviceEditForm from './DeviceEditForm';
 
 interface DeviceEditDialogProps {
@@ -18,38 +19,42 @@ interface DeviceEditDialogProps {
   onDeviceUpdated?: () => void;
 }
 
-const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ device, onDeviceUpdated }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  
-  const handleDeviceUpdated = () => {
-    setIsOpen(false);
-    if (onDeviceUpdated) {
-      onDeviceUpdated();
-    }
-  };
-  
+// Create the DialogDescription component
+const DeviceDialogDescription: React.FC = () => (
+  <DialogDescription>
+    Edit device information and properties below.
+  </DialogDescription>
+);
+
+export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ 
+  device, 
+  onDeviceUpdated 
+}) => {
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8" title="Edit Device">
+        <Button variant="ghost" size="icon" className="h-8 w-8">
           <Edit className="h-4 w-4" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[800px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Edit Device</DialogTitle>
-          <DialogDescription>
-            Make changes to the device details below.
-          </DialogDescription>
+          <DeviceDialogDescription />
         </DialogHeader>
+        
         <DeviceEditForm 
           device={device} 
-          onDeviceUpdated={handleDeviceUpdated} 
-          onCancel={() => setIsOpen(false)} 
+          onDeviceUpdated={onDeviceUpdated} 
         />
+        
+        <DialogFooter className="mt-4">
+          {/* Footer content if needed */}
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );
 };
 
+// Add default export
 export default DeviceEditDialog;

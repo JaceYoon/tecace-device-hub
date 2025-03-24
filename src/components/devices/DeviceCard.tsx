@@ -7,12 +7,12 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import DeviceEditDialog from './DeviceEditDialog';
+import { DeviceEditDialog } from './DeviceEditDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +23,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface DeviceCardProps {
   device: Device;
@@ -215,16 +216,20 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>
-                <button
-                    onClick={() => setExpanded(!expanded)}
-                    className="flex items-center text-left w-full"
-                >
-                  <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
-                  {expanded ?
-                      <ChevronDown className="h-4 w-4 ml-2" /> :
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                  }
-                </button>
+                <Collapsible>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      onClick={() => setExpanded(!expanded)}
+                      className="flex items-center text-left w-full"
+                    >
+                      <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
+                      {expanded ?
+                        <ChevronDown className="h-4 w-4 ml-2" /> :
+                        <ChevronRight className="h-4 w-4 ml-2" />
+                      }
+                    </button>
+                  </CollapsibleTrigger>
+                </Collapsible>
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Smartphone className="h-3.5 w-3.5" />
                   {device.type}
@@ -256,7 +261,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-muted-foreground">Serial Number</p>
-                  <p className="font-mono text-xs">{device.serialNumber}</p>
+                  <p className="font-mono text-xs">{device.serialNumber || 'N/A'}</p>
                 </div>
               </div>
 
@@ -264,30 +269,51 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 <Cpu className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
                 <div>
                   <p className="text-muted-foreground">IMEI</p>
-                  <p className="font-mono text-xs">{device.imei}</p>
+                  <p className="font-mono text-xs">{device.imei || 'N/A'}</p>
                 </div>
               </div>
 
-              {expanded && (
-                  <>
+              <Collapsible open={expanded}>
+                <CollapsibleContent>
+                  <div className="space-y-2 text-sm mt-2 pt-2 border-t">
                     {assignedUser && (
-                        <div className="flex items-start">
-                          <UserIcon className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-muted-foreground">Assigned to</p>
-                            <p className="text-sm">{assignedUser.name}</p>
-                          </div>
+                      <div className="flex items-start">
+                        <UserIcon className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Current Owner</p>
+                          <p className="text-sm">{assignedUser.name}</p>
                         </div>
+                      </div>
+                    )}
+
+                    {device.deviceType && (
+                      <div className="flex items-start">
+                        <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Device Type</p>
+                          <p className="text-sm">{device.deviceType}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {device.notes && (
+                      <div className="flex items-start">
+                        <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Notes</p>
+                          <p className="text-sm">{device.notes}</p>
+                        </div>
+                      </div>
                     )}
 
                     {requestedByUser && (
-                        <div className="flex items-start">
-                          <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-muted-foreground">Requested by</p>
-                            <p className="text-sm">{requestedByUser.name}</p>
-                          </div>
+                      <div className="flex items-start">
+                        <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Requested by</p>
+                          <p className="text-sm">{requestedByUser.name}</p>
                         </div>
+                      </div>
                     )}
 
                     <div className="flex items-start">
@@ -297,8 +323,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                         <p className="text-xs">{formatDate(device.updatedAt)}</p>
                       </div>
                     </div>
-                  </>
-              )}
+                  </div>
+                </CollapsibleContent>
+              </Collapsible>
             </div>
           </CardContent>
 
