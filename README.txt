@@ -73,22 +73,28 @@ cd ..
 
 ### Step 4: Start the application
 
-You can use the convenience script to start both frontend and backend:
+**Recommended approach (separate terminals):**
+
+For the most reliable startup experience, start each service in a separate terminal:
+
+```bash
+# Terminal 1: Start the backend
+cd server
+node server.js
+
+# Terminal 2: Start the frontend
+npm run dev
+```
+
+**Alternative approach (convenience script):**
+
+You can try using the convenience script to start both frontend and backend:
 
 ```bash
 node start.js
 ```
 
-If you encounter issues with the start script, you can start both services separately:
-
-```bash
-# Start the backend (from the root directory)
-cd server
-npm run dev
-
-# Start the frontend (in a new terminal, from the root directory)
-npm run dev
-```
+If you encounter issues with the start script, fall back to the separate terminals approach.
 
 ## Default Admin Account
 
