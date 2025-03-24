@@ -9,7 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Clock } from 'lucide-react';
-import ExportButton from '@/components/devices/ExportButton';
 import RequestList from '@/components/devices/RequestList';
 import { dataService } from '@/services/data.service';
 import StatusSummary from '@/components/devices/StatusSummary';
@@ -32,7 +31,7 @@ const DeviceManagement: React.FC = () => {
     // Only redirect if the user is not a manager or admin
     if (!isManager && !isAdmin) {
       navigate('/dashboard');
-      toast.error('Access denied. Admin or manager permissions required.');
+      // Remove toast so it doesn't show if access works
     }
 
     setIsLoading(false);
@@ -55,7 +54,7 @@ const DeviceManagement: React.FC = () => {
   const handleExportAll = async () => {
     try {
       const devices = await dataService.getDevices();
-      exportDevicesToExcel(devices, 'Complete_Device_Inventory2.xlsx');
+      exportDevicesToExcel(devices, 'Complete_Device_Inventory.xlsx');
       toast.success('Export successful');
     } catch (error) {
       console.error('Export error:', error);

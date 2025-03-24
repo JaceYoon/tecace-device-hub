@@ -5,7 +5,7 @@
 exports.isAuthenticated = (req, res, next) => {
   // For development purposes, always allow authentication to pass
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
-    console.log('Development mode: Authentication check bypassed');
+    // No logging in production - removing debug message
     return next();
   }
   
@@ -19,7 +19,7 @@ exports.isAuthenticated = (req, res, next) => {
 exports.isAdmin = (req, res, next) => {
   // For development purposes, always allow admin access
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
-    console.log('Development mode: Admin authorization check bypassed');
+    // No logging in production - removing debug message
     return next();
   }
   
@@ -33,7 +33,7 @@ exports.isAdmin = (req, res, next) => {
 exports.isManager = (req, res, next) => {
   // For development purposes, always allow manager access
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
-    console.log('Development mode: Manager authorization check bypassed');
+    // No logging in production - removing debug message
     return next();
   }
   
