@@ -79,7 +79,6 @@ const RequestList: React.FC<RequestListProps> = ({
     loadData();
   }, [userId, refreshTrigger]);
 
-  // Fix: Improve cancel request functionality
   const handleCancelRequest = async (requestId: string) => {
     try {
       const request = requests.find(req => req.id === requestId);
@@ -107,7 +106,7 @@ const RequestList: React.FC<RequestListProps> = ({
       // Show success message
       toast.success('Request cancelled successfully');
       
-      // Update local state to remove the cancelled request
+      // Update local state to reflect the cancelled request
       setRequests(prevRequests => 
         prevRequests.map(req => 
           req.id === requestId ? { ...req, status: 'rejected' } : req
@@ -117,8 +116,10 @@ const RequestList: React.FC<RequestListProps> = ({
       // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
       
-      // Force reload data
-      loadData();
+      // Force reload data after a short delay to ensure all updates are reflected
+      setTimeout(() => {
+        loadData();
+      }, 500);
     } catch (error) {
       console.error('Error cancelling request:', error);
       toast.error('Failed to cancel request');
@@ -134,7 +135,11 @@ const RequestList: React.FC<RequestListProps> = ({
 
       // Refresh the data
       if (onRequestProcessed) onRequestProcessed();
-      loadData();
+      
+      // Force reload data after a short delay to ensure all updates are reflected
+      setTimeout(() => {
+        loadData();
+      }, 500);
     } catch (error) {
       console.error('Error processing request:', error);
       toast.error('Failed to process request');

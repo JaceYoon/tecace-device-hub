@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -395,6 +394,47 @@ export const authService = {
       body: JSON.stringify({ name, email })
     });
   },
+};
+
+// Define and export deviceService
+export const deviceService = {
+  getAll: (): Promise<Device[]> =>
+    apiCall<Device[]>('/devices'),
+
+  getById: (id: string): Promise<Device | null> =>
+    apiCall<Device | null>(`/devices/${id}`),
+
+  create: (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> =>
+    apiCall<Device>('/devices', {
+      method: 'POST',
+      body: JSON.stringify(device)
+    }),
+
+  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> =>
+    apiCall<Device | null>(`/devices/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(updates)
+    }),
+
+  delete: (id: string): Promise<SuccessResponse> =>
+    apiCall<SuccessResponse>(`/devices/${id}`, {
+      method: 'DELETE'
+    }),
+
+  requestDevice: (deviceId: string, type: 'assign' | 'release'): Promise<DeviceRequest> =>
+    apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
+      method: 'POST',
+      body: JSON.stringify({ type })
+    }),
+
+  processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
+    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    }),
+
+  getAllRequests: (): Promise<DeviceRequest[]> =>
+    apiCall<DeviceRequest[]>('/devices/requests/all'),
 };
 
 // User services

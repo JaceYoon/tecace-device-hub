@@ -36,6 +36,7 @@ class RequestStore {
       ...request,
       id: `request-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       requestedAt: new Date(),
+      status: 'pending',
     };
     this.requests.push(newRequest);
     
