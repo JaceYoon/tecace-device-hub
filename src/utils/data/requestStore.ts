@@ -14,12 +14,12 @@ class RequestStore {
         this.requests = JSON.parse(storedRequests);
       } else {
         // Initialize with mock requests if none exist
-        this.requests = [...mockDeviceRequests];
+        this.requests = [];
         localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
       }
     } catch (error) {
       console.error('Error initializing RequestStore:', error);
-      this.requests = [...mockDeviceRequests];
+      this.requests = [];
     }
   }
 

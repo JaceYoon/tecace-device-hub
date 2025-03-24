@@ -188,6 +188,27 @@ const RequestList: React.FC<RequestListProps> = ({
             const isPending = request.status === 'pending';
             const isMyRequest = userId === request.userId;
 
+            // Safely format dates with validation
+            const formatDate = (dateValue: Date | string | undefined) => {
+              if (!dateValue) return '';
+              
+              // Convert string dates to Date objects if needed
+              const date = typeof dateValue === 'string' ? new Date(dateValue) : dateValue;
+              
+              // Validate the date is valid before formatting
+              if (!(date instanceof Date) || isNaN(date.getTime())) {
+                console.warn('Invalid date:', dateValue);
+                return 'Invalid date';
+              }
+              
+              try {
+                return formatDistanceToNow(date, { addSuffix: true });
+              } catch (error) {
+                console.error('Error formatting date:', error, dateValue);
+                return 'Date error';
+              }
+            };
+
             return (
                 <Card key={request.id} className="overflow-hidden">
                   <CardContent className="p-4">
@@ -198,11 +219,11 @@ const RequestList: React.FC<RequestListProps> = ({
                           {request.type === 'assign' ? 'Request to assign' : 'Request to release'} 
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          Requested {formatDistanceToNow(new Date(request.requestedAt), { addSuffix: true })}
+                          Requested {formatDate(request.requestedAt)}
                         </div>
                         {request.processedAt && (
                             <div className="text-xs text-muted-foreground">
-                              Processed {formatDistanceToNow(new Date(request.processedAt), { addSuffix: true })}
+                              Processed {formatDate(request.processedAt)}
                               {processor && ` by ${processor.name}`}
                             </div>
                         )}

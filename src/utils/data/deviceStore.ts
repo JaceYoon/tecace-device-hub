@@ -27,6 +27,11 @@ class DeviceStore {
     return this.devices;
   }
 
+  getDevicesByUser(userId: string): Device[] {
+    if (!userId) return [];
+    return this.devices.filter(device => device.assignedTo === userId);
+  }
+
   getDeviceById(id: string): Device | undefined {
     return this.devices.find(device => device.id === id);
   }
