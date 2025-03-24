@@ -462,8 +462,6 @@ export const deviceService = {
     }),
 
   cancelRequest: (requestId: string, userId: string): Promise<DeviceRequest | null> => {
-    // In dev mode this will be handled by handleDevModeCall
-    // In production, we simply use processRequest with special 'cancelled' status
     return apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
       method: 'PUT',
       body: JSON.stringify({ userId })

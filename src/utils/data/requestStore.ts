@@ -76,12 +76,46 @@ class RequestStore {
         requestedBy: undefined,
         status: request.type === 'assign' ? 'assigned' : 'available',
       });
-    } else if (status === 'rejected') {
-      // If rejected, clear the requestedBy field
+    } else if (status === 'rejected' || status === 'cancelled') {
+      // If rejected or cancelled, clear the requestedBy field
       deviceStore.updateDevice(request.deviceId, {
         requestedBy: undefined,
       });
     }
+    
+    // Persist to localStorage
+    localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
+    
+    return this.requests[requestIndex];
+  }
+
+  // Specific method for handling cancellation
+  cancelRequest(id: string, userId: string): DeviceRequest | null {
+    const requestIndex = this.requests.findIndex(request => request.id === id);
+    if (requestIndex === -1) return null;
+    
+    const request = this.requests[requestIndex];
+    
+    // Verify the user is the one who created the request
+    if (request.userId !== userId) {
+      console.error("User cannot cancel a request they didn't create");
+      return null;
+    }
+    
+    console.log(`Cancelling request ${id} by user ${userId}`);
+    
+    // Update request status to cancelled
+    this.requests[requestIndex] = {
+      ...request,
+      status: 'cancelled',
+      processedAt: new Date(),
+      processedBy: userId // In this case, the requester is processing their own request
+    };
+    
+    // Clear the requestedBy field on the device
+    deviceStore.updateDevice(request.deviceId, {
+      requestedBy: undefined,
+    });
     
     // Persist to localStorage
     localStorage.setItem('tecace_requests', JSON.stringify(this.requests));

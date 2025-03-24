@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { DeviceRequest, User, Device } from '@/types';
+import { DeviceRequest, User, Device, RequestStatus } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
@@ -97,9 +98,10 @@ const RequestList: React.FC<RequestListProps> = ({
 
       toast.success('Request cancelled successfully');
       
+      // The result has a status of 'cancelled' which is now a valid RequestStatus
       setRequests(prevRequests => 
         prevRequests.map(req => 
-          req.id === requestId ? { ...req, status: 'cancelled' } : req
+          req.id === requestId ? { ...req, status: 'cancelled' as RequestStatus } : req
         )
       );
 
