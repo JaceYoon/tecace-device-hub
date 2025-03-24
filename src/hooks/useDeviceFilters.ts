@@ -73,7 +73,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // Filter by search query
     if (searchQuery && !device.project.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase()) &&
+        (!device.serialNumber || !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase())) &&
         !(device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()))) {
       return false;
     }

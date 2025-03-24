@@ -9,6 +9,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { Clock, Package, PackageCheck, ShieldAlert, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
+import { dataService } from '@/services/data.service';
 
 interface RequestListProps {
   title?: string;
@@ -19,49 +20,50 @@ interface RequestListProps {
 }
 
 const RequestList: React.FC<RequestListProps> = ({
-                                                   title = 'Requests',
-                                                   userId,
-                                                   showExportButton = false,
-                                                   onRequestProcessed,
-                                                   refreshTrigger = 0,
-                                                 }) => {
-  const { isManager } = useAuth();
+  title = 'Requests',
+  userId,
+  showExportButton = false,
+  onRequestProcessed,
+  refreshTrigger = 0,
+}) => {
+  const { isManager, user } = useAuth();
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [devices, setDevices] = useState<{[key: string]: Device}>({});
   const [users, setUsers] = useState<{[key: string]: User}>({});
   const [loading, setLoading] = useState(true);
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
-      // Get all requests
-      let allRequests = dataStore.getRequests();
+      setLoading(true);
+      // Get all requests using dataService instead of dataStore
+      const allRequests = await dataService.getRequests();
+      console.log("RequestList: Fetched requests:", allRequests);
 
       // Filter requests if userId provided
+      let filteredRequests = allRequests;
       if (userId) {
-        allRequests = allRequests.filter(req => req.userId === userId);
+        filteredRequests = allRequests.filter(req => req.userId === userId);
       }
 
-      setRequests(allRequests);
+      setRequests(filteredRequests);
 
       // Create maps for faster lookup
       const deviceMap: {[key: string]: Device} = {};
       const userMap: {[key: string]: User} = {};
 
-      allRequests.forEach(request => {
-        if (!deviceMap[request.deviceId]) {
-          const device = dataStore.getDeviceById(request.deviceId);
-          if (device) deviceMap[request.deviceId] = device;
-        }
+      // Fetch all devices and users in one batch
+      const [allDevices, allUsers] = await Promise.all([
+        dataService.getDevices(),
+        dataService.getUsers()
+      ]);
 
-        if (!userMap[request.userId]) {
-          const user = dataStore.getUserById(request.userId);
-          if (user) userMap[request.userId] = user;
-        }
+      // Create lookup maps
+      allDevices.forEach(device => {
+        deviceMap[device.id] = device;
+      });
 
-        if (request.processedBy && !userMap[request.processedBy]) {
-          const user = dataStore.getUserById(request.processedBy);
-          if (user) userMap[request.processedBy] = user;
-        }
+      allUsers.forEach(user => {
+        userMap[user.id] = user;
       });
 
       setDevices(deviceMap);
@@ -78,9 +80,9 @@ const RequestList: React.FC<RequestListProps> = ({
     loadData();
   }, [userId, refreshTrigger]);
 
-  const handleCancelRequest = (requestId: string) => {
+  const handleCancelRequest = async (requestId: string) => {
     try {
-      const request = dataStore.getRequestById(requestId);
+      const request = requests.find(req => req.id === requestId);
       if (!request) return;
 
       // Only the user who made the request can cancel it
@@ -90,13 +92,7 @@ const RequestList: React.FC<RequestListProps> = ({
       }
 
       // Update request status to 'rejected'
-      dataStore.processRequest(requestId, 'rejected', userId || '');
-
-      // Clear the requestedBy field on the device
-      const device = dataStore.getDeviceById(request.deviceId);
-      if (device) {
-        dataStore.updateDevice(request.deviceId, { requestedBy: undefined });
-      }
+      await dataService.processRequest(requestId, 'rejected', userId || '');
 
       toast.success('Request cancelled successfully');
 
@@ -109,11 +105,11 @@ const RequestList: React.FC<RequestListProps> = ({
     }
   };
 
-  const handleProcessRequest = (requestId: string, approve: boolean) => {
+  const handleProcessRequest = async (requestId: string, approve: boolean) => {
     if (!isManager) return;
 
     try {
-      dataStore.processRequest(requestId, approve ? 'approved' : 'rejected', userId || '');
+      await dataService.processRequest(requestId, approve ? 'approved' : 'rejected', user?.id || '');
       toast.success(`Request ${approve ? 'approved' : 'rejected'} successfully`);
 
       // Refresh the data
