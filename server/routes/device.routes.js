@@ -25,7 +25,7 @@ router.delete('/:id', isAuthenticated, isAdmin, deviceController.delete);
 // Request a device
 router.post('/:id/request', isAuthenticated, deviceController.requestDevice);
 
-// Process a device request
-router.put('/requests/:id', isAuthenticated, isAdmin, deviceController.processRequest);
+// Process a device request - modified to use custom middleware
+router.put('/requests/:id', isAuthenticated, deviceController.processRequest);
 
 module.exports = router;

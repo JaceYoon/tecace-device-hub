@@ -133,6 +133,24 @@ export const dataService = {
     }
   },
 
+  // Special method for cancellation by the requester
+  cancelRequest: async (id: string, userId: string): Promise<DeviceRequest | null> => {
+    if (USE_LOCAL_STORAGE) {
+      // For localStorage, we're using processRequest with status='rejected'
+      return requestStore.processRequest(id, 'rejected', userId);
+    }
+
+    try {
+      // Use the new cancelRequest method from deviceService
+      const cancelledRequest = await deviceService.cancelRequest(id, userId);
+      return cancelledRequest;
+    } catch (error) {
+      console.error('Error cancelling request in API, falling back to localStorage', error);
+      // Fallback to localStorage implementation
+      return requestStore.processRequest(id, 'rejected', userId);
+    }
+  },
+
   // User methods
   getUsers: async (): Promise<User[]> => {
     if (USE_LOCAL_STORAGE) {
