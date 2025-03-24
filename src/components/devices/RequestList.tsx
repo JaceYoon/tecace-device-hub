@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
 import { DeviceRequest, User, Device } from '@/types';
-import { dataStore } from '@/utils/data';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
@@ -35,7 +34,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const loadData = async () => {
     try {
       setLoading(true);
-      // Get all requests using dataService instead of dataStore
+      // Get all requests using dataService
       const allRequests = await dataService.getRequests();
       console.log("RequestList: Fetched requests:", allRequests);
 
@@ -86,13 +85,13 @@ const RequestList: React.FC<RequestListProps> = ({
       if (!request) return;
 
       // Only the user who made the request can cancel it
-      if (request.userId !== userId) {
+      if (user && request.userId !== user.id) {
         toast.error('You can only cancel your own requests');
         return;
       }
 
       // Update request status to 'rejected'
-      await dataService.processRequest(requestId, 'rejected', userId || '');
+      await dataService.processRequest(requestId, 'rejected', user?.id || '');
 
       toast.success('Request cancelled successfully');
 
@@ -106,10 +105,10 @@ const RequestList: React.FC<RequestListProps> = ({
   };
 
   const handleProcessRequest = async (requestId: string, approve: boolean) => {
-    if (!isManager) return;
+    if (!isManager || !user) return;
 
     try {
-      await dataService.processRequest(requestId, approve ? 'approved' : 'rejected', user?.id || '');
+      await dataService.processRequest(requestId, approve ? 'approved' : 'rejected', user.id);
       toast.success(`Request ${approve ? 'approved' : 'rejected'} successfully`);
 
       // Refresh the data
