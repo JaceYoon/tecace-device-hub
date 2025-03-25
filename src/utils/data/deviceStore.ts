@@ -1,3 +1,4 @@
+
 import { Device } from '@/types';
 
 class DeviceStore {
@@ -23,6 +24,21 @@ class DeviceStore {
           if (!device.project) {
             return { ...device, project: 'Unknown Project' };
           }
+          
+          // Make sure assignedTo and assignedToName are properly synced
+          if (device.assignedTo && !device.assignedToName) {
+            // Try to get user name from local storage if available
+            try {
+              const users = JSON.parse(localStorage.getItem('tecace_users') || '[]');
+              const user = users.find((u: any) => u.id === device.assignedTo);
+              if (user) {
+                device.assignedToName = user.name;
+              }
+            } catch (e) {
+              console.warn('Error getting user name for assigned device', e);
+            }
+          }
+          
           return device;
         });
         
@@ -44,7 +60,11 @@ class DeviceStore {
 
   getDevicesByUser(userId: string): Device[] {
     if (!userId) return [];
-    return this.devices.filter(device => device.assignedTo === userId);
+    console.log("Getting devices for user ID:", userId);
+    console.log("All devices:", this.devices);
+    const userDevices = this.devices.filter(device => device.assignedTo === userId);
+    console.log("User devices:", userDevices);
+    return userDevices;
   }
 
   getDeviceById(id: string): Device | undefined {
@@ -71,6 +91,25 @@ class DeviceStore {
   updateDevice(id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Device | null {
     const index = this.devices.findIndex(device => device.id === id);
     if (index === -1) return null;
+
+    // If assignedTo is being updated, make sure to update assignedToName as well
+    if (updates.assignedTo !== undefined) {
+      if (updates.assignedTo) {
+        // Try to get user name from local storage
+        try {
+          const users = JSON.parse(localStorage.getItem('tecace_users') || '[]');
+          const user = users.find((u: any) => u.id === updates.assignedTo);
+          if (user) {
+            updates.assignedToName = user.name;
+          }
+        } catch (e) {
+          console.warn('Error getting user name for assigned device', e);
+        }
+      } else {
+        // If assignedTo is being removed, clear assignedToName as well
+        updates.assignedToName = undefined;
+      }
+    }
 
     this.devices[index] = {
       ...this.devices[index],
@@ -101,4 +140,3 @@ class DeviceStore {
 }
 
 export const deviceStore = new DeviceStore();
-

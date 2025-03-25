@@ -106,7 +106,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // Filter by assigned to user - check if the device is assigned to the specified user
     if (props.filterByAssignedToUser) {
-      console.log("Checking device assigned to:", device.assignedTo, "against user:", props.filterByAssignedToUser);
+      console.log("Device checking:", device.project, "assigned to:", device.assignedTo, "against user:", props.filterByAssignedToUser);
       return device.assignedTo === props.filterByAssignedToUser;
     }
 

@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -49,7 +48,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   const isDeviceOwner = device.assignedTo === user?.id;
   const hasRequested = device.requestedBy === user?.id;
   const isRequested = !!device.requestedBy;
+  
   const assignedUser = users.find(u => u.id === device.assignedTo);
+  const assignedUserName = assignedUser?.name || device.assignedToName || 'Unknown User';
+  
   const requestedByUser = users.find(u => u.id === device.requestedBy);
 
   const formatDate = (date: Date) => {
@@ -254,13 +256,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           </CardHeader>
 
           <CardContent className="pb-3 space-y-3">
-            {/* Owner badge at the top of content */}
-            {assignedUser && (
+            {device.status === 'assigned' && (
               <div className="flex items-center gap-1.5 bg-blue-50 text-blue-800 p-2 rounded-md">
                 <UserIcon className="h-4 w-4" />
                 <div>
                   <span className="text-xs font-medium">Current Owner</span>
-                  <p className="text-sm font-medium">{assignedUser.name}</p>
+                  <p className="text-sm font-medium">{assignedUserName}</p>
                 </div>
               </div>
             )}
