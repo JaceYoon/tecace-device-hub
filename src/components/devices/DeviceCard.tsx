@@ -176,6 +176,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             });
             
             if (onAction) onAction();
+            
+            // Force immediate refresh of UI by triggering a global state update
+            // This ensures "My Devices" view gets updated immediately
+            dataService.triggerRefresh();
           } catch (error) {
             console.error('Error releasing device:', error);
             toast.error('Failed to release device');

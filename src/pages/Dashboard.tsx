@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -47,21 +46,18 @@ const Dashboard: React.FC = () => {
         console.log("Dashboard: Fetched requests:", allRequests);
         setRequests(allRequests);
         
-        // Fetch devices and users for the requests
         const allDevices = await dataService.getDevices();
         const allUsers = await dataService.getUsers();
         
         console.log("Dashboard: User id:", user.id, "Name:", user.name);
         console.log("Dashboard: Fetched devices:", allDevices.length);
         
-        // Check for assigned devices to this user
         const myDevices = allDevices.filter(d => {
           return String(d.assignedTo) === String(user.id) || String(d.assignedToId) === String(user.id);
         });
         console.log("Dashboard: My devices found:", myDevices.length);
         console.log("Dashboard: My devices details:", myDevices);
         
-        // Create maps for faster lookups
         const deviceMap: {[key: string]: Device} = {};
         const userMap: {[key: string]: User} = {};
         
@@ -87,6 +83,16 @@ const Dashboard: React.FC = () => {
     
     fetchData();
   }, [user, refreshTrigger, isAuthenticated]);
+
+  useEffect(() => {
+    const unregister = dataService.registerRefreshCallback(() => {
+      setRefreshTrigger(prev => prev + 1);
+    });
+    
+    return () => {
+      if (unregister) unregister();
+    };
+  }, []);
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
@@ -118,7 +124,6 @@ const Dashboard: React.FC = () => {
 
   const pendingRequests = requests.filter(request => request.status === 'pending') || [];
 
-  // Explicitly use the user ID for My Devices filter and ensure it's a string
   const myDeviceFilter = String(user.id);
   console.log("Dashboard: Setting my device filter to:", myDeviceFilter);
 
@@ -171,7 +176,6 @@ const Dashboard: React.FC = () => {
                     const device = devices[request.deviceId];
                     const requestUser = users[request.userId];
                     
-                    // Get device name with fallback
                     const deviceName = device ? (device.project || device.projectGroup || 'Unknown Device') : 'Unknown Device';
                     const userName = requestUser ? requestUser.name || 'Unknown User' : 'Unknown User';
                     const serialNumber = device ? device.serialNumber : 'N/A';
