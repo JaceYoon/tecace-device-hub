@@ -40,6 +40,10 @@ const DeviceList: React.FC<DeviceListProps> = ({
   const effectiveUserFilter = filterByAssignedToUser || 
     (title === 'My Devices' && user ? user.id : undefined);
   
+  // Debug log to see what's being used for filtering
+  console.log(`DeviceList "${title}" - User:`, user?.id);
+  console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
+  
   const {
     users,
     filteredDevices,
