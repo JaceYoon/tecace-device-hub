@@ -40,8 +40,8 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       if (props.filterByAssignedToUser) {
         console.log("Filtering by assignedTo:", props.filterByAssignedToUser);
         const userDevices = devicesData.filter(d => {
-          const match = d.assignedToId === props.filterByAssignedToUser || d.assignedTo === props.filterByAssignedToUser;
-          console.log(`Device ${d.project} - assignedToId: ${d.assignedToId}, assignedTo: ${d.assignedTo}, matched: ${match}`);
+          const match = d.assignedTo === props.filterByAssignedToUser || d.assignedTo === props.filterByAssignedToUser;
+          console.log(`Device ${d.project} - assignedTo: ${d.assignedTo}, matched: ${match}`);
           return match;
         });
         console.log("Devices assigned to this user:", userDevices);
@@ -110,8 +110,8 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // Filter by assigned to user - check if the device is assigned to the specified user
     if (props.filterByAssignedToUser) {
-      console.log(`Device ${device.project} - checking assignedTo: ${device.assignedTo}, assignedToId: ${device.assignedToId} against filter: ${props.filterByAssignedToUser}`);
-      return device.assignedTo === props.filterByAssignedToUser || device.assignedToId === props.filterByAssignedToUser;
+      console.log(`Device ${device.project} - checking assignedTo: ${device.assignedTo} against filter: ${props.filterByAssignedToUser}`);
+      return device.assignedTo === props.filterByAssignedToUser;
     }
 
     return true;

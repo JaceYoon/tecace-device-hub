@@ -19,7 +19,7 @@ class DeviceStore {
   getDevicesByUser(userId: string): Device[] {
     console.warn('DeviceStore.getDevicesByUser() is deprecated, please use dataService instead');
     if (!userId) return [];
-    const userDevices = this.devices.filter(device => device.assignedTo === userId || device.assignedToId === userId);
+    const userDevices = this.devices.filter(device => device.assignedTo === userId);
     return userDevices;
   }
 
