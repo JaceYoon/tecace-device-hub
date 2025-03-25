@@ -111,7 +111,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 // Auth services
-export const authService = {
+const authService = {
   checkAuth: (): Promise<{ isAuthenticated: boolean; user: User | null }> =>
     apiCall<{ isAuthenticated: boolean; user: User | null }>('/auth/check'),
 
@@ -141,7 +141,7 @@ export const authService = {
 };
 
 // Define and export deviceService
-export const deviceService = {
+const deviceService = {
   getAll: (): Promise<Device[]> =>
     apiCall<Device[]>('/devices'),
 
@@ -190,7 +190,7 @@ export const deviceService = {
 };
 
 // User services
-export const userService = {
+const userService = {
   getAll: (): Promise<User[]> =>
     apiCall<User[]>('/users'),
 
@@ -282,9 +282,6 @@ export const dataService = {
     method: 'DELETE'
   }),
 };
-
-// Export the individual services for direct access
-export { deviceService, userService, authService };
 
 // Export the dataService as default as well for flexibility
 export default dataService;

@@ -104,8 +104,7 @@ const Dashboard: React.FC = () => {
     try {
       await dataService.processRequest(
           requestId,
-          approve ? 'approved' : 'rejected',
-          user.id
+          approve ? 'approved' : 'rejected'
       );
 
       toast.success(`Request ${approve ? 'approved' : 'rejected'} successfully`);

@@ -55,7 +55,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const handleApprove = async (requestId: string) => {
     setProcessing(requestId);
     try {
-      await dataService.processRequest(requestId, 'approved', '');
+      await dataService.processRequest(requestId, 'approved');
       toast.success('Request approved successfully');
       fetchData();
       if (onRequestProcessed) onRequestProcessed();
@@ -70,7 +70,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const handleReject = async (requestId: string) => {
     setProcessing(requestId);
     try {
-      await dataService.processRequest(requestId, 'rejected', '');
+      await dataService.processRequest(requestId, 'rejected');
       toast.success('Request rejected successfully');
       fetchData();
       if (onRequestProcessed) onRequestProcessed();
