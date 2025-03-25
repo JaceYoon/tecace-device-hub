@@ -28,7 +28,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
   const [processing, setProcessing] = useState<string | null>(null);
 
   const fetchData = async () => {
@@ -38,6 +38,7 @@ const RequestList: React.FC<RequestListProps> = ({
         dataService.getRequests(),
         dataService.getUsers()
       ]);
+      console.log("Fetched requests:", requestsData.length);
       setRequests(requestsData);
       setUsers(usersData);
     } catch (error) {
@@ -104,13 +105,17 @@ const RequestList: React.FC<RequestListProps> = ({
   // Filter requests based on userId prop if provided
   let filteredRequests = requests;
   if (userId) {
+    // When viewing "My Requests" tab, show ALL requests for this user (not just pending)
     filteredRequests = requests.filter(request => request.userId === userId);
+    console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
   } else {
+    // For admin view, only show pending requests that need action
     filteredRequests = requests.filter(request => request.status === 'pending');
   }
 
-  if (!isAdmin) {
-    return null;
+  // If not admin, only show requests that belong to current user
+  if (!isAdmin && !userId && user) {
+    filteredRequests = requests.filter(request => request.userId === user.id);
   }
 
   return (
@@ -124,7 +129,7 @@ const RequestList: React.FC<RequestListProps> = ({
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : filteredRequests.length === 0 ? (
-          <p>No pending device requests.</p>
+          <p>No device requests found.</p>
         ) : (
           <div className="overflow-x-auto">
             <Table>
@@ -152,42 +157,46 @@ const RequestList: React.FC<RequestListProps> = ({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleApprove(request.id)}
-                          disabled={processing === request.id}
-                        >
-                          {processing === request.id ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Approving...
-                            </>
-                          ) : (
-                            <>
-                              <Check className="mr-2 h-4 w-4" />
-                              Approve
-                            </>
-                          )}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleReject(request.id)}
-                          disabled={processing === request.id}
-                        >
-                          {processing === request.id ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              Rejecting...
-                            </>
-                          ) : (
-                            <>
-                              <X className="mr-2 h-4 w-4" />
-                              Reject
-                            </>
-                          )}
-                        </Button>
+                        {isAdmin && request.status === 'pending' && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApprove(request.id)}
+                              disabled={processing === request.id}
+                            >
+                              {processing === request.id ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Approving...
+                                </>
+                              ) : (
+                                <>
+                                  <Check className="mr-2 h-4 w-4" />
+                                  Approve
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="destructive"
+                              size="sm"
+                              onClick={() => handleReject(request.id)}
+                              disabled={processing === request.id}
+                            >
+                              {processing === request.id ? (
+                                <>
+                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                  Rejecting...
+                                </>
+                              ) : (
+                                <>
+                                  <X className="mr-2 h-4 w-4" />
+                                  Reject
+                                </>
+                              )}
+                            </Button>
+                          </>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
