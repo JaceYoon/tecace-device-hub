@@ -26,12 +26,13 @@ export interface Device {
   deviceStatus?: string;
   receivedDate?: Date;
   returnDate?: Date;
-  assignedTo?: string; // Changed from User to string (user ID)
-  addedBy: string; // Changed from User to string (user ID)
+  assignedTo?: string; // User ID
+  assignedToName?: string; // Added to display user name directly
+  addedBy: string; // User ID
   notes?: string;
   createdAt: Date;
   updatedAt: Date;
-  requestedBy?: string; // Added requestedBy field as string (user ID)
+  requestedBy?: string; // User ID
 }
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
@@ -44,7 +45,7 @@ export interface DeviceRequest {
   type: 'assign' | 'release';
   requestedAt: Date;
   processedAt?: Date;
-  processedBy?: string; // Changed from User to string (user ID)
+  processedBy?: string; // User ID
   device?: Device;
   user?: User;
 }

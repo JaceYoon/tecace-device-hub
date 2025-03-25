@@ -61,13 +61,12 @@ const DeviceList: React.FC<DeviceListProps> = ({
     }
   }, [initialStatusFilter, setStatusFilter]);
 
-  console.log(
-    `DeviceList: Filtered ${filteredDevices.length} devices, ` +
-    `filterByStatus=${JSON.stringify(filterByStatus)}, ` +
-    `statusFilter=${statusFilter}, ` +
-    `filterByAssignedToUser=${filterByAssignedToUser || (title === 'My Devices' && user ? user.id : 'none')}, ` +
-    `isAdmin=${isAdmin}`
-  );
+  // Debug logs for "My Devices" view
+  if (title === 'My Devices' && user) {
+    console.log("My Devices view - User ID:", user.id);
+    console.log("My Devices view - Filtered devices:", filteredDevices);
+    console.log("My Devices view - Filter by assigned user:", filterByAssignedToUser || user.id);
+  }
 
   return (
     <div className={className}>

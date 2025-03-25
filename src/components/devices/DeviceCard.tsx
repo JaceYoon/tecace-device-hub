@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -24,6 +25,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Badge } from '@/components/ui/badge';
 
 interface DeviceCardProps {
   device: Device;
@@ -210,6 +212,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
               "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
+              "border-green-300 bg-green-50/40": device.status === 'assigned' && isDeviceOwner,
             },
             className
         )}>
@@ -233,11 +236,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Smartphone className="h-3.5 w-3.5" />
                   {device.type}
-                  {assignedUser && (
-                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded-full">
-                      Assigned to: {assignedUser.name}
-                    </span>
-                  )}
                 </CardDescription>
               </div>
               <div className="flex flex-col items-end gap-1">
@@ -256,6 +254,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           </CardHeader>
 
           <CardContent className="pb-3 space-y-3">
+            {/* Owner badge at the top of content */}
+            {assignedUser && (
+              <div className="flex items-center gap-1.5 bg-blue-50 text-blue-800 p-2 rounded-md">
+                <UserIcon className="h-4 w-4" />
+                <div>
+                  <span className="text-xs font-medium">Current Owner</span>
+                  <p className="text-sm font-medium">{assignedUser.name}</p>
+                </div>
+              </div>
+            )}
+
             <div className="space-y-2 text-sm">
               <div className="flex items-start">
                 <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
@@ -276,16 +285,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
               <Collapsible open={expanded}>
                 <CollapsibleContent>
                   <div className="space-y-2 text-sm mt-2 pt-2 border-t">
-                    {assignedUser && (
-                      <div className="flex items-start">
-                        <UserIcon className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-muted-foreground">Current Owner</p>
-                          <p className="text-sm">{assignedUser.name}</p>
-                        </div>
-                      </div>
-                    )}
-
                     {device.deviceType && (
                       <div className="flex items-start">
                         <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />

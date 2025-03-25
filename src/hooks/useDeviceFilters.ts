@@ -37,6 +37,12 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       ]);
 
       console.log("Fetched devices for useDeviceFilters:", devicesData);
+      if (props.filterByAssignedToUser) {
+        console.log("Filtering by assignedTo:", props.filterByAssignedToUser);
+        console.log("Devices assigned to this user:", 
+          devicesData.filter(d => d.assignedTo === props.filterByAssignedToUser));
+      }
+      
       setDevices(devicesData);
       setUsers(usersData);
     } catch (error) {
@@ -99,8 +105,9 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     }
 
     // Filter by assigned to user - check if the device is assigned to the specified user
-    if (props.filterByAssignedToUser && device.assignedTo !== props.filterByAssignedToUser) {
-      return false;
+    if (props.filterByAssignedToUser) {
+      console.log("Checking device assigned to:", device.assignedTo, "against user:", props.filterByAssignedToUser);
+      return device.assignedTo === props.filterByAssignedToUser;
     }
 
     return true;
