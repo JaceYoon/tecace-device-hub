@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
-import { Device, DeviceTypeCategory } from '@/types';
+import { Device, DeviceTypeCategory, DeviceTypeValue } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
@@ -19,11 +19,32 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   const { user, isManager } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Make sure we have a valid deviceType value from the allowed options
+  const deviceTypeValue = device.deviceType && 
+    (device.deviceType === 'C-Type' || device.deviceType === 'Lunchbox') ? 
+    device.deviceType : 'C-Type';
+  
+  // Ensure device.type is one of the allowed values
+  const ensureValidType = (type: string): DeviceTypeValue => {
+    const validTypes: DeviceTypeValue[] = [
+      'Smartphone',
+      'Tablet',
+      'Smartwatch',
+      'Box',
+      'Accessory',
+      'Other'
+    ];
+    
+    return validTypes.includes(type as DeviceTypeValue) 
+      ? (type as DeviceTypeValue) 
+      : 'Other';
+  };
+  
   const [deviceData, setDeviceData] = useState({
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
-    type: device.type,
-    deviceType: device.deviceType || 'Smartphone' as DeviceTypeCategory,
+    type: ensureValidType(device.type),
+    deviceType: deviceTypeValue as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,
@@ -32,10 +53,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     notes: device.notes || '',
   });
   
-  const deviceTypes = [
+  // Strictly typed list of device types matching the database schema
+  const deviceTypes: DeviceTypeValue[] = [
     'Smartphone',
     'Tablet',
-    'Laptop',
     'Smartwatch',
     'Box',
     'Accessory',
@@ -76,6 +97,12 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
+      return;
+    }
+    
+    // Validate that type is one of the allowed values
+    if (!deviceTypes.includes(type as DeviceTypeValue)) {
+      toast.error('Please select a valid device type');
       return;
     }
     

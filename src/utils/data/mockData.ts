@@ -46,7 +46,7 @@ export const mockDevices: Device[] = [
     id: '2',
     project: 'MacBook Pro M1',
     projectGroup: 'Eureka',  // Added projectGroup
-    type: 'Laptop',
+    type: 'Other', // Changed from "Laptop" to "Other"
     imei: '987654321098765',
     serialNumber: 'MBP20221234',
     status: 'assigned',
@@ -91,7 +91,7 @@ export const mockDevices: Device[] = [
     id: '5',
     project: 'Dell XPS 13',
     projectGroup: 'Eureka',  // Added projectGroup
-    type: 'Laptop',
+    type: 'Other', // Changed from "Laptop" to "Other"
     imei: '345678901234567',
     serialNumber: 'XPS13DEF456',
     status: 'available',

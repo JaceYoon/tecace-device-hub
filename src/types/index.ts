@@ -12,13 +12,14 @@ export interface User {
 }
 
 export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen';
-export type DeviceTypeCategory = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | 'Accessory' | 'Other';
+export type DeviceTypeCategory = 'C-Type' | 'Lunchbox';
+export type DeviceTypeValue = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | 'Accessory' | 'Other';
 
 export interface Device {
   id: string;
   project: string;
   projectGroup: string;
-  type: string;
+  type: DeviceTypeValue;
   deviceType?: DeviceTypeCategory;
   imei?: string;
   serialNumber?: string;

@@ -9,14 +9,14 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { CalendarIcon } from 'lucide-react';
-import { DeviceTypeCategory } from '@/types';
+import { DeviceTypeCategory, DeviceTypeValue } from '@/types';
 import { cn } from '@/lib/utils';
 
 interface DeviceFormFieldsProps {
   deviceData: {
     project: string;
     projectGroup: string;
-    type: string;
+    type: DeviceTypeValue;
     deviceType: DeviceTypeCategory;
     imei?: string;
     serialNumber?: string;
@@ -24,7 +24,7 @@ interface DeviceFormFieldsProps {
     receivedDate?: Date;
     notes?: string;
   };
-  deviceTypes: string[];
+  deviceTypes: DeviceTypeValue[];
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
   handleSelectChange: (value: string, field: string) => void;
   handleDateChange: (date: Date | undefined, field: string) => void;
@@ -95,12 +95,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               <SelectValue placeholder="Select device category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Smartphone">Smartphone</SelectItem>
-              <SelectItem value="Tablet">Tablet</SelectItem>
-              <SelectItem value="Smartwatch">Smartwatch</SelectItem>
-              <SelectItem value="Box">Box</SelectItem>
-              <SelectItem value="Accessory">Accessory</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="C-Type">C-Type</SelectItem>
+              <SelectItem value="Lunchbox">Lunchbox</SelectItem>
             </SelectContent>
           </Select>
         </div>
