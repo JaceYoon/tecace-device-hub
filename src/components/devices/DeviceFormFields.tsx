@@ -11,12 +11,13 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Image } from 'lucide-react';
+import { Calendar as CalendarIcon, Image, Download } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { Dialog, DialogContent, DialogClose } from '@/components/ui/dialog';
 
 interface DeviceData {
   project: string;
@@ -51,6 +52,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleFileChange,
   isEditMode = false
 }) => {
+  const [showImageDialog, setShowImageDialog] = React.useState(false);
+
   // Handle device picture file upload
   const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -73,6 +76,17 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     }
   };
 
+  const downloadImage = () => {
+    if (!deviceData.devicePicture) return;
+    
+    const link = document.createElement('a');
+    link.href = deviceData.devicePicture;
+    link.download = `device-${deviceData.project || 'image'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -93,7 +107,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           <Input
             id="projectGroup"
             name="projectGroup"
-            placeholder="Project Group"
+            placeholder="Eureka, Galaxy Watch 7, Tablet 10 Series.."
             value={deviceData.projectGroup}
             onChange={handleChange}
             required
@@ -120,13 +134,13 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deviceType">Form Factor</Label>
+          <Label htmlFor="deviceType">Type</Label>
           <Select
             value={deviceData.deviceType}
             onValueChange={(value) => handleSelectChange(value, 'deviceType')}
           >
             <SelectTrigger id="deviceType">
-              <SelectValue placeholder="Select Form Factor" />
+              <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="C-Type">C-Type</SelectItem>
@@ -188,11 +202,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deviceStatus">Status Details</Label>
+          <Label htmlFor="deviceStatus">Status</Label>
           <Input
             id="deviceStatus"
             name="deviceStatus"
-            placeholder="Device Status"
+            placeholder="Mukundan or Matt"
             value={deviceData.deviceStatus || ''}
             onChange={handleChange}
           />
@@ -218,7 +232,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             <img 
               src={deviceData.devicePicture} 
               alt="Device Picture" 
-              className="max-w-full h-auto max-h-24 rounded border border-muted" 
+              className="max-w-full h-auto max-h-24 rounded border border-muted cursor-pointer"
+              onClick={() => setShowImageDialog(true)}
             />
           </div>
         )}
@@ -235,6 +250,34 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           rows={3}
         />
       </div>
+
+      {/* Image Dialog for Full Size View */}
+      <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
+        <DialogContent className="max-w-3xl">
+          <div className="flex flex-col items-center">
+            {deviceData.devicePicture && (
+              <img
+                src={deviceData.devicePicture}
+                alt="Full Size Device"
+                className="max-w-full h-auto"
+              />
+            )}
+            <div className="flex justify-end w-full mt-4">
+              <Button 
+                variant="outline" 
+                className="mr-2"
+                onClick={downloadImage}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+              <DialogClose asChild>
+                <Button variant="secondary">Close</Button>
+              </DialogClose>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
