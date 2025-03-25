@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
@@ -83,41 +82,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       }
       
-      // Login failed with API, try local storage
-      const localUsers = userStore.getUsers();
-      const matchingUser = localUsers.find(u => 
-        u.email.toLowerCase() === email.toLowerCase()
-      );
-      
-      if (matchingUser) {
-        setUser(matchingUser);
-        localStorage.setItem('tecace_current_user', JSON.stringify(matchingUser));
-        toast.success(`Welcome back, ${matchingUser.name}! (Local mode)`);
-        return true;
-      }
-      
+      // If login failed through API, don't fall back to localStorage
+      // This is a security issue - we should not allow login with incorrect passwords
       toast.error('Invalid email or password');
       return false;
     } catch (error) {
       console.error('Login error:', error);
       
-      // Attempt to retrieve user from localStorage as fallback
-      try {
-        const localUsers = userStore.getUsers();
-        const matchingUser = localUsers.find(u => 
-          u.email.toLowerCase() === email.toLowerCase()
-        );
-        
-        if (matchingUser) {
-          setUser(matchingUser);
-          localStorage.setItem('tecace_current_user', JSON.stringify(matchingUser));
-          toast.success(`Welcome back, ${matchingUser.name}! (Local mode)`);
-          return true;
-        }
-      } catch (fallbackError) {
-        console.error('Local login fallback failed:', fallbackError);
-      }
-      
+      // Do not fall back to localStorage for failed logins - security fix
       toast.error('Invalid email or password');
       return false;
     }

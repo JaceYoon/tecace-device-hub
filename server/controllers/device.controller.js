@@ -210,17 +210,27 @@ exports.getDeviceHistory = async (req, res) => {
     
     const historyWithNames = history.map(entry => {
       const entryJson = entry.toJSON();
+      
       // Add user name for easier display
       if (entryJson.user) {
         entryJson.userName = entryJson.user.name;
       }
+      
       // Add released by name if available
       if (entryJson.releasedBy) {
         entryJson.releasedByName = entryJson.releasedBy.name;
       }
+      
+      // Ensure IDs are strings for frontend consistency
+      if (entryJson.id) entryJson.id = String(entryJson.id);
+      if (entryJson.deviceId) entryJson.deviceId = String(entryJson.deviceId);
+      if (entryJson.userId) entryJson.userId = String(entryJson.userId);
+      if (entryJson.releasedById) entryJson.releasedById = String(entryJson.releasedById);
+      
       return entryJson;
     });
     
+    console.log(`Returning ${historyWithNames.length} history entries for device ${deviceId}`);
     res.json(historyWithNames);
   } catch (err) {
     console.error("Error fetching device history:", err);
@@ -424,14 +434,7 @@ exports.processRequest = async (req, res) => {
           }
         }
       } else if (request.type === 'release') {
-        // Update device status
-        await device.update({
-          status: 'available',
-          assignedToId: null,
-          requestedBy: null
-        });
-        
-        // Update ownership history to mark release
+        // Find existing ownership history entry and update it
         const history = await OwnershipHistory.findOne({
           where: {
             deviceId: device.id,
@@ -447,6 +450,13 @@ exports.processRequest = async (req, res) => {
             releaseReason: 'User requested release'
           });
         }
+        
+        // Update device status
+        await device.update({
+          status: 'available',
+          assignedToId: null,
+          requestedBy: null
+        });
       }
     } else {
       // If rejected, just clear the requestedBy field
