@@ -43,7 +43,6 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true
     }
   }, {
-    // Add options to help with debugging
     timestamps: true
   });
   
