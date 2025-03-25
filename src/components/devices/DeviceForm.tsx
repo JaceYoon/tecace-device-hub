@@ -1,11 +1,11 @@
 
-import React from 'react';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2, Plus } from 'lucide-react';
-import DeviceFormFields from './DeviceFormFields';
+import React, { useState } from 'react';
 import { useDeviceForm } from '@/hooks/useDeviceForm';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
+import DeviceFormFields from './DeviceFormFields';
+import { DeviceTypeValue } from '@/types';
 
 interface DeviceFormProps {
   onDeviceAdded?: () => void;
@@ -13,51 +13,56 @@ interface DeviceFormProps {
 }
 
 const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
-  const { user } = useAuth();
+  const { deviceData, setDeviceData, handleSubmit, handleChange, handleSelectChange, handleDateChange, isSubmitting } = useDeviceForm(onDeviceAdded);
   
-  const {
-    deviceData,
-    deviceTypes,
-    isSubmitting,
-    handleChange,
-    handleSelectChange,
-    handleDateChange,
-    handleSubmit
-  } = useDeviceForm({ onDeviceAdded, onCancel });
-  
-  const onSubmit = (e: React.FormEvent) => {
-    if (user) {
-      handleSubmit(e, user.id);
+  // Strictly typed list of device types matching the database schema
+  const deviceTypes: DeviceTypeValue[] = [
+    'Smartphone',
+    'Tablet',
+    'Smartwatch',
+    'Box',
+    'Accessory',
+    'Other',
+  ];
+
+  // Function to handle barcode file upload
+  const handleFileChange = (file: File | null, fieldName: string) => {
+    if (!file) return;
+    
+    // Handle barcode image upload
+    if (fieldName === 'barcode') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setDeviceData(prev => ({
+          ...prev,
+          barcode: base64String
+        }));
+      };
+      reader.readAsDataURL(file);
     }
   };
   
   return (
-    <Card className="w-full shadow-md">
+    <Card className="shadow-soft border-none">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Plus className="h-5 w-5" />
-          Add New Device
-        </CardTitle>
+        <CardTitle>Add New Device</CardTitle>
       </CardHeader>
-      
-      <form onSubmit={onSubmit}>
+      <form onSubmit={handleSubmit}>
         <CardContent>
-          <DeviceFormFields
+          <DeviceFormFields 
             deviceData={deviceData}
             deviceTypes={deviceTypes}
             handleChange={handleChange}
             handleSelectChange={handleSelectChange}
             handleDateChange={handleDateChange}
+            handleFileChange={handleFileChange}
           />
         </CardContent>
-        
         <CardFooter className="flex justify-between">
           {onCancel && (
-            <Button type="button" variant="outline" onClick={onCancel}>
-              Cancel
-            </Button>
+            <Button type="button" variant="outline" onClick={onCancel}>Cancel</Button>
           )}
-          
           <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>

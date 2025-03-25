@@ -51,6 +51,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: true
     },
+    barcode: {
+      type: Sequelize.TEXT('long'),
+      allowNull: true,
+      comment: 'Base64 encoded image of the barcode'
+    },
     addedById: {
       type: Sequelize.INTEGER,
       allowNull: true,

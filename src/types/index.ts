@@ -1,4 +1,3 @@
-
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export interface User {
@@ -18,23 +17,25 @@ export type DeviceTypeValue = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | '
 export interface Device {
   id: string;
   project: string;
-  projectGroup: string;
+  projectGroup?: string;
   type: DeviceTypeValue;
   deviceType?: DeviceTypeCategory;
   imei?: string;
   serialNumber?: string;
-  status: DeviceStatus;
+  status: 'available' | 'assigned' | 'missing' | 'stolen';
   deviceStatus?: string;
   receivedDate?: Date;
   returnDate?: Date;
-  assignedTo?: string; // User ID
-  assignedToId?: string; // Added to support backend ID format
-  assignedToName?: string; // Added to display user name directly
-  addedBy: string; // User ID
   notes?: string;
+  barcode?: string; // Base64 encoded barcode image
+  addedBy?: string;
+  addedById?: string;
+  assignedTo?: string;
+  assignedToId?: string;
+  assignedToName?: string;
+  requestedBy?: string;
   createdAt: Date;
   updatedAt: Date;
-  requestedBy?: string; // User ID
 }
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';

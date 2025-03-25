@@ -3,12 +3,13 @@ const db = require('../models');
 const Device = db.device;
 const User = db.user;
 const Request = db.request;
+const OwnershipHistory = db.ownershipHistory;
 const Op = db.Sequelize.Op;
 
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes, barcode } = req.body;
 
     console.log('Creating device with data:', JSON.stringify(req.body, null, 2));
 
@@ -28,6 +29,7 @@ exports.create = async (req, res) => {
       deviceStatus: deviceStatus || null,
       receivedDate: receivedDate || null,
       notes: notes || null,
+      barcode: barcode || null,
       addedById: req.user ? req.user.id : null,
       status: 'available'
     };
@@ -185,10 +187,51 @@ exports.findOne = async (req, res) => {
   }
 };
 
+// Get device ownership history
+exports.getDeviceHistory = async (req, res) => {
+  try {
+    const deviceId = req.params.id;
+    
+    // Verify the device exists
+    const device = await Device.findByPk(deviceId);
+    if (!device) {
+      return res.status(404).json({ message: 'Device not found' });
+    }
+    
+    // Get ownership history for this device
+    const history = await OwnershipHistory.findAll({
+      where: { deviceId },
+      include: [
+        { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
+        { model: User, as: 'releasedBy', attributes: ['id', 'name', 'email'] }
+      ],
+      order: [['assignedAt', 'DESC']]
+    });
+    
+    const historyWithNames = history.map(entry => {
+      const entryJson = entry.toJSON();
+      // Add user name for easier display
+      if (entryJson.user) {
+        entryJson.userName = entryJson.user.name;
+      }
+      // Add released by name if available
+      if (entryJson.releasedBy) {
+        entryJson.releasedByName = entryJson.releasedBy.name;
+      }
+      return entryJson;
+    });
+    
+    res.json(historyWithNames);
+  } catch (err) {
+    console.error("Error fetching device history:", err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId, barcode } = req.body;
 
     const device = await Device.findByPk(req.params.id);
 
@@ -207,6 +250,7 @@ exports.update = async (req, res) => {
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
+      barcode: barcode !== undefined ? barcode : device.barcode,
       assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
     });
 
@@ -238,6 +282,9 @@ exports.delete = async (req, res) => {
       console.log(`Deleting ${associatedRequests.length} associated requests`);
       await Request.destroy({ where: { deviceId: device.id } });
     }
+    
+    // Delete ownership history records
+    await OwnershipHistory.destroy({ where: { deviceId: device.id } });
 
     // Now delete the device
     await device.destroy();
@@ -341,17 +388,64 @@ exports.processRequest = async (req, res) => {
       const device = await Device.findByPk(request.deviceId);
 
       if (request.type === 'assign') {
+        const previousAssignedToId = device.assignedToId;
+        
+        // Update device assignment
         await device.update({
           status: 'assigned',
           assignedToId: request.userId,
           requestedBy: null
         });
+        
+        // Create new ownership history entry
+        await OwnershipHistory.create({
+          deviceId: device.id,
+          userId: request.userId,
+          assignedAt: new Date()
+        });
+        
+        // If this device was previously assigned to someone else, update their history record
+        if (previousAssignedToId) {
+          const previousHistory = await OwnershipHistory.findOne({
+            where: {
+              deviceId: device.id,
+              userId: previousAssignedToId,
+              releasedAt: null
+            }
+          });
+          
+          if (previousHistory) {
+            await previousHistory.update({
+              releasedAt: new Date(),
+              releasedById: req.user.id,
+              releaseReason: 'Reassigned to another user'
+            });
+          }
+        }
       } else if (request.type === 'release') {
+        // Update device status
         await device.update({
           status: 'available',
           assignedToId: null,
           requestedBy: null
         });
+        
+        // Update ownership history to mark release
+        const history = await OwnershipHistory.findOne({
+          where: {
+            deviceId: device.id,
+            userId: request.userId,
+            releasedAt: null
+          }
+        });
+        
+        if (history) {
+          await history.update({
+            releasedAt: new Date(),
+            releasedById: req.user.id,
+            releaseReason: 'User requested release'
+          });
+        }
       }
     } else {
       // If rejected, just clear the requestedBy field

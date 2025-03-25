@@ -79,6 +79,9 @@ const DeviceList: React.FC<DeviceListProps> = ({
     }
   }, [title, user, filteredDevices, effectiveUserFilter]);
 
+  // If this is My Devices view, we always want to show the controls for device return
+  const showReturnControls = title === 'My Devices';
+
   return (
     <div className={className}>
       <DeviceListHeader
@@ -104,6 +107,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
         devices={filteredDevices}
         users={users}
         onAction={fetchData}
+        showReturnControls={showReturnControls}
       />
     </div>
   );

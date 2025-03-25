@@ -13,6 +13,9 @@ router.get('/', isAuthenticated, deviceController.findAll);
 // Get a single device
 router.get('/:id', isAuthenticated, deviceController.findOne);
 
+// Get device ownership history
+router.get('/:id/history', isAuthenticated, deviceController.getDeviceHistory);
+
 // Create a new device
 router.post('/', isAuthenticated, isAdmin, deviceController.create);
 
