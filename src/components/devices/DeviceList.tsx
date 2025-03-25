@@ -29,7 +29,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   className,
   refreshTrigger,
 }) => {
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   
   // Determine what statuses to filter by default
   const defaultFilterStatuses = filterByStatus 
@@ -49,7 +49,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     fetchData
   } = useDeviceFilters({
     filterByAvailable,
-    filterByAssignedToUser,
+    filterByAssignedToUser: filterByAssignedToUser || (title === 'My Devices' && user ? user.id : undefined),
     filterByStatus: defaultFilterStatuses,
     refreshTrigger
   });
@@ -65,6 +65,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     `DeviceList: Filtered ${filteredDevices.length} devices, ` +
     `filterByStatus=${JSON.stringify(filterByStatus)}, ` +
     `statusFilter=${statusFilter}, ` +
+    `filterByAssignedToUser=${filterByAssignedToUser || (title === 'My Devices' && user ? user.id : 'none')}, ` +
     `isAdmin=${isAdmin}`
   );
 

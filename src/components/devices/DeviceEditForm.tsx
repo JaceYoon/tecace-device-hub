@@ -1,8 +1,9 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
 import { Device, DeviceTypeCategory } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -22,7 +23,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
-    deviceType: device.deviceType || 'C-Type' as DeviceTypeCategory,
+    deviceType: device.deviceType || 'Smartphone' as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,
@@ -35,10 +36,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     'Smartphone',
     'Tablet',
     'Laptop',
-    'Desktop',
     'Smartwatch',
-    'C-Type',
-    'Lunchbox',
     'Box',
     'Accessory',
     'Other',
