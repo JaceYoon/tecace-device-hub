@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
-import { DeviceTypeCategory } from '@/types';
+import { DeviceTypeCategory, DeviceTypeValue } from '@/types';
 
 interface UseDeviceFormProps {
   onDeviceAdded?: () => void;
@@ -14,8 +14,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
   const [deviceData, setDeviceData] = useState({
     project: '',
     projectGroup: '',
-    type: 'Smartphone',
-    deviceType: 'C-Type' as DeviceTypeCategory, // Updated to use C-Type as default
+    type: 'Smartphone' as DeviceTypeValue,
+    deviceType: 'C-Type' as DeviceTypeCategory,
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -23,11 +23,10 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     notes: '',
   });
   
-  // Updated list of device types
-  const deviceTypes = [
+  // Strictly typed list of device types matching the database schema
+  const deviceTypes: DeviceTypeValue[] = [
     'Smartphone',
     'Tablet',
-    'Laptop',
     'Smartwatch',
     'Box',
     'Accessory',
@@ -63,6 +62,12 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
+      return;
+    }
+    
+    // Validate that type is one of the allowed values
+    if (!deviceTypes.includes(type as DeviceTypeValue)) {
+      toast.error('Please select a valid device type');
       return;
     }
     
@@ -107,8 +112,8 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
       setDeviceData({
         project: '',
         projectGroup: '',
-        type: 'Smartphone',
-        deviceType: 'C-Type' as DeviceTypeCategory, // Updated default value
+        type: 'Smartphone' as DeviceTypeValue,
+        deviceType: 'C-Type' as DeviceTypeCategory,
         imei: '',
         serialNumber: '',
         deviceStatus: '',

@@ -15,11 +15,11 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     type: {
-      type: Sequelize.STRING,
+      type: Sequelize.ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'Accessory', 'Other'),
       allowNull: false
     },
     deviceType: {
-      type: Sequelize.ENUM('C-Type', 'Lunchbox'), // Changed to only allow these two types
+      type: Sequelize.ENUM('C-Type', 'Lunchbox'),
       allowNull: false,
       defaultValue: 'C-Type'
     },
