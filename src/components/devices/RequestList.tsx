@@ -30,14 +30,30 @@ const RequestList: React.FC<RequestListProps> = ({
   const [devices, setDevices] = useState<{[key: string]: Device}>({});
   const [users, setUsers] = useState<{[key: string]: User}>({});
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const loadData = async () => {
     try {
       setLoading(true);
+      setError(null);
       
-      // Get all requests first
-      const allRequests = await dataService.getRequests();
-      console.log("RequestList: Fetched requests:", allRequests);
+      // Use Promise.allSettled to handle partial failures
+      const results = await Promise.allSettled([
+        dataService.getRequests(),
+        dataService.getDevices(),
+        dataService.getUsers()
+      ]);
+      
+      // Handle requests result
+      let allRequests: DeviceRequest[] = [];
+      if (results[0].status === 'fulfilled') {
+        console.log("RequestList: Fetched requests:", results[0].value);
+        allRequests = results[0].value;
+      } else {
+        console.error('Error fetching requests:', results[0].reason);
+        setError(`Failed to load requests: ${results[0].reason?.message || 'Unknown error'}`);
+        allRequests = [];
+      }
 
       let filteredRequests = allRequests;
       if (userId) {
@@ -46,27 +62,34 @@ const RequestList: React.FC<RequestListProps> = ({
 
       setRequests(filteredRequests);
 
-      // Get all devices and users for reference
-      const allDevices = await dataService.getDevices();
-      const allUsers = await dataService.getUsers();
-      
-      // Create maps for faster lookups
+      // Handle devices result
       const deviceMap: {[key: string]: Device} = {};
+      if (results[1].status === 'fulfilled') {
+        const allDevices = results[1].value;
+        allDevices.forEach(device => {
+          deviceMap[device.id] = device;
+        });
+      } else {
+        console.error('Error fetching devices:', results[1].reason);
+      }
+      
+      // Handle users result
       const userMap: {[key: string]: User} = {};
-      
-      allDevices.forEach(device => {
-        deviceMap[device.id] = device;
-      });
-      
-      allUsers.forEach(user => {
-        userMap[user.id] = user;
-      });
+      if (results[2].status === 'fulfilled') {
+        const allUsers = results[2].value;
+        allUsers.forEach(user => {
+          userMap[user.id] = user;
+        });
+      } else {
+        console.error('Error fetching users:', results[2].reason);
+      }
       
       setDevices(deviceMap);
       setUsers(userMap);
       
     } catch (error) {
       console.error('Error loading request data:', error);
+      setError((error as Error).message || 'An unknown error occurred');
       toast.error('Failed to load request data');
     } finally {
       setLoading(false);
@@ -179,6 +202,27 @@ const RequestList: React.FC<RequestListProps> = ({
           <Clock className="h-6 w-6 animate-spin mx-auto" />
           <p className="mt-2 text-muted-foreground">Loading requests...</p>
         </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>{title}</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="py-4 px-6 bg-red-50 text-red-700 rounded border border-red-200">
+            <AlertTriangle className="h-6 w-6 mx-auto mb-2" />
+            <p className="text-center">{error}</p>
+            <div className="flex justify-center mt-4">
+              <Button onClick={loadData} variant="outline" size="sm">
+                <RefreshCw className="h-4 w-4 mr-2" /> Try Again
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     );
   }
 

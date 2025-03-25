@@ -111,8 +111,22 @@ export const dataService = {
       console.log('Fetched requests from API:', requests);
       
       // Get devices and users to resolve names
-      const devices = await dataService.getDevices();
-      const users = await dataService.getUsers();
+      let devices: Device[] = [];
+      let users: User[] = [];
+      
+      try {
+        devices = await dataService.getDevices();
+      } catch (error) {
+        console.error('Error fetching devices for request mapping:', error);
+        devices = [];
+      }
+      
+      try {
+        users = await dataService.getUsers();
+      } catch (error) {
+        console.error('Error fetching users for request mapping:', error);
+        users = [];
+      }
       
       // Ensure dates are properly formatted as Date objects and resolve references
       const formattedRequests = requests.map(request => {
