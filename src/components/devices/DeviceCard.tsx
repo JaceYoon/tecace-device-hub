@@ -264,20 +264,21 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>
-                <CollapsibleTrigger
-                  onClick={() => setExpanded(!expanded)}
-                  className="flex items-center text-left w-full"
-                >
-                  <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
-                  {expanded ?
-                    <ChevronDown className="h-4 w-4 ml-2" /> :
-                    <ChevronRight className="h-4 w-4 ml-2" />
-                  }
-                </CollapsibleTrigger>
-                <CardDescription className="flex items-center gap-1 mt-1">
-                  <Smartphone className="h-3.5 w-3.5" />
-                  {device.type}
-                </CardDescription>
+                <Collapsible open={expanded} onOpenChange={setExpanded}>
+                  <CollapsibleTrigger className="flex items-center text-left w-full">
+                    <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
+                    {expanded ?
+                      <ChevronDown className="h-4 w-4 ml-2" /> :
+                      <ChevronRight className="h-4 w-4 ml-2" />
+                    }
+                  </CollapsibleTrigger>
+                  <div className="mt-1">
+                    <CardDescription className="flex items-center gap-1">
+                      <Smartphone className="h-3.5 w-3.5" />
+                      {device.type}
+                    </CardDescription>
+                  </div>
+                </Collapsible>
               </div>
               <div className="flex flex-col items-end gap-1">
                 {isAdmin && (
