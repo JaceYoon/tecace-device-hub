@@ -51,6 +51,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
     notes: device.notes || '',
+    barcode: device.barcode || '',
   });
   
   // Strictly typed list of device types matching the database schema
@@ -85,6 +86,24 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     }));
   };
   
+  // Function to handle barcode file upload
+  const handleFileChange = (file: File | null, fieldName: string) => {
+    if (!file) return;
+    
+    // Handle barcode image upload
+    if (fieldName === 'barcode') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setDeviceData(prev => ({
+          ...prev,
+          barcode: base64String
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -93,7 +112,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, barcode } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
@@ -120,6 +139,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         deviceStatus: deviceStatus || undefined,
         receivedDate,
         notes: notes || undefined,
+        barcode: barcode || undefined,
       });
       
       if (updatedDevice) {
@@ -153,6 +173,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
             handleChange={handleChange}
             handleSelectChange={handleSelectChange}
             handleDateChange={handleDateChange}
+            handleFileChange={handleFileChange}
             isEditMode={true}
           />
         </CardContent>

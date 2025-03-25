@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,12 +8,13 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Barcode
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { DeviceEditDialog } from './DeviceEditDialog';
+import { DeviceHistoryDialog } from './DeviceHistoryDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,9 +33,16 @@ interface DeviceCardProps {
   onAction?: () => void;
   users?: User[];
   className?: string;
+  showReturnControls?: boolean;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], className }) => {
+const DeviceCard: React.FC<DeviceCardProps> = ({ 
+  device, 
+  onAction, 
+  users = [], 
+  className, 
+  showReturnControls = false 
+}) => {
   const { user, isManager, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -140,13 +149,13 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
               userId: user.id,
               status: 'pending',
               type: 'release',
+            }).then(() => {
+              toast.success('Device return requested', {
+                description: `Your request to return ${device.project} has been submitted for approval`,
+                icon: <Clock className="h-4 w-4" />
+              });
+              if (onAction) onAction();
             });
-
-            toast.success('Device return requested', {
-              description: `Your request to return ${device.project} has been submitted for approval`,
-              icon: <Clock className="h-4 w-4" />
-            });
-            if (onAction) onAction();
           } catch (error) {
             console.error('Error releasing device:', error);
             toast.error('Failed to release device');
@@ -285,6 +294,22 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                 </div>
               </div>
 
+              {device.barcode && (
+                <div className="flex items-start">
+                  <Barcode className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-muted-foreground">Barcode</p>
+                    <div className="mt-1">
+                      <img 
+                        src={device.barcode} 
+                        alt="Barcode" 
+                        className="max-w-full h-auto max-h-24 rounded border border-muted"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <Collapsible open={expanded}>
                 <CollapsibleContent>
                   <div className="space-y-2 text-sm mt-2 pt-2 border-t">
@@ -325,6 +350,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                         <p className="text-xs">{formatDate(device.updatedAt)}</p>
                       </div>
                     </div>
+                    
+                    {(isManager || isAdmin) && (
+                      <div className="mt-2 pt-2 border-t">
+                        <DeviceHistoryDialog device={device} users={users} />
+                      </div>
+                    )}
                   </div>
                 </CollapsibleContent>
               </Collapsible>
@@ -434,7 +465,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
                       </Button>
                   )}
 
-                  {isDeviceOwner && (
+                  {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
                       <Button
                           variant="outline"
                           className="w-full"
@@ -449,7 +480,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
           </CardFooter>
         </Card>
 
-        <AlertDialog open={confirmDialog.isOpen} onOpenChange={(open) => !open && setConfirmDialog(prev => ({...prev, isOpen: false}))}>
+        <AlertDialog 
+          open={confirmDialog.isOpen} 
+          onOpenChange={(open) => {
+            if (!open) {
+              // Reset any processing state when dialog is closed via escape key or clicking outside
+              setIsProcessing(false);
+              setConfirmDialog(prev => ({...prev, isOpen: false}));
+            }
+          }}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
@@ -458,7 +498,13 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel onClick={() => {
+                // Reset processing state when Cancel is clicked
+                setIsProcessing(false);
+                setConfirmDialog(prev => ({...prev, isOpen: false}));
+              }}>
+                Cancel
+              </AlertDialogCancel>
               <AlertDialogAction onClick={() => {
                 confirmDialog.action();
                 setConfirmDialog(prev => ({...prev, isOpen: false}));

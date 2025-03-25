@@ -60,6 +60,16 @@ export const dataService = {
     }
   },
 
+  getDeviceHistory: async (id: string): Promise<any[]> => {
+    try {
+      const history = await deviceService.getDeviceHistory(id);
+      return history;
+    } catch (error) {
+      console.error('Error fetching device history from API', error);
+      return [];
+    }
+  },
+
   addDevice: async (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> => {
     try {
       console.log('Sending device to API:', device);

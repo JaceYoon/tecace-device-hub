@@ -148,6 +148,9 @@ export const deviceService = {
   getById: (id: string): Promise<Device | null> =>
     apiCall<Device | null>(`/devices/${id}`),
 
+  getDeviceHistory: (id: string): Promise<any[]> =>
+    apiCall<any[]>(`/devices/${id}/history`),
+
   create: (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> =>
     apiCall<Device>('/devices', {
       method: 'POST',
