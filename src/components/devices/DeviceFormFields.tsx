@@ -95,12 +95,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               <SelectValue placeholder="Select device category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="Smartphone">Smartphone</SelectItem>
-              <SelectItem value="Tablet">Tablet</SelectItem>
-              <SelectItem value="Smartwatch">Smartwatch</SelectItem>
-              <SelectItem value="Box">Box</SelectItem>
-              <SelectItem value="Accessory">Accessory</SelectItem>
-              <SelectItem value="Other">Other</SelectItem>
+              <SelectItem value="C-Type">C-Type</SelectItem>
+              <SelectItem value="Lunchbox">Lunchbox</SelectItem>
             </SelectContent>
           </Select>
         </div>

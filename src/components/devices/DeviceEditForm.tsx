@@ -19,11 +19,16 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   const { user, isManager } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
+  // Make sure we have a valid deviceType value from the allowed options
+  const deviceTypeValue = device.deviceType && 
+    (device.deviceType === 'C-Type' || device.deviceType === 'Lunchbox') ? 
+    device.deviceType : 'C-Type';
+  
   const [deviceData, setDeviceData] = useState({
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
     type: device.type,
-    deviceType: device.deviceType || 'Smartphone' as DeviceTypeCategory,
+    deviceType: deviceTypeValue as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
     status: device.status,

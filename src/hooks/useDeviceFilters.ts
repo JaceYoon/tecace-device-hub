@@ -43,15 +43,19 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       // Debug for My Devices filtering
       if (props.filterByAssignedToUser) {
         console.log("useDeviceFilters - Filtering by assignedTo:", props.filterByAssignedToUser);
+        
+        // Check for both assignedTo and assignedToId that match the user
         const userDevices = devicesData.filter(d => {
-          // Check both assignedTo and assignedToId fields for the user ID
-          const match = d.assignedTo === props.filterByAssignedToUser;
-          console.log(`Device ${d.project} - status: ${d.status}, assignedTo: ${d.assignedTo}, matched: ${match}`);
-          return match;
+          const assignedToMatch = d.assignedTo === props.filterByAssignedToUser;
+          const assignedToIdMatch = d.assignedToId === props.filterByAssignedToUser;
+          
+          console.log(`Device ${d.project} - status: ${d.status}, assignedTo: ${d.assignedTo}, assignedToId: ${d.assignedToId}, matched: ${assignedToMatch || assignedToIdMatch}`);
+          
+          return assignedToMatch || assignedToIdMatch;
         });
         
         console.log("useDeviceFilters - Devices assigned to user:", userDevices.length);
-        console.log("useDeviceFilters - Devices:", userDevices);
+        console.log("useDeviceFilters - Matching devices:", userDevices);
       }
       
       setDevices(devicesData);
@@ -118,8 +122,10 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     // Filter by assigned to user - check if the device is assigned to the specified user
     if (props.filterByAssignedToUser) {
       console.log(`Device ${device.project} - checking assignedTo: ${device.assignedTo} against filter: ${props.filterByAssignedToUser}`);
-      // Important: We're using STRICT EQUALITY here to avoid type issues with numeric IDs
-      return device.assignedTo === props.filterByAssignedToUser;
+      
+      // Check both assignedTo and assignedToId fields to handle different formats
+      return device.assignedTo === props.filterByAssignedToUser || 
+             device.assignedToId === props.filterByAssignedToUser;
     }
 
     return true;

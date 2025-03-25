@@ -15,7 +15,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     project: '',
     projectGroup: '',
     type: 'Smartphone',
-    deviceType: 'Smartphone' as DeviceTypeCategory,
+    deviceType: 'C-Type' as DeviceTypeCategory, // Updated to use C-Type as default
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -23,6 +23,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     notes: '',
   });
   
+  // Updated list of device types
   const deviceTypes = [
     'Smartphone',
     'Tablet',
@@ -102,11 +103,12 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         description: `${project} has been added to the inventory`
       });
       
+      // Reset form after successful submission
       setDeviceData({
         project: '',
         projectGroup: '',
         type: 'Smartphone',
-        deviceType: 'Smartphone' as DeviceTypeCategory,
+        deviceType: 'C-Type' as DeviceTypeCategory, // Updated default value
         imei: '',
         serialNumber: '',
         deviceStatus: '',
