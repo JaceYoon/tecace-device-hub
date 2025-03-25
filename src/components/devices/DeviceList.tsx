@@ -38,7 +38,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   
   // Important: Set the user ID for filtering my devices correctly
   const effectiveUserFilter = filterByAssignedToUser || 
-    (title === 'My Devices' && user ? user.id : undefined);
+    (title === 'My Devices' && user ? String(user.id) : undefined);
   
   // Debug log to see what's being used for filtering
   console.log(`DeviceList "${title}" - User:`, user?.id);
@@ -70,12 +70,14 @@ const DeviceList: React.FC<DeviceListProps> = ({
   }, [initialStatusFilter, setStatusFilter]);
 
   // Debug logs for "My Devices" view
-  if (title === 'My Devices' && user) {
-    console.log("My Devices view - User ID:", user.id);
-    console.log("My Devices view - Filtered devices count:", filteredDevices.length);
-    console.log("My Devices view - All filtered devices:", filteredDevices);
-    console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
-  }
+  useEffect(() => {
+    if (title === 'My Devices' && user) {
+      console.log("My Devices view - User ID:", user.id);
+      console.log("My Devices view - Filtered devices count:", filteredDevices.length);
+      console.log("My Devices view - All filtered devices:", filteredDevices);
+      console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
+    }
+  }, [title, user, filteredDevices, effectiveUserFilter]);
 
   return (
     <div className={className}>

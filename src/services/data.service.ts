@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 
@@ -13,14 +14,25 @@ export const dataService = {
       
       // Ensure device IDs are strings for consistent comparison
       const formattedDevices = devices.map(device => {
-        // Make sure assignedTo is always a string for proper comparison
+        // Make sure ID is a string
+        if (device.id) {
+          device.id = String(device.id);
+        }
+        
+        // Make sure assignedTo and assignedToId are always strings for proper comparison
         if (device.assignedTo) {
           device.assignedTo = String(device.assignedTo);
+        }
+        
+        if (device.assignedToId) {
+          device.assignedToId = String(device.assignedToId);
         }
         
         // Ensure proper assignment between assignedTo and assignedToId
         if (device.assignedToId && !device.assignedTo) {
           device.assignedTo = String(device.assignedToId);
+        } else if (device.assignedTo && !device.assignedToId) {
+          device.assignedToId = String(device.assignedTo);
         }
         
         // Log devices with assignments for debugging

@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -93,15 +94,15 @@ exports.findAll = async (req, res) => {
       const deviceJson = device.toJSON();
       
       // Ensure IDs are consistent strings
-      if (deviceJson.id) deviceJson.id = String(deviceJson.id);
-      if (deviceJson.assignedToId) deviceJson.assignedToId = String(deviceJson.assignedToId);
-      if (deviceJson.addedById) deviceJson.addedById = String(deviceJson.addedById);
+      if (deviceJson.id !== undefined) deviceJson.id = String(deviceJson.id);
+      if (deviceJson.assignedToId !== undefined) deviceJson.assignedToId = String(deviceJson.assignedToId);
+      if (deviceJson.addedById !== undefined) deviceJson.addedById = String(deviceJson.addedById);
       
       // Add assignedToName if there's an assigned user
       if (deviceJson.assignedTo) {
         deviceJson.assignedToName = deviceJson.assignedTo.name;
         // Ensure assignedTo ID is a string for frontend
-        if (deviceJson.assignedTo.id) {
+        if (deviceJson.assignedTo.id !== undefined) {
           deviceJson.assignedTo = String(deviceJson.assignedTo.id);
         }
       }
@@ -111,7 +112,7 @@ exports.findAll = async (req, res) => {
       
       // If has pending request, find the user who requested it
       if (hasPendingRequest) {
-        const request = pendingRequests.find(req => req.deviceId === deviceJson.id);
+        const request = pendingRequests.find(req => String(req.deviceId) === String(deviceJson.id));
         if (request) {
           deviceJson.requestedBy = String(request.userId);
         }
