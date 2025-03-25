@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
 import { DeviceRequest, User } from '@/types';
@@ -14,9 +15,16 @@ interface RequestListProps {
   title?: string;
   onRequestProcessed?: () => void;
   refreshTrigger?: number;
+  userId?: string;
+  showExportButton?: boolean;
 }
 
-const RequestList: React.FC<RequestListProps> = ({ title = 'Device Requests', onRequestProcessed, refreshTrigger }) => {
+const RequestList: React.FC<RequestListProps> = ({ 
+  title = 'Device Requests', 
+  onRequestProcessed, 
+  refreshTrigger,
+  userId
+}) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,7 +55,7 @@ const RequestList: React.FC<RequestListProps> = ({ title = 'Device Requests', on
   const handleApprove = async (requestId: string) => {
     setProcessing(requestId);
     try {
-      await dataService.updateRequestStatus(requestId, 'approved');
+      await dataService.processRequest(requestId, 'approved', '');
       toast.success('Request approved successfully');
       fetchData();
       if (onRequestProcessed) onRequestProcessed();
@@ -62,7 +70,7 @@ const RequestList: React.FC<RequestListProps> = ({ title = 'Device Requests', on
   const handleReject = async (requestId: string) => {
     setProcessing(requestId);
     try {
-      await dataService.updateRequestStatus(requestId, 'rejected');
+      await dataService.processRequest(requestId, 'rejected', '');
       toast.success('Request rejected successfully');
       fetchData();
       if (onRequestProcessed) onRequestProcessed();
@@ -79,7 +87,13 @@ const RequestList: React.FC<RequestListProps> = ({ title = 'Device Requests', on
     return user ? user.name : 'Unknown User';
   };
 
-  const filteredRequests = requests.filter(request => request.status === 'pending');
+  // Filter requests based on userId prop if provided
+  let filteredRequests = requests;
+  if (userId) {
+    filteredRequests = requests.filter(request => request.userId === userId);
+  } else {
+    filteredRequests = requests.filter(request => request.status === 'pending');
+  }
 
   if (!isAdmin) {
     return null;
@@ -118,7 +132,7 @@ const RequestList: React.FC<RequestListProps> = ({ title = 'Device Requests', on
                       <StatusBadge status={request.status} />
                     </TableCell>
                     <TableCell>
-                      {formatDistanceToNow(new Date(request.createdAt), {
+                      {formatDistanceToNow(new Date(request.requestedAt), {
                         addSuffix: true,
                       })}
                     </TableCell>
