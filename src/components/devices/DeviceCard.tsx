@@ -2,29 +2,36 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Device } from '@/types';
+import { Device, User } from '@/types';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import DeviceAssignButton from './DeviceAssignButton';
 import DeviceCardImage from './DeviceCardImage';
 
 interface DeviceCardProps {
   device: Device;
+  users?: User[];
   onEdit?: (device: Device) => void;
   onEditHistory?: (device: Device) => void;
   showControls?: boolean;
   refreshTrigger?: number;
   showCardFooter?: boolean;
+  className?: string;
+  showReturnControls?: boolean;
+  onAction?: () => void;
 }
 
 const DeviceCard: React.FC<DeviceCardProps> = ({
   device,
+  users = [],
   onEdit,
   onEditHistory,
   showControls = true,
   refreshTrigger,
-  showCardFooter = true
+  showCardFooter = true,
+  className,
+  showReturnControls = false,
+  onAction
 }) => {
   const [expanded, setExpanded] = useState(false);
   const { isAdmin, isManager } = useAuth();
@@ -42,7 +49,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   };
 
   return (
-    <Card className={`w-full transition-all duration-300 hover:shadow-md`}>
+    <Card className={`w-full transition-all duration-300 hover:shadow-md ${className}`}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <CardTitle className="text-lg font-semibold truncate">
@@ -135,12 +142,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </div>
           )}
           
+          {/* We're removing the DeviceAssignButton reference since it's not available */}
           {showControls && (
-            <DeviceAssignButton 
-              device={device} 
-              refreshTrigger={refreshTrigger} 
+            <Button 
+              size="sm" 
+              variant="outline" 
               className="ml-auto"
-            />
+              onClick={onAction}
+            >
+              {device.status === 'assigned' ? 'Return' : 'Assign'}
+            </Button>
           )}
         </CardFooter>
       )}
