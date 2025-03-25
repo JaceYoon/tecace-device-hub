@@ -27,6 +27,7 @@ interface DeviceHistoryDialogProps {
 export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps) {
   const [history, setHistory] = useState<OwnershipHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   const fetchHistory = async () => {
     setLoading(true);
@@ -38,16 +39,53 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched device history:', data);
         setHistory(data);
       } else {
         console.error('Failed to fetch device history:', response.statusText);
+        // If API fails, try to create some history based on device info
+        createFallbackHistory();
       }
     } catch (error) {
       console.error('Error fetching device history:', error);
+      // If API fails, try to create some history based on device info
+      createFallbackHistory();
     } finally {
       setLoading(false);
     }
   };
+
+  // Create fallback history if API fails
+  const createFallbackHistory = () => {
+    const fallbackEntries: OwnershipHistoryEntry[] = [];
+    
+    // If device is assigned, add a current entry
+    if (device.assignedTo) {
+      const assignedUser = users.find(u => u.id === device.assignedTo);
+      if (assignedUser) {
+        fallbackEntries.push({
+          id: `fallback-current-${device.id}`,
+          deviceId: device.id,
+          userId: device.assignedTo,
+          userName: assignedUser.name,
+          assignedAt: device.updatedAt?.toISOString() || new Date().toISOString(),
+          releasedAt: null,
+          releasedById: null,
+          releasedByName: null,
+          releaseReason: null
+        });
+      }
+    }
+    
+    console.log('Created fallback history:', fallbackEntries);
+    setHistory(fallbackEntries);
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      fetchHistory();
+    }
+  }, [isOpen, device.id]);
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Current owner';
@@ -59,13 +97,12 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
   };
 
   return (
-    <Dialog>
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
           size="sm" 
           className="text-xs flex items-center gap-1"
-          onClick={() => fetchHistory()}
         >
           <Clock className="h-3.5 w-3.5" />
           Ownership History
