@@ -44,12 +44,15 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
       if (props.filterByAssignedToUser) {
         console.log("useDeviceFilters - Filtering by assignedTo:", props.filterByAssignedToUser);
         
+        // Enhanced debugging - log all devices with their assignment information
+        devicesData.forEach(d => {
+          console.log(`Device ${d.id}: ${d.project} - assignedTo: ${d.assignedTo}, assignedToId: ${d.assignedToId}`);
+        });
+        
         // Check for both assignedTo and assignedToId that match the user
         const userDevices = devicesData.filter(d => {
-          const assignedToMatch = d.assignedTo === props.filterByAssignedToUser;
-          const assignedToIdMatch = d.assignedToId === props.filterByAssignedToUser;
-          
-          console.log(`Device ${d.project} - status: ${d.status}, assignedTo: ${d.assignedTo}, assignedToId: ${d.assignedToId}, matched: ${assignedToMatch || assignedToIdMatch}`);
+          const assignedToMatch = String(d.assignedTo) === String(props.filterByAssignedToUser);
+          const assignedToIdMatch = String(d.assignedToId) === String(props.filterByAssignedToUser);
           
           return assignedToMatch || assignedToIdMatch;
         });
@@ -121,11 +124,14 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
 
     // Filter by assigned to user - check if the device is assigned to the specified user
     if (props.filterByAssignedToUser) {
-      console.log(`Device ${device.project} - checking assignedTo: ${device.assignedTo} against filter: ${props.filterByAssignedToUser}`);
+      const userIdToFilter = String(props.filterByAssignedToUser);
+      const deviceAssignedTo = device.assignedTo ? String(device.assignedTo) : null;
+      const deviceAssignedToId = device.assignedToId ? String(device.assignedToId) : null;
+      
+      console.log(`Checking device ${device.id} (${device.project}): assignedTo=${deviceAssignedTo}, assignedToId=${deviceAssignedToId} against userId=${userIdToFilter}`);
       
       // Check both assignedTo and assignedToId fields to handle different formats
-      return device.assignedTo === props.filterByAssignedToUser || 
-             device.assignedToId === props.filterByAssignedToUser;
+      return deviceAssignedTo === userIdToFilter || deviceAssignedToId === userIdToFilter;
     }
 
     return true;
