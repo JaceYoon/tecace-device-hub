@@ -140,7 +140,7 @@ const authService = {
   },
 };
 
-// Define and export deviceService
+// Define deviceService
 const deviceService = {
   getAll: (): Promise<Device[]> =>
     apiCall<Device[]>('/devices'),
@@ -210,8 +210,9 @@ const userService = {
 // Create a global refresh callback mechanism
 let refreshCallbacks: (() => void)[] = [];
 
-// Add top-level methods for compatibility
+// Create a unified dataService object that includes all the services
 export const dataService = {
+  // Add services
   auth: authService,
   devices: deviceService,
   users: userService,
