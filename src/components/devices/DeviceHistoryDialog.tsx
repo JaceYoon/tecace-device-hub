@@ -172,35 +172,35 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                   <p>No ownership history available</p>
                 </div>
               ) : (
-                history.map((entry, index) => (
-                  <div key={entry.id || index} className="border rounded-md p-3">
-                    <div className="font-semibold">{entry.userName}</div>
-                    <div className="text-sm mt-1">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Assigned:</span>
-                        <span>{formatDate(entry.assignedAt)}</span>
+                history.map((entry, index) => {
+                  // Check if this is the current owner (no releasedAt date)
+                  const isCurrentOwner = entry.releasedAt === null;
+                  
+                  return (
+                    <div key={entry.id || index} className="border rounded-md p-3">
+                      <div className="font-semibold">
+                        {entry.userName}
+                        {isCurrentOwner && 
+                          <span className="ml-2 text-sm text-primary">(Current Owner)</span>
+                        }
                       </div>
                       
-                      <div className="flex justify-between mt-1">
-                        <span className="text-muted-foreground">Returned:</span>
-                        <span>{entry.releasedAt ? formatDate(entry.releasedAt) : 'Current owner'}</span>
+                      <div className="text-sm mt-1">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Assigned:</span>
+                          <span>{formatDate(entry.assignedAt)}</span>
+                        </div>
+                        
+                        {!isCurrentOwner && (
+                          <div className="flex justify-between mt-1">
+                            <span className="text-muted-foreground">Returned:</span>
+                            <span>{formatDate(entry.releasedAt)}</span>
+                          </div>
+                        )}
                       </div>
-                      
-                      {entry.releasedByName && (
-                        <div className="flex justify-between mt-1">
-                          <span className="text-muted-foreground">Released by:</span>
-                          <span>{entry.releasedByName}</span>
-                        </div>
-                      )}
-                      
-                      {entry.releaseReason && (
-                        <div className="mt-1 text-xs text-muted-foreground">
-                          <span className="font-medium">Reason:</span> {entry.releaseReason}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}
