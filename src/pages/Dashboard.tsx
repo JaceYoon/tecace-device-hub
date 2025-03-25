@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -52,9 +53,13 @@ const Dashboard: React.FC = () => {
         console.log("Dashboard: User id:", user.id, "Name:", user.name);
         console.log("Dashboard: Fetched devices:", allDevices.length);
         
+        // Improved filtering to ensure released devices don't show up
         const myDevices = allDevices.filter(d => {
-          return String(d.assignedTo) === String(user.id) || String(d.assignedToId) === String(user.id);
+          const assignedToId = String(d.assignedTo) || String(d.assignedToId);
+          const userId = String(user.id);
+          return assignedToId === userId && d.status === 'assigned';
         });
+        
         console.log("Dashboard: My devices found:", myDevices.length);
         console.log("Dashboard: My devices details:", myDevices);
         

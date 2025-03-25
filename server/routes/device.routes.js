@@ -16,11 +16,11 @@ router.get('/:id', isAuthenticated, deviceController.findOne);
 // Get device ownership history
 router.get('/:id/history', isAuthenticated, deviceController.getDeviceHistory);
 
-// Create a new device
-router.post('/', isAuthenticated, isAdmin, deviceController.create);
+// Create a new device - increase payload limit to 10MB for image uploads
+router.post('/', isAuthenticated, isAdmin, express.json({ limit: '10mb' }), deviceController.create);
 
-// Update a device
-router.put('/:id', isAuthenticated, deviceController.update);
+// Update a device - increase payload limit to 10MB for image uploads
+router.put('/:id', isAuthenticated, express.json({ limit: '10mb' }), deviceController.update);
 
 // Delete a device
 router.delete('/:id', isAuthenticated, isAdmin, deviceController.delete);
