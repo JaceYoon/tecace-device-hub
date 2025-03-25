@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Clock, Info } from 'lucide-react';
 import { dataService } from '@/services/data.service';
@@ -50,7 +50,7 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
         if (Array.isArray(data) && data.length > 0) {
           setHistory(data);
         } else {
-          console.log('No history data returned, creating fallback');
+          console.log('No history data returned, creating fallback history');
           createFallbackHistory();
         }
       } else {
@@ -75,12 +75,19 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
     if (device.assignedTo) {
       const assignedUser = users.find(u => u.id === device.assignedTo);
       if (assignedUser) {
+        // Handle date conversion properly - updatedAt could be a string or a Date
+        const assignedDate = typeof device.updatedAt === 'string' 
+          ? device.updatedAt 
+          : device.updatedAt instanceof Date 
+            ? device.updatedAt.toISOString() 
+            : new Date().toISOString();
+            
         fallbackEntries.push({
           id: `fallback-current-${device.id}`,
           deviceId: device.id,
           userId: device.assignedTo,
           userName: assignedUser.name,
-          assignedAt: device.updatedAt?.toISOString() || new Date().toISOString(),
+          assignedAt: assignedDate,
           releasedAt: null,
           releasedById: null,
           releasedByName: null,
@@ -123,10 +130,22 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Ownership History</DialogTitle>
+          <DialogDescription>
+            Track who has used this device over time
+          </DialogDescription>
         </DialogHeader>
         
         <div className="py-4">
           <h3 className="font-semibold mb-2">{device.project} - {device.serialNumber || 'No S/N'}</h3>
+          
+          <div className="text-xs text-muted-foreground mb-3">
+            <div className="flex gap-2 mt-1">
+              <span className="font-medium">S/N:</span> {device.serialNumber || 'Not available'}
+            </div>
+            <div className="flex gap-2 mt-1">
+              <span className="font-medium">IMEI:</span> {device.imei || 'Not available'}
+            </div>
+          </div>
           
           {loading ? (
             <div className="flex justify-center py-8">

@@ -158,6 +158,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             // First update device status directly
             const updatedDevice = await dataService.updateDevice(device.id, {
               assignedTo: undefined,
+              assignedToId: undefined,
               status: 'available',
             });
             
@@ -287,9 +288,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 <StatusBadge status={device.status} />
                 {isRequested && (
                     <span className="text-xs text-amber-600 flex items-center mt-1">
-                  <Clock className="h-3 w-3 mr-1" />
-                  Request Pending
-                </span>
+                      <Clock className="h-3 w-3 mr-1" />
+                      Request Pending
+                    </span>
                 )}
               </div>
             </div>
@@ -374,6 +375,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                                       Download
                                     </Button>
                                   </DialogTitle>
+                                  <DialogDescription>
+                                    View full-sized device image
+                                  </DialogDescription>
                                 </DialogHeader>
                                 <div className="mt-2 flex justify-center">
                                   <img 
