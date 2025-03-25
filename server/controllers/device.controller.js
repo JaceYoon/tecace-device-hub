@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -86,9 +87,14 @@ exports.findAll = async (req, res) => {
     // Map device IDs with pending requests
     const deviceIdsWithPendingRequests = pendingRequests.map(req => req.deviceId);
     
-    // Mark devices with pending requests
+    // Mark devices with pending requests and add assignedToName
     const devicesWithRequestInfo = devices.map(device => {
       const deviceJson = device.toJSON();
+      
+      // Add assignedToName if there's an assigned user
+      if (deviceJson.assignedTo) {
+        deviceJson.assignedToName = deviceJson.assignedTo.name;
+      }
       
       // Check if this device has pending requests
       const hasPendingRequest = deviceIdsWithPendingRequests.includes(deviceJson.id);
@@ -140,6 +146,11 @@ exports.findOne = async (req, res) => {
     });
 
     const deviceJson = device.toJSON();
+    
+    // Add assignedToName if there's an assigned user
+    if (deviceJson.assignedTo) {
+      deviceJson.assignedToName = deviceJson.assignedTo.name;
+    }
     
     // If device has a pending request, add the requestedBy information
     if (pendingRequest) {
