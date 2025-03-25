@@ -142,7 +142,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </div>
           )}
           
-          {/* We're removing the DeviceAssignButton reference since it's not available */}
           {showControls && (
             <Button 
               size="sm" 
