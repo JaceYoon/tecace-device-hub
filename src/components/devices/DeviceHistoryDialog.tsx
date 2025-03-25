@@ -28,10 +28,15 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
   const [history, setHistory] = useState<OwnershipHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   const fetchHistory = async () => {
     setLoading(true);
+    setHasError(false);
     try {
+      // Log the attempt to fetch history
+      console.log(`Attempting to fetch history for device: ${device.id}`);
+      
       // Make API call to get history
       const response = await fetch(`/api/devices/${device.id}/history`, {
         credentials: 'include',
@@ -40,15 +45,22 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched device history:', data);
-        setHistory(data);
+        
+        // Check if we actually got data back
+        if (Array.isArray(data) && data.length > 0) {
+          setHistory(data);
+        } else {
+          console.log('No history data returned, creating fallback');
+          createFallbackHistory();
+        }
       } else {
         console.error('Failed to fetch device history:', response.statusText);
-        // If API fails, try to create some history based on device info
+        setHasError(true);
         createFallbackHistory();
       }
     } catch (error) {
       console.error('Error fetching device history:', error);
-      // If API fails, try to create some history based on device info
+      setHasError(true);
       createFallbackHistory();
     } finally {
       setLoading(false);
@@ -119,11 +131,17 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
           {loading ? (
             <div className="flex justify-center py-8">
               <Clock className="h-6 w-6 animate-spin" />
+              <span className="ml-2">Loading history...</span>
             </div>
           ) : history.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <Info className="h-8 w-8 mx-auto mb-2 opacity-50" />
               <p>No ownership records found</p>
+              {hasError && (
+                <p className="text-sm mt-2 text-red-500">
+                  There was an error loading the history data.
+                </p>
+              )}
             </div>
           ) : (
             <div className="space-y-4 mt-4">
@@ -161,6 +179,26 @@ export function DeviceHistoryDialog({ device, users }: DeviceHistoryDialogProps)
                   </div>
                 </div>
               ))}
+              
+              {hasError && (
+                <div className="text-xs text-amber-600 mt-2 text-center">
+                  Note: This is a partial history based on available data.
+                </div>
+              )}
+            </div>
+          )}
+          
+          {!loading && hasError && (
+            <div className="flex justify-center mt-4">
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={fetchHistory}
+                className="text-xs"
+              >
+                <Clock className="h-3.5 w-3.5 mr-1" />
+                Retry loading history
+              </Button>
             </div>
           )}
         </div>
