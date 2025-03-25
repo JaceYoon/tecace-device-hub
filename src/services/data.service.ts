@@ -174,7 +174,9 @@ export const dataService = {
                 type: 'assign', // Assuming assign as default
                 requestedAt: new Date(),
                 device: device,
-                user: user
+                user: user,
+                deviceName: device.project,
+                userName: user?.name || 'Unknown User'
               };
             });
             

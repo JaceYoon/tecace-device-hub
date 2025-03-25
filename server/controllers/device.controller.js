@@ -521,8 +521,8 @@ exports.findAllRequests = async (req, res) => {
     const requests = await Request.findAll({
       where: condition,
       include: [
-        { model: Device },
-        { model: User },
+        { model: Device, as: 'device' },  // Explicitly specify the alias here
+        { model: User, as: 'user' },      // Explicitly specify the alias here
         { model: User, as: 'processedBy' }
       ],
       order: [['createdAt', 'DESC']]
