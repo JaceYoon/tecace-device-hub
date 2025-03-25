@@ -21,6 +21,10 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({ devices, users, onAction }) => 
     );
   }
   
+  // Add debugging info
+  console.log("DeviceGrid - Rendering devices:", devices.length);
+  console.log("DeviceGrid - First few devices:", devices.slice(0, 3));
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
       {devices.map(device => (

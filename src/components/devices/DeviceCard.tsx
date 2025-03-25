@@ -54,6 +54,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
   
   const requestedByUser = users.find(u => u.id === device.requestedBy);
 
+  console.log(`DeviceCard for ${device.project} - assignedTo: ${device.assignedTo}, found user: ${assignedUser?.name || 'not found'}`);
+
   const formatDate = (date: Date) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   };

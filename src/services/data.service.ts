@@ -1,14 +1,9 @@
 
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
-import { deviceStore, userStore, requestStore } from '@/utils/data';
-
-// Setting to false to force use of the API
-const USE_LOCAL_STORAGE = false;
 
 /**
- * This service acts as a facade over both the API and localStorage implementations
- * allowing the application to transparently use either one
+ * This service exclusively uses the API for all data operations
  */
 export const dataService = {
   // Device methods
@@ -19,7 +14,6 @@ export const dataService = {
       return Array.isArray(devices) ? devices : [];
     } catch (error) {
       console.error('Error fetching devices from API', error);
-      // Do NOT fall back to localStorage
       return [];
     }
   },
@@ -111,7 +105,7 @@ export const dataService = {
       };
     } catch (error) {
       console.error('Error adding request to API', error);
-      throw error; // Re-throw the error instead of silently falling back
+      throw error; 
     }
   },
 
@@ -128,7 +122,7 @@ export const dataService = {
       };
     } catch (error) {
       console.error('Error processing request in API', error);
-      throw error; // Re-throw the error instead of silently falling back
+      throw error;
     }
   },
 
@@ -146,7 +140,7 @@ export const dataService = {
       };
     } catch (error) {
       console.error('Error cancelling request in API', error);
-      throw error; // Re-throw the error instead of silently falling back
+      throw error;
     }
   },
 

@@ -27,6 +27,7 @@ export interface Device {
   receivedDate?: Date;
   returnDate?: Date;
   assignedTo?: string; // User ID
+  assignedToId?: string; // Added to support backend ID format
   assignedToName?: string; // Added to display user name directly
   addedBy: string; // User ID
   notes?: string;

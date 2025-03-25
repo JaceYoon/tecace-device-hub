@@ -68,7 +68,8 @@ const DeviceList: React.FC<DeviceListProps> = ({
   // Debug logs for "My Devices" view
   if (title === 'My Devices' && user) {
     console.log("My Devices view - User ID:", user.id);
-    console.log("My Devices view - Filtered devices:", filteredDevices);
+    console.log("My Devices view - Filtered devices count:", filteredDevices.length);
+    console.log("My Devices view - All filtered devices:", filteredDevices);
     console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
   }
 
