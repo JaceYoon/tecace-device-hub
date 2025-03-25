@@ -40,7 +40,7 @@ function App() {
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
-              <Toaster position="top-right" />
+              <Toaster position="bottom-right" />
             </div>
           </Router>
         </AuthProvider>

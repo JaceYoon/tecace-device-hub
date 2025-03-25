@@ -19,9 +19,9 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     deviceType: {
-      type: Sequelize.ENUM('C-Type', 'Lunchbox'),
+      type: Sequelize.ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'Accessory', 'Other'),
       allowNull: false,
-      defaultValue: 'C-Type'
+      defaultValue: 'Smartphone'
     },
     imei: {
       type: Sequelize.STRING,

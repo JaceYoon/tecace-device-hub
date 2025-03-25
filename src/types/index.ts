@@ -12,7 +12,7 @@ export interface User {
 }
 
 export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen';
-export type DeviceTypeCategory = 'C-Type' | 'Lunchbox'; // Removed 'none' and '' values
+export type DeviceTypeCategory = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | 'Accessory' | 'Other';
 
 export interface Device {
   id: string;

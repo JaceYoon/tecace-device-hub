@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
@@ -14,7 +15,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     project: '',
     projectGroup: '',
     type: 'Smartphone',
-    deviceType: 'C-Type' as DeviceTypeCategory,
+    deviceType: 'Smartphone' as DeviceTypeCategory,
     imei: '',
     serialNumber: '',
     deviceStatus: '',
@@ -26,10 +27,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
     'Smartphone',
     'Tablet',
     'Laptop',
-    'Desktop',
     'Smartwatch',
-    'C-Type',
-    'Lunchbox',
     'Box',
     'Accessory',
     'Other',
@@ -108,7 +106,7 @@ export const useDeviceForm = ({ onDeviceAdded, onCancel }: UseDeviceFormProps = 
         project: '',
         projectGroup: '',
         type: 'Smartphone',
-        deviceType: 'C-Type' as DeviceTypeCategory,
+        deviceType: 'Smartphone' as DeviceTypeCategory,
         imei: '',
         serialNumber: '',
         deviceStatus: '',
