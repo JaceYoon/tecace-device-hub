@@ -77,13 +77,24 @@ class RequestStore {
     
     // If approved, update the device assignment
     if (status === 'approved') {
-      deviceStore.updateDevice(request.deviceId, {
-        assignedTo: request.type === 'assign' ? request.userId : undefined,
-        requestedBy: undefined,
-        status: request.type === 'assign' ? 'assigned' : 'available',
-      });
+      console.log(`Approved request: updating device ${request.deviceId}`);
+      
+      if (request.type === 'assign') {
+        deviceStore.updateDevice(request.deviceId, {
+          assignedTo: request.userId,
+          requestedBy: undefined,
+          status: 'assigned',
+        });
+      } else if (request.type === 'release') {
+        deviceStore.updateDevice(request.deviceId, {
+          assignedTo: undefined,
+          requestedBy: undefined,
+          status: 'available',
+        });
+      }
     } else if (status === 'rejected' || status === 'cancelled') {
       // If rejected or cancelled, clear the requestedBy field
+      console.log(`Request ${status}: clearing requestedBy for device ${request.deviceId}`);
       deviceStore.updateDevice(request.deviceId, {
         requestedBy: undefined,
       });

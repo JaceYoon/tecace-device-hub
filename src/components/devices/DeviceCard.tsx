@@ -153,6 +153,15 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         `Are you sure you want to release ${device.project}?`,
         async () => {
           try {
+            setIsProcessing(true);
+            
+            // First update device status directly
+            const updatedDevice = await dataService.updateDevice(device.id, {
+              assignedTo: undefined,
+              status: 'available',
+            });
+            
+            // Then add a release request to track history
             const request = await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
@@ -164,10 +173,13 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               description: `You have returned ${device.project}`,
               icon: <Check className="h-4 w-4" />
             });
+            
             if (onAction) onAction();
           } catch (error) {
             console.error('Error releasing device:', error);
             toast.error('Failed to release device');
+          } finally {
+            setIsProcessing(false);
           }
         }
     );
@@ -252,20 +264,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           <CardHeader className="pb-2">
             <div className="flex justify-between items-start">
               <div>
-                <Collapsible>
-                  <CollapsibleTrigger asChild>
-                    <button
-                      onClick={() => setExpanded(!expanded)}
-                      className="flex items-center text-left w-full"
-                    >
-                      <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
-                      {expanded ?
-                        <ChevronDown className="h-4 w-4 ml-2" /> :
-                        <ChevronRight className="h-4 w-4 ml-2" />
-                      }
-                    </button>
-                  </CollapsibleTrigger>
-                </Collapsible>
+                <CollapsibleTrigger
+                  onClick={() => setExpanded(!expanded)}
+                  className="flex items-center text-left w-full"
+                >
+                  <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
+                  {expanded ?
+                    <ChevronDown className="h-4 w-4 ml-2" /> :
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  }
+                </CollapsibleTrigger>
                 <CardDescription className="flex items-center gap-1 mt-1">
                   <Smartphone className="h-3.5 w-3.5" />
                   {device.type}
@@ -317,6 +325,26 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               <Collapsible open={expanded}>
                 <CollapsibleContent>
                   <div className="space-y-2 text-sm mt-2 pt-2 border-t">
+                    {device.deviceType && (
+                      <div className="flex items-start">
+                        <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Type</p>
+                          <p className="text-sm">{device.deviceType}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {device.notes && (
+                      <div className="flex items-start">
+                        <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Notes</p>
+                          <p className="text-sm">{device.notes}</p>
+                        </div>
+                      </div>
+                    )}
+
                     {device.devicePicture && (
                       <div className="flex items-start">
                         <Image className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
@@ -356,26 +384,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                               </DialogContent>
                             </Dialog>
                           </div>
-                        </div>
-                      </div>
-                    )}
-                  
-                    {device.deviceType && (
-                      <div className="flex items-start">
-                        <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-muted-foreground">Form Factor</p>
-                          <p className="text-sm">{device.deviceType}</p>
-                        </div>
-                      </div>
-                    )}
-
-                    {device.notes && (
-                      <div className="flex items-start">
-                        <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                        <div>
-                          <p className="text-muted-foreground">Notes</p>
-                          <p className="text-sm">{device.notes}</p>
                         </div>
                       </div>
                     )}
@@ -518,8 +526,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                           className="w-full"
                           size="sm"
                           onClick={handleReleaseDevice}
+                          disabled={isProcessing}
                       >
-                        Return Device
+                        {isProcessing ? (
+                          <>
+                            <Clock className="h-4 w-4 mr-1 animate-spin" />
+                            Processing...
+                          </>
+                        ) : (
+                          <>Return Device</>
+                        )}
                       </Button>
                   )}
                 </>

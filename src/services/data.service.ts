@@ -84,7 +84,9 @@ export const dataService = {
 
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
     try {
+      console.log('Updating device:', id, updates);
       const updatedDevice = await deviceService.update(id, updates);
+      console.log('Updated device result:', updatedDevice);
       return updatedDevice;
     } catch (error) {
       console.error('Error updating device in API', error);
@@ -194,7 +196,24 @@ export const dataService = {
 
   addRequest: async (request: Omit<DeviceRequest, 'id' | 'requestedAt'>): Promise<DeviceRequest> => {
     try {
+      console.log('Adding request:', request);
       const newRequest = await deviceService.requestDevice(request.deviceId, request.type);
+      console.log('Request result:', newRequest);
+      
+      // For release requests (user returning device), directly update the device status
+      if (request.type === 'release') {
+        try {
+          console.log('Auto-releasing device:', request.deviceId);
+          const updatedDevice = await dataService.updateDevice(request.deviceId, {
+            assignedTo: undefined,
+            status: 'available',
+          });
+          console.log('Device released successfully:', updatedDevice);
+        } catch (releaseError) {
+          console.error('Error auto-releasing device:', releaseError);
+        }
+      }
+      
       // Ensure dates are properly formatted
       return {
         ...newRequest,
@@ -209,8 +228,35 @@ export const dataService = {
 
   processRequest: async (id: string, status: 'approved' | 'rejected', managerId: string): Promise<DeviceRequest | null> => {
     try {
+      console.log(`Processing request ${id} with status ${status}`);
       const processedRequest = await deviceService.processRequest(id, status);
+      console.log('Process result:', processedRequest);
+      
       if (!processedRequest) return null;
+      
+      // If we successfully processed the request through the API,
+      // make sure device state is updated accordingly
+      if (status === 'approved' && processedRequest.type === 'assign') {
+        try {
+          console.log(`Updating device ${processedRequest.deviceId} assignment to ${processedRequest.userId}`);
+          await dataService.updateDevice(processedRequest.deviceId, {
+            assignedTo: processedRequest.userId,
+            status: 'assigned',
+            requestedBy: undefined
+          });
+        } catch (updateError) {
+          console.error('Error updating device after request approval:', updateError);
+        }
+      } else if (status === 'rejected') {
+        try {
+          console.log(`Clearing requestedBy for device ${processedRequest.deviceId}`);
+          await dataService.updateDevice(processedRequest.deviceId, {
+            requestedBy: undefined
+          });
+        } catch (updateError) {
+          console.error('Error updating device after request rejection:', updateError);
+        }
+      }
       
       // Ensure dates are properly formatted
       return {
@@ -229,6 +275,16 @@ export const dataService = {
     try {
       const cancelledRequest = await deviceService.cancelRequest(id);
       if (!cancelledRequest) return null;
+      
+      // Also update the device status to clear the requestedBy field
+      try {
+        console.log(`Clearing requestedBy for device ${cancelledRequest.deviceId}`);
+        await dataService.updateDevice(cancelledRequest.deviceId, {
+          requestedBy: undefined
+        });
+      } catch (updateError) {
+        console.error('Error updating device after request cancellation:', updateError);
+      }
       
       // Ensure dates are properly formatted
       return {

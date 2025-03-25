@@ -42,6 +42,9 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: true
     }
+  }, {
+    // Add options to help with debugging
+    timestamps: true
   });
   
   return OwnershipHistory;
