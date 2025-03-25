@@ -5,6 +5,8 @@ import DeviceFilters from './DeviceFilters';
 import DeviceGrid from './DeviceGrid';
 import DeviceListHeader from './DeviceListHeader';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { dataService } from '@/services/data.service';
+import { toast } from 'sonner';
 
 interface DeviceListProps {
   title?: string;
@@ -79,6 +81,17 @@ const DeviceList: React.FC<DeviceListProps> = ({
     }
   }, [title, user, filteredDevices, effectiveUserFilter]);
 
+  // Handle device action (assign or return)
+  const handleDeviceAction = async () => {
+    try {
+      await fetchData();
+      toast.success('Device action completed successfully');
+    } catch (error) {
+      console.error('Error with device action:', error);
+      toast.error('Failed to complete device action');
+    }
+  };
+
   // If this is My Devices view, we always want to show the controls for device return
   const showReturnControls = title === 'My Devices';
 
@@ -106,7 +119,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       <DeviceGrid
         devices={filteredDevices}
         users={users}
-        onAction={fetchData}
+        onAction={handleDeviceAction}
         showReturnControls={showReturnControls}
       />
     </div>

@@ -6,7 +6,6 @@ import { Device, User } from '@/types';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { ChevronDown, ChevronUp, Pencil } from 'lucide-react';
 import { useAuth } from '@/components/auth/AuthProvider';
-import DeviceCardImage from './DeviceCardImage';
 
 interface DeviceCardProps {
   device: Device;
@@ -77,12 +76,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         </div>
       </CardHeader>
 
-      {/* Display image if collapsed and available */}
-      <DeviceCardImage 
-        image={device.devicePicture} 
-        deviceName={device.project}
-        isCollapsed={!expanded} 
-      />
+      {/* Display image if available */}
+      {!expanded && device.devicePicture && (
+        <div className="px-6">
+          <img 
+            src={device.devicePicture} 
+            alt={`${device.project} picture`} 
+            className="w-full h-auto rounded mb-4 border border-muted"
+          />
+        </div>
+      )}
       
       {expanded && (
         <CardContent className="pt-2 pb-2">
