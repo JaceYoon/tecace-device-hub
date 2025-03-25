@@ -52,6 +52,8 @@ export interface DeviceRequest {
   processedBy?: string; // User ID
   device?: Device;
   user?: User;
+  deviceName?: string; // Added for improved resilience
+  userName?: string; // Added for improved resilience
 }
 
 export interface AuthContextType {

@@ -87,6 +87,20 @@ const RequestList: React.FC<RequestListProps> = ({
     return user ? user.name : 'Unknown User';
   };
 
+  const getDeviceName = (request: DeviceRequest) => {
+    // Handle both cases: when device is fully populated or when we need to extract from deviceName
+    if (request.device?.project) {
+      return request.device.project;
+    }
+    
+    // Fallback to deviceName if available (from our client-side workaround)
+    if (request.deviceName) {
+      return request.deviceName;
+    }
+    
+    return 'N/A';
+  };
+
   // Filter requests based on userId prop if provided
   let filteredRequests = requests;
   if (userId) {
@@ -106,7 +120,7 @@ const RequestList: React.FC<RequestListProps> = ({
       </CardHeader>
       <CardContent>
         {loading ? (
-          <div className="flex items-center justify-center">
+          <div className="flex items-center justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
         ) : filteredRequests.length === 0 ? (
@@ -126,7 +140,7 @@ const RequestList: React.FC<RequestListProps> = ({
               <TableBody>
                 {filteredRequests.map(request => (
                   <TableRow key={request.id}>
-                    <TableCell>{request.device?.project || 'N/A'}</TableCell>
+                    <TableCell>{getDeviceName(request)}</TableCell>
                     <TableCell>{getUserName(request.userId)}</TableCell>
                     <TableCell>
                       <RequestStatusBadge status={request.status} />

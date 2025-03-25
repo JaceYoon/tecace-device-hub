@@ -139,13 +139,53 @@ export const dataService = {
           deviceName: device?.project || 'Unknown Device',
           userName: user?.name || 'Unknown User',
           requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
-          processedAt: request.processedAt ? new Date(request.processedAt) : undefined
+          processedAt: request.processedAt ? new Date(request.processedAt) : undefined,
+          // Add an explicit device property if it doesn't exist
+          device: request.device || device || undefined
         };
       });
       
       return Array.isArray(formattedRequests) ? formattedRequests : [];
     } catch (error) {
       console.error('Error fetching requests from API', error);
+      
+      // If we get the specific alias error, we'll have to work with a client-side workaround
+      // until the backend is fixed
+      if (error instanceof Error && 
+          error.message.includes('alias') && 
+          error.message.includes('device is associated')) {
+        console.log('Using client-side workaround for device association error');
+        
+        try {
+          // Get devices and manually create request objects
+          const devices = await dataService.getDevices();
+          const users = await dataService.getUsers();
+          
+          // We'll only get pending requests from devices with requestedBy field
+          const pendingRequests: DeviceRequest[] = devices
+            .filter(device => device.requestedBy)
+            .map(device => {
+              const user = users.find(u => u.id === device.requestedBy);
+              return {
+                id: `temp-${device.id}-${Date.now()}`,
+                deviceId: device.id,
+                userId: device.requestedBy || '',
+                status: 'pending',
+                type: 'assign', // Assuming assign as default
+                requestedAt: new Date(),
+                device: device,
+                user: user
+              };
+            });
+            
+          console.log('Created temporary request objects:', pendingRequests);
+          return pendingRequests;
+        } catch (secondError) {
+          console.error('Error in fallback request handling:', secondError);
+          return [];
+        }
+      }
+      
       return [];
     }
   },
