@@ -13,7 +13,7 @@ module.exports = {
     bigNumberStrings: true,
     trace: false, // Always disable trace
     // Debug options - but don't log binary data
-    debug: false, // Always disable debug
+    debug: process.env.DB_DEBUG === 'true',
     // Try to handle various authentication methods
     authPlugins: {
       mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' })
@@ -25,7 +25,7 @@ module.exports = {
     acquire: 120000, // Increased acquire timeout to 2 minutes
     idle: 30000 // Increased idle timeout
   },
-  logging: false, // Always disable logging
+  logging: process.env.SQL_LOG === 'true', // Enable SQL logging if environment variable is set
   retry: {
     match: [
       /ETIMEDOUT/,
