@@ -6,6 +6,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { toast } from 'sonner';
 
 interface StatusSummaryProps {
   onRefresh?: () => void;
@@ -15,7 +16,24 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
-  const { isAdmin, isManager, isAuthenticated, user } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  
+  // Safely get auth context with fallback for when not initialized
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    console.error('Auth context not ready:', error);
+    // Provide default values that won't break the component
+    authContext = {
+      isAdmin: false,
+      isManager: false, 
+      isAuthenticated: false,
+      user: null
+    };
+  }
+  
+  const { isAdmin, isManager, isAuthenticated, user } = authContext;
   
   const fetchData = async () => {
     // Exit immediately if not authenticated
@@ -28,19 +46,44 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
     
     try {
       setLoading(true);
-      const [allDevices, allRequests] = await Promise.all([
+      setError(null);
+      
+      // Use Promise.allSettled to handle partial failures
+      const results = await Promise.allSettled([
         dataService.getDevices(),
         dataService.getRequests()
       ]);
-      console.log('StatusSummary - fetched devices:', allDevices.length);
-      console.log('StatusSummary - fetched requests:', allRequests.length);
-      setDevices(allDevices);
-      setRequests(allRequests);
+      
+      // Handle devices result
+      if (results[0].status === 'fulfilled') {
+        console.log('StatusSummary - fetched devices:', results[0].value.length);
+        setDevices(results[0].value);
+      } else {
+        console.error('Error fetching devices:', results[0].reason);
+        setDevices([]);
+      }
+      
+      // Handle requests result
+      if (results[1].status === 'fulfilled') {
+        console.log('StatusSummary - fetched requests:', results[1].value.length);
+        setRequests(results[1].value);
+      } else {
+        console.error('Error fetching requests:', results[1].reason);
+        setRequests([]);
+        
+        // Only show the toast for request errors if they're not network related
+        const errorMessage = results[1].reason?.message || 'Unknown error';
+        if (!errorMessage.includes('Failed to fetch') && 
+            !errorMessage.includes('ECONNREFUSED')) {
+          toast.error(`Error loading requests: ${errorMessage}`);
+        }
+      }
     } catch (error) {
       console.error('Error fetching data for status summary:', error);
       // Clear data on error to prevent stale data display
       setDevices([]);
       setRequests([]);
+      setError((error as Error).message || 'An unknown error occurred');
     } finally {
       setLoading(false);
     }
@@ -116,6 +159,12 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
           Refresh
         </Button>
       </div>
+      
+      {error && (
+        <div className="mb-4 p-2 bg-red-50 text-red-700 rounded border border-red-200">
+          Error loading data: {error}
+        </div>
+      )}
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
         <StatusCard 

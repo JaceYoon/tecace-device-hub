@@ -106,7 +106,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
     }
     
-    throw error; // Always throw to prevent fallback to dev mode
+    throw error;
   }
 }
 
