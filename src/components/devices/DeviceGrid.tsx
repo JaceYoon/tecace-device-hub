@@ -35,7 +35,7 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
             device={device} 
             users={users} 
             onAction={onAction}
-            className="w-full flex-grow"
+            className="w-full"
             showReturnControls={showReturnControls}
           />
         </div>
