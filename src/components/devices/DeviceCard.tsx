@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,7 +8,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image, Download
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -26,6 +27,14 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Badge } from '@/components/ui/badge';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 interface DeviceCardProps {
   device: Device;
@@ -46,6 +55,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isImageDialogOpen, setIsImageDialogOpen] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean,
     title: string,
@@ -214,6 +224,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     );
   };
 
+  const handleDownloadImage = () => {
+    if (!device.devicePicture) return;
+    
+    const link = document.createElement('a');
+    link.href = device.devicePicture;
+    link.download = `${device.project}_image.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
   return (
@@ -299,11 +320,38 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                   <div>
                     <p className="text-muted-foreground">Device Picture</p>
                     <div className="mt-1">
-                      <img 
-                        src={device.devicePicture} 
-                        alt="Device Picture" 
-                        className="max-w-full h-auto max-h-24 rounded border border-muted"
-                      />
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <img 
+                            src={device.devicePicture} 
+                            alt="Device Picture" 
+                            className="max-w-full h-auto max-h-24 rounded border border-muted cursor-pointer hover:opacity-80 transition-opacity" 
+                          />
+                        </DialogTrigger>
+                        <DialogContent className="sm:max-w-xl">
+                          <DialogHeader>
+                            <DialogTitle className="flex justify-between items-center">
+                              <span>Device Picture - {device.project}</span>
+                              <Button 
+                                variant="outline" 
+                                size="sm" 
+                                className="flex items-center gap-1"
+                                onClick={handleDownloadImage}
+                              >
+                                <Download className="h-4 w-4" />
+                                Download
+                              </Button>
+                            </DialogTitle>
+                          </DialogHeader>
+                          <div className="mt-2 flex justify-center">
+                            <img 
+                              src={device.devicePicture} 
+                              alt="Device Picture" 
+                              className="max-w-full max-h-[70vh] rounded" 
+                            />
+                          </div>
+                        </DialogContent>
+                      </Dialog>
                     </div>
                   </div>
                 </div>

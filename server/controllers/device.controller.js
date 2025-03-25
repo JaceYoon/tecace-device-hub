@@ -361,10 +361,11 @@ exports.processRequest = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
+    // Fix for alias error: explicitly specify the alias in the include statement
     const request = await Request.findByPk(req.params.id, {
       include: [
-        { model: Device },
-        { model: User }
+        { model: Device, as: 'device' },
+        { model: User, as: 'user' }
       ]
     });
 
@@ -457,6 +458,7 @@ exports.processRequest = async (req, res) => {
 
     res.json(request);
   } catch (err) {
+    console.error("Error processing request:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -466,7 +468,7 @@ exports.cancelRequest = async (req, res) => {
   try {
     const request = await Request.findByPk(req.params.id, {
       include: [
-        { model: Device }
+        { model: Device, as: 'device' }
       ]
     });
 
