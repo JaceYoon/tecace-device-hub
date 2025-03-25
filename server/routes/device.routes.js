@@ -4,6 +4,9 @@ const router = express.Router();
 const deviceController = require('../controllers/device.controller');
 const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
+// Configure JSON body parser with increased limit for all device routes
+router.use(express.json({ limit: '100mb' }));
+
 // Get all requests endpoint must be before /:id route to avoid conflict
 router.get('/requests/all', isAuthenticated, deviceController.findAllRequests);
 
@@ -16,11 +19,11 @@ router.get('/:id', isAuthenticated, deviceController.findOne);
 // Get device ownership history
 router.get('/:id/history', isAuthenticated, deviceController.getDeviceHistory);
 
-// Create a new device - increase payload limit to 100MB for image uploads
-router.post('/', isAuthenticated, isAdmin, express.json({ limit: '100mb' }), deviceController.create);
+// Create a new device
+router.post('/', isAuthenticated, isAdmin, deviceController.create);
 
-// Update a device - increase payload limit to 100MB for image uploads
-router.put('/:id', isAuthenticated, express.json({ limit: '100mb' }), deviceController.update);
+// Update a device
+router.put('/:id', isAuthenticated, deviceController.update);
 
 // Delete a device
 router.delete('/:id', isAuthenticated, isAdmin, deviceController.delete);

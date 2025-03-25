@@ -36,7 +36,7 @@ const RequestList: React.FC<RequestListProps> = ({
     try {
       const [requestsData, usersData] = await Promise.all([
         dataService.getRequests(),
-        dataService.getUsers()
+        dataService.users.getAll()
       ]);
       console.log("Fetched requests:", requestsData.length);
       setRequests(requestsData);
@@ -83,6 +83,21 @@ const RequestList: React.FC<RequestListProps> = ({
     }
   };
 
+  const handleCancel = async (requestId: string) => {
+    setProcessing(requestId);
+    try {
+      await dataService.devices.cancelRequest(requestId);
+      toast.success('Request cancelled successfully');
+      fetchData();
+      if (onRequestProcessed) onRequestProcessed();
+    } catch (error) {
+      console.error('Error cancelling request:', error);
+      toast.error('Failed to cancel request');
+    } finally {
+      setProcessing(null);
+    }
+  };
+
   const getUserName = (userId: string) => {
     const user = users.find(u => u.id === userId);
     return user ? user.name : 'Unknown User';
@@ -115,7 +130,7 @@ const RequestList: React.FC<RequestListProps> = ({
 
   // If not admin, only show requests that belong to current user
   if (!isAdmin && !userId && user) {
-    filteredRequests = requests.filter(request => request.userId === user.id);
+    filteredRequests = requests.filter(request => request.userId === user.id && request.status === 'pending');
   }
 
   return (
@@ -196,6 +211,27 @@ const RequestList: React.FC<RequestListProps> = ({
                               )}
                             </Button>
                           </>
+                        )}
+                        {/* Show Cancel button for non-admin users for their own pending requests */}
+                        {!isAdmin && user && request.userId === user.id && request.status === 'pending' && (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => handleCancel(request.id)}
+                            disabled={processing === request.id}
+                          >
+                            {processing === request.id ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Cancelling...
+                              </>
+                            ) : (
+                              <>
+                                <X className="mr-2 h-4 w-4" />
+                                Cancel
+                              </>
+                            )}
+                          </Button>
                         )}
                       </div>
                     </TableCell>
