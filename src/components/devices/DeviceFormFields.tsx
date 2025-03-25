@@ -93,7 +93,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           <Input
             id="projectGroup"
             name="projectGroup"
-            placeholder="Project Group"
+            placeholder="Eureka, Galaxy Watch 7, Tablet 10 Series.."
             value={deviceData.projectGroup}
             onChange={handleChange}
             required
@@ -120,13 +120,13 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deviceType">Form Factor</Label>
+          <Label htmlFor="deviceType">Type</Label>
           <Select
             value={deviceData.deviceType}
             onValueChange={(value) => handleSelectChange(value, 'deviceType')}
           >
             <SelectTrigger id="deviceType">
-              <SelectValue placeholder="Select Form Factor" />
+              <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="C-Type">C-Type</SelectItem>
@@ -188,11 +188,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deviceStatus">Status Details</Label>
+          <Label htmlFor="deviceStatus">Status</Label>
           <Input
             id="deviceStatus"
             name="deviceStatus"
-            placeholder="Device Status"
+            placeholder="Mukundan or Matt"
             value={deviceData.deviceStatus || ''}
             onChange={handleChange}
           />
