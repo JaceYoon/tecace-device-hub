@@ -36,6 +36,10 @@ const DeviceList: React.FC<DeviceListProps> = ({
     ? filterByStatus // Use provided filter status directly
     : undefined;  // Don't restrict by status for admins by default
   
+  // Important: Set the user ID for filtering my devices correctly
+  const effectiveUserFilter = filterByAssignedToUser || 
+    (title === 'My Devices' && user ? user.id : undefined);
+  
   const {
     users,
     filteredDevices,
@@ -49,7 +53,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     fetchData
   } = useDeviceFilters({
     filterByAvailable,
-    filterByAssignedToUser: filterByAssignedToUser || (title === 'My Devices' && user ? user.id : undefined),
+    filterByAssignedToUser: effectiveUserFilter,
     filterByStatus: defaultFilterStatuses,
     refreshTrigger
   });
@@ -65,7 +69,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   if (title === 'My Devices' && user) {
     console.log("My Devices view - User ID:", user.id);
     console.log("My Devices view - Filtered devices:", filteredDevices);
-    console.log("My Devices view - Filter by assigned user:", filterByAssignedToUser || user.id);
+    console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
   }
 
   return (
