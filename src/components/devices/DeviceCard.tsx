@@ -45,14 +45,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onAction, users = [], c
     action: () => void
   }>({ isOpen: false, title: '', description: '', action: () => {} });
 
-  const isDeviceOwner = device.assignedTo === user?.id;
+  const isDeviceOwner = device.assignedTo === user?.id || device.assignedToId === user?.id;
   const hasRequested = device.requestedBy === user?.id;
   const isRequested = !!device.requestedBy;
   
-  const assignedUser = users.find(u => u.id === device.assignedTo);
+  const assignedUser = users.find(u => u.id === device.assignedTo || u.id === device.assignedToId);
   const assignedUserName = assignedUser?.name || device.assignedToName || 'Unknown User';
   
   const requestedByUser = users.find(u => u.id === device.requestedBy);
+
+  console.log(`DeviceCard for ${device.project} - assignedTo: ${device.assignedTo}, assignedToId: ${device.assignedToId}, found user: ${assignedUser?.name || 'not found'}`);
 
   const formatDate = (date: Date) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });

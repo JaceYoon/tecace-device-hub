@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -69,7 +68,7 @@ exports.findAll = async (req, res) => {
     }
 
     console.log("User role:", req.user.role);
-    console.log("Applying filter condition:", condition);
+    console.log("Applying filter condition:", JSON.stringify(condition));
 
     const devices = await Device.findAll({
       where: condition,
@@ -78,6 +77,8 @@ exports.findAll = async (req, res) => {
         { model: User, as: 'addedBy', attributes: ['id', 'name', 'email'] }
       ]
     });
+
+    console.log(`Found ${devices.length} devices`);
 
     // Get all pending requests to identify devices with requests
     const pendingRequests = await Request.findAll({
@@ -91,9 +92,18 @@ exports.findAll = async (req, res) => {
     const devicesWithRequestInfo = devices.map(device => {
       const deviceJson = device.toJSON();
       
+      // Ensure IDs are consistent strings
+      if (deviceJson.id) deviceJson.id = String(deviceJson.id);
+      if (deviceJson.assignedToId) deviceJson.assignedToId = String(deviceJson.assignedToId);
+      if (deviceJson.addedById) deviceJson.addedById = String(deviceJson.addedById);
+      
       // Add assignedToName if there's an assigned user
       if (deviceJson.assignedTo) {
         deviceJson.assignedToName = deviceJson.assignedTo.name;
+        // Ensure assignedTo ID is a string for frontend
+        if (deviceJson.assignedTo.id) {
+          deviceJson.assignedTo = String(deviceJson.assignedTo.id);
+        }
       }
       
       // Check if this device has pending requests
@@ -103,14 +113,25 @@ exports.findAll = async (req, res) => {
       if (hasPendingRequest) {
         const request = pendingRequests.find(req => req.deviceId === deviceJson.id);
         if (request) {
-          deviceJson.requestedBy = request.userId;
+          deviceJson.requestedBy = String(request.userId);
         }
       }
       
       return deviceJson;
     });
 
-    console.log(`Found ${devices.length} devices`);
+    // Debug log devices with assigned users
+    const assignedDevices = devicesWithRequestInfo.filter(d => d.assignedTo || d.assignedToId);
+    console.log(`Found ${assignedDevices.length} assigned devices:`, 
+      assignedDevices.map(d => ({
+        id: d.id,
+        project: d.project,
+        assignedTo: d.assignedTo,
+        assignedToId: d.assignedToId,
+        assignedToName: d.assignedToName
+      }))
+    );
+
     res.json(devicesWithRequestInfo);
   } catch (err) {
     console.error("Error fetching devices:", err);
@@ -400,7 +421,7 @@ exports.findAllRequests = async (req, res) => {
     }
 
     console.log("User role for requests:", req.user.role);
-    console.log("Request condition:", condition);
+    console.log("Request condition:", JSON.stringify(condition));
 
     const requests = await Request.findAll({
       where: condition,
