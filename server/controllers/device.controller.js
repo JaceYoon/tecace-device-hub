@@ -9,7 +9,7 @@ const Op = db.Sequelize.Op;
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes, barcode } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes, devicePicture } = req.body;
 
     console.log('Creating device with data:', JSON.stringify(req.body, null, 2));
 
@@ -29,7 +29,7 @@ exports.create = async (req, res) => {
       deviceStatus: deviceStatus || null,
       receivedDate: receivedDate || null,
       notes: notes || null,
-      barcode: barcode || null,
+      devicePicture: devicePicture || null,
       addedById: req.user ? req.user.id : null,
       status: 'available'
     };
@@ -231,7 +231,7 @@ exports.getDeviceHistory = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId, barcode } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId, devicePicture } = req.body;
 
     const device = await Device.findByPk(req.params.id);
 
@@ -250,7 +250,7 @@ exports.update = async (req, res) => {
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
-      barcode: barcode !== undefined ? barcode : device.barcode,
+      devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
       assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
     });
 
