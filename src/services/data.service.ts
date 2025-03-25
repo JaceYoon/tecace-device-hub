@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -209,24 +210,20 @@ export const userService = {
 // Create a global refresh callback mechanism
 let refreshCallbacks: (() => void)[] = [];
 
-// Add this to the existing dataService object
+// Add top-level methods for compatibility
 export const dataService = {
   auth: authService,
   devices: deviceService,
   users: userService,
-  get: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint),
-  post: <T>(endpoint: string, data: any): Promise<T> => apiCall<T>(endpoint, {
-    method: 'POST',
-    body: JSON.stringify(data)
-  }),
-  put: <T>(endpoint: string, data: any): Promise<T> => apiCall<T>(endpoint, {
-    method: 'PUT',
-    body: JSON.stringify(data)
-  }),
-  delete: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint, {
-    method: 'DELETE'
-  }),
-
+  
+  // Add direct methods to maintain compatibility with existing code
+  getDeviceHistory: deviceService.getDeviceHistory,
+  getDevices: deviceService.getAll,
+  getUsers: userService.getAll,
+  updateDevice: deviceService.update,
+  deleteDevice: deviceService.delete,
+  processRequest: deviceService.processRequest,
+  addDevice: deviceService.create,
   getRequests: async (): Promise<DeviceRequest[]> => {
     try {
       console.log('Fetching all device requests...');
@@ -249,7 +246,7 @@ export const dataService = {
       console.log('Request added successfully:', newRequest);
       
       // Trigger refresh callback to update UI immediately
-      triggerRefresh();
+      dataService.triggerRefresh();
       
       return newRequest;
     } catch (error) {
@@ -259,6 +256,7 @@ export const dataService = {
     }
   },
   
+  // Define triggerRefresh function
   triggerRefresh: () => {
     refreshCallbacks.forEach(callback => callback());
   },
@@ -269,6 +267,24 @@ export const dataService = {
       refreshCallbacks = refreshCallbacks.filter(cb => cb !== callback);
     };
   },
+  
+  // Helper methods for HTTP operations
+  get: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint),
+  post: <T>(endpoint: string, data: any): Promise<T> => apiCall<T>(endpoint, {
+    method: 'POST',
+    body: JSON.stringify(data)
+  }),
+  put: <T>(endpoint: string, data: any): Promise<T> => apiCall<T>(endpoint, {
+    method: 'PUT',
+    body: JSON.stringify(data)
+  }),
+  delete: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint, {
+    method: 'DELETE'
+  }),
 };
 
-export default api;
+// Export the individual services for direct access
+export { deviceService, userService, authService };
+
+// Export the dataService as default as well for flexibility
+export default dataService;

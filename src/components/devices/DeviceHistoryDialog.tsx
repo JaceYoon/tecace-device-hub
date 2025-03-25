@@ -41,6 +41,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     setLoading(true);
     try {
       console.log(`Fetching history for device: ${device.id}`);
+      // Use the correct method from dataService
       const data = await dataService.getDeviceHistory(device.id);
       
       if (data) {
@@ -89,11 +90,14 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       const assignedUser = users.find(u => u.id === device.assignedTo);
       if (assignedUser) {
         // Handle date conversion properly - updatedAt could be a string or a Date
-        const assignedDate = typeof device.updatedAt === 'string' 
-          ? device.updatedAt 
-          : device.updatedAt instanceof Date 
-            ? device.updatedAt.toISOString() 
-            : new Date().toISOString();
+        let assignedDate: string;
+        if (typeof device.updatedAt === 'string') {
+          assignedDate = device.updatedAt;
+        } else if (device.updatedAt instanceof Date) {
+          assignedDate = device.updatedAt.toISOString();
+        } else {
+          assignedDate = new Date().toISOString();
+        }
             
         fallbackEntries.push({
           id: `fallback-current-${device.id}`,
@@ -205,3 +209,5 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     </Dialog>
   );
 };
+
+export default DeviceHistoryDialog;
