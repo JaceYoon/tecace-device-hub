@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Barcode
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -294,15 +293,15 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 </div>
               </div>
 
-              {device.barcode && (
+              {device.devicePicture && (
                 <div className="flex items-start">
-                  <Barcode className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                  <Image className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-muted-foreground">Barcode</p>
+                    <p className="text-muted-foreground">Device Picture</p>
                     <div className="mt-1">
                       <img 
-                        src={device.barcode} 
-                        alt="Barcode" 
+                        src={device.devicePicture} 
+                        alt="Device Picture" 
                         className="max-w-full h-auto max-h-24 rounded border border-muted"
                       />
                     </div>

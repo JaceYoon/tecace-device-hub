@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -51,7 +50,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
     notes: device.notes || '',
-    barcode: device.barcode || '',
+    devicePicture: device.devicePicture || '',
   });
   
   // Strictly typed list of device types matching the database schema
@@ -86,18 +85,18 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     }));
   };
   
-  // Function to handle barcode file upload
+  // Function to handle device picture file upload
   const handleFileChange = (file: File | null, fieldName: string) => {
     if (!file) return;
     
-    // Handle barcode image upload
-    if (fieldName === 'barcode') {
+    // Handle device picture image upload
+    if (fieldName === 'devicePicture') {
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
         setDeviceData(prev => ({
           ...prev,
-          barcode: base64String
+          devicePicture: base64String
         }));
       };
       reader.readAsDataURL(file);
@@ -112,7 +111,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, barcode } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
@@ -139,7 +138,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         deviceStatus: deviceStatus || undefined,
         receivedDate,
         notes: notes || undefined,
-        barcode: barcode || undefined,
+        devicePicture: devicePicture || undefined,
       });
       
       if (updatedDevice) {

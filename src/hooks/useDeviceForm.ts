@@ -18,7 +18,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     deviceStatus: '',
     notes: '',
     receivedDate: undefined as Date | undefined,
-    barcode: '',
+    devicePicture: '',
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -54,14 +54,14 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       deviceStatus: '',
       notes: '',
       receivedDate: undefined,
-      barcode: '',
+      devicePicture: '',
     });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, barcode } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
@@ -83,7 +83,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
         receivedDate: receivedDate,
         addedById: user?.id,
         status: 'available',
-        barcode: barcode || undefined,
+        devicePicture: devicePicture || undefined,
       });
       
       toast.success('Device added successfully', {

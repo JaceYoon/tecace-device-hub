@@ -11,7 +11,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Barcode } from 'lucide-react';
+import { Calendar as CalendarIcon, Image } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -29,7 +29,7 @@ interface DeviceData {
   deviceStatus?: string;
   receivedDate?: Date;
   notes?: string;
-  barcode?: string;
+  devicePicture?: string;
 }
 
 interface DeviceFormFieldsProps {
@@ -51,19 +51,19 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleFileChange,
   isEditMode = false
 }) => {
-  // Handle barcode file upload
-  const handleBarcodeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle device picture file upload
+  const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file && handleFileChange) {
       // Read the file as a base64 string
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result as string;
-        handleFileChange(file, 'barcode');
+        handleFileChange(file, 'devicePicture');
         // Also update the form with the base64 string
         const changeEvent = {
           target: {
-            name: 'barcode',
+            name: 'devicePicture',
             value: base64String
           }
         } as React.ChangeEvent<HTMLInputElement>;
@@ -200,24 +200,24 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="barcode">Barcode Image</Label>
+        <Label htmlFor="devicePicture">Device Picture</Label>
         <div className="flex items-center gap-2">
           <Input
-            id="barcode"
-            name="barcode-upload"
+            id="devicePicture"
+            name="devicePicture-upload"
             type="file"
             accept="image/*"
-            onChange={handleBarcodeUpload}
+            onChange={handleDevicePictureUpload}
             className="flex-1"
           />
-          <Barcode className="h-5 w-5 text-muted-foreground" />
+          <Image className="h-5 w-5 text-muted-foreground" />
         </div>
-        {deviceData.barcode && (
+        {deviceData.devicePicture && (
           <div className="mt-2">
-            <p className="text-sm text-muted-foreground mb-1">Current barcode image:</p>
+            <p className="text-sm text-muted-foreground mb-1">Current device picture:</p>
             <img 
-              src={deviceData.barcode} 
-              alt="Barcode" 
+              src={deviceData.devicePicture} 
+              alt="Device Picture" 
               className="max-w-full h-auto max-h-24 rounded border border-muted" 
             />
           </div>

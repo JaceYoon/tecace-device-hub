@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'manager' | 'user';
 
 export interface User {
@@ -27,7 +28,7 @@ export interface Device {
   receivedDate?: Date;
   returnDate?: Date;
   notes?: string;
-  barcode?: string; // Base64 encoded barcode image
+  devicePicture?: string; // Base64 encoded device image
   addedBy?: string;
   addedById?: string;
   assignedTo?: string;
