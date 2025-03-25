@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 
@@ -135,13 +136,12 @@ export const dataService = {
         
         return {
           ...request,
-          deviceName: device?.project || request.deviceName || 'Unknown Device',
-          userName: user?.name || request.userName || 'Unknown User',
+          deviceName: device?.project || 'Unknown Device',
+          userName: user?.name || 'Unknown User',
           requestedAt: request.requestedAt ? new Date(request.requestedAt) : new Date(),
           processedAt: request.processedAt ? new Date(request.processedAt) : undefined,
           // Add an explicit device property if it doesn't exist
-          device: request.device || device || undefined,
-          user: request.user || user || undefined
+          device: request.device || device || undefined
         };
       });
       
@@ -152,8 +152,8 @@ export const dataService = {
       // If we get the specific alias error, we'll have to work with a client-side workaround
       // until the backend is fixed
       if (error instanceof Error && 
-          (error.message.includes('alias') || 
-           error.message.includes('device is associated'))) {
+          error.message.includes('alias') && 
+          error.message.includes('device is associated')) {
         console.log('Using client-side workaround for device association error');
         
         try {
@@ -216,40 +216,15 @@ export const dataService = {
       return {
         ...processedRequest,
         requestedAt: processedRequest.requestedAt ? new Date(processedRequest.requestedAt) : new Date(),
-        processedAt: processedRequest.processedAt ? new Date(processedRequest.processedAt) : undefined,
-        // Ensure device and user are set if they exist
-        device: processedRequest.device || undefined,
-        user: processedRequest.user || undefined
+        processedAt: processedRequest.processedAt ? new Date(processedRequest.processedAt) : undefined
       };
     } catch (error) {
       console.error('Error processing request in API', error);
-      
-      // If we get the specific alias error, use client-side workaround
-      if (error instanceof Error && 
-          (error.message.includes('alias') || 
-           error.message.includes('device is associated'))) {
-        console.log('Using client-side workaround for processing request');
-        
-        try {
-          // Try to process using the requestStore directly
-          const processedRequest = await deviceService.processRequest(id, status);
-          if (!processedRequest) return null;
-          
-          return {
-            ...processedRequest,
-            requestedAt: processedRequest.requestedAt ? new Date(processedRequest.requestedAt) : new Date(),
-            processedAt: new Date()
-          };
-        } catch (fallbackError) {
-          console.error('Error in fallback request processing:', fallbackError);
-          throw fallbackError;
-        }
-      }
-      
       throw error;
     }
   },
 
+  // Special method for cancellation by the requester
   cancelRequest: async (id: string, userId: string): Promise<DeviceRequest | null> => {
     try {
       const cancelledRequest = await deviceService.cancelRequest(id);
@@ -267,6 +242,7 @@ export const dataService = {
     }
   },
 
+  // User methods
   getUsers: async (): Promise<User[]> => {
     try {
       const users = await userService.getAll();

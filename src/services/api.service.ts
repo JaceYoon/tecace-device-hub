@@ -80,15 +80,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(`API error response: ${response.status}`, errorData);
-
-      // Special handling for Sequelize alias errors
-      if (errorData.message && errorData.message.includes('alias')) {
-        if (endpoint === '/devices/requests/all' || endpoint.includes('/devices/requests/')) {
-          console.log('Detected Sequelize alias error, using fallback implementation');
-          throw new Error('alias_error'); // Special error code for our fallback
-        }
-      }
-
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
@@ -97,11 +88,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     return data as T;
   } catch (error) {
     console.error(`API error for ${endpoint}:`, error);
-    
-    // Check if it's our special alias error
-    if (error instanceof Error && error.message === 'alias_error') {
-      throw error; // Propagate for special handling
-    }
     
     // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
     if (error instanceof Error && 
@@ -188,56 +174,19 @@ export const deviceService = {
       body: JSON.stringify({ type })
     }),
 
-  processRequest: async (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> => {
-    try {
-      return await apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
-        method: 'PUT',
-        body: JSON.stringify({ status })
-      });
-    } catch (error) {
-      // Check if it's our special alias error
-      if (error instanceof Error && error.message === 'alias_error') {
-        console.log('Using client-side fallback for processing request');
-        // Use the mock data as fallback
-        return requestStore.processRequest(requestId, status, 'admin-1');
-      }
-      throw error;
-    }
-  },
+  processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
+    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status })
+    }),
 
-  cancelRequest: async (requestId: string): Promise<DeviceRequest | null> => {
-    try {
-      return await apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
-        method: 'PUT'
-      });
-    } catch (error) {
-      // Check if it's our special alias error
-      if (error instanceof Error && error.message === 'alias_error') {
-        console.log('Using client-side fallback for cancelling request');
-        // Use the mock data as fallback - we assume the current user's ID 
-        // This is safe because the cancelRequest method validates that the user is the requester
-        return requestStore.cancelRequest(requestId, 'current-user-id'); 
-      }
-      throw error;
-    }
-  },
+  cancelRequest: (requestId: string): Promise<DeviceRequest | null> =>
+    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
+      method: 'PUT'
+    }),
 
-  getAllRequests: async (): Promise<DeviceRequest[]> => {
-    try {
-      return await apiCall<DeviceRequest[]>('/devices/requests/all');
-    } catch (error) {
-      // Check if it's our special alias error
-      if (error instanceof Error && (
-        error.message === 'alias_error' || 
-        error.message.includes('alias')
-      )) {
-        console.log('Using client-side fallback for getAllRequests');
-        // Use the mock data as fallback
-        return requestStore.getRequests();
-      }
-      throw error;
-    }
-  },
+  getAllRequests: (): Promise<DeviceRequest[]> =>
+    apiCall<DeviceRequest[]>('/devices/requests/all'),
 };
 
 // User services
