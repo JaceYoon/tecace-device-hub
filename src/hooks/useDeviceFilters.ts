@@ -31,20 +31,27 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      console.log("useDeviceFilters - Fetching data...");
       const [devicesData, usersData] = await Promise.all([
         dataService.getDevices(),
         dataService.getUsers()
       ]);
 
-      console.log("Fetched devices for useDeviceFilters:", devicesData);
+      console.log("useDeviceFilters - Devices fetched:", devicesData.length);
+      console.log("useDeviceFilters - Users fetched:", usersData.length);
+      
+      // Debug for My Devices filtering
       if (props.filterByAssignedToUser) {
-        console.log("Filtering by assignedTo:", props.filterByAssignedToUser);
+        console.log("useDeviceFilters - Filtering by assignedTo:", props.filterByAssignedToUser);
         const userDevices = devicesData.filter(d => {
-          const match = d.assignedTo === props.filterByAssignedToUser || d.assignedTo === props.filterByAssignedToUser;
-          console.log(`Device ${d.project} - assignedTo: ${d.assignedTo}, matched: ${match}`);
+          // Check both assignedTo and assignedToId fields for the user ID
+          const match = d.assignedTo === props.filterByAssignedToUser;
+          console.log(`Device ${d.project} - status: ${d.status}, assignedTo: ${d.assignedTo}, matched: ${match}`);
           return match;
         });
-        console.log("Devices assigned to this user:", userDevices);
+        
+        console.log("useDeviceFilters - Devices assigned to user:", userDevices.length);
+        console.log("useDeviceFilters - Devices:", userDevices);
       }
       
       setDevices(devicesData);
@@ -111,6 +118,7 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     // Filter by assigned to user - check if the device is assigned to the specified user
     if (props.filterByAssignedToUser) {
       console.log(`Device ${device.project} - checking assignedTo: ${device.assignedTo} against filter: ${props.filterByAssignedToUser}`);
+      // Important: We're using STRICT EQUALITY here to avoid type issues with numeric IDs
       return device.assignedTo === props.filterByAssignedToUser;
     }
 

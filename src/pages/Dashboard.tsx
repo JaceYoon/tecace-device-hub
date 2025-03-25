@@ -51,6 +51,13 @@ const Dashboard: React.FC = () => {
         const allDevices = await dataService.getDevices();
         const allUsers = await dataService.getUsers();
         
+        console.log("Dashboard: User id:", user.id, "Name:", user.name);
+        console.log("Dashboard: Fetched devices:", allDevices.length);
+        
+        // Check for assigned devices to this user
+        const myDevices = allDevices.filter(d => d.assignedTo === user.id);
+        console.log("Dashboard: My devices:", myDevices.length, myDevices);
+        
         // Create maps for faster lookups
         const deviceMap: {[key: string]: Device} = {};
         const userMap: {[key: string]: User} = {};
@@ -108,7 +115,9 @@ const Dashboard: React.FC = () => {
 
   const pendingRequests = requests.filter(request => request.status === 'pending') || [];
 
-  const myDeviceFilter = user?.id;
+  // Explicitly use the user ID for My Devices filter and ensure it's a string
+  const myDeviceFilter = user.id;
+  console.log("Dashboard: Setting my device filter to:", myDeviceFilter);
 
   if (isLoading) {
     return (

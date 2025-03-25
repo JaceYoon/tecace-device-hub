@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User } from '@/types';
 import { deviceService, userService } from './api.service';
 
@@ -11,7 +10,28 @@ export const dataService = {
     try {
       const devices = await deviceService.getAll();
       console.log('Fetched devices from API:', devices);
-      return Array.isArray(devices) ? devices : [];
+      
+      // Ensure device IDs are strings for consistent comparison
+      const formattedDevices = devices.map(device => {
+        // Make sure assignedTo is always a string for proper comparison
+        if (device.assignedTo) {
+          device.assignedTo = String(device.assignedTo);
+        }
+        
+        // Ensure proper assignment between assignedTo and assignedToId
+        if (device.assignedToId && !device.assignedTo) {
+          device.assignedTo = String(device.assignedToId);
+        }
+        
+        // Log devices with assignments for debugging
+        if (device.assignedTo || device.assignedToId) {
+          console.log(`Device ${device.project} is assigned to: ${device.assignedTo || device.assignedToId}`);
+        }
+        
+        return device;
+      });
+      
+      return Array.isArray(formattedDevices) ? formattedDevices : [];
     } catch (error) {
       console.error('Error fetching devices from API', error);
       return [];
@@ -149,7 +169,16 @@ export const dataService = {
     try {
       const users = await userService.getAll();
       console.log('Fetched users from API:', users);
-      return Array.isArray(users) ? users : [];
+      
+      // Ensure user IDs are strings for consistent comparison
+      const formattedUsers = users.map(user => {
+        if (user.id) {
+          user.id = String(user.id);
+        }
+        return user;
+      });
+      
+      return Array.isArray(formattedUsers) ? formattedUsers : [];
     } catch (error) {
       console.error('Error fetching users from API', error);
       return [];
