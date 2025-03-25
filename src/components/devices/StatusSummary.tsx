@@ -17,7 +17,23 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { isAdmin, isManager, isAuthenticated, user } = useAuth();
+  
+  // Safely get auth context with fallback for when not initialized
+  let authContext;
+  try {
+    authContext = useAuth();
+  } catch (error) {
+    console.error('Auth context not ready:', error);
+    // Provide default values that won't break the component
+    authContext = {
+      isAdmin: false,
+      isManager: false, 
+      isAuthenticated: false,
+      user: null
+    };
+  }
+  
+  const { isAdmin, isManager, isAuthenticated, user } = authContext;
   
   const fetchData = async () => {
     // Exit immediately if not authenticated
