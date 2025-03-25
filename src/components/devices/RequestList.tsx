@@ -7,7 +7,7 @@ import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { useAuth } from '@/components/auth/AuthProvider';
-import StatusBadge from '@/components/ui/StatusBadge';
+import RequestStatusBadge from '@/components/ui/RequestStatusBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2, Check, X, RefreshCw } from 'lucide-react';
 
@@ -129,7 +129,7 @@ const RequestList: React.FC<RequestListProps> = ({
                     <TableCell>{request.device?.project || 'N/A'}</TableCell>
                     <TableCell>{getUserName(request.userId)}</TableCell>
                     <TableCell>
-                      <StatusBadge status={request.status} />
+                      <RequestStatusBadge status={request.status} />
                     </TableCell>
                     <TableCell>
                       {formatDistanceToNow(new Date(request.requestedAt), {
