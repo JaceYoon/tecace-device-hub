@@ -1,141 +1,129 @@
-
-import { useState, useEffect } from 'react';
-import { Device, User } from '@/types';
+import { useState, useEffect, useMemo } from 'react';
+import { Device, User, DeviceTypeValue } from '@/types';
 import { dataService } from '@/services/data.service';
-import { useAuth } from '@/components/auth/AuthProvider';
 
-interface UseDeviceFiltersProps {
+interface DeviceFiltersOptions {
   filterByAvailable?: boolean;
   filterByAssignedToUser?: string;
   filterByStatus?: string[];
   refreshTrigger?: number;
 }
 
-export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
+export const useDeviceFilters = ({
+  filterByAvailable = false,
+  filterByAssignedToUser,
+  filterByStatus,
+  refreshTrigger = 0
+}: DeviceFiltersOptions) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [typeFilter, setTypeFilter] = useState('all');
-  const [loading, setLoading] = useState(true);
-  const { isManager, isAdmin, user } = useAuth();
+  const [statusFilter, setStatusFilter] = useState<string>(filterByAvailable ? 'available' : 'all');
+  const [typeFilter, setTypeFilter] = useState<string>('all');
+  
+  // Store the actual status filters to apply
+  const [effectiveStatusFilters, setEffectiveStatusFilters] = useState<string[] | undefined>(filterByStatus);
 
-  // Get unique device types from the devices array
-  const deviceTypes = ['all', ...new Set(
-    devices.map(device => device.type)
-      .filter(Boolean)
-      .sort()
-  )];
+  // Log initial filters for debugging
+  useEffect(() => {
+    console.log('Initial filterByStatus:', filterByStatus);
+    console.log('Initial filterByAssignedToUser:', filterByAssignedToUser);
+    console.log('Initial filterByAvailable:', filterByAvailable);
+  }, [filterByStatus, filterByAssignedToUser, filterByAvailable]);
 
-  // Fetch devices and users
   const fetchData = async () => {
-    setLoading(true);
     try {
-      console.log("useDeviceFilters - Fetching data...");
-      const [devicesData, usersData] = await Promise.all([
-        dataService.getDevices(),
-        dataService.getUsers()
+      const [fetchedDevices, fetchedUsers] = await Promise.all([
+        dataService.devices.getAll(),
+        dataService.users.getAll()
       ]);
-
-      console.log("useDeviceFilters - Devices fetched:", devicesData.length);
-      console.log("useDeviceFilters - Users fetched:", usersData.length);
       
-      // Debug for My Devices filtering
-      if (props.filterByAssignedToUser) {
-        console.log("useDeviceFilters - Filtering by assignedTo:", props.filterByAssignedToUser);
-        
-        // Enhanced debugging - log all devices with their assignment information
-        devicesData.forEach(d => {
-          console.log(`Device ${d.id}: ${d.project} - assignedTo: ${d.assignedTo}, assignedToId: ${d.assignedToId}`);
-        });
-        
-        // Check for both assignedTo and assignedToId that match the user
-        const userDevices = devicesData.filter(d => {
-          const assignedToMatch = String(d.assignedTo) === String(props.filterByAssignedToUser);
-          const assignedToIdMatch = String(d.assignedToId) === String(props.filterByAssignedToUser);
-          
-          return assignedToMatch || assignedToIdMatch;
-        });
-        
-        console.log("useDeviceFilters - Devices assigned to user:", userDevices.length);
-        console.log("useDeviceFilters - Matching devices:", userDevices);
-      }
+      console.log(`useDeviceFilters: Fetched ${fetchedDevices.length} devices`);
       
-      setDevices(devicesData);
-      setUsers(usersData);
+      // Debug output for assigned devices
+      const assignedDevices = fetchedDevices.filter(d => d.assignedTo || d.assignedToId);
+      console.log(`useDeviceFilters: Found ${assignedDevices.length} assigned devices`);
+      assignedDevices.forEach(d => {
+        console.log(`Device ${d.id} (${d.project}): assignedTo=${d.assignedTo}, assignedToId=${d.assignedToId}`);
+      });
+      
+      setDevices(fetchedDevices);
+      setUsers(fetchedUsers);
     } catch (error) {
-      console.error('Error fetching data:', error);
-    } finally {
-      setLoading(false);
+      console.error('Error fetching data for filters:', error);
+      // Keep the existing data
     }
   };
 
-  // Fetch data on component mount and when refreshTrigger changes
+  // Update effective status filters when statusFilter changes
+  useEffect(() => {
+    // If filterByStatus is provided, always use that (for My Devices)
+    if (filterByStatus) {
+      setEffectiveStatusFilters(filterByStatus);
+      return;
+    }
+    
+    // Otherwise, use the statusFilter dropdown selection
+    if (statusFilter === 'all') {
+      setEffectiveStatusFilters(undefined);
+    } else {
+      setEffectiveStatusFilters([statusFilter]);
+    }
+  }, [statusFilter, filterByStatus]);
+
+  // Fetch devices and users
   useEffect(() => {
     fetchData();
-  }, [props.refreshTrigger]);
+  }, [refreshTrigger]);
 
-  // Filter devices based on filters
-  const filteredDevices = devices.filter(device => {
-    // For non-admin/manager users, always hide missing/stolen devices
-    if (!isAdmin && !isManager && ['missing', 'stolen'].includes(device.status)) {
-      return false;
-    }
+  const deviceTypes = useMemo(() => {
+    const types = new Set<DeviceTypeValue>();
+    devices.forEach(device => {
+      if (device.type) {
+        types.add(device.type as DeviceTypeValue);
+      }
+    });
+    return Array.from(types);
+  }, [devices]);
 
-    // If specific status filter is provided via props
-    if (props.filterByStatus && props.filterByStatus.length > 0) {
-      // For 'pending' status, include devices with requestedBy value
-      if (props.filterByStatus.includes('pending')) {
-        if (device.requestedBy || props.filterByStatus.includes(device.status)) {
-          return true;
+  const filteredDevices = useMemo(() => {
+    return devices.filter(device => {
+      // Filter by search query
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = searchQuery === '' || 
+        (device.project && device.project.toLowerCase().includes(searchLower)) ||
+        (device.projectGroup && device.projectGroup.toLowerCase().includes(searchLower)) ||
+        (device.type && device.type.toLowerCase().includes(searchLower)) ||
+        (device.serialNumber && device.serialNumber.toLowerCase().includes(searchLower)) ||
+        (device.imei && device.imei.toLowerCase().includes(searchLower));
+      
+      if (!matchesSearch) return false;
+      
+      // Filter by assigned user
+      if (filterByAssignedToUser) {
+        const deviceAssignedTo = String(device.assignedTo || device.assignedToId || '');
+        const userIdToMatch = String(filterByAssignedToUser);
+        
+        if (deviceAssignedTo !== userIdToMatch) {
+          return false;
         }
-        return false;
-      } else if (!props.filterByStatus.includes(device.status)) {
+      }
+      
+      // Filter by status (using effective status filters)
+      if (effectiveStatusFilters && effectiveStatusFilters.length > 0) {
+        if (!device.status || !effectiveStatusFilters.includes(device.status)) {
+          return false;
+        }
+      }
+      
+      // Filter by type
+      if (typeFilter !== 'all' && device.type !== typeFilter) {
         return false;
       }
-    }
-
-    // Filter by search query
-    if (searchQuery && !device.project.toLowerCase().includes(searchQuery.toLowerCase()) &&
-        (!device.serialNumber || !device.serialNumber.toLowerCase().includes(searchQuery.toLowerCase())) &&
-        !(device.imei && device.imei.toLowerCase().includes(searchQuery.toLowerCase()))) {
-      return false;
-    }
-
-    // Filter by status dropdown
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'pending') {
-        // If filtering for pending devices, show devices with requestedBy value
-        if (!device.requestedBy) return false;
-      } else if (device.status !== statusFilter) {
-        return false;
-      }
-    }
-
-    // Filter by type
-    if (typeFilter !== 'all' && device.type !== typeFilter) {
-      return false;
-    }
-
-    // Filter by available only - but exclude devices with pending requests
-    if (props.filterByAvailable && (device.status !== 'available' || device.requestedBy)) {
-      return false;
-    }
-
-    // Filter by assigned to user - check if the device is assigned to the specified user
-    if (props.filterByAssignedToUser) {
-      const userIdToFilter = String(props.filterByAssignedToUser);
-      const deviceAssignedTo = device.assignedTo ? String(device.assignedTo) : null;
-      const deviceAssignedToId = device.assignedToId ? String(device.assignedToId) : null;
       
-      console.log(`Checking device ${device.id} (${device.project}): assignedTo=${deviceAssignedTo}, assignedToId=${deviceAssignedToId} against userId=${userIdToFilter}`);
-      
-      // Check both assignedTo and assignedToId fields to handle different formats
-      return deviceAssignedTo === userIdToFilter || deviceAssignedToId === userIdToFilter;
-    }
-
-    return true;
-  });
+      return true;
+    });
+  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser]);
 
   return {
     devices,
@@ -148,7 +136,6 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
     setStatusFilter,
     typeFilter,
     setTypeFilter,
-    loading,
     fetchData
   };
 };

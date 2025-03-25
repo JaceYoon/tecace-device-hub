@@ -40,9 +40,14 @@ const DeviceList: React.FC<DeviceListProps> = ({
   const effectiveUserFilter = filterByAssignedToUser || 
     (title === 'My Devices' && user ? String(user.id) : undefined);
   
+  // If this is the My Devices view, always force status to be 'assigned'
+  const forceAssignedStatus = title === 'My Devices' ? ['assigned'] : undefined;
+  const effectiveStatusFilter = forceAssignedStatus || defaultFilterStatuses;
+  
   // Debug log to see what's being used for filtering
   console.log(`DeviceList "${title}" - User:`, user?.id);
   console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
+  console.log(`DeviceList "${title}" - Status filter:`, effectiveStatusFilter);
   
   const {
     users,
@@ -58,7 +63,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   } = useDeviceFilters({
     filterByAvailable,
     filterByAssignedToUser: effectiveUserFilter,
-    filterByStatus: defaultFilterStatuses,
+    filterByStatus: effectiveStatusFilter,
     refreshTrigger
   });
 
