@@ -151,20 +151,20 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     showConfirmation(
         "Release Device",
         `Are you sure you want to release ${device.project}?`,
-        () => {
+        async () => {
           try {
-            dataService.addRequest({
+            const request = await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
-              status: 'pending',
+              status: 'approved', // Auto-approve release requests
               type: 'release',
-            }).then(() => {
-              toast.success('Device return requested', {
-                description: `Your request to return ${device.project} has been submitted for approval`,
-                icon: <Clock className="h-4 w-4" />
-              });
-              if (onAction) onAction();
             });
+
+            toast.success('Device returned successfully', {
+              description: `You have returned ${device.project}`,
+              icon: <Check className="h-4 w-4" />
+            });
+            if (onAction) onAction();
           } catch (error) {
             console.error('Error releasing device:', error);
             toast.error('Failed to release device');
@@ -240,7 +240,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   return (
       <>
         <Card className={cn(
-            "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1",
+            "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col",
             {
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
@@ -286,7 +286,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </div>
           </CardHeader>
 
-          <CardContent className="pb-3 space-y-3">
+          <CardContent className="pb-3 space-y-3 flex-grow">
             {device.status === 'assigned' && (
               <div className="flex items-center gap-1.5 bg-blue-50 text-blue-800 p-2 rounded-md">
                 <UserIcon className="h-4 w-4" />
@@ -314,57 +314,57 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 </div>
               </div>
 
-              {device.devicePicture && (
-                <div className="flex items-start">
-                  <Image className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-muted-foreground">Device Picture</p>
-                    <div className="mt-1">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                          <img 
-                            src={device.devicePicture} 
-                            alt="Device Picture" 
-                            className="max-w-full h-auto max-h-24 rounded border border-muted cursor-pointer hover:opacity-80 transition-opacity" 
-                          />
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-xl">
-                          <DialogHeader>
-                            <DialogTitle className="flex justify-between items-center">
-                              <span>Device Picture - {device.project}</span>
-                              <Button 
-                                variant="outline" 
-                                size="sm" 
-                                className="flex items-center gap-1"
-                                onClick={handleDownloadImage}
-                              >
-                                <Download className="h-4 w-4" />
-                                Download
-                              </Button>
-                            </DialogTitle>
-                          </DialogHeader>
-                          <div className="mt-2 flex justify-center">
-                            <img 
-                              src={device.devicePicture} 
-                              alt="Device Picture" 
-                              className="max-w-full max-h-[70vh] rounded" 
-                            />
-                          </div>
-                        </DialogContent>
-                      </Dialog>
-                    </div>
-                  </div>
-                </div>
-              )}
-
               <Collapsible open={expanded}>
                 <CollapsibleContent>
                   <div className="space-y-2 text-sm mt-2 pt-2 border-t">
+                    {device.devicePicture && (
+                      <div className="flex items-start">
+                        <Image className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Device Picture</p>
+                          <div className="mt-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <img 
+                                  src={device.devicePicture} 
+                                  alt="Device Picture" 
+                                  className="max-w-full h-auto max-h-24 rounded border border-muted cursor-pointer hover:opacity-80 transition-opacity" 
+                                />
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-xl">
+                                <DialogHeader>
+                                  <DialogTitle className="flex justify-between items-center">
+                                    <span>Device Picture - {device.project}</span>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm" 
+                                      className="flex items-center gap-1"
+                                      onClick={handleDownloadImage}
+                                    >
+                                      <Download className="h-4 w-4" />
+                                      Download
+                                    </Button>
+                                  </DialogTitle>
+                                </DialogHeader>
+                                <div className="mt-2 flex justify-center">
+                                  <img 
+                                    src={device.devicePicture} 
+                                    alt="Device Picture" 
+                                    className="max-w-full max-h-[70vh] rounded" 
+                                  />
+                                </div>
+                              </DialogContent>
+                            </Dialog>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  
                     {device.deviceType && (
                       <div className="flex items-start">
                         <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
                         <div>
-                          <p className="text-muted-foreground">Device Type</p>
+                          <p className="text-muted-foreground">Form Factor</p>
                           <p className="text-sm">{device.deviceType}</p>
                         </div>
                       </div>
@@ -409,7 +409,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </div>
           </CardContent>
 
-          <CardFooter className="pt-2 flex flex-col space-y-2">
+          <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
             {isAdmin ? (
                 <div className="grid grid-cols-2 gap-2 w-full">
                   {(device.status === 'available' || device.status === 'assigned') && (

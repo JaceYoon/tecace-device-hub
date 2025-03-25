@@ -36,7 +36,7 @@ class RequestStore {
       ...request,
       id: `request-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       requestedAt: new Date(),
-      status: 'pending',
+      status: request.type === 'release' ? 'approved' : 'pending', // Auto-approve release requests
     };
     this.requests.push(newRequest);
     
@@ -44,6 +44,12 @@ class RequestStore {
     if (request.type === 'assign') {
       deviceStore.updateDevice(request.deviceId, {
         requestedBy: request.userId,
+      });
+    } else if (request.type === 'release') {
+      // Auto-process device release - immediately update device status
+      deviceStore.updateDevice(request.deviceId, {
+        assignedTo: undefined,
+        status: 'available',
       });
     }
     
