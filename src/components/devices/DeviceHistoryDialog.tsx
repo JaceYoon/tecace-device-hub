@@ -47,11 +47,15 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       if (data) {
         if (Array.isArray(data) && data.length > 0) {
           console.log(`Retrieved ${data.length} history entries`);
-          setHistory(data);
+          
+          // Process and deduplicate history entries
+          const processedHistory = processHistoryEntries(data);
+          setHistory(processedHistory);
         } else {
           console.log('No history data returned, creating fallback history');
           // Only create fallback history when there's truly no data
           const fallbackHistory = createFallbackHistory();
+          
           if (fallbackHistory.length > 0) {
             setHistory(fallbackHistory);
           } else {
@@ -70,14 +74,42 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         }
       } else {
         console.log('No data returned from API');
-        createFallbackHistory();
+        const fallbackHistory = createFallbackHistory();
+        setHistory(fallbackHistory);
       }
     } catch (error) {
       console.error('Error fetching device history:', error);
-      createFallbackHistory();
+      const fallbackHistory = createFallbackHistory();
+      setHistory(fallbackHistory);
     } finally {
       setLoading(false);
     }
+  };
+  
+  // Process history entries to remove duplicates and ensure correct order
+  const processHistoryEntries = (entries: HistoryEntry[]): HistoryEntry[] => {
+    // Sort entries by time (newest first for assignment, oldest first for releases)
+    const sortedEntries = [...entries].sort((a, b) => {
+      const dateA = new Date(a.assignedAt || a.releasedAt || 0);
+      const dateB = new Date(b.assignedAt || b.releasedAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    });
+    
+    // Remove entries with duplicate information (same user, same time frame)
+    const uniqueEntries = sortedEntries.filter((entry, index, self) => {
+      return index === self.findIndex(e => 
+        e.userId === entry.userId && 
+        e.assignedAt === entry.assignedAt && 
+        e.releasedAt === entry.releasedAt
+      );
+    });
+    
+    // Don't add "Current Owner" label for devices that are available
+    if (device.status === 'available') {
+      return uniqueEntries.filter(entry => entry.id !== `current-${device.id}`);
+    }
+    
+    return uniqueEntries;
   };
   
   // Create fallback history from device information if API fails
@@ -113,7 +145,6 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       }
     }
     
-    setHistory(fallbackEntries);
     return fallbackEntries;
   };
   
@@ -166,6 +197,17 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
             </div>
           ) : (
             <div className="space-y-4">
+              {device.status === 'available' && (
+                <div className="border rounded-md p-3 bg-green-50/30">
+                  <div className="font-semibold text-green-700">
+                    Available
+                  </div>
+                  <div className="text-sm mt-1 text-muted-foreground">
+                    This device is currently available for use
+                  </div>
+                </div>
+              )}
+              
               {history.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <Info className="h-12 w-12 mx-auto mb-2 opacity-20" />
@@ -174,7 +216,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
               ) : (
                 history.map((entry, index) => {
                   // Check if this is the current owner (no releasedAt date)
-                  const isCurrentOwner = entry.releasedAt === null;
+                  const isCurrentOwner = entry.releasedAt === null && device.status === 'assigned';
                   
                   return (
                     <div key={entry.id || index} className="border rounded-md p-3">
@@ -185,16 +227,16 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                         }
                       </div>
                       
-                      <div className="text-sm mt-1">
-                        <div className="flex justify-between">
-                          <span className="text-muted-foreground">Assigned:</span>
-                          <span>{formatDate(entry.assignedAt)}</span>
-                        </div>
-                        
-                        {!isCurrentOwner && (
-                          <div className="flex justify-between mt-1">
-                            <span className="text-muted-foreground">Returned:</span>
-                            <span>{formatDate(entry.releasedAt)}</span>
+                      <div className="text-sm mt-2">
+                        {entry.releasedAt ? (
+                          <div>
+                            <p className="text-muted-foreground mb-1">Rental Term:</p>
+                            <p>{formatDate(entry.assignedAt)} - {formatDate(entry.releasedAt)}</p>
+                          </div>
+                        ) : (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Assigned:</span>
+                            <span>{formatDate(entry.assignedAt)}</span>
                           </div>
                         )}
                       </div>
