@@ -5,6 +5,7 @@ import { deviceStore } from './deviceStore';
 class RequestStore {
   private requests: DeviceRequest[] = [];
   private processingRequests = new Set<string>(); // Track requests being processed
+  private lastDeviceOperations = new Map<string, number>(); // Track last operation time per device
 
   constructor() {
     // Try to load requests from localStorage first
@@ -34,6 +35,24 @@ class RequestStore {
   addRequest(request: Omit<DeviceRequest, 'id' | 'requestedAt'>): DeviceRequest {
     // Check if we're already processing a similar request (prevent duplicates)
     const deviceKey = `${request.deviceId}-${request.type}`;
+    
+    // Debounce device operations
+    const now = Date.now();
+    const lastOpTime = this.lastDeviceOperations.get(request.deviceId) || 0;
+    if (now - lastOpTime < 2000) { // 2 seconds debounce
+      console.log(`Debouncing ${request.type} request for device ${request.deviceId}, too soon after last operation`);
+      
+      // Find the existing request if possible
+      const existingRequest = this.requests.find(
+        r => r.deviceId === request.deviceId && r.type === request.type && 
+        (r.status === 'pending' || (r.status === 'approved' && now - new Date(r.requestedAt).getTime() < 5000))
+      );
+      
+      if (existingRequest) {
+        return existingRequest;
+      }
+    }
+    
     if (this.processingRequests.has(deviceKey)) {
       console.log(`Already processing a ${request.type} request for device ${request.deviceId}`);
       
@@ -49,6 +68,7 @@ class RequestStore {
     
     // Mark this request as being processed
     this.processingRequests.add(deviceKey);
+    this.lastDeviceOperations.set(request.deviceId, now);
     
     const newRequest: DeviceRequest = {
       ...request,
@@ -74,17 +94,20 @@ class RequestStore {
     
     this.requests.push(newRequest);
     
-    // Update device requestedBy field
-    if (request.type === 'assign') {
-      deviceStore.updateDevice(request.deviceId, {
-        requestedBy: request.userId,
-      });
-    } else if (request.type === 'release') {
+    // Handle release requests immediately to improve UI responsiveness
+    if (request.type === 'release') {
       // Auto-process device release - immediately update device status
       deviceStore.updateDevice(request.deviceId, {
         assignedTo: undefined,
         assignedToId: undefined,
         status: 'available',
+      });
+      
+      console.log(`Device ${request.deviceId} released (status set to available)`);
+    } else if (request.type === 'assign') {
+      // Update device requestedBy field
+      deviceStore.updateDevice(request.deviceId, {
+        requestedBy: request.userId,
       });
     }
     
@@ -94,7 +117,7 @@ class RequestStore {
     // Clear the processing flag with a small delay to prevent race conditions
     setTimeout(() => {
       this.processingRequests.delete(deviceKey);
-    }, 500);
+    }, 1000); // Increased timeout to 1 second
     
     return newRequest;
   }

@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const allRequests = await dataService.getRequests();
+        const allRequests = await dataService.devices.getAllRequests();
         console.log("Dashboard: Fetched requests:", allRequests);
         setRequests(allRequests);
         

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,7 +99,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
     try {
       setIsProcessing(true);
-      const requests = await dataService.getRequests();
+      const requests = await dataService.devices.getAllRequests();
       const userPendingRequests = requests.filter(
         req => req.userId === user.id && 
                req.status === 'pending' && 
@@ -154,29 +155,45 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           try {
             setIsProcessing(true);
             
-            // Create a release request first with auto-approval
-            await dataService.addRequest({
-              deviceId: device.id,
-              userId: user.id,
-              status: 'approved', // Auto-approve release requests
-              type: 'release',
-            });
-            
-            // Update device status - this operation is now handled inside dataService.addRequest
-            // to prevent double updates that cause infinite loops
-            
-            toast.success('Device returned successfully', {
-              description: `You have returned ${device.project}`,
-              icon: <Check className="h-4 w-4" />
-            });
-            
-            // Only trigger onAction once to avoid refresh loops
-            if (onAction) {
-              onAction();
+            // Direct device update approach for better reliability
+            try {
+              // First update the device status directly
+              await dataService.updateDevice(device.id, {
+                assignedTo: undefined,
+                assignedToId: undefined,
+                status: 'available',
+              });
+              
+              // Then create a release request for record-keeping (but with less critical path)
+              try {
+                await dataService.addRequest({
+                  deviceId: device.id,
+                  userId: user.id,
+                  status: 'approved', // Auto-approve release requests
+                  type: 'release',
+                });
+              } catch (requestError) {
+                // If request creation fails, log but don't block the UI update
+                console.warn('Failed to create release request record:', requestError);
+                // The device is already released, so this is not critical
+              }
+              
+              toast.success('Device returned successfully', {
+                description: `You have returned ${device.project}`,
+                icon: <Check className="h-4 w-4" />
+              });
+              
+              // Only trigger onAction once to avoid refresh loops
+              if (onAction) {
+                onAction();
+              }
+            } catch (error) {
+              console.error('Error updating device status:', error);
+              toast.error('Failed to return device');
             }
           } catch (error) {
             console.error('Error releasing device:', error);
-            toast.error('Failed to release device');
+            toast.error('Failed to return device');
           } finally {
             setIsProcessing(false);
           }

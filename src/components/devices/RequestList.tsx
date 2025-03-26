@@ -35,7 +35,7 @@ const RequestList: React.FC<RequestListProps> = ({
     setLoading(true);
     try {
       const [requestsData, usersData] = await Promise.all([
-        dataService.getRequests(),
+        dataService.devices.getAllRequests(),
         dataService.users.getAll()
       ]);
       console.log("Fetched requests:", requestsData.length);

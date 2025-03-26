@@ -32,6 +32,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   const { user, isAdmin } = useAuth();
   const initialRenderRef = useRef(true);
   const hasSetInitialStatusRef = useRef(false);
+  const lastActionTimeRef = useRef(0);
   
   // Memoize values that shouldn't change on every render
   // This is critical to prevent dependency changes in useEffect
@@ -84,6 +85,13 @@ const DeviceList: React.FC<DeviceListProps> = ({
 
   // Define a memoized onAction callback to prevent infinite loops
   const handleAction = useCallback(() => {
+    // Debounce the action to prevent multiple rapid calls
+    const now = Date.now();
+    if (now - lastActionTimeRef.current < 500) {
+      return;
+    }
+    lastActionTimeRef.current = now;
+    
     // Use a timeout to prevent potential setState calls during React updates
     setTimeout(() => {
       fetchData();

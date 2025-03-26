@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Device, User, DeviceTypeValue } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -28,6 +29,32 @@ export const useDeviceFilters = ({
   const initialLogsDone = useRef(false);
   // Use a ref to track if a fetch is in progress to prevent duplicate requests
   const fetchInProgress = useRef(false);
+  // Use a ref to store the last timestamp when fetch was called
+  const lastFetchTime = useRef(0);
+
+  // Stable version of filterByStatus
+  const stableFilterByStatus = useRef(filterByStatus);
+  
+  // Update the ref when filterByStatus changes significantly (not on every render)
+  useEffect(() => {
+    // Only update if there's a meaningful difference
+    const currentIsArray = Array.isArray(stableFilterByStatus.current);
+    const newIsArray = Array.isArray(filterByStatus);
+    
+    let shouldUpdate = currentIsArray !== newIsArray;
+    
+    if (currentIsArray && newIsArray) {
+      // Both are arrays, check contents
+      const current = stableFilterByStatus.current || [];
+      const newVal = filterByStatus || [];
+      shouldUpdate = current.length !== newVal.length || 
+                     current.some((item, i) => item !== newVal[i]);
+    }
+    
+    if (shouldUpdate) {
+      stableFilterByStatus.current = filterByStatus;
+    }
+  }, [filterByStatus]);
 
   // Log initial filters for debugging - only once on initial mount
   useEffect(() => {
@@ -43,6 +70,13 @@ export const useDeviceFilters = ({
   const fetchData = useCallback(async () => {
     // Prevent concurrent fetches that could cause loops
     if (fetchInProgress.current) return;
+    
+    // Debounce fetch operations to prevent rapid successive calls
+    const now = Date.now();
+    if (now - lastFetchTime.current < 500) {
+      return;
+    }
+    lastFetchTime.current = now;
     
     try {
       fetchInProgress.current = true;
@@ -68,11 +102,10 @@ export const useDeviceFilters = ({
   }, []);
 
   // Update effective status filters when statusFilter or filterByStatus changes
-  // This was causing an infinite loop when used with filterByStatus prop changes
   useEffect(() => {
     // If filterByStatus is provided, always use that (for My Devices)
-    if (filterByStatus) {
-      setEffectiveStatusFilters(filterByStatus);
+    if (stableFilterByStatus.current) {
+      setEffectiveStatusFilters(stableFilterByStatus.current);
     } 
     // Otherwise, use the statusFilter dropdown selection
     else if (statusFilter === 'all') {
@@ -80,14 +113,27 @@ export const useDeviceFilters = ({
     } else {
       setEffectiveStatusFilters([statusFilter]);
     }
-    // IMPORTANT: Only update when these specific props change
-  }, [statusFilter, filterByStatus]);
+    // Only depend on statusFilter and the stable ref (not the prop directly)
+  }, [statusFilter]);
 
   // Fetch devices and users when refreshTrigger changes
-  // This was also causing loops due to missing dependencies
   useEffect(() => {
     fetchData();
-    // Only depend on fetchData and refreshTrigger
+    
+    // Set up a refresh callback with dataService
+    const cleanupCallback = dataService.registerRefreshCallback(() => {
+      // Use setTimeout to delay the refresh and prevent rapid successive calls
+      setTimeout(() => {
+        if (!fetchInProgress.current) {
+          fetchData();
+        }
+      }, 500);
+    });
+    
+    return () => {
+      // Clean up the callback when the component unmounts
+      cleanupCallback();
+    };
   }, [refreshTrigger, fetchData]);
 
   const deviceTypes = useMemo(() => {
