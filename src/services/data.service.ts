@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -220,6 +221,7 @@ export const dataService = {
   getDeviceHistory: deviceService.getDeviceHistory,
   getDevices: deviceService.getAll,
   getUsers: userService.getAll,
+  getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
     try {
       // For device releases, we need special handling

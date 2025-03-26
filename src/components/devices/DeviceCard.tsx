@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -98,7 +99,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
     try {
       setIsProcessing(true);
-      const requests = await dataService.getRequests();
+      const requests = await dataService.devices.getAllRequests();
       const userPendingRequests = requests.filter(
         req => req.userId === user.id && 
                req.status === 'pending' && 
