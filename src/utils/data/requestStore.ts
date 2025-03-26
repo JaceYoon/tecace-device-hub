@@ -4,6 +4,7 @@ import { deviceStore } from './deviceStore';
 
 class RequestStore {
   private requests: DeviceRequest[] = [];
+  private processingRequests = new Set<string>(); // Track requests being processed
 
   constructor() {
     // Try to load requests from localStorage first
@@ -31,6 +32,24 @@ class RequestStore {
   }
 
   addRequest(request: Omit<DeviceRequest, 'id' | 'requestedAt'>): DeviceRequest {
+    // Check if we're already processing a similar request (prevent duplicates)
+    const deviceKey = `${request.deviceId}-${request.type}`;
+    if (this.processingRequests.has(deviceKey)) {
+      console.log(`Already processing a ${request.type} request for device ${request.deviceId}`);
+      
+      // Find the existing request if possible
+      const existingRequest = this.requests.find(
+        r => r.deviceId === request.deviceId && r.type === request.type && r.status === 'pending'
+      );
+      
+      if (existingRequest) {
+        return existingRequest;
+      }
+    }
+    
+    // Mark this request as being processed
+    this.processingRequests.add(deviceKey);
+    
     const newRequest: DeviceRequest = {
       ...request,
       id: `request-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -48,6 +67,7 @@ class RequestStore {
       
       if (existingRequest) {
         console.log('Found existing request, not creating a duplicate');
+        this.processingRequests.delete(deviceKey);
         return existingRequest;
       }
     }
@@ -71,6 +91,11 @@ class RequestStore {
     // Persist to localStorage
     localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
     
+    // Clear the processing flag with a small delay to prevent race conditions
+    setTimeout(() => {
+      this.processingRequests.delete(deviceKey);
+    }, 500);
+    
     return newRequest;
   }
 
@@ -79,6 +104,16 @@ class RequestStore {
     if (requestIndex === -1) return null;
     
     const request = this.requests[requestIndex];
+    const deviceKey = `${request.deviceId}-${request.type}`;
+    
+    // Don't process if we're already processing this request
+    if (this.processingRequests.has(deviceKey)) {
+      console.log(`Already processing request ${id}, skipping duplicate call`);
+      return this.requests[requestIndex];
+    }
+    
+    // Mark as processing
+    this.processingRequests.add(deviceKey);
 
     console.log(`Processing request ${id} with status ${status} by user ${managerId}`);
     
@@ -119,6 +154,11 @@ class RequestStore {
     // Persist to localStorage
     localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
     
+    // Clear the processing status after a delay
+    setTimeout(() => {
+      this.processingRequests.delete(deviceKey);
+    }, 500);
+    
     return this.requests[requestIndex];
   }
 
@@ -128,10 +168,21 @@ class RequestStore {
     if (requestIndex === -1) return null;
     
     const request = this.requests[requestIndex];
+    const deviceKey = `${request.deviceId}-${request.type}`;
+    
+    // Check if already processing
+    if (this.processingRequests.has(deviceKey)) {
+      console.log(`Already cancelling request ${id}, skipping duplicate call`);
+      return this.requests[requestIndex];
+    }
+    
+    // Mark as processing
+    this.processingRequests.add(deviceKey);
     
     // Verify the user is the one who created the request
     if (request.userId !== userId) {
       console.error("User cannot cancel a request they didn't create");
+      this.processingRequests.delete(deviceKey);
       return null;
     }
     
@@ -152,6 +203,11 @@ class RequestStore {
     
     // Persist to localStorage
     localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
+    
+    // Clear processing status
+    setTimeout(() => {
+      this.processingRequests.delete(deviceKey);
+    }, 500);
     
     return this.requests[requestIndex];
   }
