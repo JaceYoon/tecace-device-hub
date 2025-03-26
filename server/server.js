@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -33,6 +34,8 @@ console.log('CORS configured with origin:', corsOptions.origin);
 
 // Middleware
 app.use(cors(corsOptions));
+
+// Increase payload size limits for all routes
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 

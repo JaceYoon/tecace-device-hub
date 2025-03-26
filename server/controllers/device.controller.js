@@ -277,6 +277,9 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
+    // Check if device is being released (assignedToId being set to null when it was previously set)
+    const isBeingReleased = device.assignedToId && !assignedToId;
+    
     // Update device
     await device.update({
       project: project || device.project,
@@ -292,8 +295,33 @@ exports.update = async (req, res) => {
       assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
     });
 
+    // If the device is being released, create an auto-approved release request
+    if (isBeingReleased) {
+      console.log(`Device ${device.id} is being released. Creating auto-approved release request`);
+      
+      // Create and auto-approve a release request
+      await Request.create({
+        type: 'release',
+        status: 'approved',
+        deviceId: device.id,
+        userId: device.assignedToId, // The user who was assigned the device
+        processedById: req.user.id,  // The admin/manager who processed the release
+        requestedAt: new Date(),
+        processedAt: new Date(),
+        reason: 'Device returned by user'
+      });
+      
+      // Update device status
+      await device.update({
+        status: 'available',
+        assignedToId: null,
+        requestedBy: null  // Clear any pending requests
+      });
+    }
+
     res.json(device);
   } catch (err) {
+    console.error("Error updating device:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -360,21 +388,39 @@ exports.requestDevice = async (req, res) => {
       return res.status(400).json({ message: 'Device is not assigned to you' });
     }
 
+    // If it's a release request, auto-approve it (for any user, including admin)
+    const status = type === 'release' ? 'approved' : 'pending';
+    const processedAt = type === 'release' ? new Date() : null;
+    const processedById = type === 'release' ? req.user.id : null;
+
     // Create request
     const request = await Request.create({
       type,
+      status,
       deviceId: device.id,
-      userId: req.user.id
+      userId: req.user.id,
+      processedAt,
+      processedById,
+      requestedAt: new Date(),
+      reason: type === 'release' ? 'Device returned by user' : null
     });
 
-    // Update the device to indicate it has a pending request
-    if (type === 'assign') {
+    // If it's a release request, update the device immediately
+    if (type === 'release') {
+      await device.update({
+        status: 'available',
+        assignedToId: null,
+        requestedBy: null
+      });
+    } else if (type === 'assign') {
+      // Update the device to indicate it has a pending request
       device.requestedBy = req.user.id;
       await device.save();
     }
 
     res.status(201).json(request);
   } catch (err) {
+    console.error("Error creating device request:", err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -404,19 +450,20 @@ exports.processRequest = async (req, res) => {
     }
 
     // Auto-approve if it's a release request
+    let finalStatus = status;
     if (request.type === 'release') {
-      status = 'approved';
+      finalStatus = 'approved';
     }
 
     // Update request
     await request.update({
-      status,
+      status: finalStatus,
       processedById: req.user.id,
       processedAt: new Date()
     });
 
     // If approved, update device
-    if (status === 'approved') {
+    if (finalStatus === 'approved') {
       const device = await Device.findByPk(request.deviceId);
 
       if (request.type === 'assign') {
