@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -198,37 +197,67 @@ exports.getDeviceHistory = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
     
-    // Get ownership history for this device
-    const history = await OwnershipHistory.findAll({
-      where: { deviceId },
+    // Get ownership history from the Requests table
+    const history = await Request.findAll({
+      where: { 
+        deviceId,
+        type: ['assign', 'release'],
+        status: 'approved' // Only include approved requests
+      },
       include: [
         { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
-        { model: User, as: 'releasedBy', attributes: ['id', 'name', 'email'] }
+        { model: User, as: 'processedBy', attributes: ['id', 'name', 'email'] }
       ],
-      order: [['assignedAt', 'DESC']]
+      order: [['processedAt', 'DESC']]
     });
     
+    // Transform request data to match ownership history format
     const historyWithNames = history.map(entry => {
       const entryJson = entry.toJSON();
       
-      // Add user name for easier display
-      if (entryJson.user) {
-        entryJson.userName = entryJson.user.name;
-      }
+      // Create a formatted history entry from request data
+      const historyEntry = {
+        id: String(entryJson.id),
+        deviceId: String(entryJson.deviceId),
+        userId: String(entryJson.userId),
+        userName: entryJson.user ? entryJson.user.name : 'Unknown User',
+        // For an assign request, this is when it was assigned
+        assignedAt: entryJson.type === 'assign' ? entryJson.processedAt : null,
+        // For a release request, this is when it was released
+        releasedAt: entryJson.type === 'release' ? entryJson.processedAt : null,
+        releasedById: entryJson.type === 'release' ? String(entryJson.processedById) : null,
+        releasedByName: entryJson.type === 'release' && entryJson.processedBy ? entryJson.processedBy.name : null,
+        releaseReason: entryJson.type === 'release' ? 'User requested release' : null
+      };
       
-      // Add released by name if available
-      if (entryJson.releasedBy) {
-        entryJson.releasedByName = entryJson.releasedBy.name;
-      }
-      
-      // Ensure IDs are strings for frontend consistency
-      if (entryJson.id) entryJson.id = String(entryJson.id);
-      if (entryJson.deviceId) entryJson.deviceId = String(entryJson.deviceId);
-      if (entryJson.userId) entryJson.userId = String(entryJson.userId);
-      if (entryJson.releasedById) entryJson.releasedById = String(entryJson.releasedById);
-      
-      return entryJson;
+      return historyEntry;
     });
+    
+    // Add current assignment if not already in the history
+    if (device.assignedToId) {
+      // Find the user who currently has the device
+      const assignedUser = await User.findByPk(device.assignedToId);
+      
+      // Check if there's already an entry for the current assignment
+      const hasCurrentAssignment = historyWithNames.some(
+        entry => entry.userId === String(device.assignedToId) && !entry.releasedAt
+      );
+      
+      if (assignedUser && !hasCurrentAssignment) {
+        // Add the current assignment to the history
+        historyWithNames.unshift({
+          id: `current-${deviceId}`,
+          deviceId: String(deviceId),
+          userId: String(device.assignedToId),
+          userName: assignedUser.name,
+          assignedAt: device.updatedAt,
+          releasedAt: null,
+          releasedById: null,
+          releasedByName: null,
+          releaseReason: null
+        });
+      }
+    }
     
     console.log(`Returning ${historyWithNames.length} history entries for device ${deviceId}`);
     res.json(historyWithNames);
@@ -281,7 +310,7 @@ exports.delete = async (req, res) => {
       console.log('Device not found for deletion');
       return res.status(404).json({ message: 'Device not found' });
     }
-
+    
     // Check if there are any requests associated with this device
     const associatedRequests = await Request.findAll({
       where: { deviceId: device.id }
@@ -399,58 +428,13 @@ exports.processRequest = async (req, res) => {
       const device = await Device.findByPk(request.deviceId);
 
       if (request.type === 'assign') {
-        const previousAssignedToId = device.assignedToId;
-        
         // Update device assignment
         await device.update({
           status: 'assigned',
           assignedToId: request.userId,
           requestedBy: null
         });
-        
-        // Create new ownership history entry
-        await OwnershipHistory.create({
-          deviceId: device.id,
-          userId: request.userId,
-          assignedAt: new Date()
-        });
-        
-        // If this device was previously assigned to someone else, update their history record
-        if (previousAssignedToId) {
-          const previousHistory = await OwnershipHistory.findOne({
-            where: {
-              deviceId: device.id,
-              userId: previousAssignedToId,
-              releasedAt: null
-            }
-          });
-          
-          if (previousHistory) {
-            await previousHistory.update({
-              releasedAt: new Date(),
-              releasedById: req.user.id,
-              releaseReason: 'Reassigned to another user'
-            });
-          }
-        }
       } else if (request.type === 'release') {
-        // Find existing ownership history entry and update it
-        const history = await OwnershipHistory.findOne({
-          where: {
-            deviceId: device.id,
-            userId: request.userId,
-            releasedAt: null
-          }
-        });
-        
-        if (history) {
-          await history.update({
-            releasedAt: new Date(),
-            releasedById: req.user.id,
-            releaseReason: 'User requested release'
-          });
-        }
-        
         // Update device status
         await device.update({
           status: 'available',

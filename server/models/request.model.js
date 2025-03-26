@@ -21,6 +21,11 @@ module.exports = (sequelize, Sequelize) => {
     processedAt: {
       type: Sequelize.DATE,
       allowNull: true
+    },
+    reason: {
+      type: Sequelize.STRING,
+      allowNull: true,
+      comment: 'Reason for request or release'
     }
   });
   
