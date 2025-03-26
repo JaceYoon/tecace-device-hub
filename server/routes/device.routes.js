@@ -6,6 +6,8 @@ const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
 // Configure JSON body parser with increased limit for all device routes
 router.use(express.json({ limit: '100mb' }));
+// Add urlencoded parser with increased limit for form data
+router.use(express.urlencoded({ limit: '100mb', extended: true }));
 
 // Get all requests endpoint must be before /:id route to avoid conflict
 router.get('/requests/all', isAuthenticated, deviceController.findAllRequests);
