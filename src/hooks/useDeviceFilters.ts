@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Device, User, DeviceTypeValue } from '@/types';
 import { dataService } from '@/services/data.service';
 
@@ -24,14 +24,15 @@ export const useDeviceFilters = ({
   // Store the actual status filters to apply
   const [effectiveStatusFilters, setEffectiveStatusFilters] = useState<string[] | undefined>(filterByStatus);
 
-  // Log initial filters for debugging
+  // Log initial filters for debugging - remove dependency on effectiveStatusFilters
   useEffect(() => {
     console.log('Initial filterByStatus:', filterByStatus);
     console.log('Initial filterByAssignedToUser:', filterByAssignedToUser);
     console.log('Initial filterByAvailable:', filterByAvailable);
   }, [filterByStatus, filterByAssignedToUser, filterByAvailable]);
 
-  const fetchData = async () => {
+  // Memoize fetchData to avoid recreation on each render
+  const fetchData = useCallback(async () => {
     try {
       const [fetchedDevices, fetchedUsers] = await Promise.all([
         dataService.devices.getAll(),
@@ -53,9 +54,9 @@ export const useDeviceFilters = ({
       console.error('Error fetching data for filters:', error);
       // Keep the existing data
     }
-  };
+  }, []);
 
-  // Update effective status filters when statusFilter changes
+  // Update effective status filters when statusFilter changes - keep fixed dependencies
   useEffect(() => {
     // If filterByStatus is provided, always use that (for My Devices)
     if (filterByStatus) {
@@ -71,10 +72,10 @@ export const useDeviceFilters = ({
     }
   }, [statusFilter, filterByStatus]);
 
-  // Fetch devices and users
+  // Fetch devices and users - use memoized fetchData
   useEffect(() => {
     fetchData();
-  }, [refreshTrigger]);
+  }, [refreshTrigger, fetchData]);
 
   const deviceTypes = useMemo(() => {
     const types = new Set<DeviceTypeValue>();
