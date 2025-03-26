@@ -1,6 +1,5 @@
 
 import { DeviceRequest, RequestStatus } from '@/types';
-import { mockDeviceRequests } from './mockData';
 import { deviceStore } from './deviceStore';
 
 class RequestStore {
@@ -38,6 +37,21 @@ class RequestStore {
       requestedAt: new Date(),
       status: request.type === 'release' ? 'approved' : 'pending', // Auto-approve release requests
     };
+    
+    // First check if there's already a pending request for this device
+    if (request.type === 'assign') {
+      const existingRequest = this.requests.find(
+        r => r.deviceId === request.deviceId && 
+             r.status === 'pending' && 
+             r.type === 'assign'
+      );
+      
+      if (existingRequest) {
+        console.log('Found existing request, not creating a duplicate');
+        return existingRequest;
+      }
+    }
+    
     this.requests.push(newRequest);
     
     // Update device requestedBy field
@@ -49,6 +63,7 @@ class RequestStore {
       // Auto-process device release - immediately update device status
       deviceStore.updateDevice(request.deviceId, {
         assignedTo: undefined,
+        assignedToId: undefined,
         status: 'available',
       });
     }
@@ -88,6 +103,7 @@ class RequestStore {
       } else if (request.type === 'release') {
         deviceStore.updateDevice(request.deviceId, {
           assignedTo: undefined,
+          assignedToId: undefined,
           requestedBy: undefined,
           status: 'available',
         });

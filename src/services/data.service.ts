@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -240,14 +239,31 @@ export const dataService = {
 
   addRequest: async (request: Omit<DeviceRequest, 'id' | 'requestedAt'>): Promise<DeviceRequest> => {
     try {
+      // If it's a release request, first update the device to prevent loops
+      if (request.type === 'release') {
+        // First update the device to release it
+        await deviceService.update(request.deviceId, {
+          assignedTo: undefined,
+          assignedToId: undefined,
+          status: 'available',
+        });
+        
+        // Small delay to ensure device updates are processed first
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      // Then create the request
       const newRequest = await deviceService.requestDevice(
         request.deviceId,
         request.type as 'assign' | 'release'
       );
+      
       console.log('Request added successfully:', newRequest);
       
-      // Trigger refresh callback to update UI immediately
-      dataService.triggerRefresh();
+      // Trigger refresh callback with a delay to avoid immediate refresh loops
+      setTimeout(() => {
+        dataService.triggerRefresh();
+      }, 300);
       
       return newRequest;
     } catch (error) {
@@ -286,3 +302,4 @@ export const dataService = {
 
 // Export the dataService as default as well for flexibility
 export default dataService;
+
