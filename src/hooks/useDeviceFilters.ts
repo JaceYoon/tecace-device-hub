@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Device, User, DeviceTypeValue } from '@/types';
 import { dataService } from '@/services/data.service';
 
@@ -23,12 +23,18 @@ export const useDeviceFilters = ({
   
   // Store the actual status filters to apply - initialized with filterByStatus
   const [effectiveStatusFilters, setEffectiveStatusFilters] = useState<string[] | undefined>(filterByStatus);
+  
+  // Use a ref to prevent infinite loops on initial logs
+  const initialLogsDone = useRef(false);
 
   // Log initial filters for debugging - only once on initial mount
   useEffect(() => {
-    console.log('Initial filterByStatus:', filterByStatus);
-    console.log('Initial filterByAssignedToUser:', filterByAssignedToUser);
-    console.log('Initial filterByAvailable:', filterByAvailable);
+    if (!initialLogsDone.current) {
+      console.log('Initial filterByStatus:', filterByStatus);
+      console.log('Initial filterByAssignedToUser:', filterByAssignedToUser);
+      console.log('Initial filterByAvailable:', filterByAvailable);
+      initialLogsDone.current = true;
+    }
   }, [filterByStatus, filterByAssignedToUser, filterByAvailable]);
 
   // Memoize fetchData to avoid recreation on each render
@@ -44,9 +50,6 @@ export const useDeviceFilters = ({
       // Debug output for assigned devices
       const assignedDevices = fetchedDevices.filter(d => d.assignedTo || d.assignedToId);
       console.log(`useDeviceFilters: Found ${assignedDevices.length} assigned devices`);
-      assignedDevices.forEach(d => {
-        console.log(`Device ${d.id} (${d.project}): assignedTo=${d.assignedTo}, assignedToId=${d.assignedToId}`);
-      });
       
       setDevices(fetchedDevices);
       setUsers(fetchedUsers);

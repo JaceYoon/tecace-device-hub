@@ -1,5 +1,5 @@
 
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useRef } from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
 import DeviceFilters from './DeviceFilters';
 import DeviceGrid from './DeviceGrid';
@@ -30,6 +30,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
   refreshTrigger,
 }) => {
   const { user, isAdmin } = useAuth();
+  const initialRenderRef = useRef(true);
   
   // Determine what statuses to filter by default - memoize this calculation
   const defaultFilterStatuses = filterByStatus 
@@ -46,9 +47,12 @@ const DeviceList: React.FC<DeviceListProps> = ({
   
   // Debug log to see what's being used for filtering - only log once
   useEffect(() => {
-    console.log(`DeviceList "${title}" - User:`, user?.id);
-    console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
-    console.log(`DeviceList "${title}" - Status filter:`, effectiveStatusFilter);
+    if (initialRenderRef.current) {
+      console.log(`DeviceList "${title}" - User:`, user?.id);
+      console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
+      console.log(`DeviceList "${title}" - Status filter:`, effectiveStatusFilter);
+      initialRenderRef.current = false;
+    }
   }, [title, user?.id, effectiveUserFilter, effectiveStatusFilter]);
   
   const {
@@ -78,7 +82,10 @@ const DeviceList: React.FC<DeviceListProps> = ({
 
   // Define a memoized onAction callback to prevent infinite loops
   const handleAction = useCallback(() => {
-    fetchData();
+    // Use a timeout to prevent potential setState calls during React updates
+    setTimeout(() => {
+      fetchData();
+    }, 300);
   }, [fetchData]);
 
   // Debug logs for "My Devices" view - only log once when filteredDevices changes

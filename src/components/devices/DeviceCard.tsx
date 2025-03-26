@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -156,35 +155,25 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             setIsProcessing(true);
             
             // Create a release request first with auto-approval
-            const request = await dataService.addRequest({
+            await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
               status: 'approved', // Auto-approve release requests
               type: 'release',
             });
             
-            // Then update device status
-            const updatedDevice = await dataService.updateDevice(device.id, {
-              assignedTo: undefined,
-              assignedToId: undefined,
-              status: 'available',
-            });
-
+            // Update device status - this operation is now handled inside dataService.addRequest
+            // to prevent double updates that cause infinite loops
+            
             toast.success('Device returned successfully', {
               description: `You have returned ${device.project}`,
               icon: <Check className="h-4 w-4" />
             });
             
-            // Only trigger the onAction callback once
+            // Only trigger onAction once to avoid refresh loops
             if (onAction) {
               onAction();
             }
-            
-            // Use the dataService.triggerRefresh() method instead of calling directly
-            // This prevents potential infinite loops
-            setTimeout(() => {
-              dataService.triggerRefresh();
-            }, 300);
           } catch (error) {
             console.error('Error releasing device:', error);
             toast.error('Failed to release device');
