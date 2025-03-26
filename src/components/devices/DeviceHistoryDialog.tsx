@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
@@ -97,96 +96,106 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
   
   // Process history entries to consolidate related assignment and release records
   const processHistoryEntries = (entries: HistoryEntry[]): ConsolidatedHistoryEntry[] => {
-    // Sort entries by time (newest first)
+    // Group entries by userId to pair assign and release events
+    const entriesByUser = new Map<string, HistoryEntry[]>();
+    
+    // First sort all entries chronologically by assignedAt or releasedAt
     const sortedEntries = [...entries].sort((a, b) => {
-      const dateA = new Date(a.assignedAt).getTime();
-      const dateB = new Date(b.assignedAt).getTime();
-      return dateB - dateA;
+      const dateA = new Date(a.assignedAt || a.releasedAt || 0).getTime();
+      const dateB = new Date(b.assignedAt || b.releasedAt || 0).getTime();
+      return dateA - dateB; // Oldest first
     });
     
-    // Map to track users and their assignment periods
-    const userAssignments = new Map<string, {
-      userName: string,
-      periods: {
-        assigned: string, 
-        released: string | null
-      }[]
-    }>();
-    
-    // Process each entry to build the assignment periods
+    // Group entries by user
     sortedEntries.forEach(entry => {
-      const userId = entry.userId;
+      if (!entriesByUser.has(entry.userId)) {
+        entriesByUser.set(entry.userId, []);
+      }
+      entriesByUser.get(entry.userId)!.push(entry);
+    });
+    
+    // Create consolidated entries from grouped entries
+    const consolidatedEntries: ConsolidatedHistoryEntry[] = [];
+    
+    // Process each user's entries
+    entriesByUser.forEach((userEntries, userId) => {
+      // Find assignment entries (may have assignedAt set)
+      const assignEntries = userEntries.filter(e => e.assignedAt);
+      // Find release entries (may have releasedAt set)
+      const releaseEntries = userEntries.filter(e => e.releasedAt);
       
-      if (!userAssignments.has(userId)) {
-        userAssignments.set(userId, {
-          userName: entry.userName,
-          periods: []
+      // Pair assign entries with release entries to create complete rental periods
+      for (const assignEntry of assignEntries) {
+        // Find matching release entry that occurred after this assignment
+        const matchingRelease = releaseEntries.find(release => 
+          new Date(release.releasedAt!).getTime() > new Date(assignEntry.assignedAt).getTime()
+        );
+        
+        // Check if this user is the current owner of the device
+        const isCurrentOwner = device.assignedToId === userId && !matchingRelease;
+        
+        consolidatedEntries.push({
+          id: `paired-${assignEntry.id}`,
+          deviceId: device.id,
+          userId: userId,
+          userName: assignEntry.userName,
+          assignedAt: assignEntry.assignedAt,
+          releasedAt: matchingRelease ? matchingRelease.releasedAt : null,
+          isCurrentOwner: isCurrentOwner
         });
       }
       
-      const userRecord = userAssignments.get(userId)!;
-      
-      // If this is an assignment entry 
-      if (entry.assignedAt && !entry.releasedAt) {
-        userRecord.periods.push({
-          assigned: entry.assignedAt,
-          released: null
-        });
-      } 
-      // If this is a release entry
-      else if (entry.releasedAt) {
-        // Find the most recent assignment without a release date
-        const lastOpenPeriod = userRecord.periods.find(p => p.released === null);
-        if (lastOpenPeriod) {
-          lastOpenPeriod.released = entry.releasedAt;
-        } else {
-          // If no open period is found, add a new complete period
-          userRecord.periods.push({
-            assigned: entry.assignedAt || new Date(0).toISOString(), // fallback
-            released: entry.releasedAt
+      // Handle unpaired release entries (rare, but possible)
+      for (const releaseEntry of releaseEntries) {
+        // Check if this release entry is already paired with an assign entry
+        const isAlreadyPaired = consolidatedEntries.some(entry => 
+          entry.userId === userId && entry.releasedAt === releaseEntry.releasedAt
+        );
+        
+        if (!isAlreadyPaired) {
+          consolidatedEntries.push({
+            id: `unpaired-${releaseEntry.id}`,
+            deviceId: device.id,
+            userId: userId,
+            userName: releaseEntry.userName,
+            // If we don't have an assignedAt, use a date before the release
+            assignedAt: releaseEntry.assignedAt || new Date(0).toISOString(),
+            releasedAt: releaseEntry.releasedAt,
+            isCurrentOwner: false
           });
         }
       }
     });
     
-    // Convert to consolidated entries
-    const consolidatedEntries: ConsolidatedHistoryEntry[] = [];
-    
-    // Add an "Available" entry if the device is currently available
-    if (device.status === 'available') {
-      consolidatedEntries.push({
-        id: `available-${device.id}`,
-        deviceId: device.id,
-        userId: '',
-        userName: 'Available',
-        assignedAt: new Date().toISOString(),
-        releasedAt: null,
-        isCurrentOwner: true
-      });
+    // Add the current owner if they are not in the history
+    if (device.assignedToId && !consolidatedEntries.some(entry => entry.isCurrentOwner)) {
+      const currentUser = users.find(u => u.id === device.assignedToId);
+      
+      if (currentUser) {
+        consolidatedEntries.push({
+          id: `current-${device.id}`,
+          deviceId: device.id,
+          userId: device.assignedToId,
+          userName: currentUser.name,
+          assignedAt: device.updatedAt instanceof Date 
+            ? device.updatedAt.toISOString() 
+            : typeof device.updatedAt === 'string' ? device.updatedAt : new Date().toISOString(),
+          releasedAt: null,
+          isCurrentOwner: true
+        });
+      }
     }
     
-    // Process each user's assignments
-    userAssignments.forEach((record, userId) => {
-      // For each assignment period
-      record.periods.forEach((period, index) => {
-        // Check if this user currently has the device assigned
-        const isCurrentOwner = device.assignedTo === userId && period.released === null;
-        
-        consolidatedEntries.push({
-          id: `${userId}-${index}`,
-          deviceId: device.id,
-          userId: userId,
-          userName: record.userName,
-          assignedAt: period.assigned,
-          releasedAt: period.released,
-          isCurrentOwner: isCurrentOwner
-        });
-      });
-    });
-    
-    // Sort by assignment date (newest first)
+    // Sort entries - current owner first, then by most recent assignment date
     return consolidatedEntries.sort((a, b) => {
-      return new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime();
+      // Current owner always comes first
+      if (a.isCurrentOwner) return -1;
+      if (b.isCurrentOwner) return 1;
+      
+      // Otherwise sort by most recent assignment date
+      const dateA = new Date(a.assignedAt).getTime();
+      const dateB = new Date(b.assignedAt).getTime();
+      return dateB - dateA; // Newest first
     });
   };
   

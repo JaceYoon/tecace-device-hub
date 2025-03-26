@@ -201,7 +201,7 @@ exports.getDeviceHistory = async (req, res) => {
       where: { 
         deviceId,
         type: ['assign', 'release'],
-        status: 'approved' // Only include approved requests
+        status: ['approved', 'returned'] // Include both approved and returned requests
       },
       include: [
         { model: User, as: 'user', attributes: ['id', 'name', 'email'] },
@@ -226,7 +226,7 @@ exports.getDeviceHistory = async (req, res) => {
         releasedAt: entryJson.type === 'release' ? entryJson.processedAt : null,
         releasedById: entryJson.type === 'release' ? String(entryJson.processedById) : null,
         releasedByName: entryJson.type === 'release' && entryJson.processedBy ? entryJson.processedBy.name : null,
-        releaseReason: entryJson.type === 'release' ? 'User requested release' : null
+        releaseReason: entryJson.type === 'release' ? entryJson.reason || 'User requested release' : null
       };
       
       return historyEntry;
