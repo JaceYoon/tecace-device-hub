@@ -122,19 +122,21 @@ const LoginPage: React.FC = () => {
             <CardContent>
               <TabsContent value="login" className="space-y-4">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4">
+                  <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4" id="login-form">
                     <FormField
                       control={loginForm.control}
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel htmlFor="login-email">Email</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
+                                id="login-email"
                                 placeholder="your.email@example.com" 
                                 className="pl-10" 
+                                autoComplete="email"
                                 {...field} 
                               />
                             </div>
@@ -149,14 +151,16 @@ const LoginPage: React.FC = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel htmlFor="login-password">Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
+                                id="login-password"
                                 type="password" 
                                 placeholder="••••••" 
-                                className="pl-10" 
+                                className="pl-10"
+                                autoComplete="current-password"
                                 {...field} 
                               />
                             </div>
@@ -194,15 +198,20 @@ const LoginPage: React.FC = () => {
               
               <TabsContent value="register" className="space-y-4">
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4">
+                  <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4" id="register-form">
                     <FormField
                       control={registerForm.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Full Name</FormLabel>
+                          <FormLabel htmlFor="register-name">Full Name</FormLabel>
                           <FormControl>
-                            <Input placeholder="John Doe" {...field} />
+                            <Input 
+                              id="register-name"
+                              placeholder="John Doe" 
+                              autoComplete="name"
+                              {...field} 
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
@@ -214,13 +223,15 @@ const LoginPage: React.FC = () => {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Email</FormLabel>
+                          <FormLabel htmlFor="register-email">Email</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
+                                id="register-email"
                                 placeholder="your.email@example.com" 
-                                className="pl-10" 
+                                className="pl-10"
+                                autoComplete="email"
                                 {...field} 
                               />
                             </div>
@@ -235,14 +246,16 @@ const LoginPage: React.FC = () => {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Password</FormLabel>
+                          <FormLabel htmlFor="register-password">Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
+                                id="register-password"
                                 type="password" 
                                 placeholder="••••••" 
-                                className="pl-10" 
+                                className="pl-10"
+                                autoComplete="new-password"
                                 {...field} 
                               />
                             </div>
@@ -257,14 +270,16 @@ const LoginPage: React.FC = () => {
                       name="confirmPassword"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Confirm Password</FormLabel>
+                          <FormLabel htmlFor="register-confirm-password">Confirm Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
+                                id="register-confirm-password"
                                 type="password" 
                                 placeholder="••••••" 
-                                className="pl-10" 
+                                className="pl-10"
+                                autoComplete="new-password"
                                 {...field} 
                               />
                             </div>

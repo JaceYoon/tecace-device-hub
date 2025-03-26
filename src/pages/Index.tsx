@@ -11,8 +11,8 @@ const Index: React.FC = () => {
   // and provide a fallback for when the context isn't ready yet
   let isAuthenticated = false;
   try {
-    const auth = useAuth();
-    isAuthenticated = auth.isAuthenticated;
+    const { isAuthenticated: authStatus } = useAuth();
+    isAuthenticated = authStatus;
     
     useEffect(() => {
       if (isAuthenticated) {
