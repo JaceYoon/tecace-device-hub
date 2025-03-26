@@ -25,7 +25,7 @@ interface HistoryEntry {
   releaseReason: string | null;
 }
 
-// New interface for consolidated history entries
+// Interface for consolidated history entries
 interface ConsolidatedHistoryEntry {
   id: string;
   deviceId: string;
@@ -104,28 +104,47 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       return dateB - dateA;
     });
     
-    // Group entries by user ID to consolidate assignment and release records
-    const userMap = new Map<string, {
-      assignedAt: string,
-      releasedAt: string | null,
-      entries: HistoryEntry[]
+    // Map to track users and their assignment periods
+    const userAssignments = new Map<string, {
+      userName: string,
+      periods: {
+        assigned: string, 
+        released: string | null
+      }[]
     }>();
     
-    // First pass: group entries by user and assignment time
+    // Process each entry to build the assignment periods
     sortedEntries.forEach(entry => {
-      const key = `${entry.userId}_${new Date(entry.assignedAt).toISOString()}`;
-      if (!userMap.has(key)) {
-        userMap.set(key, {
-          assignedAt: entry.assignedAt,
-          releasedAt: entry.releasedAt,
-          entries: [entry]
+      const userId = entry.userId;
+      
+      if (!userAssignments.has(userId)) {
+        userAssignments.set(userId, {
+          userName: entry.userName,
+          periods: []
         });
-      } else {
-        const existingGroup = userMap.get(key)!;
-        existingGroup.entries.push(entry);
-        // Update releasedAt if it exists in the new entry but not in the existing group
-        if (!existingGroup.releasedAt && entry.releasedAt) {
-          existingGroup.releasedAt = entry.releasedAt;
+      }
+      
+      const userRecord = userAssignments.get(userId)!;
+      
+      // If this is an assignment entry 
+      if (entry.assignedAt && !entry.releasedAt) {
+        userRecord.periods.push({
+          assigned: entry.assignedAt,
+          released: null
+        });
+      } 
+      // If this is a release entry
+      else if (entry.releasedAt) {
+        // Find the most recent assignment without a release date
+        const lastOpenPeriod = userRecord.periods.find(p => p.released === null);
+        if (lastOpenPeriod) {
+          lastOpenPeriod.released = entry.releasedAt;
+        } else {
+          // If no open period is found, add a new complete period
+          userRecord.periods.push({
+            assigned: entry.assignedAt || new Date(0).toISOString(), // fallback
+            released: entry.releasedAt
+          });
         }
       }
     });
@@ -133,31 +152,37 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     // Convert to consolidated entries
     const consolidatedEntries: ConsolidatedHistoryEntry[] = [];
     
-    userMap.forEach((value, key) => {
-      const entry = value.entries[0]; // Use the first entry for user information
-      consolidatedEntries.push({
-        id: `${entry.id}-consolidated`,
-        deviceId: entry.deviceId,
-        userId: entry.userId,
-        userName: entry.userName,
-        assignedAt: value.assignedAt,
-        releasedAt: value.releasedAt,
-        isCurrentOwner: device.assignedTo === entry.userId && !value.releasedAt
-      });
-    });
-    
     // Add an "Available" entry if the device is currently available
     if (device.status === 'available') {
-      consolidatedEntries.unshift({
+      consolidatedEntries.push({
         id: `available-${device.id}`,
         deviceId: device.id,
         userId: '',
         userName: 'Available',
         assignedAt: new Date().toISOString(),
         releasedAt: null,
-        isCurrentOwner: false
+        isCurrentOwner: true
       });
     }
+    
+    // Process each user's assignments
+    userAssignments.forEach((record, userId) => {
+      // For each assignment period
+      record.periods.forEach((period, index) => {
+        // Check if this user currently has the device assigned
+        const isCurrentOwner = device.assignedTo === userId && period.released === null;
+        
+        consolidatedEntries.push({
+          id: `${userId}-${index}`,
+          deviceId: device.id,
+          userId: userId,
+          userName: record.userName,
+          assignedAt: period.assigned,
+          releasedAt: period.released,
+          isCurrentOwner: isCurrentOwner
+        });
+      });
+    });
     
     // Sort by assignment date (newest first)
     return consolidatedEntries.sort((a, b) => {
@@ -203,7 +228,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         userName: 'Available',
         assignedAt: new Date().toISOString(),
         releasedAt: null,
-        isCurrentOwner: false
+        isCurrentOwner: true
       });
     }
     
@@ -277,32 +302,32 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                   <p>No ownership history available</p>
                 </div>
               ) : (
-                history.map((entry) => {
-                  // Skip rendering the "Available" entry as a separate card if we already have the available banner
-                  if (entry.userName === 'Available' && device.status === 'available') {
-                    return null;
-                  }
-                  
-                  return (
-                    <div key={entry.id} className="border rounded-md p-3">
-                      <div className="font-semibold">
-                        {entry.userName}
-                        {entry.isCurrentOwner && 
-                          <span className="ml-2 text-sm text-primary">(Current Owner)</span>
-                        }
-                      </div>
-                      
-                      <div className="text-sm mt-2">
-                        {entry.userName !== 'Available' && (
-                          <div>
-                            <p className="text-muted-foreground mb-1">Rental Term:</p>
-                            <p>{formatDateOnly(entry.assignedAt)} - {entry.releasedAt ? formatDateOnly(entry.releasedAt) : 'Present'}</p>
-                          </div>
-                        )}
-                      </div>
+                history.filter(entry => 
+                  // Skip showing the Available entry as a card if we already have the banner
+                  !(entry.userName === 'Available' && device.status === 'available')
+                ).map((entry) => (
+                  <div key={entry.id} className="border rounded-md p-3">
+                    <div className="font-semibold">
+                      {entry.userName}
+                      {entry.isCurrentOwner && entry.userName !== 'Available' && 
+                        <span className="ml-2 text-sm text-primary">(Current Owner)</span>
+                      }
                     </div>
-                  );
-                }).filter(Boolean) // Remove null entries
+                    
+                    <div className="text-sm mt-2">
+                      {entry.userName !== 'Available' && (
+                        <div>
+                          <p className="text-muted-foreground mb-1">Rental Term:</p>
+                          <p>
+                            {formatDateOnly(entry.assignedAt)} - {entry.releasedAt 
+                              ? formatDateOnly(entry.releasedAt) 
+                              : 'Present'}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))
               )}
             </div>
           )}
