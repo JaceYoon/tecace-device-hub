@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { 
   Dialog, 
   DialogTrigger, 
@@ -30,8 +30,18 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
   device, 
   onDeviceUpdated 
 }) => {
+  const [open, setOpen] = useState(false);
+  
+  const handleDeviceUpdated = () => {
+    if (onDeviceUpdated) {
+      onDeviceUpdated();
+    }
+    // Close the dialog after the device is updated
+    setOpen(false);
+  };
+  
   return (
-    <Dialog>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
           <Edit className="h-4 w-4" />
@@ -45,7 +55,8 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
         
         <DeviceEditForm 
           device={device} 
-          onDeviceUpdated={onDeviceUpdated} 
+          onDeviceUpdated={handleDeviceUpdated} 
+          onCancel={() => setOpen(false)}
         />
         
         <DialogFooter className="mt-4">
