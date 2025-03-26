@@ -10,7 +10,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deviceData, setDeviceData] = useState({
     project: '',
-    projectGroup: 'Eureka',
+    projectGroup: '',
     type: 'Smartphone' as DeviceTypeValue,
     deviceType: 'C-Type' as 'C-Type' | 'Lunchbox',
     imei: '',
@@ -46,7 +46,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const resetForm = () => {
     setDeviceData({
       project: '',
-      projectGroup: 'Eureka',
+      projectGroup: '',
       type: 'Smartphone' as DeviceTypeValue,
       deviceType: 'C-Type' as 'C-Type' | 'Lunchbox',
       imei: '',
@@ -63,7 +63,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
     
-    if (!project || !type || !projectGroup) {
+    if (!project || !type) {
       toast.error('Please fill all required fields');
       return;
     }
@@ -73,7 +73,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     try {
       const addedDevice = await dataService.addDevice({
         project,
-        projectGroup,
+        projectGroup: projectGroup || 'Eureka',
         type,
         deviceType,
         imei: imei || undefined,

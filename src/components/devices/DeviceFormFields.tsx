@@ -93,7 +93,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           <Input
             id="projectGroup"
             name="projectGroup"
-            placeholder="Eureka, Galaxy Watch 7, Tablet 10 Series.."
+            placeholder="Galaxy S25 Series, Tablet S10 Series, Galaxy Watch 7 Series and etc.."
             value={deviceData.projectGroup}
             onChange={handleChange}
             required
