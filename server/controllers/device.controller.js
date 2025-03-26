@@ -311,6 +311,19 @@ exports.update = async (req, res) => {
         reason: 'Device returned by user'
       });
       
+      // Mark any previous 'assign' requests as 'returned'
+      await Request.update(
+        { status: 'returned' },
+        { 
+          where: { 
+            deviceId: device.id,
+            userId: device.assignedToId,
+            type: 'assign',
+            status: 'approved'
+          }
+        }
+      );
+      
       // Update device status
       await device.update({
         status: 'available',
@@ -480,6 +493,19 @@ exports.processRequest = async (req, res) => {
           assignedToId: null,
           requestedBy: null
         });
+        
+        // Mark any previous 'assign' requests as 'returned'
+        await Request.update(
+          { status: 'returned' },
+          { 
+            where: { 
+              deviceId: request.deviceId,
+              userId: request.userId,
+              type: 'assign',
+              status: 'approved'
+            }
+          }
+        );
       }
     } else {
       // If rejected, just clear the requestedBy field

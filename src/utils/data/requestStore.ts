@@ -103,6 +103,18 @@ class RequestStore {
         status: 'available',
       });
       
+      // Mark any assign requests for this device from this user as 'returned'
+      const assignRequests = this.requests.filter(
+        r => r.deviceId === request.deviceId && 
+             r.userId === request.userId && 
+             r.type === 'assign' && 
+             r.status === 'approved'
+      );
+      
+      assignRequests.forEach(r => {
+        r.status = 'returned';
+      });
+      
       console.log(`Device ${request.deviceId} released (status set to available)`);
     } else if (request.type === 'assign') {
       // Update device requestedBy field
@@ -164,6 +176,26 @@ class RequestStore {
           assignedToId: undefined,
           requestedBy: undefined,
           status: 'available',
+        });
+        
+        // Mark any assign requests for this device from this user as 'returned'
+        const assignRequests = this.requests.filter(
+          r => r.deviceId === request.deviceId && 
+               r.userId === request.userId && 
+               r.type === 'assign' && 
+               r.status === 'approved'
+        );
+        
+        assignRequests.forEach(r => {
+          const idx = this.requests.findIndex(req => req.id === r.id);
+          if (idx !== -1) {
+            this.requests[idx] = {
+              ...this.requests[idx],
+              status: 'returned',
+              processedAt: new Date(),
+              processedBy: managerId
+            };
+          }
         });
       }
     } else if (status === 'rejected' || status === 'cancelled') {

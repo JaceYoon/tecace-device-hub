@@ -39,7 +39,7 @@ export interface Device {
   updatedAt: Date;
 }
 
-export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'returned';
 
 export interface DeviceRequest {
   id: string;
