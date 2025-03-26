@@ -5,7 +5,7 @@ const deviceController = require('../controllers/device.controller');
 const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
 // Configure JSON body parser with increased limit for all device routes
-router.use(express.json({ limit: '100mb' }));
+router.use(express.json({ limit: '100mb', extended: true }));
 // Add urlencoded parser with increased limit for form data
 router.use(express.urlencoded({ limit: '100mb', extended: true }));
 

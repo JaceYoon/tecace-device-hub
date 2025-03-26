@@ -2,7 +2,6 @@ const db = require('../models');
 const Device = db.device;
 const User = db.user;
 const Request = db.request;
-const OwnershipHistory = db.ownershipHistory;
 const Op = db.Sequelize.Op;
 
 // Create a new device
@@ -311,20 +310,9 @@ exports.delete = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
     
-    // Check if there are any requests associated with this device
-    const associatedRequests = await Request.findAll({
-      where: { deviceId: device.id }
-    });
-
     // Delete associated requests first if they exist
-    if (associatedRequests.length > 0) {
-      console.log(`Deleting ${associatedRequests.length} associated requests`);
-      await Request.destroy({ where: { deviceId: device.id } });
-    }
+    await Request.destroy({ where: { deviceId: device.id } });
     
-    // Delete ownership history records
-    await OwnershipHistory.destroy({ where: { deviceId: device.id } });
-
     // Now delete the device
     await device.destroy();
     console.log('Device successfully deleted');
@@ -400,7 +388,6 @@ exports.processRequest = async (req, res) => {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    // Fix for alias error: explicitly specify the alias in the include statement
     const request = await Request.findByPk(req.params.id, {
       include: [
         { model: Device, as: 'device' },
@@ -414,6 +401,11 @@ exports.processRequest = async (req, res) => {
 
     if (request.status !== 'pending') {
       return res.status(400).json({ message: 'Request has already been processed' });
+    }
+
+    // Auto-approve if it's a release request
+    if (request.type === 'release') {
+      status = 'approved';
     }
 
     // Update request
@@ -435,7 +427,7 @@ exports.processRequest = async (req, res) => {
           requestedBy: null
         });
       } else if (request.type === 'release') {
-        // Update device status
+        // Update device status immediately for release
         await device.update({
           status: 'available',
           assignedToId: null,
