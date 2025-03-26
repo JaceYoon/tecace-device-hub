@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -146,6 +147,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
           description: `${project} has been updated`
         });
         
+        // Call onDeviceUpdated which will now close the dialog
         if (onDeviceUpdated) {
           onDeviceUpdated();
         }

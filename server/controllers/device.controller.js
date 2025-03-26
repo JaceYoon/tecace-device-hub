@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -315,7 +314,8 @@ exports.update = async (req, res) => {
       // Update device status
       await device.update({
         status: 'available',
-        assignedToId: null
+        assignedToId: null,
+        requestedBy: null  // Clear any pending requests
       });
     }
 
@@ -388,7 +388,7 @@ exports.requestDevice = async (req, res) => {
       return res.status(400).json({ message: 'Device is not assigned to you' });
     }
 
-    // If it's a release request, auto-approve it
+    // If it's a release request, auto-approve it (for any user, including admin)
     const status = type === 'release' ? 'approved' : 'pending';
     const processedAt = type === 'release' ? new Date() : null;
     const processedById = type === 'release' ? req.user.id : null;
@@ -400,7 +400,9 @@ exports.requestDevice = async (req, res) => {
       deviceId: device.id,
       userId: req.user.id,
       processedAt,
-      processedById
+      processedById,
+      requestedAt: new Date(),
+      reason: type === 'release' ? 'Device returned by user' : null
     });
 
     // If it's a release request, update the device immediately
@@ -448,19 +450,20 @@ exports.processRequest = async (req, res) => {
     }
 
     // Auto-approve if it's a release request
+    let finalStatus = status;
     if (request.type === 'release') {
-      status = 'approved';
+      finalStatus = 'approved';
     }
 
     // Update request
     await request.update({
-      status,
+      status: finalStatus,
       processedById: req.user.id,
       processedAt: new Date()
     });
 
     // If approved, update device
-    if (status === 'approved') {
+    if (finalStatus === 'approved') {
       const device = await Device.findByPk(request.deviceId);
 
       if (request.type === 'assign') {
