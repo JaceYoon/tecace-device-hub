@@ -1,4 +1,3 @@
-
 import { DeviceRequest, RequestStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
@@ -217,7 +216,6 @@ class RequestStore {
     return this.requests[requestIndex];
   }
 
-  // Specific method for handling cancellation
   cancelRequest(id: string, userId: string): DeviceRequest | null {
     const requestIndex = this.requests.findIndex(request => request.id === id);
     if (requestIndex === -1) return null;
