@@ -1,5 +1,5 @@
 
-import React, { useEffect, useCallback, useRef } from 'react';
+import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
 import DeviceFilters from './DeviceFilters';
 import DeviceGrid from './DeviceGrid';
@@ -31,29 +31,30 @@ const DeviceList: React.FC<DeviceListProps> = ({
 }) => {
   const { user, isAdmin } = useAuth();
   const initialRenderRef = useRef(true);
+  const hasSetInitialStatusRef = useRef(false);
   
-  // Determine what statuses to filter by default - memoize this calculation
-  const defaultFilterStatuses = filterByStatus 
-    ? filterByStatus // Use provided filter status directly
-    : undefined;  // Don't restrict by status for admins by default
-  
-  // Important: Set the user ID for filtering my devices correctly
-  const effectiveUserFilter = filterByAssignedToUser || 
-    (title === 'My Devices' && user ? String(user.id) : undefined);
+  // Memoize values that shouldn't change on every render
+  // This is critical to prevent dependency changes in useEffect
+  const effectiveUserFilter = useMemo(() => {
+    return filterByAssignedToUser || 
+      (title === 'My Devices' && user ? String(user.id) : undefined);
+  }, [filterByAssignedToUser, title, user]);
   
   // If this is the My Devices view, always force status to be 'assigned'
-  const forceAssignedStatus = title === 'My Devices' ? ['assigned'] : undefined;
-  const effectiveStatusFilter = forceAssignedStatus || defaultFilterStatuses;
+  const effectiveStatusFilter = useMemo(() => {
+    const forceAssignedStatus = title === 'My Devices' ? ['assigned'] : undefined;
+    return forceAssignedStatus || filterByStatus;
+  }, [title, filterByStatus]);
   
   // Debug log to see what's being used for filtering - only log once
   useEffect(() => {
-    if (initialRenderRef.current) {
-      console.log(`DeviceList "${title}" - User:`, user?.id);
+    if (initialRenderRef.current && user) {
+      console.log(`DeviceList "${title}" - User:`, user.id);
       console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
       console.log(`DeviceList "${title}" - Status filter:`, effectiveStatusFilter);
       initialRenderRef.current = false;
     }
-  }, [title, user?.id, effectiveUserFilter, effectiveStatusFilter]);
+  }, [title, user, effectiveUserFilter, effectiveStatusFilter]);
   
   const {
     users,
@@ -75,8 +76,9 @@ const DeviceList: React.FC<DeviceListProps> = ({
 
   // Only set initial status filter once after component mounts
   useEffect(() => {
-    if (initialStatusFilter) {
+    if (initialStatusFilter && !hasSetInitialStatusRef.current) {
       setStatusFilter(initialStatusFilter);
+      hasSetInitialStatusRef.current = true;
     }
   }, [initialStatusFilter, setStatusFilter]);
 
@@ -96,7 +98,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       console.log("My Devices view - All filtered devices:", filteredDevices);
       console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
     }
-  }, [title, user, filteredDevices.length, effectiveUserFilter]);
+  }, [title, user, filteredDevices.length, effectiveUserFilter, filteredDevices]);
 
   // If this is My Devices view, we always want to show the controls for device return
   const showReturnControls = title === 'My Devices';

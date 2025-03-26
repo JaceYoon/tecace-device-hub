@@ -26,6 +26,8 @@ export const useDeviceFilters = ({
   
   // Use a ref to prevent infinite loops on initial logs
   const initialLogsDone = useRef(false);
+  // Use a ref to track if a fetch is in progress to prevent duplicate requests
+  const fetchInProgress = useRef(false);
 
   // Log initial filters for debugging - only once on initial mount
   useEffect(() => {
@@ -39,7 +41,11 @@ export const useDeviceFilters = ({
 
   // Memoize fetchData to avoid recreation on each render
   const fetchData = useCallback(async () => {
+    // Prevent concurrent fetches that could cause loops
+    if (fetchInProgress.current) return;
+    
     try {
+      fetchInProgress.current = true;
       const [fetchedDevices, fetchedUsers] = await Promise.all([
         dataService.devices.getAll(),
         dataService.users.getAll()
@@ -56,10 +62,13 @@ export const useDeviceFilters = ({
     } catch (error) {
       console.error('Error fetching data for filters:', error);
       // Keep the existing data
+    } finally {
+      fetchInProgress.current = false;
     }
   }, []);
 
   // Update effective status filters when statusFilter or filterByStatus changes
+  // This was causing an infinite loop when used with filterByStatus prop changes
   useEffect(() => {
     // If filterByStatus is provided, always use that (for My Devices)
     if (filterByStatus) {
@@ -71,11 +80,14 @@ export const useDeviceFilters = ({
     } else {
       setEffectiveStatusFilters([statusFilter]);
     }
+    // IMPORTANT: Only update when these specific props change
   }, [statusFilter, filterByStatus]);
 
   // Fetch devices and users when refreshTrigger changes
+  // This was also causing loops due to missing dependencies
   useEffect(() => {
     fetchData();
+    // Only depend on fetchData and refreshTrigger
   }, [refreshTrigger, fetchData]);
 
   const deviceTypes = useMemo(() => {
