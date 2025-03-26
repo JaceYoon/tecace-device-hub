@@ -21,10 +21,10 @@ export const useDeviceFilters = ({
   const [statusFilter, setStatusFilter] = useState<string>(filterByAvailable ? 'available' : 'all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   
-  // Store the actual status filters to apply
+  // Store the actual status filters to apply - initialized with filterByStatus
   const [effectiveStatusFilters, setEffectiveStatusFilters] = useState<string[] | undefined>(filterByStatus);
 
-  // Log initial filters for debugging - remove dependency on effectiveStatusFilters
+  // Log initial filters for debugging - only once on initial mount
   useEffect(() => {
     console.log('Initial filterByStatus:', filterByStatus);
     console.log('Initial filterByAssignedToUser:', filterByAssignedToUser);
@@ -56,23 +56,21 @@ export const useDeviceFilters = ({
     }
   }, []);
 
-  // Update effective status filters when statusFilter changes - keep fixed dependencies
+  // Update effective status filters when statusFilter or filterByStatus changes
   useEffect(() => {
     // If filterByStatus is provided, always use that (for My Devices)
     if (filterByStatus) {
       setEffectiveStatusFilters(filterByStatus);
-      return;
-    }
-    
+    } 
     // Otherwise, use the statusFilter dropdown selection
-    if (statusFilter === 'all') {
+    else if (statusFilter === 'all') {
       setEffectiveStatusFilters(undefined);
     } else {
       setEffectiveStatusFilters([statusFilter]);
     }
   }, [statusFilter, filterByStatus]);
 
-  // Fetch devices and users - use memoized fetchData
+  // Fetch devices and users when refreshTrigger changes
   useEffect(() => {
     fetchData();
   }, [refreshTrigger, fetchData]);

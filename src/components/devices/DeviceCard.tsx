@@ -155,19 +155,19 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           try {
             setIsProcessing(true);
             
-            // First update device status directly
-            const updatedDevice = await dataService.updateDevice(device.id, {
-              assignedTo: undefined,
-              assignedToId: undefined,
-              status: 'available',
-            });
-            
-            // Then add a release request to track history
+            // Create a release request first with auto-approval
             const request = await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
               status: 'approved', // Auto-approve release requests
               type: 'release',
+            });
+            
+            // Then update device status
+            const updatedDevice = await dataService.updateDevice(device.id, {
+              assignedTo: undefined,
+              assignedToId: undefined,
+              status: 'available',
             });
 
             toast.success('Device returned successfully', {
@@ -175,11 +175,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               icon: <Check className="h-4 w-4" />
             });
             
-            if (onAction) onAction();
+            // Only trigger the onAction callback once
+            if (onAction) {
+              onAction();
+            }
             
-            // Force immediate refresh of UI by triggering a global state update
-            // This ensures "My Devices" view gets updated immediately
-            dataService.triggerRefresh();
+            // Use the dataService.triggerRefresh() method instead of calling directly
+            // This prevents potential infinite loops
+            setTimeout(() => {
+              dataService.triggerRefresh();
+            }, 300);
           } catch (error) {
             console.error('Error releasing device:', error);
             toast.error('Failed to release device');
