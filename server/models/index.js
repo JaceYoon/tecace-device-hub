@@ -1,4 +1,3 @@
-
 const dbConfig = require("../config/db.config.js");
 const Sequelize = require("sequelize");
 
@@ -24,7 +23,6 @@ db.sequelize = sequelize;
 db.user = require("./user.model.js")(sequelize, Sequelize);
 db.device = require("./device.model.js")(sequelize, Sequelize);
 db.request = require("./request.model.js")(sequelize, Sequelize);
-db.ownershipHistory = require("./ownership-history.model.js")(sequelize, Sequelize);
 
 // Define relationships
 
@@ -44,15 +42,5 @@ db.request.belongsTo(db.user, { as: "user", foreignKey: "userId" });
 
 db.user.hasMany(db.request, { as: "processedRequests", foreignKey: "processedById" });
 db.request.belongsTo(db.user, { as: "processedBy", foreignKey: "processedById" });
-
-// Ownership History relationships
-db.device.hasMany(db.ownershipHistory, { as: "ownershipHistory", foreignKey: "deviceId" });
-db.ownershipHistory.belongsTo(db.device, { as: "device", foreignKey: "deviceId" });
-
-db.user.hasMany(db.ownershipHistory, { as: "deviceHistory", foreignKey: "userId" });
-db.ownershipHistory.belongsTo(db.user, { as: "user", foreignKey: "userId" });
-
-db.user.hasMany(db.ownershipHistory, { as: "releasedDeviceHistory", foreignKey: "releasedById" });
-db.ownershipHistory.belongsTo(db.user, { as: "releasedBy", foreignKey: "releasedById" });
 
 module.exports = db;
