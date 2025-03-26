@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
 import DeviceFilters from './DeviceFilters';
 import DeviceGrid from './DeviceGrid';
@@ -31,7 +31,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
 }) => {
   const { user, isAdmin } = useAuth();
   
-  // Determine what statuses to filter by default
+  // Determine what statuses to filter by default - memoize this calculation
   const defaultFilterStatuses = filterByStatus 
     ? filterByStatus // Use provided filter status directly
     : undefined;  // Don't restrict by status for admins by default
@@ -44,10 +44,12 @@ const DeviceList: React.FC<DeviceListProps> = ({
   const forceAssignedStatus = title === 'My Devices' ? ['assigned'] : undefined;
   const effectiveStatusFilter = forceAssignedStatus || defaultFilterStatuses;
   
-  // Debug log to see what's being used for filtering
-  console.log(`DeviceList "${title}" - User:`, user?.id);
-  console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
-  console.log(`DeviceList "${title}" - Status filter:`, effectiveStatusFilter);
+  // Debug log to see what's being used for filtering - only log once
+  useEffect(() => {
+    console.log(`DeviceList "${title}" - User:`, user?.id);
+    console.log(`DeviceList "${title}" - Effective filter:`, effectiveUserFilter);
+    console.log(`DeviceList "${title}" - Status filter:`, effectiveStatusFilter);
+  }, [title, user?.id, effectiveUserFilter, effectiveStatusFilter]);
   
   const {
     users,
@@ -67,14 +69,19 @@ const DeviceList: React.FC<DeviceListProps> = ({
     refreshTrigger
   });
 
-  // Set initial status filter if provided as prop
+  // Only set initial status filter once after component mounts
   useEffect(() => {
     if (initialStatusFilter) {
       setStatusFilter(initialStatusFilter);
     }
   }, [initialStatusFilter, setStatusFilter]);
 
-  // Debug logs for "My Devices" view
+  // Define a memoized onAction callback to prevent infinite loops
+  const handleAction = useCallback(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Debug logs for "My Devices" view - only log once when filteredDevices changes
   useEffect(() => {
     if (title === 'My Devices' && user) {
       console.log("My Devices view - User ID:", user.id);
@@ -82,7 +89,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       console.log("My Devices view - All filtered devices:", filteredDevices);
       console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
     }
-  }, [title, user, filteredDevices, effectiveUserFilter]);
+  }, [title, user, filteredDevices.length, effectiveUserFilter]);
 
   // If this is My Devices view, we always want to show the controls for device return
   const showReturnControls = title === 'My Devices';
@@ -111,7 +118,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       <DeviceGrid
         devices={filteredDevices}
         users={users}
-        onAction={fetchData}
+        onAction={handleAction}
         showReturnControls={showReturnControls}
       />
     </div>
