@@ -25,13 +25,25 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
     );
   }
 
+  // These are placeholder functions since we need to provide them to DeviceCard
+  const handleRequestDevice = (device: Device) => {
+    console.log('Request device:', device);
+    if (onAction) onAction();
+  };
+
+  const handleViewDetails = (device: Device) => {
+    console.log('View device details:', device);
+    if (onAction) onAction();
+  };
+
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mt-6">
       {devices.map(device => (
         <div key={device.id} className="flex">
           <DeviceCard 
             device={device}
-            onAction={onAction}
+            onRequestDevice={handleRequestDevice}
+            onViewDetails={handleViewDetails}
             className="w-full"
             showReturnControls={showReturnControls}
           />

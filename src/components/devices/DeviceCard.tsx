@@ -17,7 +17,7 @@ import {
   TooltipProvider,
   TooltipTrigger 
 } from "@/components/ui/tooltip";
-import { Device } from '@/types/device';
+import { Device } from '@/types'; // Fixed import path
 import { Download } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
@@ -25,9 +25,17 @@ interface DeviceCardProps {
   device: Device;
   onRequestDevice: (device: Device) => void;
   onViewDetails: (device: Device) => void;
+  className?: string;
+  showReturnControls?: boolean;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ device, onRequestDevice, onViewDetails }) => {
+const DeviceCard: React.FC<DeviceCardProps> = ({ 
+  device, 
+  onRequestDevice, 
+  onViewDetails,
+  className,
+  showReturnControls = false
+}) => {
   // Status color mapping
   const statusColorMap: Record<string, string> = {
     available: 'bg-green-100 text-green-800 border-green-300',
@@ -52,7 +60,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onRequestDevice, onView
   };
 
   return (
-    <Card className="h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-300">
+    <Card className={`h-full flex flex-col overflow-hidden hover:shadow-md transition-shadow duration-300 ${className || ''}`}>
       <CardHeader className="pb-2">
         <CardTitle className="text-lg font-medium flex justify-between items-start">
           <div>
@@ -160,7 +168,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onRequestDevice, onView
             Details
           </Button>
           
-          {device.status === 'available' && !device.requestedBy && (
+          {device.status === 'available' && !device.requestedBy && !showReturnControls && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -179,7 +187,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onRequestDevice, onView
             </TooltipProvider>
           )}
           
-          {device.requestedBy && (
+          {device.requestedBy && !showReturnControls && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

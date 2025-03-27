@@ -18,12 +18,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   const { user, isManager } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // Make sure we have a valid deviceType value from the allowed options
   const deviceTypeValue = device.deviceType && 
     (device.deviceType === 'C-Type' || device.deviceType === 'Lunchbox') ? 
     device.deviceType : 'C-Type';
   
-  // Ensure device.type is one of the allowed values
   const ensureValidType = (type: string): DeviceTypeValue => {
     const validTypes: DeviceTypeValue[] = [
       'Smartphone',
@@ -51,10 +49,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
-    assignedToId: device.assignedToId // Preserve the assignedToId
+    assignedToId: device.assignedToId
   });
   
-  // Strictly typed list of device types matching the database schema
   const deviceTypes: DeviceTypeValue[] = [
     'Smartphone',
     'Tablet',
@@ -67,7 +64,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Validation for serial number - only alphanumeric characters
     if (name === 'serialNumber' && value) {
       const alphanumericRegex = /^[a-zA-Z0-9]*$/;
       if (!alphanumericRegex.test(value)) {
@@ -76,10 +72,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       }
     }
     
-    // Validation for IMEI - only numbers with exactly 15 digits or empty
     if (name === 'imei') {
       if (value === '') {
-        // Allow empty IMEI
         setDeviceData(prev => ({
           ...prev,
           [name]: value,
@@ -93,7 +87,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         return;
       }
       
-      // Allow partial input (while typing), but warn if they've entered more than 15 digits
       if (value.length > 15) {
         toast.error('IMEI must be exactly 15 digits');
         return;
@@ -120,11 +113,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     }));
   };
   
-  // Function to handle device picture file upload
   const handleFileChange = (file: File | null, fieldName: string) => {
     if (!file) return;
     
-    // Handle device picture image upload
     if (fieldName === 'devicePicture') {
       const reader = new FileReader();
       reader.onload = (e) => {
@@ -153,19 +144,16 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    // Validate that type is one of the allowed values
     if (!deviceTypes.includes(type as DeviceTypeValue)) {
       toast.error('Please select a valid device type');
       return;
     }
     
-    // Final validation for IMEI before submission - allow empty or exactly 15 digits
     if (imei && imei.length !== 15) {
       toast.error('IMEI must be exactly 15 digits or empty');
       return;
     }
     
-    // Final validation for serial number
     if (serialNumber) {
       const alphanumericRegex = /^[a-zA-Z0-9]*$/;
       if (!alphanumericRegex.test(serialNumber)) {
@@ -177,23 +165,36 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
-      // Explicitly preserve the assignedToId and status
       const preserveOwnership = device.status === 'assigned' && device.assignedToId;
+      
+      console.log('Updating device with data:', {
+        project,
+        projectGroup,
+        type,
+        deviceType,
+        imei: imei || null,
+        serialNumber: serialNumber || null,
+        status: preserveOwnership ? 'assigned' : status,
+        assignedToId: preserveOwnership ? device.assignedToId : (assignedToId || null),
+        deviceStatus: deviceStatus || null,
+        receivedDate,
+        notes: notes || null,
+        devicePicture: devicePicture || null,
+      });
 
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
         type,
         deviceType,
-        imei: imei || undefined,
-        serialNumber: serialNumber || undefined,
-        // Keep the current status and assignedToId if the device was assigned
+        imei: imei || null,
+        serialNumber: serialNumber || null,
         status: preserveOwnership ? 'assigned' : status,
-        assignedToId: preserveOwnership ? device.assignedToId : assignedToId,
-        deviceStatus: deviceStatus || undefined,
+        assignedToId: preserveOwnership ? device.assignedToId : (assignedToId || null),
+        deviceStatus: deviceStatus || null,
         receivedDate,
-        notes: notes || undefined,
-        devicePicture: devicePicture || undefined,
+        notes: notes || null,
+        devicePicture: devicePicture || null,
       });
       
       if (updatedDevice) {
@@ -201,7 +202,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
           description: `${project} has been updated`
         });
         
-        // Call onDeviceUpdated which will now close the dialog
         if (onDeviceUpdated) {
           onDeviceUpdated();
         }

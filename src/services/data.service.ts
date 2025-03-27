@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -38,6 +39,10 @@ const formatPayload = (payload: any) => {
   const fieldsToCheck = ['assignedToId', 'addedById', 'requestedBy'];
   fieldsToCheck.forEach(field => {
     if (formattedPayload[field] === 'null') {
+      formattedPayload[field] = null;
+    }
+    // Also handle empty strings that should be null
+    if (formattedPayload[field] === '') {
       formattedPayload[field] = null;
     }
   });
@@ -154,8 +159,11 @@ export const authService = {
   },
 };
 
-// Define and export deviceService
-export const deviceService = {
+// Define the device service
+const deviceService = {
+  getDevices: (): Promise<Device[]> =>
+    apiCall<Device[]>('/devices'),
+
   getAll: (): Promise<Device[]> =>
     apiCall<Device[]>('/devices'),
 
@@ -165,14 +173,34 @@ export const deviceService = {
   getDeviceHistory: (id: string): Promise<any[]> =>
     apiCall<any[]>(`/devices/${id}/history`),
 
+  addDevice: (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> =>
+    apiCall<Device>('/devices', {
+      method: 'POST',
+      body: JSON.stringify(device)
+    }),
+
   create: (device: Omit<Device, 'id' | 'createdAt' | 'updatedAt'>): Promise<Device> =>
     apiCall<Device>('/devices', {
       method: 'POST',
       body: JSON.stringify(device)
     }),
 
-  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
+  updateDevice: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
+    // Format the payload to handle null values correctly
     const formattedData = formatPayload(updates);
+    console.log('Formatted data for update:', formattedData);
+    
+    return apiCall<Device | null>(`/devices/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(formattedData)
+    });
+  },
+
+  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
+    // Format the payload to handle null values correctly
+    const formattedData = formatPayload(updates);
+    console.log('Formatted data for update:', formattedData);
+    
     return apiCall<Device | null>(`/devices/${id}`, {
       method: 'PUT',
       body: JSON.stringify(formattedData)
@@ -210,6 +238,9 @@ export const userService = {
   getAll: (): Promise<User[]> =>
     apiCall<User[]>('/users'),
 
+  getUsers: (): Promise<User[]> =>
+    apiCall<User[]>('/users'),
+
   getCurrentUser: (): Promise<User | null> =>
     apiCall<User | null>('/users/me'),
 
@@ -222,6 +253,9 @@ export const userService = {
       body: JSON.stringify({ role })
     }),
 };
+
+// Export the device service
+export { deviceService };
 
 // Export the api object that contains all methods
 export const api = {
@@ -240,6 +274,33 @@ export const api = {
   delete: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint, {
     method: 'DELETE'
   })
+};
+
+// Create a unified dataService interface
+export const dataService = {
+  // User methods
+  getUsers: userService.getUsers,
+  getUserById: userService.getById,
+  
+  // Device methods
+  getDevices: deviceService.getAll,
+  getDeviceById: deviceService.getById,
+  getDeviceHistory: deviceService.getDeviceHistory,
+  addDevice: deviceService.create,
+  updateDevice: deviceService.update,
+  deleteDevice: deviceService.delete,
+  
+  // Request methods
+  requestDevice: deviceService.requestDevice,
+  processRequest: deviceService.processRequest,
+  cancelRequest: deviceService.cancelRequest,
+  getAllRequests: deviceService.getAllRequests,
+  
+  // Auth methods
+  auth: authService,
+  
+  // Direct API access
+  api: api
 };
 
 export default api;
