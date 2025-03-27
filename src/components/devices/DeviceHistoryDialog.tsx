@@ -14,7 +14,6 @@ import { dataService } from '@/services/data.service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BadgeCheck, ClockIcon, Download, History, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { exportToExcel } from '@/utils/exportUtils'; // Fixed import
 import { formatDistanceToNow } from 'date-fns';
 
 interface DeviceHistoryEntry {
@@ -30,8 +29,8 @@ interface DeviceHistoryEntry {
 }
 
 interface DeviceHistoryDialogProps {
-  deviceId: string;
-  deviceName: string;
+  deviceId?: string;
+  deviceName?: string;
   trigger?: React.ReactNode;
   device?: any; // For backward compatibility
   users?: any[]; // For backward compatibility
@@ -90,7 +89,12 @@ const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({
       ReleaseReason: entry.releaseReason || ''
     }));
     
-    exportToExcel(exportData, `device-history-${effectiveDeviceId}`);
+    // Export to Excel
+    const XLSX = require('xlsx');
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Device History");
+    XLSX.writeFile(workbook, `device-history-${effectiveDeviceId}.xlsx`);
   };
   
   const defaultTrigger = (

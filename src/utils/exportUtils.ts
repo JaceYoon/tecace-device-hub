@@ -2,45 +2,18 @@ import { Device, DeviceRequest } from '@/types';
 import ExcelJS from 'exceljs';
 import * as XLSX from 'xlsx';
 
-export const exportToExcel = (data: any[], filename: string = 'export.xlsx') => {
-  const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Data');
-  
-  if (data.length > 0) {
-    const headers = Object.keys(data[0]);
-    worksheet.columns = headers.map(header => ({ header, key: header, width: 20 }));
+export const exportToExcel = (data: any[], filename: string) => {
+  try {
+    const XLSX = require('xlsx');
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Data");
+    XLSX.writeFile(workbook, `${filename}.xlsx`);
+    return true;
+  } catch (error) {
+    console.error('Error exporting to Excel:', error);
+    return false;
   }
-  
-  data.forEach(item => {
-    worksheet.addRow(item);
-  });
-  
-  const headerRow = worksheet.getRow(1);
-  headerRow.eachCell((cell) => {
-    cell.fill = {
-      type: 'pattern',
-      pattern: 'solid',
-      fgColor: { argb: 'FF555555' }
-    };
-    cell.font = {
-      bold: true,
-      color: { argb: 'FFFFFFFF' }
-    };
-  });
-  
-  workbook.xlsx.writeBuffer().then(buffer => {
-    const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    }, 0);
-  });
 };
 
 export const exportDevicesToExcel = (devices: Device[], filename: string = 'Complete_Device_Inventory2.xlsx') => {
