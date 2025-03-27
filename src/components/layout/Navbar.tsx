@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
 import {
@@ -15,12 +15,53 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Box, LogOut, Package, Settings, Smartphone, User } from 'lucide-react';
 
 const Navbar: React.FC = () => {
-  const { user, isAuthenticated, isManager, logout } = useAuth();
-  const navigate = useNavigate();
+  // Safely handle navigation hooks with error boundaries
+  let navigate;
+  let location;
+  
+  try {
+    navigate = useNavigate();
+    location = useLocation();
+  } catch (error) {
+    console.warn('Router context not available in Navbar. Navigation features will be limited.');
+    // Define fallback behavior when Router context is missing
+    navigate = (path: string) => {
+      // Fallback to normal navigation without Router
+      window.location.href = path;
+    };
+    location = { pathname: window.location.pathname };
+  }
+
+  // Safely use auth context or provide fallbacks
+  let user;
+  let isAuthenticated = false;
+  let isManager = false;
+  let logout;
+
+  try {
+    const auth = useAuth();
+    user = auth.user;
+    isAuthenticated = auth.isAuthenticated;
+    isManager = auth.isManager;
+    logout = auth.logout;
+  } catch (error) {
+    console.warn('Auth context not available in Navbar. Auth features will be limited.');
+    logout = () => {
+      // Fallback logout function
+      localStorage.removeItem('tecace_current_user');
+      window.location.href = '/';
+    };
+  }
 
   const handleLogout = () => {
-    logout();
-    navigate('/');
+    if (logout) {
+      logout();
+      if (navigate) {
+        navigate('/');
+      } else {
+        window.location.href = '/';
+      }
+    }
   };
 
   return (
@@ -74,9 +115,11 @@ const Navbar: React.FC = () => {
                       ) : (
                         <AvatarFallback>
                           {user?.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
+                            ? user.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                            : 'U'}
                         </AvatarFallback>
                       )}
                     </Avatar>
@@ -86,10 +129,10 @@ const Navbar: React.FC = () => {
                   <DropdownMenuLabel className="font-normal">
                     <div className="flex flex-col space-y-1">
                       <p className="text-sm font-medium leading-none">
-                        {user?.name}
+                        {user?.name || 'User'}
                       </p>
                       <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
+                        {user?.email || ''}
                       </p>
                     </div>
                   </DropdownMenuLabel>
