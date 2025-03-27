@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -77,8 +76,17 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       }
     }
     
-    // Validation for IMEI - only numbers with exactly 15 digits
-    if (name === 'imei' && value) {
+    // Validation for IMEI - only numbers with exactly 15 digits or empty
+    if (name === 'imei') {
+      if (value === '') {
+        // Allow empty IMEI
+        setDeviceData(prev => ({
+          ...prev,
+          [name]: value,
+        }));
+        return;
+      }
+      
       const numericRegex = /^[0-9]*$/;
       if (!numericRegex.test(value)) {
         toast.error('IMEI can only contain numbers');
@@ -151,9 +159,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    // Final validation for IMEI before submission
+    // Final validation for IMEI before submission - allow empty or exactly 15 digits
     if (imei && imei.length !== 15) {
-      toast.error('IMEI must be exactly 15 digits');
+      toast.error('IMEI must be exactly 15 digits or empty');
       return;
     }
     
@@ -177,8 +185,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         projectGroup,
         type,
         deviceType,
-        imei,
-        serialNumber,
+        imei: imei || undefined,
+        serialNumber: serialNumber || undefined,
         // Keep the current status and assignedToId if the device was assigned
         status: preserveOwnership ? 'assigned' : status,
         assignedToId: preserveOwnership ? device.assignedToId : assignedToId,

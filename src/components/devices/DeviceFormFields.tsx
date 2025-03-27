@@ -204,10 +204,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="device-picture">Device Picture</Label>
+        <Label htmlFor="device-picture-upload">Device Picture</Label>
         <div className="flex items-center gap-2">
           <Input
-            id="device-picture"
+            id="device-picture-upload"
             name="devicePicture-upload"
             type="file"
             accept="image/*"

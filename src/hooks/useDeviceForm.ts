@@ -33,8 +33,17 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       }
     }
     
-    // Validation for IMEI - only numbers with exactly 15 digits
-    if (name === 'imei' && value) {
+    // Validation for IMEI - only numbers with exactly 15 digits or empty
+    if (name === 'imei') {
+      if (value === '') {
+        // Allow empty IMEI
+        setDeviceData(prev => ({
+          ...prev,
+          [name]: value,
+        }));
+        return;
+      }
+      
       const numericRegex = /^[0-9]*$/;
       if (!numericRegex.test(value)) {
         toast.error('IMEI can only contain numbers');
@@ -95,7 +104,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     
     // Final validation for IMEI before submission
     if (imei && imei.length !== 15) {
-      toast.error('IMEI must be exactly 15 digits');
+      toast.error('IMEI must be exactly 15 digits or empty');
       return;
     }
     
