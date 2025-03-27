@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -52,6 +51,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
+    assignedToId: device.assignedToId // Preserve the assignedToId
   });
   
   // Strictly typed list of device types matching the database schema
@@ -112,7 +112,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture, assignedToId } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
@@ -128,6 +128,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
+      // Explicitly preserve the assignedToId and status
+      const preserveOwnership = device.status === 'assigned' && device.assignedToId;
+
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
@@ -135,7 +138,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         deviceType,
         imei,
         serialNumber,
-        status,
+        // Keep the current status and assignedToId if the device was assigned
+        status: preserveOwnership ? 'assigned' : status,
+        assignedToId: preserveOwnership ? device.assignedToId : assignedToId,
         deviceStatus: deviceStatus || undefined,
         receivedDate,
         notes: notes || undefined,
