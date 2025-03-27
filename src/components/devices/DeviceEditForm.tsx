@@ -180,6 +180,14 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       // Explicitly preserve the assignedToId and status
       const preserveOwnership = device.status === 'assigned' && device.assignedToId;
 
+      // FIX: Convert empty string assignedToId to null explicitly for the database
+      // The database error was happening because we were sending 'null' as a string
+      // instead of null as a value for assignedToId
+      let finalAssignedToId = assignedToId;
+      if (finalAssignedToId === '' || finalAssignedToId === 'null') {
+        finalAssignedToId = null;
+      }
+
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
@@ -189,7 +197,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         serialNumber: serialNumber || undefined,
         // Keep the current status and assignedToId if the device was assigned
         status: preserveOwnership ? 'assigned' : status,
-        assignedToId: preserveOwnership ? device.assignedToId : assignedToId,
+        assignedToId: preserveOwnership ? device.assignedToId : finalAssignedToId,
         deviceStatus: deviceStatus || undefined,
         receivedDate,
         notes: notes || undefined,

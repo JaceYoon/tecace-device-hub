@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -286,6 +287,20 @@ exports.update = async (req, res) => {
                                     assignedToId === undefined && 
                                     status === undefined;
 
+    console.log('Update device request:', {
+      id: req.params.id,
+      assignedToId: assignedToId,
+      isBeingReleased,
+      shouldPreserveAssignment
+    });
+
+    // Handle null values properly for the database
+    // Important to convert 'null' strings to actual null values
+    const processedAssignedToId = 
+      assignedToId === null || assignedToId === 'null' || assignedToId === '' 
+        ? null 
+        : (shouldPreserveAssignment ? device.assignedToId : assignedToId);
+
     // Update device
     await device.update({
       project: project || device.project,
@@ -298,7 +313,7 @@ exports.update = async (req, res) => {
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: shouldPreserveAssignment ? device.assignedToId : (assignedToId !== undefined ? assignedToId : device.assignedToId)
+      assignedToId: processedAssignedToId
     });
 
     // If the device is being released, create an auto-approved release request
