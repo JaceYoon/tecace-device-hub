@@ -277,8 +277,8 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
-    // Check if device is being released (assignedToId being set to null when it was previously set)
-    const isBeingReleased = device.assignedToId && !assignedToId;
+    // Check if device is being released (assignedToId being explicitly set to null when it was previously set)
+    const isBeingReleased = device.assignedToId && assignedToId === null;
     
     // Update device
     await device.update({
@@ -292,7 +292,8 @@ exports.update = async (req, res) => {
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
+      // Only update assignedToId if it's explicitly included in the request
+      ...(assignedToId !== undefined && { assignedToId })
     });
 
     // If the device is being released, create an auto-approved release request
@@ -311,18 +312,20 @@ exports.update = async (req, res) => {
         reason: 'Device returned by user'
       });
       
-      // Mark any previous 'assign' requests as 'returned'
-      await Request.update(
-        { status: 'returned' },
-        { 
-          where: { 
-            deviceId: device.id,
-            userId: device.assignedToId,
-            type: 'assign',
-            status: 'approved'
-          }
+      // Mark any previous 'assign' requests with status 'approved'
+      const prevAssignRequests = await Request.findAll({
+        where: { 
+          deviceId: device.id,
+          userId: device.assignedToId,
+          type: 'assign',
+          status: 'approved'
         }
-      );
+      });
+      
+      // Handle each request individually to avoid SQL errors
+      for (const request of prevAssignRequests) {
+        await request.update({ status: 'returned' });
+      }
       
       // Update device status
       await device.update({
@@ -494,18 +497,20 @@ exports.processRequest = async (req, res) => {
           requestedBy: null
         });
         
-        // Mark any previous 'assign' requests as 'returned'
-        await Request.update(
-          { status: 'returned' },
-          { 
-            where: { 
-              deviceId: request.deviceId,
-              userId: request.userId,
-              type: 'assign',
-              status: 'approved'
-            }
+        // Mark any previous 'assign' requests with status 'approved'
+        const prevAssignRequests = await Request.findAll({
+          where: { 
+            deviceId: request.deviceId,
+            userId: request.userId,
+            type: 'assign',
+            status: 'approved'
           }
-        );
+        });
+        
+        // Handle each request individually to avoid SQL errors
+        for (const request of prevAssignRequests) {
+          await request.update({ status: 'returned' });
+        }
       }
     } else {
       // If rejected, just clear the requestedBy field

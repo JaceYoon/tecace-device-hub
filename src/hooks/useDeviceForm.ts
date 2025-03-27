@@ -57,14 +57,42 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       devicePicture: '',
     });
   };
+  
+  const validateDeviceData = () => {
+    const { project, projectGroup, imei, serialNumber } = deviceData;
+    
+    if (!project) {
+      toast.error('Please fill all required fields');
+      return false;
+    }
+    
+    // Validate serial number (only alphanumeric characters)
+    if (serialNumber && !/^[a-zA-Z0-9]+$/.test(serialNumber)) {
+      toast.error('Serial number can only contain letters and numbers');
+      return false;
+    }
+    
+    // Validate IMEI (exactly 15 digits)
+    if (imei && !/^\d{15}$/.test(imei)) {
+      toast.error('IMEI must be exactly 15 digits');
+      return false;
+    }
+    
+    return true;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
     
-    if (!project || !type) {
+    if (!project) {
       toast.error('Please fill all required fields');
+      return;
+    }
+    
+    // Validate device data
+    if (!validateDeviceData()) {
       return;
     }
     
