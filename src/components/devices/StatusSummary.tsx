@@ -1,6 +1,6 @@
-
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
+import api from '@/services/api.service';
 import { Device, DeviceRequest } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw } from 'lucide-react';
@@ -48,36 +48,51 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
       setLoading(true);
       setError(null);
       
-      // Use Promise.allSettled to handle partial failures
-      const results = await Promise.allSettled([
-        dataService.getDevices(),
-        dataService.devices.getAllRequests()
-      ]);
+      // Fetch devices - try both services
+      let devicesData: Device[] = [];
+      let requestsData: DeviceRequest[] = [];
       
-      // Handle devices result
-      if (results[0].status === 'fulfilled') {
-        console.log('StatusSummary - fetched devices:', results[0].value.length);
-        setDevices(results[0].value);
-      } else {
-        console.error('Error fetching devices:', results[0].reason);
-        setDevices([]);
-      }
-      
-      // Handle requests result
-      if (results[1].status === 'fulfilled') {
-        console.log('StatusSummary - fetched requests:', results[1].value.length);
-        setRequests(results[1].value);
-      } else {
-        console.error('Error fetching requests:', results[1].reason);
-        setRequests([]);
+      // Try API first for devices
+      try {
+        devicesData = await api.devices.getAll();
+        console.log('StatusSummary - fetched devices from API:', devicesData.length);
+      } catch (error) {
+        console.error('Error fetching devices from API:', error);
         
-        // Only show the toast for request errors if they're not network related
-        const errorMessage = results[1].reason?.message || 'Unknown error';
-        if (!errorMessage.includes('Failed to fetch') && 
-            !errorMessage.includes('ECONNREFUSED')) {
-          toast.error(`Error loading requests: ${errorMessage}`);
+        // Try dataService as fallback
+        try {
+          devicesData = await dataService.devices.getAll();
+          console.log('StatusSummary - fetched devices from dataService:', devicesData.length);
+        } catch (fallbackError) {
+          console.error('Error fetching devices from dataService:', fallbackError);
         }
       }
+      
+      // Try API first for requests
+      try {
+        requestsData = await api.devices.getAllRequests();
+        console.log('StatusSummary - fetched requests from API:', requestsData.length);
+      } catch (error) {
+        console.error('Error fetching requests from API:', error);
+        
+        // Try dataService as fallback
+        try {
+          requestsData = await dataService.devices.getAllRequests();
+          console.log('StatusSummary - fetched requests from dataService:', requestsData.length);
+        } catch (fallbackError) {
+          console.error('Error fetching requests from dataService:', fallbackError);
+          
+          // Only show the toast for request errors if they're not network related
+          const errorMessage = fallbackError instanceof Error ? fallbackError.message : 'Unknown error';
+          if (!errorMessage.includes('Failed to fetch') && 
+              !errorMessage.includes('ECONNREFUSED')) {
+            toast.error(`Error loading requests: ${errorMessage}`);
+          }
+        }
+      }
+      
+      setDevices(devicesData);
+      setRequests(requestsData);
     } catch (error) {
       console.error('Error fetching data for status summary:', error);
       // Clear data on error to prevent stale data display
