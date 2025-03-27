@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import {
   Card,
@@ -27,9 +28,11 @@ import DeviceHistoryDialog from './DeviceHistoryDialog';
 interface DeviceCardProps {
   device: Device;
   onEdit: (deviceId: string) => void;
+  className?: string;
+  showReturnControls?: boolean;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ device, onEdit }) => {
+const DeviceCard: React.FC<DeviceCardProps> = ({ device, onEdit, className, showReturnControls }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isHistoryDialogOpen, setIsHistoryDialogOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -71,14 +74,14 @@ const DeviceCard: React.FC<DeviceCardProps> = ({ device, onEdit }) => {
 
   return (
     <>
-      <Card className="shadow-md hover:shadow-lg transition-shadow duration-300">
+      <Card className={`shadow-md hover:shadow-lg transition-shadow duration-300 ${className || ''}`}>
         <CardHeader>
-          <CardTitle>{device.name}</CardTitle>
+          <CardTitle>{device.project}</CardTitle>
           <CardDescription>{device.deviceType}</CardDescription>
         </CardHeader>
         <CardContent>
           <p>Serial: {device.serialNumber}</p>
-          <p>Manufacturer: {device.manufacturer}</p>
+          <p>Type: {device.type}</p>
         </CardContent>
         <CardFooter className="flex justify-between items-center">
           <Button variant="secondary" onClick={() => navigate(`/device-details/${device.id}`)}>
