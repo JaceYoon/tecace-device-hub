@@ -73,6 +73,22 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     }
   };
 
+  // IMEI validation - allow empty or 15 digits only
+  const handleImeiChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '' || /^\d{0,15}$/.test(value)) {
+      handleChange(e);
+    }
+  };
+
+  // Serial Number validation - allow alphanumeric only
+  const handleSerialNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (/^[a-zA-Z0-9]*$/.test(value)) {
+      handleChange(e);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,24 +154,25 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="serialNumber">Serial Number</Label>
+          <Label htmlFor="serialNumber">Serial Number (alphanumeric only)</Label>
           <Input
             id="serialNumber"
             name="serialNumber"
             placeholder="Serial Number"
             value={deviceData.serialNumber || ''}
-            onChange={handleChange}
+            onChange={handleSerialNumberChange}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="imei">IMEI</Label>
+          <Label htmlFor="imei">IMEI (15 digits)</Label>
           <Input
             id="imei"
             name="imei"
             placeholder="IMEI"
             value={deviceData.imei || ''}
-            onChange={handleChange}
+            onChange={handleImeiChange}
+            maxLength={15}
           />
         </div>
       </div>

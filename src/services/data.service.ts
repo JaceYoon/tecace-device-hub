@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -224,13 +223,16 @@ export const dataService = {
   getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
     try {
+      // Make a copy of the updates to ensure we don't modify the original object
+      const updatesCopy = { ...updates };
+      
       // For device releases, we need special handling
-      if (updates.status === 'available' && updates.assignedTo === undefined) {
+      if (updatesCopy.status === 'available' && updatesCopy.assignedToId === undefined) {
         console.log(`Special handling for device release: ${id}`);
         
         // Try to update the device via API first
         try {
-          const updatedDevice = await deviceService.update(id, updates);
+          const updatedDevice = await deviceService.update(id, updatesCopy);
           console.log(`Device ${id} released via API`);
           
           // Trigger refresh after a short delay
@@ -258,8 +260,26 @@ export const dataService = {
         }
       }
       
+      // Regular device update - verify if we're keeping the assignedToId
+      if (updatesCopy.assignedToId === undefined) {
+        // Get the current device to preserve assignment if not explicitly changing it
+        try {
+          const currentDevice = await deviceService.getById(id);
+          if (currentDevice && currentDevice.assignedToId) {
+            // Preserve the existing assignment
+            console.log(`Preserving existing assignment for device ${id} to user ${currentDevice.assignedToId}`);
+            updatesCopy.assignedToId = currentDevice.assignedToId;
+          }
+        } catch (error) {
+          console.error(`Error fetching current device ${id} state:`, error);
+          // Continue with the update even if we couldn't fetch the current state
+        }
+      }
+      
+      console.log(`Updating device ${id} with data:`, updatesCopy);
+      
       // Regular device update
-      const updatedDevice = await deviceService.update(id, updates);
+      const updatedDevice = await deviceService.update(id, updatesCopy);
       
       // Trigger refresh after a short delay
       setTimeout(() => dataService.triggerRefresh(), 500);

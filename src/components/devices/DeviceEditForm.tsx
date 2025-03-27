@@ -15,7 +15,11 @@ interface DeviceEditFormProps {
   onCancel?: () => void;
 }
 
-const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated, onCancel }) => {
+const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ 
+  device, 
+  onDeviceUpdated, 
+  onCancel 
+}) => {
   const { user, isManager } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -52,6 +56,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
+    assignedToId: device.assignedToId, // Keep track of assignment
   });
   
   // Strictly typed list of device types matching the database schema
@@ -112,10 +117,34 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture } = deviceData;
+    const { 
+      project, 
+      projectGroup, 
+      type, 
+      deviceType, 
+      imei, 
+      serialNumber, 
+      status, 
+      deviceStatus, 
+      receivedDate, 
+      notes, 
+      devicePicture 
+    } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
+      return;
+    }
+    
+    // Validate IMEI if provided (must be 15 digits or empty)
+    if (imei && !/^\d{15}$/.test(imei)) {
+      toast.error('IMEI must be 15 digits');
+      return;
+    }
+    
+    // Validate serial number if provided (must be alphanumeric)
+    if (serialNumber && !/^[a-zA-Z0-9]*$/.test(serialNumber)) {
+      toast.error('Serial number must contain only letters and numbers');
       return;
     }
     
@@ -128,19 +157,34 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
-      const updatedDevice = await dataService.updateDevice(device.id, {
+      // Create update object, intentionally excluding assignedToId to preserve ownership
+      const updateData = {
         project,
         projectGroup,
         type,
         deviceType,
-        imei,
-        serialNumber,
-        status,
-        deviceStatus: deviceStatus || undefined,
+        imei: imei || null,
+        serialNumber: serialNumber || null,
+        deviceStatus: deviceStatus || null,
         receivedDate,
-        notes: notes || undefined,
-        devicePicture: devicePicture || undefined,
-      });
+        notes: notes || null,
+        devicePicture: devicePicture || null,
+      };
+      
+      // Only include status if we're actually changing it (avoid accidental status changes)
+      if (status !== device.status) {
+        updateData.status = status;
+      }
+      
+      // CRITICAL FIX: Only include assignedToId if we're intentionally changing it
+      // This preserves the current assignment unless explicitly changed
+      if (device.assignedToId !== deviceData.assignedToId) {
+        updateData.assignedToId = deviceData.assignedToId;
+      }
+      
+      console.log('Updating device with data:', updateData);
+      
+      const updatedDevice = await dataService.updateDevice(device.id, updateData);
       
       if (updatedDevice) {
         toast.success('Device updated successfully', {
