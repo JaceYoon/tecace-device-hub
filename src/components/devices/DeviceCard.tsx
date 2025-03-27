@@ -14,7 +14,7 @@ import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import { DeviceEditDialog } from './DeviceEditDialog';
-import { DeviceHistoryDialog } from './DeviceHistoryDialog';
+import DeviceHistoryDialog from './DeviceHistoryDialog';
 import {
   AlertDialog,
   AlertDialogAction,

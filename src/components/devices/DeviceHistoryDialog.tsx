@@ -1,8 +1,23 @@
+
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogHeader, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { X, Download } from 'lucide-react';
 import { Device } from '@/types';
+import { useAsync } from '@/hooks/useAsync';
+import { dataService } from '@/services/data.service';
+import { toast } from 'sonner';
+import { format } from "date-fns";
+import {
+  Table,
+  TableBody,
+  TableCaption,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { User } from '@/types';
 
 interface ImageDialogProps {
   isOpen: boolean;
@@ -63,7 +78,7 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
         <DialogFooter className="p-4 flex justify-center">
           <Button 
             variant="outline"
-            className="ml-4 gap-2" 
+            className="gap-2" 
             onClick={handleDownload}
           >
             <Download className="h-4 w-4" />
@@ -75,29 +90,12 @@ export const ImageDialog: React.FC<ImageDialogProps> = ({
   );
 };
 
-// Main component for the device history dialog
-import {
-  Table,
-  TableBody,
-  TableCaption,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { dataService } from '@/services/data.service';
-import { useAsync } from '@/hooks/useAsync';
-import { toast } from 'sonner';
-import { Calendar } from "@/components/ui/calendar"
-import { format } from "date-fns"
-import { cn } from "@/lib/utils"
-import { CalendarIcon } from "lucide-react"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-
 interface DeviceHistoryDialogProps {
   deviceId: string;
   deviceName: string;
   devicePicture?: string;
+  device?: Device;
+  users?: User[];
 }
 
 interface HistoryEntry {
@@ -112,10 +110,16 @@ interface HistoryEntry {
   releaseReason: string | null;
 }
 
-const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({ deviceId, deviceName, devicePicture }) => {
+const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({ 
+  deviceId, 
+  deviceName, 
+  devicePicture,
+  device,
+  users
+}) => {
   const [open, setOpen] = useState(false);
   const [isImageOpen, setIsImageOpen] = useState(false);
-  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date())
+  const [selectedDate, setSelectedDate] = React.useState<Date | undefined>(new Date());
   
   const {
     data: history,
