@@ -30,6 +30,21 @@ export const setUserLoggedOut = () => {
 // Import the store data directly instead of using require()
 import { deviceStore, userStore, requestStore } from '../utils/data';
 
+// Helper function to convert string 'null' to actual null
+const formatPayload = (payload: any) => {
+  const formattedPayload = { ...payload };
+  
+  // Convert string 'null' to actual null for specific fields
+  const fieldsToCheck = ['assignedToId', 'addedById', 'requestedBy'];
+  fieldsToCheck.forEach(field => {
+    if (formattedPayload[field] === 'null') {
+      formattedPayload[field] = null;
+    }
+  });
+  
+  return formattedPayload;
+};
+
 // Helper function for API calls with dev mode fallback
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   try {
@@ -110,7 +125,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 }
 
 // Auth services
-const authService = {
+export const authService = {
   checkAuth: (): Promise<{ isAuthenticated: boolean; user: User | null }> =>
     apiCall<{ isAuthenticated: boolean; user: User | null }>('/auth/check'),
 
@@ -139,8 +154,8 @@ const authService = {
   },
 };
 
-// Define deviceService
-const deviceService = {
+// Define and export deviceService
+export const deviceService = {
   getAll: (): Promise<Device[]> =>
     apiCall<Device[]>('/devices'),
 
@@ -156,11 +171,13 @@ const deviceService = {
       body: JSON.stringify(device)
     }),
 
-  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> =>
-    apiCall<Device | null>(`/devices/${id}`, {
+  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
+    const formattedData = formatPayload(updates);
+    return apiCall<Device | null>(`/devices/${id}`, {
       method: 'PUT',
-      body: JSON.stringify(updates)
-    }),
+      body: JSON.stringify(formattedData)
+    });
+  },
 
   delete: (id: string): Promise<{ success: boolean }> =>
     apiCall<{ success: boolean }>(`/devices/${id}`, {
@@ -189,7 +206,7 @@ const deviceService = {
 };
 
 // User services
-const userService = {
+export const userService = {
   getAll: (): Promise<User[]> =>
     apiCall<User[]>('/users'),
 
@@ -206,177 +223,11 @@ const userService = {
     }),
 };
 
-// Create a global refresh callback mechanism
-let refreshCallbacks: (() => void)[] = [];
-
-// Create a unified dataService object that includes all the services
-export const dataService = {
-  // Add services
+// Export the api object that contains all methods
+export const api = {
   auth: authService,
   devices: deviceService,
   users: userService,
-  
-  // Add direct methods to maintain compatibility with existing code
-  getDeviceHistory: deviceService.getDeviceHistory,
-  getDevices: deviceService.getAll,
-  getUsers: userService.getAll,
-  getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
-  updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
-    try {
-      // Important: Check if this is a device that's assigned and make sure we preserve assignment
-      const currentDevice = await deviceService.getById(id);
-      
-      // Special handling for assigned devices
-      if (currentDevice && currentDevice.status === 'assigned' && currentDevice.assignedToId) {
-        // Explicitly preserve the assignment when updating unless explicitly changing it
-        if (updates.status === undefined && updates.assignedToId === undefined) {
-          console.log(`Preserving assignment for device ${id} to user ${currentDevice.assignedToId}`);
-          updates.status = 'assigned';
-          updates.assignedToId = currentDevice.assignedToId;
-        }
-      }
-      
-      // For device releases, we need special handling
-      if (updates.status === 'available' && updates.assignedTo === undefined) {
-        console.log(`Special handling for device release: ${id}`);
-        
-        // Try to update the device via API first
-        try {
-          const updatedDevice = await deviceService.update(id, updates);
-          console.log(`Device ${id} released via API`);
-          
-          // Trigger refresh after a short delay
-          setTimeout(() => dataService.triggerRefresh(), 500);
-          
-          return updatedDevice;
-        } catch (apiError) {
-          // If the API fails due to ownership issues, try the fallback approach
-          if (apiError instanceof Error && apiError.message.includes('not assigned to you')) {
-            console.log('Using fallback for device release due to ownership issue');
-            
-            // Try immediate local update as fallback
-            const localDevice = await deviceStore.updateDevice(id, {
-              assignedTo: undefined,
-              assignedToId: undefined,
-              status: 'available',
-            });
-            
-            // Trigger refresh
-            setTimeout(() => dataService.triggerRefresh(), 300);
-            
-            return localDevice;
-          }
-          throw apiError;
-        }
-      }
-      
-      // Regular device update
-      const updatedDevice = await deviceService.update(id, updates);
-      
-      // Trigger refresh after a short delay
-      setTimeout(() => dataService.triggerRefresh(), 500);
-      
-      return updatedDevice;
-    } catch (error) {
-      console.error('Error updating device:', error);
-      toast.error('Failed to update device');
-      throw error;
-    }
-  },
-  deleteDevice: deviceService.delete,
-  processRequest: deviceService.processRequest,
-  addDevice: deviceService.create,
-  
-  addRequest: async (request: Omit<DeviceRequest, 'id' | 'requestedAt'>): Promise<DeviceRequest> => {
-    try {
-      // If it's a release request, first update the device to prevent loops
-      if (request.type === 'release') {
-        try {
-          // First update the device to release it
-          await dataService.updateDevice(request.deviceId, {
-            assignedTo: undefined,
-            assignedToId: undefined,
-            status: 'available',
-          });
-          
-          console.log(`Device ${request.deviceId} released directly during request creation`);
-          
-          // Small delay to ensure device updates are processed first
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          // Then create the request (which might fail, but that's ok since device is already released)
-          try {
-            const newRequest = await deviceService.requestDevice(
-              request.deviceId,
-              request.type as 'assign' | 'release'
-            );
-            
-            console.log('Release request added successfully:', newRequest);
-            return newRequest;
-          } catch (requestError) {
-            // If API request fails, create a local request record instead
-            console.log('API release request failed, creating local record instead');
-            const localRequest = requestStore.addRequest({
-              ...request,
-              status: 'approved' // Auto-approve local release requests
-            });
-            
-            // Trigger refresh
-            setTimeout(() => dataService.triggerRefresh(), 300);
-            
-            return localRequest;
-          }
-        } catch (deviceUpdateError) {
-          console.error('Error updating device during release:', deviceUpdateError);
-          // If direct update fails, try the API request as fallback
-          const newRequest = await deviceService.requestDevice(
-            request.deviceId,
-            request.type as 'assign' | 'release'
-          );
-          
-          console.log('Release request added via API fallback:', newRequest);
-          
-          // Trigger refresh
-          setTimeout(() => dataService.triggerRefresh(), 300);
-          
-          return newRequest;
-        }
-      } else {
-        // For non-release requests (assign), use normal flow
-        const newRequest = await deviceService.requestDevice(
-          request.deviceId,
-          request.type as 'assign' | 'release'
-        );
-        
-        console.log('Request added successfully:', newRequest);
-        
-        // Trigger refresh callback with a delay to avoid immediate refresh loops
-        setTimeout(() => {
-          dataService.triggerRefresh();
-        }, 300);
-        
-        return newRequest;
-      }
-    } catch (error) {
-      console.error('Error adding request:', error);
-      toast.error('Failed to process device request');
-      throw error;
-    }
-  },
-  
-  // Define triggerRefresh function
-  triggerRefresh: () => {
-    refreshCallbacks.forEach(callback => callback());
-  },
-  
-  registerRefreshCallback: (callback: () => void) => {
-    refreshCallbacks.push(callback);
-    return () => {
-      refreshCallbacks = refreshCallbacks.filter(cb => cb !== callback);
-    };
-  },
-  
-  // Helper methods for HTTP operations
   get: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint),
   post: <T>(endpoint: string, data: any): Promise<T> => apiCall<T>(endpoint, {
     method: 'POST',
@@ -388,8 +239,7 @@ export const dataService = {
   }),
   delete: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint, {
     method: 'DELETE'
-  }),
+  })
 };
 
-// Export the dataService as default as well for flexibility
-export default dataService;
+export default api;
