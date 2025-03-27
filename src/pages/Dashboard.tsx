@@ -43,7 +43,7 @@ const Dashboard: React.FC = () => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const allRequests = await dataService.getAllRequests();
+        const allRequests = await dataService.devices.getAllRequests();
         console.log("Dashboard: Fetched requests:", allRequests);
         setRequests(allRequests);
         
@@ -90,19 +90,12 @@ const Dashboard: React.FC = () => {
   }, [user, refreshTrigger, isAuthenticated]);
 
   useEffect(() => {
-    // Create a noop unregister function as a fallback
-    let unregister = () => {};
-    
-    if (dataService.registerRefreshCallback) {
-      unregister = dataService.registerRefreshCallback(() => {
-        setRefreshTrigger(prev => prev + 1);
-      });
-    } else {
-      console.warn('registerRefreshCallback not available in dataService');
-    }
+    const unregister = dataService.registerRefreshCallback(() => {
+      setRefreshTrigger(prev => prev + 1);
+    });
     
     return () => {
-      unregister();
+      if (unregister) unregister();
     };
   }, []);
 

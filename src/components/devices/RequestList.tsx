@@ -27,16 +27,16 @@ const RequestList: React.FC<RequestListProps> = ({
 }) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const { isAdmin, user } = useAuth();
   const [loading, setLoading] = useState(true);
+  const { isAdmin, user } = useAuth();
   const [processing, setProcessing] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [requestsData, usersData] = await Promise.all([
-        dataService.getAllRequests(),
-        dataService.getUsers()
+        dataService.devices.getAllRequests(),
+        dataService.users.getAll()
       ]);
       console.log("Fetched requests:", requestsData.length);
       setRequests(requestsData);
@@ -86,7 +86,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const handleCancel = async (requestId: string) => {
     setProcessing(requestId);
     try {
-      await dataService.cancelRequest(requestId);
+      await dataService.devices.cancelRequest(requestId);
       toast.success('Request cancelled successfully');
       fetchData();
       if (onRequestProcessed) onRequestProcessed();

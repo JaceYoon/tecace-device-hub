@@ -52,7 +52,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh, refreshTrigger
       // Use Promise.allSettled to handle partial failures
       const results = await Promise.allSettled([
         dataService.getDevices(),
-        dataService.getAllRequests()
+        dataService.devices.getAllRequests()
       ]);
       
       // Handle devices result
