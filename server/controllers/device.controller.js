@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -277,11 +278,12 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
-    // Check if device is being released (assignedToId being set to null when it was previously set)
-    const isBeingReleased = device.assignedToId && !assignedToId;
+    // Only handle a device release if assignedToId is explicitly set to null
+    // and the device previously had an assignment
+    const isBeingReleased = device.assignedToId && assignedToId === null;
     
-    // Update device
-    await device.update({
+    // Update device - only include assignedToId in the update if it was explicitly provided
+    const updateFields = {
       project: project || device.project,
       projectGroup: projectGroup || device.projectGroup,
       type: type || device.type,
@@ -292,8 +294,14 @@ exports.update = async (req, res) => {
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
-    });
+    };
+    
+    // Only update assignedToId if it was explicitly provided in the request
+    if (assignedToId !== undefined) {
+      updateFields.assignedToId = assignedToId;
+    }
+    
+    await device.update(updateFields);
 
     // If the device is being released, create an auto-approved release request
     if (isBeingReleased) {

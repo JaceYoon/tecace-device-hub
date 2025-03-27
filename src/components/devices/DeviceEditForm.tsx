@@ -152,7 +152,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
-      const updatedDevice = await dataService.updateDevice(device.id, {
+      // Create update object but preserve the device's assignment status
+      // This is the key change to fix the issue - we won't touch assignedTo or assignedToId
+      const updateData = {
         project,
         projectGroup,
         type,
@@ -164,7 +166,11 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         receivedDate,
         notes: notes || undefined,
         devicePicture: devicePicture || undefined,
-      });
+        // Preserve the device's current assignment by not including
+        // assignedTo or assignedToId in the update
+      };
+      
+      const updatedDevice = await dataService.updateDevice(device.id, updateData);
       
       if (updatedDevice) {
         toast.success('Device updated successfully', {
