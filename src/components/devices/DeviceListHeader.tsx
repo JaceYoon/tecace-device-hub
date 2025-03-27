@@ -8,13 +8,17 @@ interface DeviceListHeaderProps {
   showExportButton: boolean;
   devices: Device[];
   users: User[];
+  showAddButton?: boolean;
+  showManagementLink?: boolean;
 }
 
 const DeviceListHeader: React.FC<DeviceListHeaderProps> = ({
   title,
   showExportButton = true,
   devices,
-  users
+  users,
+  showAddButton,
+  showManagementLink
 }) => {
   if (!title) return null;
   
