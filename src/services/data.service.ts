@@ -110,7 +110,8 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
           try {
             const body = JSON.parse(options.body as string);
             const { email } = body;
-            const user = userStore.getUserByEmail(email);
+            // Find user by email among all users
+            const user = userStore.getUsers().find(u => u.email === email);
             
             if (user) {
               localStorage.setItem('dev-user-id', user.id);
@@ -131,7 +132,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       
       // Device endpoints
       if (endpoint === '/devices') {
-        return deviceStore.getAllDevices() as T;
+        return deviceStore.getDevices() as T;
       }
       
       if (endpoint.startsWith('/devices/') && !endpoint.includes('requests')) {
@@ -141,7 +142,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       
       // Request endpoints
       if (endpoint === '/devices/requests/all') {
-        return requestStore.getAllRequests() as T;
+        return requestStore.getRequests() as T;
       }
       
       if (endpoint.startsWith('/devices/requests/') && options.method === 'PUT') {
@@ -151,7 +152,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
           const { status } = body;
           
           if (status === 'approved' || status === 'rejected') {
-            return requestStore.updateRequest(requestId, { status }) as T;
+            // Use the existing processRequest method that handles status updates
+            const userId = localStorage.getItem('dev-user-id') || '1'; // Default to admin if none found
+            return requestStore.processRequest(requestId, status, userId) as T;
           }
         } catch (e) {
           console.error('Error parsing request body:', e);
@@ -160,7 +163,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       
       // User endpoints
       if (endpoint === '/users') {
-        return userStore.getAllUsers() as T;
+        return userStore.getUsers() as T;
       }
       
       if (endpoint === '/users/me') {
