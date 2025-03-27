@@ -33,9 +33,8 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
         <div key={device.id} className="flex">
           <DeviceCard 
             device={device} 
-            onEdit={() => {
-              if (onAction) onAction();
-            }}
+            users={users} 
+            onAction={onAction}
             className="w-full"
             showReturnControls={showReturnControls}
           />

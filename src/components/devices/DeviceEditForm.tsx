@@ -52,7 +52,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
-    assignedToId: device.assignedToId,  // Preserve the assignedToId
   });
   
   // Strictly typed list of device types matching the database schema
@@ -113,7 +112,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture, assignedToId } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
@@ -141,7 +140,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         receivedDate,
         notes: notes || undefined,
         devicePicture: devicePicture || undefined,
-        assignedToId, // Keep the assignedToId when updating
       });
       
       if (updatedDevice) {

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -112,7 +111,7 @@ const DeviceManagement: React.FC = () => {
           </div>
         </div>
 
-        <StatusSummary />
+        <StatusSummary onRefresh={handleRefresh} />
 
         {showAddForm && (
           <div className="mb-8">
