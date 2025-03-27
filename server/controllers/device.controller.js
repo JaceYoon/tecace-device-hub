@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -278,9 +279,13 @@ exports.update = async (req, res) => {
     }
 
     // Check if device is being released (assignedToId being set to null when it was previously set)
-    const isBeingReleased = device.assignedToId && !assignedToId;
+    const isBeingReleased = device.assignedToId && assignedToId === undefined;
     
-    // Update device
+    // Fix: Only change assignedToId if it's explicitly provided as null or a value
+    const newAssignedToId = assignedToId === null ? null : 
+                           (assignedToId !== undefined ? assignedToId : device.assignedToId);
+    
+    // Update device - preserve assignedToId if it's not explicitly changed
     await device.update({
       project: project || device.project,
       projectGroup: projectGroup || device.projectGroup,
@@ -292,7 +297,7 @@ exports.update = async (req, res) => {
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
+      assignedToId: newAssignedToId
     });
 
     // If the device is being released, create an auto-approved release request
