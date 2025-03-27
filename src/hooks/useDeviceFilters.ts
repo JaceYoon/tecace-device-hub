@@ -51,7 +51,7 @@ export const useDeviceFilters = ({
   
   // Apply filters to devices
   const filteredDevices = devices.filter(device => {
-    // Search query filter - check project, type, serial number, IMEI, and now notes
+    // Search query filter - check project, type, serial number, IMEI, and notes
     if (searchQuery && !device.project?.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !device.type?.toLowerCase().includes(searchQuery.toLowerCase()) &&
         !device.serialNumber?.toLowerCase().includes(searchQuery.toLowerCase()) &&

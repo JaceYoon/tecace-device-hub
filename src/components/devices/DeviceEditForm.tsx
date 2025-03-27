@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,31 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    
+    // Validation for serial number - only alphanumeric characters
+    if (name === 'serialNumber' && value) {
+      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
+      if (!alphanumericRegex.test(value)) {
+        toast.error('Serial number can only contain letters and numbers');
+        return;
+      }
+    }
+    
+    // Validation for IMEI - only numbers with exactly 15 digits
+    if (name === 'imei' && value) {
+      const numericRegex = /^[0-9]*$/;
+      if (!numericRegex.test(value)) {
+        toast.error('IMEI can only contain numbers');
+        return;
+      }
+      
+      // Allow partial input (while typing), but warn if they've entered more than 15 digits
+      if (value.length > 15) {
+        toast.error('IMEI must be exactly 15 digits');
+        return;
+      }
+    }
+    
     setDeviceData(prev => ({
       ...prev,
       [name]: value,
@@ -123,6 +149,21 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     if (!deviceTypes.includes(type as DeviceTypeValue)) {
       toast.error('Please select a valid device type');
       return;
+    }
+    
+    // Final validation for IMEI before submission
+    if (imei && imei.length !== 15) {
+      toast.error('IMEI must be exactly 15 digits');
+      return;
+    }
+    
+    // Final validation for serial number
+    if (serialNumber) {
+      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
+      if (!alphanumericRegex.test(serialNumber)) {
+        toast.error('Serial number can only contain letters and numbers');
+        return;
+      }
     }
     
     setIsSubmitting(true);

@@ -77,9 +77,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="project">Project Name *</Label>
+          <Label htmlFor="device-project">Project Name *</Label>
           <Input
-            id="project"
+            id="device-project"
             name="project"
             placeholder="Project Name"
             value={deviceData.project}
@@ -89,9 +89,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="projectGroup">Project Group *</Label>
+          <Label htmlFor="device-projectGroup">Project Group *</Label>
           <Input
-            id="projectGroup"
+            id="device-projectGroup"
             name="projectGroup"
             placeholder="Galaxy S25 Series, Tablet S10 Series, Galaxy Watch 7 Series and etc.."
             value={deviceData.projectGroup}
@@ -103,12 +103,13 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="type">Device Type *</Label>
+          <Label htmlFor="device-type">Device Type *</Label>
           <Select
             value={deviceData.type}
             onValueChange={(value) => handleSelectChange(value, 'type')}
+            name="type"
           >
-            <SelectTrigger id="type">
+            <SelectTrigger id="device-type">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
@@ -120,12 +121,13 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deviceType">Type</Label>
+          <Label htmlFor="device-deviceType">Type</Label>
           <Select
             value={deviceData.deviceType}
             onValueChange={(value) => handleSelectChange(value, 'deviceType')}
+            name="deviceType"
           >
-            <SelectTrigger id="deviceType">
+            <SelectTrigger id="device-deviceType">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
@@ -138,9 +140,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="serialNumber">Serial Number</Label>
+          <Label htmlFor="device-serialNumber">Serial Number</Label>
           <Input
-            id="serialNumber"
+            id="device-serialNumber"
             name="serialNumber"
             placeholder="Serial Number"
             value={deviceData.serialNumber || ''}
@@ -149,9 +151,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="imei">IMEI</Label>
+          <Label htmlFor="device-imei">IMEI</Label>
           <Input
-            id="imei"
+            id="device-imei"
             name="imei"
             placeholder="IMEI"
             value={deviceData.imei || ''}
@@ -162,10 +164,12 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="receivedDate">Received Date</Label>
+          <Label htmlFor="device-receivedDate">Received Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                id="device-receivedDate"
+                name="receivedDate"
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
@@ -188,9 +192,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="deviceStatus">Status</Label>
+          <Label htmlFor="device-deviceStatus">Status</Label>
           <Input
-            id="deviceStatus"
+            id="device-deviceStatus"
             name="deviceStatus"
             placeholder="Mukundan or Matt"
             value={deviceData.deviceStatus || ''}
@@ -200,10 +204,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="devicePicture">Device Picture</Label>
+        <Label htmlFor="device-picture">Device Picture</Label>
         <div className="flex items-center gap-2">
           <Input
-            id="devicePicture"
+            id="device-picture"
             name="devicePicture-upload"
             type="file"
             accept="image/*"
@@ -225,9 +229,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="notes">Notes</Label>
+        <Label htmlFor="device-notes">Notes</Label>
         <Textarea
-          id="notes"
+          id="device-notes"
           name="notes"
           placeholder="Additional Notes"
           value={deviceData.notes || ''}
