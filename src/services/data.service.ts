@@ -1,11 +1,12 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to false to always use real backend API
-let devMode = false;
+// Development mode flag - set to true to always use mock data when API unavailable
+let devMode = true;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -88,6 +89,89 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   } catch (error) {
     console.error(`API error for ${endpoint}:`, error);
     
+    // Check if devMode is enabled and provide fallback data
+    if (devMode) {
+      console.log(`Using mock data fallback for ${endpoint}`);
+      
+      // Auth endpoints
+      if (endpoint.startsWith('/auth')) {
+        if (endpoint === '/auth/check') {
+          const userId = localStorage.getItem('dev-user-id');
+          const loggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+          
+          if (loggedIn && userId) {
+            const user = userStore.getUserById(userId);
+            return { isAuthenticated: true, user } as T;
+          }
+          return { isAuthenticated: false, user: null } as T;
+        }
+        
+        if (endpoint === '/auth/login' && options.method === 'POST') {
+          try {
+            const body = JSON.parse(options.body as string);
+            const { email } = body;
+            const user = userStore.getUserByEmail(email);
+            
+            if (user) {
+              localStorage.setItem('dev-user-id', user.id);
+              localStorage.setItem('dev-user-logged-in', 'true');
+              return { success: true, user, isAuthenticated: true } as T;
+            }
+          } catch (e) {
+            console.error('Error parsing login body:', e);
+          }
+        }
+        
+        if (endpoint === '/auth/logout') {
+          localStorage.removeItem('dev-user-id');
+          localStorage.setItem('dev-user-logged-in', 'false');
+          return { success: true } as T;
+        }
+      }
+      
+      // Device endpoints
+      if (endpoint === '/devices') {
+        return deviceStore.getAllDevices() as T;
+      }
+      
+      if (endpoint.startsWith('/devices/') && !endpoint.includes('requests')) {
+        const id = endpoint.split('/')[2];
+        return deviceStore.getDeviceById(id) as T;
+      }
+      
+      // Request endpoints
+      if (endpoint === '/devices/requests/all') {
+        return requestStore.getAllRequests() as T;
+      }
+      
+      if (endpoint.startsWith('/devices/requests/') && options.method === 'PUT') {
+        const requestId = endpoint.split('/')[3];
+        try {
+          const body = JSON.parse(options.body as string);
+          const { status } = body;
+          
+          if (status === 'approved' || status === 'rejected') {
+            return requestStore.updateRequest(requestId, { status }) as T;
+          }
+        } catch (e) {
+          console.error('Error parsing request body:', e);
+        }
+      }
+      
+      // User endpoints
+      if (endpoint === '/users') {
+        return userStore.getAllUsers() as T;
+      }
+      
+      if (endpoint === '/users/me') {
+        const userId = localStorage.getItem('dev-user-id');
+        if (userId) {
+          return userStore.getUserById(userId) as T;
+        }
+        return null as T;
+      }
+    }
+    
     // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
     if (error instanceof Error && 
         (error.message.includes('Failed to fetch') || 
@@ -95,7 +179,13 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
          error.message.includes('AbortError') || 
          error.message.includes('NetworkError'))) {
       // Show a more informative toast
-      toast.error('Unable to connect to the server. Please check that the server is running.');
+      toast.error('Unable to connect to the server. Switching to development mode.');
+      
+      // Enable devMode for future requests
+      devMode = true;
+      
+      // Retry the request with devMode enabled
+      return apiCall<T>(endpoint, options);
     } else if (
       // Only show toast for non-auth related errors and non-network errors
       // and not for 401 errors after logout
