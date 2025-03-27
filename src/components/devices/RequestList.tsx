@@ -17,13 +17,19 @@ interface RequestListProps {
   refreshTrigger?: number;
   userId?: string;
   showExportButton?: boolean;
+  limit?: number;
+  showProcessButtons?: boolean;
+  showFilterBar?: boolean;
 }
 
 const RequestList: React.FC<RequestListProps> = ({ 
   title = 'Device Requests', 
   onRequestProcessed, 
   refreshTrigger,
-  userId
+  userId,
+  limit,
+  showProcessButtons = true,
+  showFilterBar = true
 }) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -133,6 +139,9 @@ const RequestList: React.FC<RequestListProps> = ({
     filteredRequests = requests.filter(request => request.userId === user.id && request.status === 'pending');
   }
 
+  // If limit is provided, only show the specified number of devices
+  const limitedRequests = limit && limit > 0 ? filteredRequests.slice(0, limit) : filteredRequests;
+
   return (
     <Card className="w-full">
       <CardHeader>
@@ -143,7 +152,7 @@ const RequestList: React.FC<RequestListProps> = ({
           <div className="flex items-center justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ) : filteredRequests.length === 0 ? (
+        ) : limitedRequests.length === 0 ? (
           <p>No device requests found.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -158,7 +167,7 @@ const RequestList: React.FC<RequestListProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.map(request => (
+                {limitedRequests.map(request => (
                   <TableRow key={request.id}>
                     <TableCell>{getDeviceName(request)}</TableCell>
                     <TableCell>{getUserName(request.userId)}</TableCell>
@@ -172,7 +181,7 @@ const RequestList: React.FC<RequestListProps> = ({
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
-                        {isAdmin && request.status === 'pending' && (
+                        {isAdmin && request.status === 'pending' && showProcessButtons && (
                           <>
                             <Button
                               variant="outline"

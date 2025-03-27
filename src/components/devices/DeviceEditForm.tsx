@@ -51,12 +51,12 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
     deviceType: deviceTypeValue as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
-    status: device.status,
+    status: device.status, // Add status property
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
-    assignedToId: device.assignedToId, // Keep track of assignment
+    assignedToId: device.assignedToId, // Add assignedToId property
   });
   
   // Strictly typed list of device types matching the database schema

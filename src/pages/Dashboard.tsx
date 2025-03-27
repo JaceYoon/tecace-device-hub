@@ -1,5 +1,6 @@
+
 import React from 'react';
-import { PageContainer } from '@/components/layout';
+import PageContainer from '@/components/layout/PageContainer';
 import StatusSummary from '@/components/devices/StatusSummary';
 import DeviceList from '@/components/devices/DeviceList';
 import RequestList from '@/components/devices/RequestList';
@@ -9,7 +10,7 @@ const Dashboard = () => {
   const { isAuthenticated, isAdmin, isManager } = useAuth();
 
   return (
-    <PageContainer title="Dashboard">
+    <PageContainer>
       <div className="space-y-8">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatusSummary />

@@ -1,16 +1,24 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { Device, User } from '@/types';
+import { dataService } from '@/services/data.service';
 
 interface UseDeviceFiltersProps {
-  devices: Device[];
-  users: User[];
+  devices?: Device[];
+  users?: User[];
+  filterByAvailable?: boolean;
+  filterByAssignedToUser?: string;
+  filterByStatus?: string[];
+  refreshTrigger?: number;
 }
 
-export const useDeviceFilters = ({ devices, users }: UseDeviceFiltersProps) => {
+export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
+  const [loading, setLoading] = useState(true);
 
   // Extract unique device types for filter dropdown
   const deviceTypes = useMemo(() => {
@@ -19,6 +27,33 @@ export const useDeviceFilters = ({ devices, users }: UseDeviceFiltersProps) => {
       .filter((value, index, self) => self.indexOf(value) === index);
     return ['all', ...types];
   }, [devices]);
+
+  // Fetch data from API
+  const fetchData = async () => {
+    setLoading(true);
+    try {
+      const [devicesData, usersData] = await Promise.all([
+        dataService.getDevices(
+          props.filterByAvailable,
+          props.filterByAssignedToUser,
+          props.filterByStatus
+        ),
+        dataService.users.getAll()
+      ]);
+      
+      setDevices(devicesData);
+      setUsers(usersData);
+    } catch (error) {
+      console.error('Error fetching devices:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch data when component mounts or refreshTrigger changes
+  useEffect(() => {
+    fetchData();
+  }, [props.refreshTrigger, props.filterByAssignedToUser, props.filterByStatus, props.filterByAvailable]);
 
   // Filter devices based on search query, status, and type
   const filteredDevices = useMemo(() => {
@@ -55,7 +90,14 @@ export const useDeviceFilters = ({ devices, users }: UseDeviceFiltersProps) => {
     });
   }, [devices, searchQuery, statusFilter, typeFilter]);
 
+  // Add function to manually refresh data
+  const refreshData = async () => {
+    return await fetchData();
+  };
+
   return {
+    devices,
+    users,
     filteredDevices,
     searchQuery,
     setSearchQuery,
@@ -63,6 +105,9 @@ export const useDeviceFilters = ({ devices, users }: UseDeviceFiltersProps) => {
     setStatusFilter,
     typeFilter,
     setTypeFilter,
-    deviceTypes
+    deviceTypes,
+    fetchData,
+    refreshData,
+    loading
   };
 };
