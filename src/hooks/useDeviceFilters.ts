@@ -32,16 +32,28 @@ export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // Fix: Use getAll() instead of getDevices() with arguments
       const [devicesData, usersData] = await Promise.all([
-        dataService.getDevices(
-          props.filterByAvailable,
-          props.filterByAssignedToUser,
-          props.filterByStatus
-        ),
+        dataService.devices.getAll(),
         dataService.users.getAll()
       ]);
       
-      setDevices(devicesData);
+      // Apply filters in memory after fetching all devices
+      let filteredDevices = devicesData;
+      
+      if (props.filterByAvailable) {
+        filteredDevices = filteredDevices.filter(device => device.status === 'available');
+      }
+      
+      if (props.filterByAssignedToUser) {
+        filteredDevices = filteredDevices.filter(device => device.assignedToId === props.filterByAssignedToUser);
+      }
+      
+      if (props.filterByStatus && props.filterByStatus.length > 0) {
+        filteredDevices = filteredDevices.filter(device => props.filterByStatus?.includes(device.status));
+      }
+      
+      setDevices(filteredDevices);
       setUsers(usersData);
     } catch (error) {
       console.error('Error fetching devices:', error);

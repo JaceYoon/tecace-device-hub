@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
-import { Device, DeviceTypeCategory, DeviceTypeValue } from '@/types';
+import { Device, DeviceTypeCategory, DeviceTypeValue, DeviceStatus } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
@@ -170,7 +170,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
         receivedDate?: Date;
         notes: string | null;
         devicePicture: string | null;
-        status?: string;
+        status?: DeviceStatus;
         assignedToId?: string;
       } = {
         project,
@@ -187,7 +187,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
       
       // Only include status if we're actually changing it (avoid accidental status changes)
       if (status !== device.status) {
-        updateData.status = status;
+        updateData.status = status as DeviceStatus;
       }
       
       // CRITICAL FIX: Only include assignedToId if we're intentionally changing it
