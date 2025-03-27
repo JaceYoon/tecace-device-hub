@@ -128,7 +128,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
       deviceStatus, 
       receivedDate, 
       notes, 
-      devicePicture 
+      devicePicture,
+      assignedToId
     } = deviceData;
     
     if (!project || !type || !projectGroup) {
@@ -158,7 +159,20 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
     
     try {
       // Create update object, intentionally excluding assignedToId to preserve ownership
-      const updateData = {
+      const updateData: {
+        project: string;
+        projectGroup: string;
+        type: DeviceTypeValue;
+        deviceType: DeviceTypeCategory;
+        imei: string | null;
+        serialNumber: string | null;
+        deviceStatus: string | null;
+        receivedDate?: Date;
+        notes: string | null;
+        devicePicture: string | null;
+        status?: string;
+        assignedToId?: string;
+      } = {
         project,
         projectGroup,
         type,
@@ -178,8 +192,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
       
       // CRITICAL FIX: Only include assignedToId if we're intentionally changing it
       // This preserves the current assignment unless explicitly changed
-      if (device.assignedToId !== deviceData.assignedToId) {
-        updateData.assignedToId = deviceData.assignedToId;
+      if (device.assignedToId !== assignedToId) {
+        updateData.assignedToId = assignedToId;
       }
       
       console.log('Updating device with data:', updateData);
