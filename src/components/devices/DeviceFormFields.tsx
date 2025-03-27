@@ -40,6 +40,7 @@ interface DeviceFormFieldsProps {
   handleDateChange: (date: Date | undefined, field: string) => void;
   handleFileChange?: (file: File | null, field: string) => void;
   isEditMode?: boolean;
+  validationErrors?: Record<string, string>;
 }
 
 const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
@@ -49,7 +50,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleSelectChange,
   handleDateChange,
   handleFileChange,
-  isEditMode = false
+  isEditMode = false,
+  validationErrors = {}
 }) => {
   // Handle device picture file upload
   const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -77,21 +79,25 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     <div className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="device-project">Project Name *</Label>
+          <Label htmlFor="project">Project Name *</Label>
           <Input
-            id="device-project"
+            id="project"
             name="project"
             placeholder="Project Name"
             value={deviceData.project}
             onChange={handleChange}
             required
+            className={validationErrors.project ? 'border-red-500' : ''}
           />
+          {validationErrors.project && (
+            <p className="text-sm text-red-500">{validationErrors.project}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="device-projectGroup">Project Group *</Label>
+          <Label htmlFor="projectGroup">Project Group *</Label>
           <Input
-            id="device-projectGroup"
+            id="projectGroup"
             name="projectGroup"
             placeholder="Galaxy S25 Series, Tablet S10 Series, Galaxy Watch 7 Series and etc.."
             value={deviceData.projectGroup}
@@ -103,13 +109,12 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="device-type">Device Type *</Label>
+          <Label htmlFor="type">Device Type *</Label>
           <Select
             value={deviceData.type}
             onValueChange={(value) => handleSelectChange(value, 'type')}
-            name="type"
           >
-            <SelectTrigger id="device-type">
+            <SelectTrigger id="type">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
@@ -118,16 +123,18 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               ))}
             </SelectContent>
           </Select>
+          {validationErrors.type && (
+            <p className="text-sm text-red-500">{validationErrors.type}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="device-deviceType">Type</Label>
+          <Label htmlFor="deviceType">Type</Label>
           <Select
             value={deviceData.deviceType}
             onValueChange={(value) => handleSelectChange(value, 'deviceType')}
-            name="deviceType"
           >
-            <SelectTrigger id="device-deviceType">
+            <SelectTrigger id="deviceType">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
@@ -140,36 +147,42 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="device-serialNumber">Serial Number</Label>
+          <Label htmlFor="serialNumber">Serial Number</Label>
           <Input
-            id="device-serialNumber"
+            id="serialNumber"
             name="serialNumber"
             placeholder="Serial Number"
             value={deviceData.serialNumber || ''}
             onChange={handleChange}
+            className={validationErrors.serialNumber ? 'border-red-500' : ''}
           />
+          {validationErrors.serialNumber && (
+            <p className="text-sm text-red-500">{validationErrors.serialNumber}</p>
+          )}
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="device-imei">IMEI</Label>
+          <Label htmlFor="imei">IMEI</Label>
           <Input
-            id="device-imei"
+            id="imei"
             name="imei"
             placeholder="IMEI"
             value={deviceData.imei || ''}
             onChange={handleChange}
+            className={validationErrors.imei ? 'border-red-500' : ''}
           />
+          {validationErrors.imei && (
+            <p className="text-sm text-red-500">{validationErrors.imei}</p>
+          )}
         </div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="device-receivedDate">Received Date</Label>
+          <Label htmlFor="receivedDate">Received Date</Label>
           <Popover>
             <PopoverTrigger asChild>
               <Button
-                id="device-receivedDate"
-                name="receivedDate"
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
@@ -192,9 +205,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="device-deviceStatus">Status</Label>
+          <Label htmlFor="deviceStatus">Status</Label>
           <Input
-            id="device-deviceStatus"
+            id="deviceStatus"
             name="deviceStatus"
             placeholder="Mukundan or Matt"
             value={deviceData.deviceStatus || ''}
@@ -204,10 +217,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="device-picture-upload">Device Picture</Label>
+        <Label htmlFor="devicePicture">Device Picture</Label>
         <div className="flex items-center gap-2">
           <Input
-            id="device-picture-upload"
+            id="devicePicture"
             name="devicePicture-upload"
             type="file"
             accept="image/*"
@@ -229,9 +242,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="device-notes">Notes</Label>
+        <Label htmlFor="notes">Notes</Label>
         <Textarea
-          id="device-notes"
+          id="notes"
           name="notes"
           placeholder="Additional Notes"
           value={deviceData.notes || ''}

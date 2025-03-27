@@ -10,10 +10,9 @@ import { toast } from 'sonner';
 
 interface StatusSummaryProps {
   onRefresh?: () => void;
-  refreshTrigger?: number; // Add refreshTrigger as an optional prop
 }
 
-const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh, refreshTrigger }) => {
+const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +99,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh, refreshTrigger
       setRequests([]);
       setLoading(false);
     }
-  }, [isAuthenticated, user, refreshTrigger]); // Add refreshTrigger to dependencies
+  }, [isAuthenticated, user]);
   
   const handleRefresh = () => {
     fetchData();

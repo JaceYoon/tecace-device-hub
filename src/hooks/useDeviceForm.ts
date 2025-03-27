@@ -8,6 +8,7 @@ import { useAuth } from '@/components/auth/AuthProvider';
 export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [deviceData, setDeviceData] = useState({
     project: '',
     projectGroup: '',
@@ -21,41 +22,35 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     devicePicture: '',
   });
 
+  const validateField = (name: string, value: string): string => {
+    if (name === 'serialNumber' && value) {
+      // Check if serial number contains only alphanumeric characters
+      if (!/^[A-Za-z0-9]+$/.test(value)) {
+        return 'Serial number can only contain letters and numbers';
+      }
+    }
+    
+    if (name === 'imei' && value) {
+      // Check if IMEI is exactly 15 digits
+      if (!/^\d{15}$/.test(value)) {
+        return 'IMEI must be exactly 15 digits';
+      }
+    }
+    
+    return '';
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     
-    // Validation for serial number - only alphanumeric characters
-    if (name === 'serialNumber' && value) {
-      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
-      if (!alphanumericRegex.test(value)) {
-        toast.error('Serial number can only contain letters and numbers');
-        return;
-      }
-    }
+    // Validate the field
+    const errorMessage = validateField(name, value);
     
-    // Validation for IMEI - only numbers with exactly 15 digits or empty
-    if (name === 'imei') {
-      if (value === '') {
-        // Allow empty IMEI
-        setDeviceData(prev => ({
-          ...prev,
-          [name]: value,
-        }));
-        return;
-      }
-      
-      const numericRegex = /^[0-9]*$/;
-      if (!numericRegex.test(value)) {
-        toast.error('IMEI can only contain numbers');
-        return;
-      }
-      
-      // Allow partial input (while typing), but warn if they've entered more than 15 digits
-      if (value.length > 15) {
-        toast.error('IMEI must be exactly 15 digits');
-        return;
-      }
-    }
+    // Update validation errors
+    setValidationErrors(prev => ({
+      ...prev,
+      [name]: errorMessage
+    }));
     
     setDeviceData(prev => ({
       ...prev,
@@ -90,31 +85,62 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       receivedDate: undefined,
       devicePicture: '',
     });
+    setValidationErrors({});
+  };
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+    
+    // Required fields
+    if (!deviceData.project) {
+      errors.project = 'Project name is required';
+    }
+    
+    if (!deviceData.type) {
+      errors.type = 'Device type is required';
+    }
+    
+    // Validate serial number if provided
+    if (deviceData.serialNumber) {
+      const serialNumberError = validateField('serialNumber', deviceData.serialNumber);
+      if (serialNumberError) {
+        errors.serialNumber = serialNumberError;
+      }
+    }
+    
+    // Validate IMEI if provided
+    if (deviceData.imei) {
+      const imeiError = validateField('imei', deviceData.imei);
+      if (imeiError) {
+        errors.imei = imeiError;
+      }
+    }
+    
+    // Update validation errors state
+    setValidationErrors(errors);
+    
+    // Form is valid if there are no errors
+    return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate the form
+    if (!validateForm()) {
+      // Display the first validation error
+      const firstError = Object.values(validationErrors)[0];
+      if (firstError) {
+        toast.error(firstError);
+      }
+      return;
+    }
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
     
     if (!project || !type) {
       toast.error('Please fill all required fields');
       return;
-    }
-    
-    // Final validation for IMEI before submission
-    if (imei && imei.length !== 15) {
-      toast.error('IMEI must be exactly 15 digits or empty');
-      return;
-    }
-    
-    // Final validation for serial number
-    if (serialNumber) {
-      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
-      if (!alphanumericRegex.test(serialNumber)) {
-        toast.error('Serial number can only contain letters and numbers');
-        return;
-      }
     }
     
     setIsSubmitting(true);
@@ -161,5 +187,6 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     handleSubmit,
     isSubmitting,
     resetForm,
+    validationErrors,
   };
 };

@@ -13,7 +13,7 @@ interface DeviceFormProps {
 }
 
 const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
-  const { deviceData, setDeviceData, handleSubmit, handleChange, handleSelectChange, handleDateChange, isSubmitting } = useDeviceForm(onDeviceAdded);
+  const { deviceData, setDeviceData, handleSubmit, handleChange, handleSelectChange, handleDateChange, isSubmitting, validationErrors } = useDeviceForm(onDeviceAdded);
   
   // Strictly typed list of device types matching the database schema
   const deviceTypes: DeviceTypeValue[] = [
@@ -57,6 +57,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
             handleSelectChange={handleSelectChange}
             handleDateChange={handleDateChange}
             handleFileChange={handleFileChange}
+            validationErrors={validationErrors}
           />
         </CardContent>
         <CardFooter className="flex justify-between">

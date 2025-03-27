@@ -279,41 +279,25 @@ exports.update = async (req, res) => {
     }
 
     // Check if device is being released (assignedToId being set to null when it was previously set)
-    const isBeingReleased = device.assignedToId && assignedToId === null;
+    const isBeingReleased = device.assignedToId && assignedToId === undefined;
     
-    // Determine if we need to preserve the current assignment
-    const shouldPreserveAssignment = device.status === 'assigned' && 
-                                    device.assignedToId && 
-                                    assignedToId === undefined && 
-                                    status === undefined;
-
-    console.log('Update device request:', {
-      id: req.params.id,
-      assignedToId: assignedToId,
-      isBeingReleased,
-      shouldPreserveAssignment
-    });
-
-    // Handle null values properly for the database
-    // Important to convert 'null' strings to actual null values
-    const processedAssignedToId = 
-      assignedToId === null || assignedToId === 'null' || assignedToId === '' 
-        ? null 
-        : (shouldPreserveAssignment ? device.assignedToId : assignedToId);
-
-    // Update device
+    // Fix: Only change assignedToId if it's explicitly provided as null or a value
+    const newAssignedToId = assignedToId === null ? null : 
+                           (assignedToId !== undefined ? assignedToId : device.assignedToId);
+    
+    // Update device - preserve assignedToId if it's not explicitly changed
     await device.update({
       project: project || device.project,
       projectGroup: projectGroup || device.projectGroup,
       type: type || device.type,
       imei: imei !== undefined ? imei : device.imei,
       serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
-      status: shouldPreserveAssignment ? 'assigned' : (status || device.status),
+      status: status || device.status,
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: processedAssignedToId
+      assignedToId: newAssignedToId
     });
 
     // If the device is being released, create an auto-approved release request

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -51,7 +52,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
-    assignedToId: device.assignedToId // Preserve the assignedToId
+    assignedToId: device.assignedToId,  // Preserve the assignedToId
   });
   
   // Strictly typed list of device types matching the database schema
@@ -66,40 +67,6 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    
-    // Validation for serial number - only alphanumeric characters
-    if (name === 'serialNumber' && value) {
-      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
-      if (!alphanumericRegex.test(value)) {
-        toast.error('Serial number can only contain letters and numbers');
-        return;
-      }
-    }
-    
-    // Validation for IMEI - only numbers with exactly 15 digits or empty
-    if (name === 'imei') {
-      if (value === '') {
-        // Allow empty IMEI
-        setDeviceData(prev => ({
-          ...prev,
-          [name]: value,
-        }));
-        return;
-      }
-      
-      const numericRegex = /^[0-9]*$/;
-      if (!numericRegex.test(value)) {
-        toast.error('IMEI can only contain numbers');
-        return;
-      }
-      
-      // Allow partial input (while typing), but warn if they've entered more than 15 digits
-      if (value.length > 15) {
-        toast.error('IMEI must be exactly 15 digits');
-        return;
-      }
-    }
-    
     setDeviceData(prev => ({
       ...prev,
       [name]: value,
@@ -159,49 +126,22 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    // Final validation for IMEI before submission - allow empty or exactly 15 digits
-    if (imei && imei.length !== 15) {
-      toast.error('IMEI must be exactly 15 digits or empty');
-      return;
-    }
-    
-    // Final validation for serial number
-    if (serialNumber) {
-      const alphanumericRegex = /^[a-zA-Z0-9]*$/;
-      if (!alphanumericRegex.test(serialNumber)) {
-        toast.error('Serial number can only contain letters and numbers');
-        return;
-      }
-    }
-    
     setIsSubmitting(true);
     
     try {
-      // Explicitly preserve the assignedToId and status
-      const preserveOwnership = device.status === 'assigned' && device.assignedToId;
-
-      // FIX: Convert empty string assignedToId to null explicitly for the database
-      // The database error was happening because we were sending 'null' as a string
-      // instead of null as a value for assignedToId
-      let finalAssignedToId = assignedToId;
-      if (finalAssignedToId === '' || finalAssignedToId === 'null') {
-        finalAssignedToId = null;
-      }
-
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
         type,
         deviceType,
-        imei: imei || undefined,
-        serialNumber: serialNumber || undefined,
-        // Keep the current status and assignedToId if the device was assigned
-        status: preserveOwnership ? 'assigned' : status,
-        assignedToId: preserveOwnership ? device.assignedToId : finalAssignedToId,
+        imei,
+        serialNumber,
+        status,
         deviceStatus: deviceStatus || undefined,
         receivedDate,
         notes: notes || undefined,
         devicePicture: devicePicture || undefined,
+        assignedToId, // Keep the assignedToId when updating
       });
       
       if (updatedDevice) {

@@ -152,10 +152,18 @@ const Dashboard: React.FC = () => {
                 Welcome back, {user.name}
               </p>
             </div>
-            {/* Removed the Refresh button here */}
+            <Button 
+              onClick={handleRefresh} 
+              variant="outline" 
+              size="sm"
+              className="flex items-center gap-1"
+            >
+              <Clock className="h-4 w-4" />
+              Refresh
+            </Button>
           </div>
 
-          <StatusSummary onRefresh={handleRefresh} refreshTrigger={refreshTrigger} />
+          <StatusSummary onRefresh={handleRefresh} />
 
           {isManager && pendingRequests.length > 0 && (
               <div className="rounded-lg border p-4 animate-slide-up">

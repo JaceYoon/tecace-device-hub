@@ -1,3 +1,4 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -41,25 +42,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
 
     // Log the request for debugging
     console.log(`API Request: ${options.method || 'GET'} ${API_URL}${endpoint}`);
-    
-    // Before making the API call, check if we're sending a JSON body and process it
-    if (options.body && typeof options.body === 'string') {
-      try {
-        // Parse the body to process any 'null' strings
-        const parsedBody = JSON.parse(options.body);
-        
-        // Convert any 'null' strings or empty strings in assignedToId to null
-        if (parsedBody.assignedToId === 'null' || parsedBody.assignedToId === '') {
-          parsedBody.assignedToId = null;
-        }
-        
-        // Re-stringify the processed body
-        options.body = JSON.stringify(parsedBody);
-      } catch (parseError) {
-        // If parsing fails, just use the original body
-        console.log('Failed to parse request body:', parseError);
-      }
-    }
     
     // Make the API call with a timeout of 15000ms (15 seconds) - increased timeout
     const controller = new AbortController();
@@ -242,34 +224,13 @@ export const dataService = {
   getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
     try {
-      // Important: Check if this is a device that's assigned and make sure we preserve assignment
-      const currentDevice = await deviceService.getById(id);
-      
-      // Special handling for assigned devices
-      if (currentDevice && currentDevice.status === 'assigned' && currentDevice.assignedToId) {
-        // Explicitly preserve the assignment when updating unless explicitly changing it
-        if (updates.status === undefined && updates.assignedToId === undefined) {
-          console.log(`Preserving assignment for device ${id} to user ${currentDevice.assignedToId}`);
-          updates.status = 'assigned';
-          updates.assignedToId = currentDevice.assignedToId;
-        }
-      }
-      
-      // Process assignedToId to ensure it's handled correctly for the database
-      if (updates.assignedToId === '' || updates.assignedToId === 'null') {
-        updates.assignedToId = null;
-      }
-      
       // For device releases, we need special handling
-      if (updates.status === 'available' && updates.assignedToId === undefined) {
+      if (updates.status === 'available' && updates.assignedTo === undefined) {
         console.log(`Special handling for device release: ${id}`);
         
         // Try to update the device via API first
         try {
-          const updatedDevice = await deviceService.update(id, {
-            ...updates,
-            assignedToId: null  // Explicitly set to null for available devices
-          });
+          const updatedDevice = await deviceService.update(id, updates);
           console.log(`Device ${id} released via API`);
           
           // Trigger refresh after a short delay

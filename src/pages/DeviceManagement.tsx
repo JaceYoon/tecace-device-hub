@@ -112,8 +112,7 @@ const DeviceManagement: React.FC = () => {
           </div>
         </div>
 
-        {/* Using handleRefresh directly with StatusSummary to avoid duplicate refresh buttons */}
-        <StatusSummary refreshTrigger={refreshTrigger} />
+        <StatusSummary />
 
         {showAddForm && (
           <div className="mb-8">
