@@ -276,6 +276,25 @@ export const api = {
   })
 };
 
+// Store for refresh callbacks
+const refreshCallbacks: Array<() => void> = [];
+
+// Function to register refresh callbacks
+const registerRefreshCallback = (callback: () => void): (() => void) => {
+  refreshCallbacks.push(callback);
+  return () => {
+    const index = refreshCallbacks.indexOf(callback);
+    if (index > -1) {
+      refreshCallbacks.splice(index, 1);
+    }
+  };
+};
+
+// Function to trigger refresh for all registered callbacks
+const triggerRefresh = () => {
+  refreshCallbacks.forEach(callback => callback());
+};
+
 // Create a unified dataService interface
 export const dataService = {
   // User methods
@@ -300,7 +319,15 @@ export const dataService = {
   auth: authService,
   
   // Direct API access
-  api: api
+  api: api,
+  
+  // Add nested objects for devices and users properties
+  devices: deviceService,
+  users: userService,
+  
+  // Add refresh callback functionality
+  registerRefreshCallback,
+  triggerRefresh
 };
 
 export default api;
