@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -52,6 +51,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     receivedDate: device.receivedDate,
     notes: device.notes || '',
     devicePicture: device.devicePicture || '',
+    assignedTo: device.assignedTo,
+    assignedToId: device.assignedToId,
+    assignedToName: device.assignedToName,
   });
   
   // Strictly typed list of device types matching the database schema
@@ -136,7 +138,11 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       return;
     }
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, notes, devicePicture } = deviceData;
+    const { 
+      project, projectGroup, type, deviceType, imei, serialNumber, 
+      status, deviceStatus, receivedDate, notes, devicePicture,
+      assignedTo, assignedToId 
+    } = deviceData;
     
     if (!project || !type || !projectGroup) {
       toast.error('Please fill all required fields');
@@ -152,6 +158,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
+      // Only include ownership data if device was already assigned
       const updatedDevice = await dataService.updateDevice(device.id, {
         project,
         projectGroup,
@@ -164,6 +171,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         receivedDate,
         notes: notes || undefined,
         devicePicture: devicePicture || undefined,
+        ...(assignedToId ? { assignedToId } : {}),
+        ...(device.status === 'assigned' ? { status: 'assigned' } : {})
       });
       
       if (updatedDevice) {

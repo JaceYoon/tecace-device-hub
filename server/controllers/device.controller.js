@@ -277,8 +277,19 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
-    // Check if device is being released (assignedToId being set to null when it was previously set)
-    const isBeingReleased = device.assignedToId && !assignedToId;
+    // Only consider it being released if status explicitly changes from assigned to available
+    // AND assignedToId is explicitly set to null
+    const isBeingReleased = device.status === 'assigned' && 
+                            status === 'available' && 
+                            device.assignedToId && 
+                            assignedToId === null;
+    
+    // For regular edits, we want to preserve the original assignedToId if it's not explicitly changed
+    const updatedAssignedToId = assignedToId !== undefined ? assignedToId : device.assignedToId;
+    
+    // For regular edits of assigned devices, keep as assigned
+    const updatedStatus = (device.status === 'assigned' && !isBeingReleased) ? 
+                          'assigned' : (status || device.status);
     
     // Update device
     await device.update({
@@ -287,12 +298,12 @@ exports.update = async (req, res) => {
       type: type || device.type,
       imei: imei !== undefined ? imei : device.imei,
       serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
-      status: status || device.status,
+      status: updatedStatus,
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
+      assignedToId: updatedAssignedToId
     });
 
     // If the device is being released, create an auto-approved release request
