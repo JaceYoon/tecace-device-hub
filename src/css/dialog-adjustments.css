@@ -23,15 +23,15 @@
   overflow-y: auto;
 }
 
-/* Added space between close and download buttons in dialogs */
+/* Added increased space between close and download buttons in dialogs */
 .DialogContent button[aria-label="Close"] + button,
 .DialogContent button + button[aria-label="Close"] {
-  margin-left: 12px;
+  margin-left: 24px; /* Increased from 12px to 24px for more space */
 }
 
 /* Ensure buttons in dialog headers have proper spacing */
 .DialogContent .dialog-header-buttons button {
-  margin-left: 12px;
+  margin-left: 24px; /* Increased from 12px to 24px for more space */
 }
 
 /* First button in a button group should not have left margin */
@@ -69,6 +69,6 @@
   /* Increase spacing between buttons on mobile */
   .DialogContent button[aria-label="Close"] + button,
   .DialogContent button + button[aria-label="Close"] {
-    margin-left: 16px;
+    margin-left: 24px; /* Increased from 16px to 24px for more space */
   }
 }
