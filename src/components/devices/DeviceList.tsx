@@ -134,7 +134,6 @@ const DeviceList: React.FC<DeviceListProps> = ({
 
       <DeviceGrid
         devices={filteredDevices}
-        users={users}
         onAction={handleAction}
         showReturnControls={showReturnControls}
       />
