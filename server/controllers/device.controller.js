@@ -278,8 +278,14 @@ exports.update = async (req, res) => {
     }
 
     // Check if device is being released (assignedToId being set to null when it was previously set)
-    const isBeingReleased = device.assignedToId && !assignedToId;
+    const isBeingReleased = device.assignedToId && assignedToId === null;
     
+    // Determine if we need to preserve the current assignment
+    const shouldPreserveAssignment = device.status === 'assigned' && 
+                                    device.assignedToId && 
+                                    assignedToId === undefined && 
+                                    status === undefined;
+
     // Update device
     await device.update({
       project: project || device.project,
@@ -287,12 +293,12 @@ exports.update = async (req, res) => {
       type: type || device.type,
       imei: imei !== undefined ? imei : device.imei,
       serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
-      status: status || device.status,
+      status: shouldPreserveAssignment ? 'assigned' : (status || device.status),
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
-      assignedToId: assignedToId !== undefined ? assignedToId : device.assignedToId
+      assignedToId: shouldPreserveAssignment ? device.assignedToId : (assignedToId !== undefined ? assignedToId : device.assignedToId)
     });
 
     // If the device is being released, create an auto-approved release request

@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -224,6 +223,19 @@ export const dataService = {
   getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
     try {
+      // Important: Check if this is a device that's assigned and make sure we preserve assignment
+      const currentDevice = await deviceService.getById(id);
+      
+      // Special handling for assigned devices
+      if (currentDevice && currentDevice.status === 'assigned' && currentDevice.assignedToId) {
+        // Explicitly preserve the assignment when updating unless explicitly changing it
+        if (updates.status === undefined && updates.assignedToId === undefined) {
+          console.log(`Preserving assignment for device ${id} to user ${currentDevice.assignedToId}`);
+          updates.status = 'assigned';
+          updates.assignedToId = currentDevice.assignedToId;
+        }
+      }
+      
       // For device releases, we need special handling
       if (updates.status === 'available' && updates.assignedTo === undefined) {
         console.log(`Special handling for device release: ${id}`);
