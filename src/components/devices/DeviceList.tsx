@@ -1,3 +1,4 @@
+
 import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
 import DeviceFilters from './DeviceFilters';
@@ -15,10 +16,6 @@ interface DeviceListProps {
   showExportButton?: boolean;
   className?: string;
   refreshTrigger?: number;
-  showAddButton?: boolean;
-  showFilterBar?: boolean;
-  showManagementLink?: boolean;
-  limit?: number;
 }
 
 const DeviceList: React.FC<DeviceListProps> = ({
@@ -31,26 +28,26 @@ const DeviceList: React.FC<DeviceListProps> = ({
   showExportButton = true,
   className,
   refreshTrigger,
-  showAddButton,
-  showFilterBar = true,
-  showManagementLink,
-  limit,
 }) => {
   const { user, isAdmin } = useAuth();
   const initialRenderRef = useRef(true);
   const hasSetInitialStatusRef = useRef(false);
   const lastActionTimeRef = useRef(0);
   
+  // Memoize values that shouldn't change on every render
+  // This is critical to prevent dependency changes in useEffect
   const effectiveUserFilter = useMemo(() => {
     return filterByAssignedToUser || 
       (title === 'My Devices' && user ? String(user.id) : undefined);
   }, [filterByAssignedToUser, title, user]);
   
+  // If this is the My Devices view, always force status to be 'assigned'
   const effectiveStatusFilter = useMemo(() => {
     const forceAssignedStatus = title === 'My Devices' ? ['assigned'] : undefined;
     return forceAssignedStatus || filterByStatus;
   }, [title, filterByStatus]);
   
+  // Debug log to see what's being used for filtering - only log once
   useEffect(() => {
     if (initialRenderRef.current && user) {
       console.log(`DeviceList "${title}" - User:`, user.id);
@@ -70,7 +67,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     setStatusFilter,
     typeFilter,
     setTypeFilter,
-    refreshData
+    fetchData
   } = useDeviceFilters({
     filterByAvailable,
     filterByAssignedToUser: effectiveUserFilter,
@@ -78,6 +75,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     refreshTrigger
   });
 
+  // Only set initial status filter once after component mounts
   useEffect(() => {
     if (initialStatusFilter && !hasSetInitialStatusRef.current) {
       setStatusFilter(initialStatusFilter);
@@ -85,18 +83,22 @@ const DeviceList: React.FC<DeviceListProps> = ({
     }
   }, [initialStatusFilter, setStatusFilter]);
 
+  // Define a memoized onAction callback to prevent infinite loops
   const handleAction = useCallback(() => {
+    // Debounce the action to prevent multiple rapid calls
     const now = Date.now();
     if (now - lastActionTimeRef.current < 500) {
       return;
     }
     lastActionTimeRef.current = now;
     
+    // Use a timeout to prevent potential setState calls during React updates
     setTimeout(() => {
-      refreshData();
+      fetchData();
     }, 300);
-  }, [refreshData]);
+  }, [fetchData]);
 
+  // Debug logs for "My Devices" view - only log once when filteredDevices changes
   useEffect(() => {
     if (title === 'My Devices' && user) {
       console.log("My Devices view - User ID:", user.id);
@@ -106,11 +108,8 @@ const DeviceList: React.FC<DeviceListProps> = ({
     }
   }, [title, user, filteredDevices.length, effectiveUserFilter, filteredDevices]);
 
+  // If this is My Devices view, we always want to show the controls for device return
   const showReturnControls = title === 'My Devices';
-
-  const displayedDevices = limit && filteredDevices.length > limit 
-    ? filteredDevices.slice(0, limit) 
-    : filteredDevices;
 
   return (
     <div className={className}>
@@ -134,7 +133,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       )}
 
       <DeviceGrid
-        devices={displayedDevices}
+        devices={filteredDevices}
         users={users}
         onAction={handleAction}
         showReturnControls={showReturnControls}

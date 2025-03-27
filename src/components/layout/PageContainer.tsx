@@ -7,14 +7,12 @@ interface PageContainerProps {
   children: React.ReactNode;
   className?: string;
   fullWidth?: boolean;
-  title?: string; // Added title prop
 }
 
 const PageContainer: React.FC<PageContainerProps> = ({ 
   children, 
   className,
-  fullWidth = false,
-  title
+  fullWidth = false
 }) => {
   return (
     <div className="flex flex-col min-h-screen">
@@ -24,11 +22,6 @@ const PageContainer: React.FC<PageContainerProps> = ({
         fullWidth ? "" : "container px-4 sm:px-6 lg:px-8",
         className
       )}>
-        {title && (
-          <div className="my-6">
-            <h1 className="text-3xl font-bold tracking-tight">{title}</h1>
-          </div>
-        )}
         {children}
       </main>
       <footer className="border-t py-4 bg-background">

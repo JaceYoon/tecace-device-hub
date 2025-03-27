@@ -17,19 +17,13 @@ interface RequestListProps {
   refreshTrigger?: number;
   userId?: string;
   showExportButton?: boolean;
-  showProcessButtons?: boolean;
-  limit?: number;
-  showFilterBar?: boolean;
 }
 
 const RequestList: React.FC<RequestListProps> = ({ 
   title = 'Device Requests', 
   onRequestProcessed, 
   refreshTrigger,
-  userId,
-  showProcessButtons = true,
-  limit,
-  showFilterBar = true
+  userId
 }) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
@@ -137,11 +131,6 @@ const RequestList: React.FC<RequestListProps> = ({
   // If not admin, only show requests that belong to current user
   if (!isAdmin && !userId && user) {
     filteredRequests = requests.filter(request => request.userId === user.id && request.status === 'pending');
-  }
-
-  // Apply limit if provided
-  if (limit && filteredRequests.length > limit) {
-    filteredRequests = filteredRequests.slice(0, limit);
   }
 
   return (
