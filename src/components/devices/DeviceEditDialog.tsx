@@ -12,7 +12,6 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { dataService } from '@/services/data.service';
 import { Download } from 'lucide-react';
 import { toast } from 'sonner';
-import DeviceImageViewer from './DeviceImageViewer';
 
 interface DeviceEditDialogProps {
   device: Device;
@@ -64,12 +63,15 @@ const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ device, onDeviceUpd
             
             <div>
               {device.devicePicture ? (
-                <div className="mt-2">
-                  <img 
-                    src={device.devicePicture} 
-                    alt="Device Picture" 
-                    className="max-w-full max-h-[70vh] rounded" 
-                  />
+                <>
+                  <div className="mt-2 flex justify-center">
+                    <img 
+                      src={device.devicePicture} 
+                      alt="Device Picture" 
+                      className="max-w-full max-h-[70vh] rounded" 
+                    />
+                  </div>
+
                   <div className="mt-2 flex justify-end">
                     <Button 
                       variant="outline" 
@@ -82,7 +84,7 @@ const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ device, onDeviceUpd
                       Download Image
                     </Button>
                   </div>
-                </div>
+                </>
               ) : (
                 <div className="text-center py-8 text-muted-foreground">
                   No image available

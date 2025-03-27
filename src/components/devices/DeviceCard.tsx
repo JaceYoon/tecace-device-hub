@@ -377,18 +377,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                               </DialogTrigger>
                               <DialogContent className="sm:max-w-xl">
                                 <DialogHeader>
-                                  <DialogTitle className="flex justify-between items-center">
-                                    <span>Device Picture - {device.project}</span>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="flex items-center gap-1"
-                                      onClick={handleDownloadImage}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                      Download
-                                    </Button>
-                                  </DialogTitle>
+                                  <DialogTitle>Device Picture - {device.project}</DialogTitle>
                                   <DialogDescription>
                                     View full-sized device image
                                   </DialogDescription>
@@ -399,6 +388,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                                     alt="Device Picture" 
                                     className="max-w-full max-h-[70vh] rounded" 
                                   />
+                                </div>
+                                <div className="mt-2 flex justify-end">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-1"
+                                    onClick={handleDownloadImage}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                  </Button>
                                 </div>
                               </DialogContent>
                             </Dialog>
@@ -566,7 +566,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           open={confirmDialog.isOpen} 
           onOpenChange={(open) => {
             if (!open) {
-              // Reset any processing state when dialog is closed via escape key or clicking outside
               setIsProcessing(false);
               setConfirmDialog(prev => ({...prev, isOpen: false}));
             }
@@ -581,7 +580,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => {
-                // Reset processing state when Cancel is clicked
                 setIsProcessing(false);
                 setConfirmDialog(prev => ({...prev, isOpen: false}));
               }}>
