@@ -138,24 +138,29 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="serialNumber">Serial Number</Label>
+          <Label htmlFor="serialNumber">Serial Number (Alphanumeric only)</Label>
           <Input
             id="serialNumber"
             name="serialNumber"
             placeholder="Serial Number"
             value={deviceData.serialNumber || ''}
             onChange={handleChange}
+            pattern="[a-zA-Z0-9]*"
+            title="Only letters and numbers are allowed"
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="imei">IMEI</Label>
+          <Label htmlFor="imei">IMEI (15 digits only)</Label>
           <Input
             id="imei"
             name="imei"
-            placeholder="IMEI"
+            placeholder="15-digit IMEI number"
             value={deviceData.imei || ''}
             onChange={handleChange}
+            pattern="\d{15}"
+            title="IMEI must be exactly 15 digits"
+            maxLength={15}
           />
         </div>
       </div>

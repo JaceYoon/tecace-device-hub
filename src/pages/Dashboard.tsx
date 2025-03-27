@@ -152,15 +152,7 @@ const Dashboard: React.FC = () => {
                 Welcome back, {user.name}
               </p>
             </div>
-            <Button 
-              onClick={handleRefresh} 
-              variant="outline" 
-              size="sm"
-              className="flex items-center gap-1"
-            >
-              <Clock className="h-4 w-4" />
-              Refresh
-            </Button>
+            {/* Remove the Refresh button */}
           </div>
 
           <StatusSummary onRefresh={handleRefresh} />

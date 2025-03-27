@@ -94,7 +94,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     if (fieldName === 'devicePicture') {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const base64String = e.target?.result as string;
+        const base64String = reader.result as string;
         setDeviceData(prev => ({
           ...prev,
           devicePicture: base64String
@@ -103,12 +103,36 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
       reader.readAsDataURL(file);
     }
   };
+
+  // Validate IMEI and Serial Number
+  const validateFields = () => {
+    const { imei, serialNumber } = deviceData;
+    
+    // Validate IMEI (empty or exactly 15 digits)
+    if (imei && !/^\d{15}$/.test(imei)) {
+      toast.error('IMEI must be exactly 15 digits');
+      return false;
+    }
+    
+    // Validate Serial Number (empty or alphanumeric only)
+    if (serialNumber && !/^[a-zA-Z0-9]+$/.test(serialNumber)) {
+      toast.error('Serial Number must contain only letters and numbers');
+      return false;
+    }
+    
+    return true;
+  };
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isManager) {
       toast.error('You do not have permission to edit devices');
+      return;
+    }
+    
+    // Validate fields before submitting
+    if (!validateFields()) {
       return;
     }
     

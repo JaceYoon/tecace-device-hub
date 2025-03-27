@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import DeviceFormFields from './DeviceFormFields';
 import { DeviceTypeValue } from '@/types';
+import { toast } from 'sonner';
 
 interface DeviceFormProps {
   onDeviceAdded?: () => void;
@@ -42,13 +43,43 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
       reader.readAsDataURL(file);
     }
   };
+
+  // Validate IMEI and Serial Number
+  const validateFields = () => {
+    const { imei, serialNumber } = deviceData;
+    
+    // Validate IMEI (empty or exactly 15 digits)
+    if (imei && !/^\d{15}$/.test(imei)) {
+      toast.error('IMEI must be exactly 15 digits');
+      return false;
+    }
+    
+    // Validate Serial Number (empty or alphanumeric only)
+    if (serialNumber && !/^[a-zA-Z0-9]+$/.test(serialNumber)) {
+      toast.error('Serial Number must contain only letters and numbers');
+      return false;
+    }
+    
+    return true;
+  };
+  
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate fields before submitting
+    if (!validateFields()) {
+      return;
+    }
+    
+    handleSubmit(e);
+  };
   
   return (
     <Card className="shadow-soft border-none">
       <CardHeader>
         <CardTitle>Add New Device</CardTitle>
       </CardHeader>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleFormSubmit}>
         <CardContent>
           <DeviceFormFields 
             deviceData={deviceData}
