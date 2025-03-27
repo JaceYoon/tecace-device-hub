@@ -1,21 +1,18 @@
 
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import { format } from "date-fns"
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+import { format, isValid, parseISO } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
-// Add formatDate function to format dates consistently throughout the app
-export function formatDate(date: Date | string | undefined): string {
+export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return 'N/A';
   
-  try {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
-    return format(dateObj, 'MMM d, yyyy');
-  } catch (error) {
-    console.error('Error formatting date:', error);
-    return 'Invalid date';
-  }
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  
+  if (!isValid(dateObj)) return 'Invalid date';
+  
+  return format(dateObj, 'MMM d, yyyy');
 }
