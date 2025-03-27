@@ -1,9 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import api, { authService, userService } from '@/services/api.service';
-import { dataService } from '@/services/data.service';
 import { userStore } from '@/utils/data';
 
 // Create the Auth Context
@@ -18,31 +16,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // Try to use the API service first
-        try {
-          const response = await authService.checkAuth();
-          if (response && 'isAuthenticated' in response && response.isAuthenticated) {
-            setUser(response.user as User);
-            setIsLoading(false);
-            return;
-          }
-        } catch (error) {
-          console.error('Authentication check error:', error);
+        const response = await authService.checkAuth();
+        if (response && 'isAuthenticated' in response && response.isAuthenticated) {
+          setUser(response.user as User);
         }
-        
-        // Try to use dataService as fallback
-        try {
-          const response = await dataService.auth.checkAuth();
-          if (response && 'isAuthenticated' in response && response.isAuthenticated) {
-            setUser(response.user as User);
-            setIsLoading(false);
-            return;
-          }
-        } catch (fallbackError) {
-          console.error('Fallback authentication check error:', fallbackError);
-        }
-
-        // Try to use localStorage as last resort
+      } catch (error) {
+        console.error('Authentication check error:', error);
+        // Try to use localStorage as fallback
         const storedUser = localStorage.getItem('tecace_current_user');
         if (storedUser) {
           try {
@@ -75,17 +55,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.error('Error fetching users from API:', error);
           }
           
-          // Try dataService next
-          try {
-            const response = await dataService.users.getAll();
-            if (Array.isArray(response)) {
-              setUsers(response);
-              return;
-            }
-          } catch (error) {
-            console.error('Error fetching users from dataService:', error);
-          }
-          
           // Fallback to localStorage if API fails
           const localUsers = userStore.getUsers();
           setUsers(localUsers);
@@ -101,41 +70,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Try using API service first
-      try {
-        const response = await authService.login(email, password);
+      const response = await authService.login(email, password);
+      
+      if (response && 'success' in response && response.success) {
+        setUser(response.user as User);
         
-        if (response && 'success' in response && response.success) {
-          setUser(response.user as User);
-          
-          // Store user in localStorage as a fallback
-          localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
-          
-          toast.success(`Welcome back, ${response.user.name}!`);
-          return true;
-        }
-      } catch (error) {
-        console.error('API login error:', error);
+        // Store user in localStorage as a fallback
+        localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
         
-        // Try dataService as fallback
-        try {
-          const response = await dataService.auth.login(email, password);
-          
-          if (response && 'success' in response && response.success) {
-            setUser(response.user as User);
-            
-            // Store user in localStorage as a fallback
-            localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
-            
-            toast.success(`Welcome back, ${response.user.name}!`);
-            return true;
-          }
-        } catch (fallbackError) {
-          console.error('Fallback login error:', fallbackError);
-        }
+        toast.success(`Welcome back, ${response.user.name}!`);
+        return true;
       }
       
-      // If login failed through both services, don't fall back to localStorage
+      // If login failed through API, don't fall back to localStorage
       // This is a security issue - we should not allow login with incorrect passwords
       toast.error('Invalid email or password');
       return false;
@@ -151,19 +98,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Logout function
   const logout = async () => {
     try {
-      // Try both services
-      try {
-        await authService.logout();
-      } catch (error) {
-        console.error('API logout error:', error);
-        try {
-          await dataService.auth.logout();
-        } catch (fallbackError) {
-          console.error('Fallback logout error:', fallbackError);
-        }
-      }
-      
-      // Always clear state
+      await authService.logout();
       setUser(null);
       // Clear localStorage user
       localStorage.removeItem('tecace_current_user');
@@ -192,48 +127,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         message?: string;
       }
       
-      // Try API service first
-      try {
-        const response = await api.post<RegisterResponse>('/auth/register', {
-          name: `${firstName} ${lastName}`,
-          email,
-          password
-        });
-        
-        if (response && 'success' in response && response.success && response.user) {
-          setUser(response.user);
-          localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
-          toast.success('Account created successfully!');
-          return { 
-            success: true, 
-            message: 'Registration successful', 
-            verificationRequired: false 
-          };
-        }
-      } catch (error) {
-        console.error('API registration error:', error);
-        
-        // Try dataService as fallback
-        try {
-          const response = await dataService.auth.register(
-            `${firstName} ${lastName}`,
-            email,
-            password
-          );
-          
-          if (response && 'success' in response && response.success && response.user) {
-            setUser(response.user);
-            localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
-            toast.success('Account created successfully!');
-            return { 
-              success: true, 
-              message: 'Registration successful', 
-              verificationRequired: false 
-            };
-          }
-        } catch (fallbackError) {
-          console.error('Fallback registration error:', fallbackError);
-        }
+      const response = await api.post<RegisterResponse>('/auth/register', {
+        name: `${firstName} ${lastName}`,
+        email,
+        password
+      });
+      
+      if (response && 'success' in response && response.success && response.user) {
+        setUser(response.user);
+        localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
+        toast.success('Account created successfully!');
+        return { 
+          success: true, 
+          message: 'Registration successful', 
+          verificationRequired: false 
+        };
       }
       
       // If API registration fails, try local
@@ -332,29 +240,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         } catch (error) {
           console.error('Error updating user role via API:', error);
-          
-          // Try dataService as fallback
-          try {
-            const response = await dataService.users.updateRole(userId, role as 'admin' | 'user');
-            if (response) {
-              // Success with dataService, update users list
-              setUsers(prev => prev.map(u => 
-                u.id === userId ? { ...u, role: role as UserRole } : u
-              ));
-              
-              // If current user is being updated, update current user
-              if (user && user.id === userId) {
-                const updatedUser = { ...user, role: role as UserRole };
-                setUser(updatedUser);
-                localStorage.setItem('tecace_current_user', JSON.stringify(updatedUser));
-              }
-              
-              toast.success(`User role updated to ${role}`);
-              return true;
-            }
-          } catch (fallbackError) {
-            console.error('Error updating user role via dataService:', fallbackError);
-          }
         }
         
         // Fallback to localStorage

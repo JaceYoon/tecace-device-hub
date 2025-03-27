@@ -5,8 +5,8 @@ import { toast } from 'sonner';
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to true to always use mock data when API unavailable
-let devMode = true;
+// Development mode flag - set to false to always use real backend API
+let devMode = false;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -89,92 +89,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   } catch (error) {
     console.error(`API error for ${endpoint}:`, error);
     
-    // Check if devMode is enabled and provide fallback data
-    if (devMode) {
-      console.log(`Using mock data fallback for ${endpoint}`);
-      
-      // Auth endpoints
-      if (endpoint.startsWith('/auth')) {
-        if (endpoint === '/auth/check') {
-          const userId = localStorage.getItem('dev-user-id');
-          const loggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
-          
-          if (loggedIn && userId) {
-            const user = userStore.getUserById(userId);
-            return { isAuthenticated: true, user } as T;
-          }
-          return { isAuthenticated: false, user: null } as T;
-        }
-        
-        if (endpoint === '/auth/login' && options.method === 'POST') {
-          try {
-            const body = JSON.parse(options.body as string);
-            const { email } = body;
-            // Find user by email among all users
-            const user = userStore.getUsers().find(u => u.email === email);
-            
-            if (user) {
-              localStorage.setItem('dev-user-id', user.id);
-              localStorage.setItem('dev-user-logged-in', 'true');
-              return { success: true, user, isAuthenticated: true } as T;
-            }
-          } catch (e) {
-            console.error('Error parsing login body:', e);
-          }
-        }
-        
-        if (endpoint === '/auth/logout') {
-          localStorage.removeItem('dev-user-id');
-          localStorage.setItem('dev-user-logged-in', 'false');
-          return { success: true } as T;
-        }
-      }
-      
-      // Device endpoints
-      if (endpoint === '/devices') {
-        return deviceStore.getDevices() as T;
-      }
-      
-      if (endpoint.startsWith('/devices/') && !endpoint.includes('requests')) {
-        const id = endpoint.split('/')[2];
-        return deviceStore.getDeviceById(id) as T;
-      }
-      
-      // Request endpoints
-      if (endpoint === '/devices/requests/all') {
-        return requestStore.getRequests() as T;
-      }
-      
-      if (endpoint.startsWith('/devices/requests/') && options.method === 'PUT') {
-        const requestId = endpoint.split('/')[3];
-        try {
-          const body = JSON.parse(options.body as string);
-          const { status } = body;
-          
-          if (status === 'approved' || status === 'rejected') {
-            // Use the existing processRequest method that handles status updates
-            const userId = localStorage.getItem('dev-user-id') || '1'; // Default to admin if none found
-            return requestStore.processRequest(requestId, status, userId) as T;
-          }
-        } catch (e) {
-          console.error('Error parsing request body:', e);
-        }
-      }
-      
-      // User endpoints
-      if (endpoint === '/users') {
-        return userStore.getUsers() as T;
-      }
-      
-      if (endpoint === '/users/me') {
-        const userId = localStorage.getItem('dev-user-id');
-        if (userId) {
-          return userStore.getUserById(userId) as T;
-        }
-        return null as T;
-      }
-    }
-    
     // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
     if (error instanceof Error && 
         (error.message.includes('Failed to fetch') || 
@@ -182,13 +96,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
          error.message.includes('AbortError') || 
          error.message.includes('NetworkError'))) {
       // Show a more informative toast
-      toast.error('Unable to connect to the server. Switching to development mode.');
-      
-      // Enable devMode for future requests
-      devMode = true;
-      
-      // Retry the request with devMode enabled
-      return apiCall<T>(endpoint, options);
+      toast.error('Unable to connect to the server. Please check that the server is running.');
     } else if (
       // Only show toast for non-auth related errors and non-network errors
       // and not for 401 errors after logout
@@ -316,16 +224,13 @@ export const dataService = {
   getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
     try {
-      // Make a copy of the updates to ensure we don't modify the original object
-      const updatesCopy = { ...updates };
-      
       // For device releases, we need special handling
-      if (updatesCopy.status === 'available' && updatesCopy.assignedToId === undefined) {
+      if (updates.status === 'available' && updates.assignedTo === undefined) {
         console.log(`Special handling for device release: ${id}`);
         
         // Try to update the device via API first
         try {
-          const updatedDevice = await deviceService.update(id, updatesCopy);
+          const updatedDevice = await deviceService.update(id, updates);
           console.log(`Device ${id} released via API`);
           
           // Trigger refresh after a short delay
@@ -353,26 +258,8 @@ export const dataService = {
         }
       }
       
-      // Regular device update - verify if we're keeping the assignedToId
-      if (updatesCopy.assignedToId === undefined) {
-        // Get the current device to preserve assignment if not explicitly changing it
-        try {
-          const currentDevice = await deviceService.getById(id);
-          if (currentDevice && currentDevice.assignedToId) {
-            // Preserve the existing assignment
-            console.log(`Preserving existing assignment for device ${id} to user ${currentDevice.assignedToId}`);
-            updatesCopy.assignedToId = currentDevice.assignedToId;
-          }
-        } catch (error) {
-          console.error(`Error fetching current device ${id} state:`, error);
-          // Continue with the update even if we couldn't fetch the current state
-        }
-      }
-      
-      console.log(`Updating device ${id} with data:`, updatesCopy);
-      
       // Regular device update
-      const updatedDevice = await deviceService.update(id, updatesCopy);
+      const updatedDevice = await deviceService.update(id, updates);
       
       // Trigger refresh after a short delay
       setTimeout(() => dataService.triggerRefresh(), 500);

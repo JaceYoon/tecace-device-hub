@@ -16,10 +16,6 @@ interface DeviceListProps {
   showExportButton?: boolean;
   className?: string;
   refreshTrigger?: number;
-  limit?: number;
-  showAddButton?: boolean;
-  showFilterBar?: boolean;
-  showManagementLink?: boolean;
 }
 
 const DeviceList: React.FC<DeviceListProps> = ({
@@ -32,10 +28,6 @@ const DeviceList: React.FC<DeviceListProps> = ({
   showExportButton = true,
   className,
   refreshTrigger,
-  limit,
-  showAddButton,
-  showFilterBar,
-  showManagementLink
 }) => {
   const { user, isAdmin } = useAuth();
   const initialRenderRef = useRef(true);
@@ -119,9 +111,6 @@ const DeviceList: React.FC<DeviceListProps> = ({
   // If this is My Devices view, we always want to show the controls for device return
   const showReturnControls = title === 'My Devices';
 
-  // If limit is provided, only show the specified number of devices
-  const limitedDevices = limit && limit > 0 ? filteredDevices.slice(0, limit) : filteredDevices;
-
   return (
     <div className={className}>
       <DeviceListHeader
@@ -129,11 +118,9 @@ const DeviceList: React.FC<DeviceListProps> = ({
         showExportButton={showExportButton}
         devices={filteredDevices}
         users={users}
-        showAddButton={showAddButton}
-        showManagementLink={showManagementLink}
       />
 
-      {showControls && showFilterBar !== false && (
+      {showControls && (
         <DeviceFilters
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
@@ -146,7 +133,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
       )}
 
       <DeviceGrid
-        devices={limitedDevices}
+        devices={filteredDevices}
         users={users}
         onAction={handleAction}
         showReturnControls={showReturnControls}

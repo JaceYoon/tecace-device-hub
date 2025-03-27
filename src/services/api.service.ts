@@ -1,11 +1,12 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to true to use mock data when API unavailable
-let devMode = true;
+// Development mode flag - set to false to always use real backend API
+let devMode = false;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -88,128 +89,6 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   } catch (error) {
     console.error(`API error for ${endpoint}:`, error);
     
-    // Check if devMode is enabled and provide fallback data
-    if (devMode) {
-      console.log(`Using mock data fallback for ${endpoint}`);
-      
-      // Auth endpoints
-      if (endpoint.startsWith('/auth')) {
-        if (endpoint === '/auth/check') {
-          const userId = localStorage.getItem('dev-user-id');
-          const loggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
-          
-          if (loggedIn && userId) {
-            const user = userStore.getUserById(userId);
-            return { isAuthenticated: true, user } as T;
-          }
-          return { isAuthenticated: false, user: null } as T;
-        }
-        
-        if (endpoint === '/auth/login' && options.method === 'POST') {
-          try {
-            const body = JSON.parse(options.body as string);
-            const { email } = body;
-            // Find user by email among all users
-            const user = userStore.getUsers().find(u => u.email === email);
-            
-            if (user) {
-              localStorage.setItem('dev-user-id', user.id);
-              localStorage.setItem('dev-user-logged-in', 'true');
-              return { success: true, user, isAuthenticated: true } as T;
-            }
-          } catch (e) {
-            console.error('Error parsing login body:', e);
-          }
-        }
-        
-        if (endpoint === '/auth/logout') {
-          localStorage.removeItem('dev-user-id');
-          localStorage.setItem('dev-user-logged-in', 'false');
-          return { success: true } as T;
-        }
-        
-        if (endpoint === '/auth/register' && options.method === 'POST') {
-          try {
-            const body = JSON.parse(options.body as string);
-            const { name, email, password } = body;
-            const newUser: User = {
-              id: `user-${Date.now()}`, // Generate a unique id using timestamp
-              name, 
-              email, 
-              role: 'user' as UserRole
-            };
-            
-            const addedUser = userStore.addUser(newUser);
-            
-            if (addedUser) {
-              localStorage.setItem('dev-user-id', addedUser.id);
-              localStorage.setItem('dev-user-logged-in', 'true');
-              return { success: true, user: addedUser } as T;
-            }
-          } catch (e) {
-            console.error('Error parsing register body:', e);
-          }
-        }
-      }
-      
-      // Device endpoints
-      if (endpoint === '/devices') {
-        return deviceStore.getDevices() as T;
-      }
-      
-      if (endpoint.startsWith('/devices/') && !endpoint.includes('requests')) {
-        const id = endpoint.split('/')[2];
-        return deviceStore.getDeviceById(id) as T;
-      }
-      
-      // Request endpoints
-      if (endpoint === '/devices/requests/all') {
-        return requestStore.getRequests() as T;
-      }
-      
-      if (endpoint.startsWith('/devices/requests/') && options.method === 'PUT') {
-        const requestId = endpoint.split('/')[3];
-        try {
-          const body = JSON.parse(options.body as string);
-          const { status } = body;
-          
-          if (status === 'approved' || status === 'rejected') {
-            // Use the existing processRequest method that handles status updates
-            const userId = localStorage.getItem('dev-user-id') || '1'; // Default to admin if none found
-            return requestStore.processRequest(requestId, status, userId) as T;
-          }
-        } catch (e) {
-          console.error('Error parsing request body:', e);
-        }
-      }
-      
-      // User endpoints
-      if (endpoint === '/users') {
-        return userStore.getUsers() as T;
-      }
-      
-      if (endpoint === '/users/me') {
-        const userId = localStorage.getItem('dev-user-id');
-        if (userId) {
-          return userStore.getUserById(userId) as T;
-        }
-        return null as T;
-      }
-      
-      if (endpoint.startsWith('/users/') && endpoint.includes('/role') && options.method === 'PUT') {
-        const userId = endpoint.split('/')[2];
-        try {
-          const body = JSON.parse(options.body as string);
-          const { role } = body;
-          
-          const updatedUser = userStore.updateUser(userId, { role });
-          return updatedUser as T;
-        } catch (e) {
-          console.error('Error parsing role update body:', e);
-        }
-      }
-    }
-    
     // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
     if (error instanceof Error && 
         (error.message.includes('Failed to fetch') || 
@@ -217,13 +96,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
          error.message.includes('AbortError') || 
          error.message.includes('NetworkError'))) {
       // Show a more informative toast
-      toast.info('Unable to connect to the server. Using development mode.');
-      
-      // Enable devMode for future requests
-      devMode = true;
-      
-      // Retry the request with devMode enabled
-      return apiCall<T>(endpoint, options);
+      toast.error('Unable to connect to the server. Please check that the server is running.');
     } else if (
       // Only show toast for non-auth related errors and non-network errors
       // and not for 401 errors after logout
