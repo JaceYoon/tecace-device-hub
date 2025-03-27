@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -428,7 +427,13 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                     
                     {(isManager || isAdmin) && (
                       <div className="mt-2 pt-2 border-t">
-                        <DeviceHistoryDialog device={device} users={users} />
+                        <DeviceHistoryDialog 
+                          deviceId={device.id} 
+                          deviceName={device.project} 
+                          devicePicture={device.devicePicture} 
+                          device={device} 
+                          users={users} 
+                        />
                       </div>
                     )}
                   </div>
