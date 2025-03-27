@@ -1,19 +1,17 @@
 
 import React from 'react';
-import { Device, User } from '@/types';
+import { Device } from '@/types';
 import DeviceCard from './DeviceCard';
 import { Clock } from 'lucide-react';
 
 interface DeviceGridProps {
   devices: Device[];
-  users: User[];
   onAction?: () => void;
   showReturnControls?: boolean;
 }
 
 const DeviceGrid: React.FC<DeviceGridProps> = ({ 
   devices, 
-  users, 
   onAction,
   showReturnControls = false
 }) => {
@@ -32,10 +30,8 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
       {devices.map(device => (
         <div key={device.id} className="flex">
           <DeviceCard 
-            device={device} 
-            onEdit={() => {
-              if (onAction) onAction();
-            }}
+            device={device}
+            onAction={onAction}
             className="w-full"
             showReturnControls={showReturnControls}
           />

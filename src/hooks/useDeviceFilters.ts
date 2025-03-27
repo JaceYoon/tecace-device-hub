@@ -155,8 +155,7 @@ export const useDeviceFilters = ({
         (device.projectGroup && device.projectGroup.toLowerCase().includes(searchLower)) ||
         (device.type && device.type.toLowerCase().includes(searchLower)) ||
         (device.serialNumber && device.serialNumber.toLowerCase().includes(searchLower)) ||
-        (device.imei && device.imei.toLowerCase().includes(searchLower)) ||
-        (device.notes && device.notes.toLowerCase().includes(searchLower)); // Added notes to search
+        (device.imei && device.imei.toLowerCase().includes(searchLower));
       
       if (!matchesSearch) return false;
       
