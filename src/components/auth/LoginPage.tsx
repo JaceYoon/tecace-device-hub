@@ -122,7 +122,7 @@ const LoginPage: React.FC = () => {
             <CardContent>
               <TabsContent value="login" className="space-y-4">
                 <Form {...loginForm}>
-                  <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4" id="login-form">
+                  <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4" id="login-form" name="login-form">
                     <FormField
                       control={loginForm.control}
                       name="email"
@@ -134,6 +134,7 @@ const LoginPage: React.FC = () => {
                               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 id="login-email"
+                                name="login-email"
                                 placeholder="your.email@example.com" 
                                 className="pl-10" 
                                 autoComplete="email"
@@ -157,6 +158,7 @@ const LoginPage: React.FC = () => {
                               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 id="login-password"
+                                name="login-password"
                                 type="password" 
                                 placeholder="••••••" 
                                 className="pl-10"
@@ -198,7 +200,7 @@ const LoginPage: React.FC = () => {
               
               <TabsContent value="register" className="space-y-4">
                 <Form {...registerForm}>
-                  <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4" id="register-form">
+                  <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4" id="register-form" name="register-form">
                     <FormField
                       control={registerForm.control}
                       name="name"
@@ -208,6 +210,7 @@ const LoginPage: React.FC = () => {
                           <FormControl>
                             <Input 
                               id="register-name"
+                              name="register-name"
                               placeholder="John Doe" 
                               autoComplete="name"
                               {...field} 
@@ -229,6 +232,7 @@ const LoginPage: React.FC = () => {
                               <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 id="register-email"
+                                name="register-email"
                                 placeholder="your.email@example.com" 
                                 className="pl-10"
                                 autoComplete="email"
@@ -252,6 +256,7 @@ const LoginPage: React.FC = () => {
                               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 id="register-password"
+                                name="register-password"
                                 type="password" 
                                 placeholder="••••••" 
                                 className="pl-10"
@@ -276,6 +281,7 @@ const LoginPage: React.FC = () => {
                               <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                               <Input 
                                 id="register-confirm-password"
+                                name="register-confirm-password"
                                 type="password" 
                                 placeholder="••••••" 
                                 className="pl-10"

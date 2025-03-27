@@ -40,6 +40,7 @@ interface DeviceFormFieldsProps {
   handleDateChange: (date: Date | undefined, field: string) => void;
   handleFileChange?: (file: File | null, field: string) => void;
   isEditMode?: boolean;
+  validationErrors?: Record<string, string>;
 }
 
 const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
@@ -49,7 +50,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleSelectChange,
   handleDateChange,
   handleFileChange,
-  isEditMode = false
+  isEditMode = false,
+  validationErrors = {}
 }) => {
   // Handle device picture file upload
   const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,7 +87,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             value={deviceData.project}
             onChange={handleChange}
             required
+            className={validationErrors.project ? 'border-red-500' : ''}
           />
+          {validationErrors.project && (
+            <p className="text-sm text-red-500">{validationErrors.project}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -117,6 +123,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               ))}
             </SelectContent>
           </Select>
+          {validationErrors.type && (
+            <p className="text-sm text-red-500">{validationErrors.type}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -145,7 +154,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             placeholder="Serial Number"
             value={deviceData.serialNumber || ''}
             onChange={handleChange}
+            className={validationErrors.serialNumber ? 'border-red-500' : ''}
           />
+          {validationErrors.serialNumber && (
+            <p className="text-sm text-red-500">{validationErrors.serialNumber}</p>
+          )}
         </div>
 
         <div className="space-y-2">
@@ -156,7 +169,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             placeholder="IMEI"
             value={deviceData.imei || ''}
             onChange={handleChange}
+            className={validationErrors.imei ? 'border-red-500' : ''}
           />
+          {validationErrors.imei && (
+            <p className="text-sm text-red-500">{validationErrors.imei}</p>
+          )}
         </div>
       </div>
 
