@@ -32,7 +32,7 @@ function App() {
             <div className="min-h-screen flex flex-col">
               <div className="flex-1">
                 <Routes>
-                  <Route path="/" element={<LoginPage />} />
+                  <Route path="/" element={<Index />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/device-management" element={<DeviceManagement />} />
                   <Route path="/user-management" element={<UserManagement />} />
