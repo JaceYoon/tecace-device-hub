@@ -1,16 +1,20 @@
 
-/* Dialog adjustments CSS */
-
-/* Add spacing between close and download buttons */
-.dialog-header-close-button {
-  margin-right: 10px; /* Add margin to the right of close buttons */
+/* Dialog button spacing adjustments */
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
 }
 
-/* Additional styling for dialog headers and buttons */
-.dialog-header {
+/* Add some space between image controls in dialogs */
+.image-dialog-controls {
   display: flex;
-  justify-content: space-between;
+  gap: 1rem;
   align-items: center;
 }
 
-/* Other dialog adjustments can be added here */
+/* Add space between buttons in dialogs */
+.dialog-button-container {
+  display: flex;
+  gap: 0.75rem;
+}
