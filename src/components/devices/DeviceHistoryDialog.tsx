@@ -14,7 +14,7 @@ import { dataService } from '@/services/data.service';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BadgeCheck, ClockIcon, Download, History, Loader2 } from 'lucide-react';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { exportToExcel } from '@/utils/exportUtils';
+import { exportToExcel } from '@/utils/exportUtils'; // Fixed import
 import { formatDistanceToNow } from 'date-fns';
 
 interface DeviceHistoryEntry {
@@ -33,26 +33,34 @@ interface DeviceHistoryDialogProps {
   deviceId: string;
   deviceName: string;
   trigger?: React.ReactNode;
+  device?: any; // For backward compatibility
+  users?: any[]; // For backward compatibility
 }
 
 const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({ 
   deviceId, 
   deviceName,
-  trigger 
+  trigger,
+  device, // For backward compatibility
+  users  // For backward compatibility
 }) => {
+  // Handle backward compatibility
+  const effectiveDeviceId = deviceId || (device?.id || '');
+  const effectiveDeviceName = deviceName || (device?.project || '');
+  
   const [history, setHistory] = useState<DeviceHistoryEntry[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   
   const fetchHistory = async () => {
-    if (!deviceId) return;
+    if (!effectiveDeviceId) return;
     
     setIsLoading(true);
     setError(null);
     
     try {
-      const data = await dataService.getDeviceHistory(deviceId);
+      const data = await dataService.getDeviceHistory(effectiveDeviceId);
       setHistory(data);
     } catch (err) {
       console.error('Error fetching device history:', err);
@@ -66,15 +74,15 @@ const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({
     if (open) {
       fetchHistory();
     }
-  }, [deviceId, open]);
+  }, [effectiveDeviceId, open]);
   
   const handleExport = () => {
     if (history.length === 0) return;
     
     // Transform data for export
     const exportData = history.map(entry => ({
-      DeviceID: deviceId,
-      DeviceName: deviceName,
+      DeviceID: effectiveDeviceId,
+      DeviceName: effectiveDeviceName,
       UserName: entry.userName,
       AssignedDate: entry.assignedAt ? new Date(entry.assignedAt).toLocaleString() : '',
       ReleasedDate: entry.releasedAt ? new Date(entry.releasedAt).toLocaleString() : '',
@@ -82,7 +90,7 @@ const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({
       ReleaseReason: entry.releaseReason || ''
     }));
     
-    exportToExcel(exportData, `device-history-${deviceId}`);
+    exportToExcel(exportData, `device-history-${effectiveDeviceId}`);
   };
   
   const defaultTrigger = (
@@ -100,7 +108,7 @@ const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({
         <DialogHeader>
           <DialogTitle>Device Ownership History</DialogTitle>
           <DialogDescription>
-            View ownership history for device: {deviceName}
+            View ownership history for device: {effectiveDeviceName}
           </DialogDescription>
         </DialogHeader>
         
@@ -184,6 +192,7 @@ const DeviceHistoryDialog: React.FC<DeviceHistoryDialogProps> = ({
           </ScrollArea>
         )}
         
+        {/* Moved download button to the bottom */}
         <div className="mt-4 flex justify-end">
           <Button 
             variant="outline" 

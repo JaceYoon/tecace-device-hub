@@ -4,9 +4,16 @@ import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
-export const useDeviceFilters = (initialDevices: Device[] = []) => {
-  const [devices, setDevices] = useState<Device[]>(initialDevices);
-  const [filteredDevices, setFilteredDevices] = useState<Device[]>(initialDevices);
+interface UseDeviceFiltersProps {
+  filterByAvailable?: boolean;
+  filterByAssignedToUser?: string;
+  filterByStatus?: string[];
+  refreshTrigger?: number;
+}
+
+export const useDeviceFilters = (props: UseDeviceFiltersProps = {}) => {
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [filteredDevices, setFilteredDevices] = useState<Device[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
@@ -18,6 +25,25 @@ export const useDeviceFilters = (initialDevices: Device[] = []) => {
   // Filter devices based on search query, status, and type
   const filterDevices = useCallback(() => {
     let filtered = devices;
+
+    // Apply filterByAssignedToUser condition
+    if (props.filterByAssignedToUser) {
+      filtered = filtered.filter(device => 
+        device.assignedTo === props.filterByAssignedToUser
+      );
+    }
+
+    // Apply filterByStatus condition
+    if (props.filterByStatus && props.filterByStatus.length > 0) {
+      filtered = filtered.filter(device => 
+        props.filterByStatus?.includes(device.status)
+      );
+    }
+
+    // Apply filterByAvailable condition
+    if (props.filterByAvailable) {
+      filtered = filtered.filter(device => device.status === 'available');
+    }
 
     // Filter by search query (project, serialNumber, imei, notes)
     if (searchQuery) {
@@ -49,7 +75,7 @@ export const useDeviceFilters = (initialDevices: Device[] = []) => {
     }
 
     setFilteredDevices(filtered);
-  }, [devices, searchQuery, statusFilter, typeFilter]);
+  }, [devices, searchQuery, statusFilter, typeFilter, props.filterByAssignedToUser, props.filterByStatus, props.filterByAvailable]);
 
   // Fetch devices and users
   const fetchData = useCallback(async () => {
@@ -92,7 +118,7 @@ export const useDeviceFilters = (initialDevices: Device[] = []) => {
     return () => {
       unregister();
     };
-  }, [fetchData]);
+  }, [fetchData, props.refreshTrigger]);
 
   // Apply filters when any filter criteria or data changes
   useEffect(() => {
