@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -133,12 +132,19 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
           try {
             const body = JSON.parse(options.body as string);
             const { name, email, password } = body;
-            const newUser = userStore.addUser({ name, email, role: 'user' });
+            const newUser: User = {
+              id: `user-${Date.now()}`, // Generate a unique id using timestamp
+              name, 
+              email, 
+              role: 'user' as UserRole
+            };
             
-            if (newUser) {
-              localStorage.setItem('dev-user-id', newUser.id);
+            const addedUser = userStore.addUser(newUser);
+            
+            if (addedUser) {
+              localStorage.setItem('dev-user-id', addedUser.id);
               localStorage.setItem('dev-user-logged-in', 'true');
-              return { success: true, user: newUser } as T;
+              return { success: true, user: addedUser } as T;
             }
           } catch (e) {
             console.error('Error parsing register body:', e);
