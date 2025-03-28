@@ -13,7 +13,7 @@ router.get('/me', isAuthenticated, userController.findMe);
 // Get user by ID
 router.get('/:id', isAuthenticated, userController.findOne);
 
-// Update user profile
+// Update user profile - anyone authenticated can access, but controller will check permissions
 router.put('/:id/profile', isAuthenticated, userController.updateProfile);
 
 // Update user role (admin only)

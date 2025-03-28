@@ -52,8 +52,17 @@ exports.findOne = async (req, res) => {
 // Update user profile
 exports.updateProfile = async (req, res) => {
   try {
-    // Only allow users to update their own profile unless they're an admin
-    if (req.user.id !== req.params.id && req.user.role !== 'admin') {
+    console.log('Profile update request for user ID:', req.params.id);
+    console.log('Current user ID:', req.user.id);
+    console.log('Current user role:', req.user.role);
+    
+    // Check if user is updating their own profile OR if they're an admin
+    // Convert both IDs to strings before comparison to handle different data types
+    const requestedUserId = String(req.params.id);
+    const currentUserId = String(req.user.id);
+    
+    if (currentUserId !== requestedUserId && req.user.role !== 'admin') {
+      console.log('Authorization failed: User can only update their own profile');
       return res.status(403).json({ message: 'You can only update your own profile' });
     }
     
@@ -63,6 +72,7 @@ exports.updateProfile = async (req, res) => {
     const user = await User.findByPk(req.params.id);
     
     if (!user) {
+      console.log('User not found with ID:', req.params.id);
       return res.status(404).json({ message: 'User not found' });
     }
     
@@ -71,6 +81,8 @@ exports.updateProfile = async (req, res) => {
       name: name || user.name,
       avatarUrl: avatarUrl !== undefined ? avatarUrl : user.avatarUrl
     });
+    
+    console.log('User profile updated successfully for ID:', req.params.id);
     
     // Return the updated user without the password
     res.json({

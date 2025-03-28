@@ -33,6 +33,8 @@ const ProfileEditor: React.FC = () => {
     setIsLoading(true);
     
     try {
+      console.log('Updating profile for user ID:', user.id);
+      
       // Call the API to update the user profile
       const response = await api.put(`/users/${user.id}/profile`, {
         name: profileData.name,
