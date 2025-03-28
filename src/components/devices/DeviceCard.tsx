@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,7 +12,7 @@ import {
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
-import { DeviceEditDialog } from './DeviceEditDialog';
+import DeviceEditDialog from './DeviceEditDialog';
 import { DeviceHistoryDialog } from './DeviceHistoryDialog';
 import {
   AlertDialog,
@@ -380,15 +379,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                                 <DialogHeader>
                                   <DialogTitle className="flex justify-between items-center">
                                     <span>Device Picture - {device.project}</span>
-                                    <Button 
-                                      variant="outline" 
-                                      size="sm" 
-                                      className="flex items-center gap-1"
-                                      onClick={handleDownloadImage}
-                                    >
-                                      <Download className="h-4 w-4" />
-                                      Download
-                                    </Button>
                                   </DialogTitle>
                                   <DialogDescription>
                                     View full-sized device image
@@ -400,6 +390,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                                     alt="Device Picture" 
                                     className="max-w-full max-h-[70vh] rounded" 
                                   />
+                                </div>
+                                <div className="flex justify-end mt-4">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-1"
+                                    onClick={handleDownloadImage}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                  </Button>
                                 </div>
                               </DialogContent>
                             </Dialog>
@@ -567,7 +568,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           open={confirmDialog.isOpen} 
           onOpenChange={(open) => {
             if (!open) {
-              // Reset any processing state when dialog is closed via escape key or clicking outside
               setIsProcessing(false);
               setConfirmDialog(prev => ({...prev, isOpen: false}));
             }
@@ -582,7 +582,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel onClick={() => {
-                // Reset processing state when Cancel is clicked
                 setIsProcessing(false);
                 setConfirmDialog(prev => ({...prev, isOpen: false}));
               }}>
