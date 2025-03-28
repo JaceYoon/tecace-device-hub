@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
 import { Device, DeviceRequest } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
-import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw, ArrowLeft, Zap } from 'lucide-react';
+import { Shield, PackageCheck, AlertCircle, ShieldAlert, RefreshCw, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'sonner';
@@ -115,7 +115,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const assignedCount = devices.filter(d => d.status === 'assigned').length;
   const missingCount = devices.filter(d => d.status === 'missing').length;
   const stolenCount = devices.filter(d => d.status === 'stolen').length;
-  const returnedCount = devices.filter(d => d.status === 'returned').length;
   const deadCount = devices.filter(d => d.status === 'dead').length;
   
   // Count pending requests directly from the requests data
@@ -168,7 +167,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
         </div>
       )}
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatusCard 
           icon={Shield} 
           count={availableCount} 
@@ -206,12 +205,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
               count={deadCount} 
               label="Dead" 
               color="bg-gray-500" 
-            />
-            <StatusCard 
-              icon={ArrowLeft} 
-              count={returnedCount} 
-              label="Returned" 
-              color="bg-purple-500" 
             />
           </>
         )}

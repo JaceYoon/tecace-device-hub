@@ -27,7 +27,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const storedUser = localStorage.getItem('tecace_current_user');
         if (storedUser) {
           try {
-            setUser(JSON.parse(storedUser) as User);
+            const parsedUser = JSON.parse(storedUser) as User;
+            // Ensure we're preserving the avatarUrl if it exists
+            if (parsedUser.avatarUrl) {
+              console.log('Found avatar URL in localStorage:', parsedUser.avatarUrl);
+            }
+            setUser(parsedUser);
           } catch (e) {
             console.error('Error parsing stored user:', e);
           }
@@ -74,9 +79,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const response = await authService.login(email, password);
       
       if (response && 'success' in response && response.success) {
+        // Make sure the avatar URL is included when saving to state
         setUser(response.user as User);
         
-        // Store user in localStorage as a fallback
+        // Ensure avatar URL is preserved in localStorage
         localStorage.setItem('tecace_current_user', JSON.stringify(response.user));
         
         toast.success(`Welcome back, ${response.user.name}!`);
@@ -212,8 +218,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (!user) return false;
 
     try {
+      // First try to update on the server
+      let serverUpdated = false;
+      try {
+        // Attempt to update via API first
+        const response = await api.put(`/users/${user.id}/profile`, updates);
+        if (response) {
+          console.log('Profile updated successfully via API');
+          serverUpdated = true;
+        }
+      } catch (error) {
+        console.error('Error updating profile via API:', error);
+      }
+      
       // Update the user in state
       const updatedUser = { ...user, ...updates };
+      
+      // Make sure avatarUrl is preserved if it exists
+      if (updates.avatarUrl) {
+        console.log('Updating avatar URL to:', updates.avatarUrl);
+        updatedUser.avatarUrl = updates.avatarUrl;
+      }
+      
       setUser(updatedUser);
       
       // Update in localStorage as fallback
