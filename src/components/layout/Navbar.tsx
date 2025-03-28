@@ -70,7 +70,16 @@ const Navbar: React.FC = () => {
                   >
                     <Avatar className="h-8 w-8">
                       {user?.avatarUrl ? (
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
+                        <AvatarImage 
+                          src={user.avatarUrl} 
+                          alt={user.name} 
+                          onError={(e) => {
+                            console.error('Failed to load avatar image:', user.avatarUrl);
+                            // Cast to HTMLImageElement to access the src property
+                            const img = e.target as HTMLImageElement;
+                            img.style.display = 'none';
+                          }}
+                        />
                       ) : (
                         <AvatarFallback>
                           {user?.name

@@ -75,7 +75,16 @@ const ProfileEditor: React.FC = () => {
         <div className="flex flex-col items-center gap-4">
           <Avatar className="h-24 w-24">
             {profileData.avatarUrl ? (
-              <AvatarImage src={profileData.avatarUrl} alt={profileData.name} />
+              <AvatarImage 
+                src={profileData.avatarUrl} 
+                alt={profileData.name} 
+                onError={(e) => {
+                  console.error('Failed to load avatar image in profile editor:', profileData.avatarUrl);
+                  // Cast to HTMLImageElement to access the src property
+                  const img = e.target as HTMLImageElement;
+                  img.style.display = 'none';
+                }}
+              />
             ) : (
               <AvatarFallback className="text-xl">
                 {profileData.name.split(' ').map(n => n[0]).join('')}
