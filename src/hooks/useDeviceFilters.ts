@@ -151,13 +151,21 @@ export const useDeviceFilters = ({
         }
       }
       
+      if (filterByAvailable && (device.status === 'returned' || device.status === 'dead')) {
+        return false;
+      }
+      
+      if (!effectiveStatusFilters && !filterByAvailable && device.status === 'returned') {
+        return false;
+      }
+      
       if (typeFilter !== 'all' && device.type !== typeFilter) {
         return false;
       }
       
       return true;
     });
-  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser]);
+  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable]);
 
   return {
     devices,

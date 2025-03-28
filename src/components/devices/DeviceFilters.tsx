@@ -60,6 +60,8 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
             <>
               <SelectItem value="missing">Missing</SelectItem>
               <SelectItem value="stolen">Stolen</SelectItem>
+              <SelectItem value="dead">Dead</SelectItem>
+              <SelectItem value="returned">Returned</SelectItem>
             </>
           )}
         </SelectContent>
