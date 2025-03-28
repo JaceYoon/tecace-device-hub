@@ -8,9 +8,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Loader2, User, Check } from 'lucide-react';
 import { toast } from 'sonner';
+import api from '@/services/api.service';
 
 const ProfileEditor: React.FC = () => {
-  const { user } = useAuth();
+  const { user, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
@@ -31,16 +32,33 @@ const ProfileEditor: React.FC = () => {
     
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // In a real app, this would be an API call to update the user profile
+    try {
+      // Call the API to update the user profile
+      const response = await api.put(`/users/${user.id}/profile`, {
+        name: profileData.name,
+        avatarUrl: profileData.avatarUrl
+      });
+      
+      if (response) {
+        // Update local user state with updateUserProfile from AuthContext
+        updateUserProfile({
+          name: profileData.name,
+          avatarUrl: profileData.avatarUrl
+        });
+        
+        toast.success('Profile updated successfully', {
+          description: 'Your profile information has been updated'
+        });
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      toast.error('Failed to update profile', {
+        description: 'Please try again later'
+      });
+    } finally {
       setIsLoading(false);
       setIsEditing(false);
-      
-      toast.success('Profile updated successfully', {
-        description: 'Your profile information has been updated'
-      });
-    }, 1000);
+    }
   };
 
   if (!user) return null;

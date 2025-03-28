@@ -13,6 +13,9 @@ router.get('/me', isAuthenticated, userController.findMe);
 // Get user by ID
 router.get('/:id', isAuthenticated, userController.findOne);
 
+// Update user profile
+router.put('/:id/profile', isAuthenticated, userController.updateProfile);
+
 // Update user role (admin only)
 router.put('/:id/role', isAuthenticated, isAdmin, userController.updateRole);
 

@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
@@ -206,6 +207,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return true;
   };
 
+  // Update user profile
+  const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
+    if (!user) return false;
+
+    try {
+      // Update the user in state
+      const updatedUser = { ...user, ...updates };
+      setUser(updatedUser);
+      
+      // Update in localStorage as fallback
+      localStorage.setItem('tecace_current_user', JSON.stringify(updatedUser));
+      
+      // Also update in the users list if present
+      if (users.length > 0) {
+        setUsers(prev => prev.map(u => 
+          u.id === user.id ? { ...u, ...updates } : u
+        ));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating user profile:', error);
+      return false;
+    }
+  };
+
   // Update user role (admin only)
   const updateUserRole = (userId: string, newRole: UserRole): boolean => {
     if (user?.role !== 'admin') {
@@ -293,7 +320,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     logout,
     register,
     verifyEmail,
-    updateUserRole
+    updateUserRole,
+    updateUserProfile
   };
 
   return (
