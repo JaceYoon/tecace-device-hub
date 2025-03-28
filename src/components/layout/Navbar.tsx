@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -17,6 +17,12 @@ import { Box, LogOut, Package, Settings, Smartphone, User } from 'lucide-react';
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, isManager, logout } = useAuth();
   const navigate = useNavigate();
+  const [imageError, setImageError] = useState(false);
+
+  // Reset image error state when user changes
+  useEffect(() => {
+    setImageError(false);
+  }, [user?.id]);
 
   const handleLogout = () => {
     logout();
@@ -69,23 +75,23 @@ const Navbar: React.FC = () => {
                     className="relative h-8 w-8 rounded-full"
                   >
                     <Avatar className="h-8 w-8">
-                      {user?.avatarUrl ? (
+                      {user?.avatarUrl && !imageError ? (
                         <AvatarImage 
                           src={user.avatarUrl} 
                           alt={user.name} 
                           onError={(e) => {
                             console.error('Failed to load avatar image:', user.avatarUrl);
-                            // Cast to HTMLImageElement to access the src property
-                            const img = e.target as HTMLImageElement;
-                            img.style.display = 'none';
+                            setImageError(true);
                           }}
                         />
                       ) : (
                         <AvatarFallback>
                           {user?.name
-                            .split(' ')
-                            .map((n) => n[0])
-                            .join('')}
+                            ? user.name
+                                .split(' ')
+                                .map((n) => n[0])
+                                .join('')
+                            : 'U'}
                         </AvatarFallback>
                       )}
                     </Avatar>

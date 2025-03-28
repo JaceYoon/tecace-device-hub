@@ -85,6 +85,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             value={deviceData.project}
             onChange={handleChange}
             required
+            autoComplete="off"
           />
         </div>
 
@@ -97,6 +98,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             value={deviceData.projectGroup}
             onChange={handleChange}
             required
+            autoComplete="off"
           />
         </div>
       </div>
@@ -108,7 +110,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             value={deviceData.type}
             onValueChange={(value) => handleSelectChange(value, 'type')}
           >
-            <SelectTrigger id="type">
+            <SelectTrigger id="type" name="type">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
@@ -125,7 +127,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             value={deviceData.deviceType}
             onValueChange={(value) => handleSelectChange(value, 'deviceType')}
           >
-            <SelectTrigger id="deviceType">
+            <SelectTrigger id="deviceType" name="deviceType">
               <SelectValue placeholder="Select Type" />
             </SelectTrigger>
             <SelectContent>
@@ -147,6 +149,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             onChange={handleChange}
             pattern="[a-zA-Z0-9]*"
             title="Only letters and numbers are allowed"
+            autoComplete="off"
           />
         </div>
 
@@ -161,6 +164,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             pattern="\d{15}"
             title="IMEI must be exactly 15 digits"
             maxLength={15}
+            autoComplete="off"
           />
         </div>
       </div>
@@ -171,6 +175,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           <Popover>
             <PopoverTrigger asChild>
               <Button
+                id="receivedDate"
+                name="receivedDate"
                 variant="outline"
                 className={cn(
                   "w-full justify-start text-left font-normal",
@@ -200,6 +206,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             placeholder="Mukundan or Matt"
             value={deviceData.deviceStatus || ''}
             onChange={handleChange}
+            autoComplete="off"
           />
         </div>
       </div>
@@ -238,6 +245,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           value={deviceData.notes || ''}
           onChange={handleChange}
           rows={3}
+          autoComplete="off"
         />
       </div>
     </div>

@@ -14,6 +14,7 @@ const ProfileEditor: React.FC = () => {
   const { user, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     avatarUrl: user?.avatarUrl || '',
@@ -48,6 +49,9 @@ const ProfileEditor: React.FC = () => {
           avatarUrl: profileData.avatarUrl
         });
         
+        // Reset image error state when updating avatar URL
+        setImageError(false);
+        
         toast.success('Profile updated successfully', {
           description: 'Your profile information has been updated'
         });
@@ -74,15 +78,13 @@ const ProfileEditor: React.FC = () => {
       <CardContent className="space-y-6">
         <div className="flex flex-col items-center gap-4">
           <Avatar className="h-24 w-24">
-            {profileData.avatarUrl ? (
+            {profileData.avatarUrl && !imageError ? (
               <AvatarImage 
                 src={profileData.avatarUrl} 
                 alt={profileData.name} 
                 onError={(e) => {
                   console.error('Failed to load avatar image in profile editor:', profileData.avatarUrl);
-                  // Cast to HTMLImageElement to access the src property
-                  const img = e.target as HTMLImageElement;
-                  img.style.display = 'none';
+                  setImageError(true);
                 }}
               />
             ) : (
@@ -102,6 +104,7 @@ const ProfileEditor: React.FC = () => {
                 onChange={handleChange}
                 placeholder="https://example.com/avatar.jpg"
                 className="mt-1"
+                autoComplete="photo"
               />
             </div>
           )}
@@ -116,6 +119,7 @@ const ProfileEditor: React.FC = () => {
               value={profileData.name}
               onChange={handleChange}
               placeholder="Your name"
+              autoComplete="name"
             />
           ) : (
             <div className="flex items-center justify-between border rounded-md p-2">
