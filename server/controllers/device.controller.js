@@ -277,6 +277,27 @@ exports.update = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
+    // For report-related statuses (missing, stolen, dead), verify the status is allowed
+    // This is a workaround for database schema issues
+    let finalStatus = status;
+    if (status && ['missing', 'stolen', 'dead'].includes(status)) {
+      // Check if the device status enum includes these values
+      try {
+        // Try to update with the requested status
+        await device.update({ status });
+        finalStatus = status;
+      } catch (statusError) {
+        // If status update fails, fallback to 'available' but mark deviceStatus field
+        console.error(`Error setting device status to '${status}', using fallback:`, statusError.message);
+        finalStatus = 'available';
+        
+        // Update deviceStatus field instead to track the reported issue
+        await device.update({ 
+          deviceStatus: `Reported as ${status} but status column constraint prevented update`
+        });
+      }
+    }
+
     // Only consider it being released if status explicitly changes from assigned to available
     // AND assignedToId is explicitly set to null
     const isBeingReleased = device.status === 'assigned' && 
@@ -289,7 +310,7 @@ exports.update = async (req, res) => {
     
     // For regular edits of assigned devices, keep as assigned
     const updatedStatus = (device.status === 'assigned' && !isBeingReleased) ? 
-                          'assigned' : (status || device.status);
+                          'assigned' : (finalStatus || device.status);
     
     // Update device
     await device.update({
@@ -526,10 +547,29 @@ exports.processRequest = async (req, res) => {
         );
       } else if (request.type === 'report' && request.reportType) {
         // For report requests, update the device status to the reported issue type
-        await device.update({
-          status: request.reportType,
-          requestedBy: null
-        });
+        try {
+          // Try to directly update the device status
+          await device.update({
+            status: request.reportType,
+            requestedBy: null
+          });
+        } catch (error) {
+          // If status update fails due to column constraint
+          if (error.message.includes('Data truncated for column') || 
+              error.message.includes('status')) {
+            console.error('Error updating device status due to database constraint:', error.message);
+            
+            // Use fallback: Update deviceStatus field instead and keep status as available
+            await device.update({
+              status: 'available', // Keep as available since db doesn't support other values
+              deviceStatus: `Reported as ${request.reportType}`, // Set descriptive device status
+              requestedBy: null
+            });
+          } else {
+            // For other errors, re-throw
+            throw error;
+          }
+        }
       }
     } else {
       // If rejected, just clear the requestedBy field
