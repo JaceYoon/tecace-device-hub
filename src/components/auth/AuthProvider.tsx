@@ -1,13 +1,14 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import api, { authService, userService } from '@/services/api.service';
 
-// Create the Auth Context
+// Create the Auth Context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Ensure the component is properly defined as a React function component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Move all hooks to the top level of the component
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -60,6 +61,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     
     fetchUsers();
   }, [user]);
+
+  // Check if user is admin
+  const isAdmin = user?.role === 'admin';
+  // For backward compatibility, isManager is true if admin or manager
+  const isManager = user?.role === 'admin' || user?.role === 'manager';
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -254,11 +260,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     performRoleUpdate();
     return true;
   };
-
-  // Check if user is admin
-  const isAdmin = user?.role === 'admin';
-  // For backward compatibility, isManager is true if admin or manager
-  const isManager = user?.role === 'admin' || user?.role === 'manager';
 
   // Create auth context value
   const contextValue: AuthContextType = {

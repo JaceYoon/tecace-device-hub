@@ -1,5 +1,5 @@
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import LoginPage from '@/components/auth/LoginPage';
@@ -7,22 +7,18 @@ import LoginPage from '@/components/auth/LoginPage';
 const Index: React.FC = () => {
   const navigate = useNavigate();
   
-  // Instead of directly using useAuth, we'll wrap the authentication check in a try/catch
-  // and provide a fallback for when the context isn't ready yet
-  let isAuthenticated = false;
-  try {
-    const { isAuthenticated: authStatus } = useAuth();
-    isAuthenticated = authStatus;
-    
-    useEffect(() => {
+  // Use try/catch but in a useEffect to properly handle the hook
+  React.useEffect(() => {
+    try {
+      const { isAuthenticated } = useAuth();
       if (isAuthenticated) {
         navigate('/dashboard');
       }
-    }, [isAuthenticated, navigate]);
-  } catch (error) {
-    console.log('Auth context not ready yet');
-    // The AuthProvider isn't ready yet, so we'll just render the login page
-  }
+    } catch (error) {
+      console.log('Auth context not ready yet');
+      // The AuthProvider isn't ready yet, so we'll just render the login page
+    }
+  }, [navigate]);
   
   return <LoginPage />;
 };
