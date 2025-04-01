@@ -468,6 +468,29 @@ exports.requestDevice = async (req, res) => {
       // Update the device to indicate it has a pending request
       device.requestedBy = req.user.id;
       await device.save();
+    } else if (type === 'report') {
+      // For report requests, mark the device as pending right away
+      try {
+        await device.update({
+          status: 'pending',
+          requestedBy: req.user.id
+        });
+      } catch (error) {
+        // If status update fails due to column constraint
+        if (error.message.includes('Data truncated for column') || 
+            error.message.includes('status')) {
+          console.error('Error updating device status due to database constraint:', error.message);
+          
+          // Use fallback: Update deviceStatus field instead
+          await device.update({
+            deviceStatus: `Pending report as ${reportType}`,
+            requestedBy: req.user.id
+          });
+        } else {
+          // For other errors, re-throw
+          throw error;
+        }
+      }
     }
 
     res.status(201).json(request);
@@ -548,23 +571,91 @@ exports.processRequest = async (req, res) => {
       } else if (request.type === 'report' && request.reportType) {
         // For report requests, update the device status to the reported issue type
         try {
+          // If device is owned by someone, release the ownership
+          let isAssigned = device.assignedToId !== null;
+          let previousOwnerId = device.assignedToId;
+          
           // Try to directly update the device status
           await device.update({
             status: request.reportType,
+            assignedToId: null, // Release ownership
             requestedBy: null
           });
+          
+          // If device was assigned, create an auto-approved release request to track history
+          if (isAssigned && previousOwnerId) {
+            console.log(`Automatically releasing device ${device.id} after report approval`);
+            
+            await Request.create({
+              type: 'release',
+              status: 'approved',
+              deviceId: device.id,
+              userId: previousOwnerId,
+              processedById: req.user.id,
+              requestedAt: new Date(),
+              processedAt: new Date(),
+              reason: `Auto-released due to device being reported as ${request.reportType}`
+            });
+            
+            // Mark any previous 'assign' requests as 'returned'
+            await Request.update(
+              { status: 'returned' },
+              { 
+                where: { 
+                  deviceId: device.id,
+                  userId: previousOwnerId,
+                  type: 'assign',
+                  status: 'approved'
+                }
+              }
+            );
+          }
         } catch (error) {
           // If status update fails due to column constraint
           if (error.message.includes('Data truncated for column') || 
               error.message.includes('status')) {
             console.error('Error updating device status due to database constraint:', error.message);
             
+            // Get current owner information before updating
+            let isAssigned = device.assignedToId !== null;
+            let previousOwnerId = device.assignedToId;
+            
             // Use fallback: Update deviceStatus field instead and keep status as available
             await device.update({
               status: 'available', // Keep as available since db doesn't support other values
               deviceStatus: `Reported as ${request.reportType}`, // Set descriptive device status
+              assignedToId: null, // Release ownership
               requestedBy: null
             });
+            
+            // If device was assigned, create an auto-approved release request to track history
+            if (isAssigned && previousOwnerId) {
+              console.log(`Automatically releasing device ${device.id} after report approval (fallback method)`);
+              
+              await Request.create({
+                type: 'release',
+                status: 'approved',
+                deviceId: device.id,
+                userId: previousOwnerId,
+                processedById: req.user.id,
+                requestedAt: new Date(),
+                processedAt: new Date(),
+                reason: `Auto-released due to device being reported as ${request.reportType}`
+              });
+              
+              // Mark any previous 'assign' requests as 'returned'
+              await Request.update(
+                { status: 'returned' },
+                { 
+                  where: { 
+                    deviceId: device.id,
+                    userId: previousOwnerId,
+                    type: 'assign',
+                    status: 'approved'
+                  }
+                }
+              );
+            }
           } else {
             // For other errors, re-throw
             throw error;
@@ -575,7 +666,11 @@ exports.processRequest = async (req, res) => {
       // If rejected, just clear the requestedBy field
       const device = await Device.findByPk(request.deviceId);
       await device.update({
-        requestedBy: null
+        requestedBy: null,
+        // If it was a report request that was rejected, restore the previous status
+        status: request.type === 'report' ? 'available' : device.status,
+        // Clear the pending report message if present
+        deviceStatus: device.deviceStatus?.includes('Pending report') ? null : device.deviceStatus
       });
     }
 

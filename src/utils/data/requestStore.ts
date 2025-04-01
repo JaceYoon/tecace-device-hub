@@ -1,4 +1,3 @@
-
 import { DeviceRequest, RequestStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
@@ -121,6 +120,15 @@ class RequestStore {
       deviceStore.updateDevice(request.deviceId, {
         requestedBy: request.userId,
       });
+    } else if (request.type === 'report') {
+      // For report requests, immediately mark the device as pending
+      deviceStore.updateDevice(request.deviceId, {
+        status: 'pending',
+        requestedBy: request.userId,
+        deviceStatus: `Pending report: ${request.reportType}`
+      });
+      
+      console.log(`Device ${request.deviceId} marked as pending due to report`);
     }
     
     // Persist to localStorage
@@ -198,17 +206,69 @@ class RequestStore {
           }
         });
       } else if (request.type === 'report' && request.reportType) {
+        // Get device to check current ownership
+        const device = deviceStore.getDeviceById(request.deviceId);
+        const isAssigned = device && device.assignedToId;
+        const previousOwnerId = device?.assignedToId;
+        
         // Handle report requests by updating device status to the reported issue
         deviceStore.updateDevice(request.deviceId, {
           status: request.reportType,
           requestedBy: undefined,
+          // Release ownership when report is approved
+          assignedTo: undefined,
+          assignedToId: undefined,
         });
+        
+        // If device was assigned, create an auto-released request to track history
+        if (isAssigned && previousOwnerId) {
+          console.log(`Auto-releasing device ${request.deviceId} after report approval`);
+          
+          // Create an auto-approved release request
+          const releaseRequest: DeviceRequest = {
+            id: `release-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            type: 'release',
+            status: 'approved',
+            deviceId: request.deviceId,
+            userId: previousOwnerId,
+            requestedAt: new Date(),
+            processedAt: new Date(),
+            processedBy: managerId,
+            reason: `Auto-released due to device being reported as ${request.reportType}`
+          };
+          
+          this.requests.push(releaseRequest);
+          
+          // Mark any assign requests as returned
+          const assignRequests = this.requests.filter(
+            r => r.deviceId === request.deviceId && 
+                 r.userId === previousOwnerId && 
+                 r.type === 'assign' && 
+                 r.status === 'approved'
+          );
+          
+          assignRequests.forEach(r => {
+            const idx = this.requests.findIndex(req => req.id === r.id);
+            if (idx !== -1) {
+              this.requests[idx] = {
+                ...this.requests[idx],
+                status: 'returned',
+                processedAt: new Date(),
+                processedBy: managerId
+              };
+            }
+          });
+        }
       }
     } else if (status === 'rejected' || status === 'cancelled') {
       // If rejected or cancelled, clear the requestedBy field
       console.log(`Request ${status}: clearing requestedBy for device ${request.deviceId}`);
       deviceStore.updateDevice(request.deviceId, {
         requestedBy: undefined,
+        // If it was a report that was rejected, restore status
+        status: request.type === 'report' ? 'available' : undefined,
+        // Clear any pending report message
+        deviceStatus: request.type === 'report' ? undefined : undefined,
       });
     }
     
