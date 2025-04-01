@@ -117,20 +117,21 @@ const RequestList: React.FC<RequestListProps> = ({
     return 'N/A';
   };
 
-  // Filter requests based on userId prop if provided
-  let filteredRequests = requests;
+  // Filter requests based on userId prop if provided and exclude reports (handled separately)
+  let filteredRequests = requests.filter(request => request.type !== 'report');
+  
   if (userId) {
     // When viewing "My Requests" tab, show ALL requests for this user (not just pending)
-    filteredRequests = requests.filter(request => request.userId === userId);
+    filteredRequests = filteredRequests.filter(request => request.userId === userId);
     console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
   } else {
     // For admin view, only show pending requests that need action
-    filteredRequests = requests.filter(request => request.status === 'pending');
+    filteredRequests = filteredRequests.filter(request => request.status === 'pending');
   }
 
   // If not admin, only show requests that belong to current user
   if (!isAdmin && !userId && user) {
-    filteredRequests = requests.filter(request => request.userId === user.id && request.status === 'pending');
+    filteredRequests = filteredRequests.filter(request => request.userId === user.id && request.status === 'pending');
   }
 
   return (
