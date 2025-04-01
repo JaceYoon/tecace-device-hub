@@ -50,7 +50,8 @@ router.post('/login', async (req, res, next) => {
           id: user.id,
           name: user.name,
           email: user.email,
-          role: user.role
+          role: user.role,
+          avatarUrl: user.avatarUrl // Ensure avatarUrl is included in the response
         } 
       });
     });
@@ -99,7 +100,8 @@ router.post('/register', async (req, res) => {
           id: newUser.id,
           name: newUser.name,
           email: newUser.email,
-          role: newUser.role
+          role: newUser.role,
+          avatarUrl: newUser.avatarUrl // Include avatarUrl in response even if null
         } 
       });
     });
@@ -112,6 +114,7 @@ router.post('/register', async (req, res) => {
 // Check if user is authenticated
 router.get('/check', (req, res) => {
   if (req.isAuthenticated()) {
+    // Make sure to always include avatarUrl in the response
     return res.json({ 
       isAuthenticated: true, 
       user: {

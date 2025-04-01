@@ -19,7 +19,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const response = await authService.checkAuth();
         if (response && 'isAuthenticated' in response && response.isAuthenticated) {
           console.log('User authenticated from server:', response.user);
-          setUser(response.user as User);
+          
+          // Make sure avatarUrl is properly included in the user object
+          if (response.user) {
+            const userWithAvatar = {
+              ...response.user,
+              avatarUrl: response.user.avatarUrl || undefined
+            };
+            setUser(userWithAvatar as User);
+            
+            // Log the user data with avatar URL for debugging
+            console.log('Setting user with avatar:', userWithAvatar);
+          }
         }
       } catch (error) {
         console.error('Authentication check error:', error);
@@ -57,7 +68,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       if (response && 'success' in response && response.success) {
         console.log('Login successful, user data:', response.user);
-        setUser(response.user as User);
+        
+        // Ensure the user object has the avatarUrl property
+        const userWithAvatar = {
+          ...response.user,
+          avatarUrl: response.user.avatarUrl || undefined
+        };
+        
+        console.log('Setting user with avatar after login:', userWithAvatar);
+        setUser(userWithAvatar as User);
         toast.success(`Welcome back, ${response.user.name}!`);
         return true;
       }
@@ -106,7 +125,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       });
       
       if (response && 'success' in response && response.success && response.user) {
-        setUser(response.user);
+        // Include avatarUrl in the user object if it exists
+        const userWithAvatar = {
+          ...response.user,
+          avatarUrl: response.user.avatarUrl || undefined
+        };
+        
+        setUser(userWithAvatar);
         toast.success('Account created successfully!');
         return { 
           success: true, 
