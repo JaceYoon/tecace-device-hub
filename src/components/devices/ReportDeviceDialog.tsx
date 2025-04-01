@@ -66,6 +66,8 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     try {
       setIsSubmitting(true);
       
+      console.log('Submitting report with values:', values);
+      
       const request = await dataService.addRequest({
         deviceId: device.id,
         userId: userId,
