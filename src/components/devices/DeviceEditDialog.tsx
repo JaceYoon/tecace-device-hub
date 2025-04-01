@@ -17,6 +17,7 @@ import DeviceEditForm from './DeviceEditForm';
 interface DeviceEditDialogProps {
   device: Device;
   onDeviceUpdated?: () => void;
+  triggerElement?: React.ReactNode;
 }
 
 // Create the DialogDescription component
@@ -28,7 +29,8 @@ const DeviceDialogDescription: React.FC = () => (
 
 export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({ 
   device, 
-  onDeviceUpdated 
+  onDeviceUpdated,
+  triggerElement
 }) => {
   const [open, setOpen] = useState(false);
   
@@ -43,9 +45,11 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Edit className="h-4 w-4" />
-        </Button>
+        {triggerElement || (
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Edit className="h-4 w-4" />
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
