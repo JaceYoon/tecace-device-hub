@@ -7,8 +7,13 @@ module.exports = (sequelize, Sequelize) => {
       autoIncrement: true
     },
     type: {
-      type: Sequelize.ENUM('assign', 'release'),
+      type: Sequelize.ENUM('assign', 'release', 'report'),
       allowNull: false
+    },
+    reportType: {
+      type: Sequelize.ENUM('missing', 'stolen', 'dead'),
+      allowNull: true,
+      comment: 'Type of report for device issues'
     },
     status: {
       type: Sequelize.ENUM('pending', 'approved', 'rejected', 'cancelled', 'returned'),
@@ -25,7 +30,7 @@ module.exports = (sequelize, Sequelize) => {
     reason: {
       type: Sequelize.STRING,
       allowNull: true,
-      comment: 'Reason for request or release'
+      comment: 'Reason for request, release or report'
     }
   });
   

@@ -379,10 +379,15 @@ exports.delete = async (req, res) => {
 // Request a device
 exports.requestDevice = async (req, res) => {
   try {
-    const { type } = req.body; // 'assign' or 'release'
+    const { type, reportType, reason } = req.body; // Added reportType and reason
 
-    if (!type || !['assign', 'release'].includes(type)) {
+    if (!type || !['assign', 'release', 'report'].includes(type)) {
       return res.status(400).json({ message: 'Invalid request type' });
+    }
+
+    // Validate reportType if this is a report request
+    if (type === 'report' && (!reportType || !['missing', 'stolen', 'dead'].includes(reportType))) {
+      return res.status(400).json({ message: 'Invalid report type' });
     }
 
     const device = await Device.findByPk(req.params.id);
@@ -403,11 +408,12 @@ exports.requestDevice = async (req, res) => {
       return res.status(400).json({ message: 'There is already a pending request for this device' });
     }
 
-    // Validate request
+    // Validate assignment request
     if (type === 'assign' && device.status !== 'available') {
       return res.status(400).json({ message: 'Device is not available' });
     }
 
+    // Validate release request
     if (type === 'release' && device.assignedToId !== req.user.id) {
       return res.status(400).json({ message: 'Device is not assigned to you' });
     }
@@ -420,13 +426,14 @@ exports.requestDevice = async (req, res) => {
     // Create request
     const request = await Request.create({
       type,
+      reportType: type === 'report' ? reportType : null,
       status,
       deviceId: device.id,
       userId: req.user.id,
       processedAt,
       processedById,
       requestedAt: new Date(),
-      reason: type === 'release' ? 'Device returned by user' : null
+      reason: reason || (type === 'release' ? 'Device returned by user' : null)
     });
 
     // If it's a release request, update the device immediately
@@ -517,6 +524,12 @@ exports.processRequest = async (req, res) => {
             }
           }
         );
+      } else if (request.type === 'report' && request.reportType) {
+        // For report requests, update the device status to the reported issue type
+        await device.update({
+          status: request.reportType,
+          requestedBy: null
+        });
       }
     } else {
       // If rejected, just clear the requestedBy field

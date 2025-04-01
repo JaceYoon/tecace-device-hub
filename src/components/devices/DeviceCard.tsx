@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -7,13 +8,14 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image, Download
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image, Download, Flag
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
 import DeviceEditDialog from './DeviceEditDialog';
 import { DeviceHistoryDialog } from './DeviceHistoryDialog';
+import ReportDeviceDialog from './ReportDeviceDialog';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -558,6 +560,15 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                           <>Return Device</>
                         )}
                       </Button>
+                  )}
+                  
+                  {/* Add Report button for non-admins */}
+                  {user && !isAdmin && (
+                    <ReportDeviceDialog 
+                      device={device} 
+                      userId={user.id} 
+                      onReportSubmitted={onAction}
+                    />
                   )}
                 </>
             )}

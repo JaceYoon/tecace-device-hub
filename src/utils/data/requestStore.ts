@@ -1,3 +1,4 @@
+
 import { DeviceRequest, RequestStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
@@ -195,6 +196,12 @@ class RequestStore {
               processedBy: managerId
             };
           }
+        });
+      } else if (request.type === 'report' && request.reportType) {
+        // Handle report requests by updating device status to the reported issue
+        deviceStore.updateDevice(request.deviceId, {
+          status: request.reportType,
+          requestedBy: undefined,
         });
       }
     } else if (status === 'rejected' || status === 'cancelled') {
