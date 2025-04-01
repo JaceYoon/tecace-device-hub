@@ -338,8 +338,9 @@ export const dataService = {
           throw new Error('Invalid report type');
         }
         
-        // For report requests, use API endpoints directly
+        // Try using API first with fallback to local storage for database enum issues
         try {
+          // First try the API
           const newRequest = await apiCall<DeviceRequest>(`/devices/${request.deviceId}/request`, {
             method: 'POST',
             body: JSON.stringify({ 
@@ -349,7 +350,7 @@ export const dataService = {
             })
           });
           
-          console.log('Report request added successfully:', newRequest);
+          console.log('Report request added successfully via API:', newRequest);
           
           // Trigger refresh callback with a delay
           setTimeout(() => {
@@ -359,6 +360,38 @@ export const dataService = {
           return newRequest;
         } catch (error) {
           console.error('Error creating report request via API:', error);
+          
+          // If the error is about data truncation for the type column, use local storage
+          if (error instanceof Error && 
+              (error.message.includes('Data truncated for column') || 
+               error.message.includes('type'))) {
+            
+            console.log('Using local storage fallback for report request due to database enum constraint');
+            
+            // Create a fallback local request
+            const localRequest = requestStore.addRequest({
+              ...request,
+              // Set to pending since it's a report request
+              status: 'pending'
+            });
+            
+            // Update device to show it's been reported
+            deviceStore.updateDevice(request.deviceId, {
+              requestedBy: request.userId
+            });
+            
+            // Trigger refresh
+            setTimeout(() => dataService.triggerRefresh(), 300);
+            
+            // Show a warning to the user about using local storage
+            toast.warning('Server database needs updating. Using local storage for now.', {
+              description: 'Your report has been saved locally. Please contact your administrator.'
+            });
+            
+            return localRequest;
+          }
+          
+          // Re-throw the error if it's not related to the enum constraint
           throw error;
         }
       } else {
