@@ -1,4 +1,3 @@
-
 import { DeviceRequest, RequestStatus, DeviceStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
@@ -215,14 +214,16 @@ class RequestStore {
         const previousOwnerId = device?.assignedToId;
         
         // Handle report requests by updating device status to the reported issue
+        // This is the key fix - ensure we use the reportType as the device status
         const reportStatus = request.reportType as DeviceStatus;
         
         deviceStore.updateDevice(request.deviceId, {
-          status: reportStatus,
+          status: reportStatus, // Use the report type (missing, stolen, dead) as the device status
           requestedBy: undefined,
           // Release ownership when report is approved
           assignedTo: undefined,
           assignedToId: undefined,
+          deviceStatus: `Reported as ${request.reportType}: ${request.reason || ''}`
         });
         
         // If device was assigned, create an auto-released request to track history
