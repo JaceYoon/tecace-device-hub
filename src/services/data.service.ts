@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -277,6 +276,8 @@ export const dataService = {
   
   addRequest: async (request: Omit<DeviceRequest, 'id' | 'requestedAt'>): Promise<DeviceRequest> => {
     try {
+      console.log('Processing addRequest with:', request);
+      
       // If it's a release request, first update the device to prevent loops
       if (request.type === 'release') {
         try {
@@ -328,6 +329,37 @@ export const dataService = {
           setTimeout(() => dataService.triggerRefresh(), 300);
           
           return newRequest;
+        }
+      } else if (request.type === 'report') {
+        // Special handling for report requests
+        console.log('Processing report request with type:', request.reportType);
+        
+        if (!request.reportType || !['missing', 'stolen', 'dead'].includes(request.reportType)) {
+          throw new Error('Invalid report type');
+        }
+        
+        // For report requests, use API endpoints directly
+        try {
+          const newRequest = await apiCall<DeviceRequest>(`/devices/${request.deviceId}/request`, {
+            method: 'POST',
+            body: JSON.stringify({ 
+              type: request.type,
+              reportType: request.reportType,
+              reason: request.reason 
+            })
+          });
+          
+          console.log('Report request added successfully:', newRequest);
+          
+          // Trigger refresh callback with a delay
+          setTimeout(() => {
+            dataService.triggerRefresh();
+          }, 300);
+          
+          return newRequest;
+        } catch (error) {
+          console.error('Error creating report request via API:', error);
+          throw error;
         }
       } else {
         // For non-release requests (assign), use normal flow
