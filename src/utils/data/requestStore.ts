@@ -1,4 +1,5 @@
-import { DeviceRequest, RequestStatus } from '@/types';
+
+import { DeviceRequest, RequestStatus, DeviceStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
 class RequestStore {
@@ -122,8 +123,10 @@ class RequestStore {
       });
     } else if (request.type === 'report') {
       // For report requests, immediately mark the device as pending
+      const updatedStatus: DeviceStatus = 'available'; // Use 'available' as status
+      
       deviceStore.updateDevice(request.deviceId, {
-        status: 'pending',
+        status: updatedStatus,
         requestedBy: request.userId,
         deviceStatus: `Pending report: ${request.reportType}`
       });
@@ -212,8 +215,10 @@ class RequestStore {
         const previousOwnerId = device?.assignedToId;
         
         // Handle report requests by updating device status to the reported issue
+        const reportStatus = request.reportType as DeviceStatus;
+        
         deviceStore.updateDevice(request.deviceId, {
-          status: request.reportType,
+          status: reportStatus,
           requestedBy: undefined,
           // Release ownership when report is approved
           assignedTo: undefined,
