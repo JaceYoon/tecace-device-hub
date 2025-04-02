@@ -420,7 +420,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                   </div>
                 </div>
 
-                {/* Collapsible content section */}
+                {/* Collapsible content section - Fix: ensure Collapsible wraps CollapsibleContent and CollapsibleTrigger */}
                 <Collapsible open={expanded} className="w-full">
                   <CollapsibleContent className="space-y-2 text-sm mt-2 pt-2 border-t">
                     {device.deviceType && (
@@ -610,16 +610,18 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               )}
             </CardFooter>
             
-            {/* Collapsible trigger button */}
-            <CollapsibleTrigger 
-              className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" 
-              onClick={toggleExpanded}
-            >
-              {expanded ? 
-                <ChevronUp className="h-4 w-4" /> : 
-                <ChevronDown className="h-4 w-4" />
-              }
-            </CollapsibleTrigger>
+            {/* Fix: Move CollapsibleTrigger inside the Collapsible component */}
+            <div className="absolute bottom-2 right-2">
+              <button 
+                className="rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" 
+                onClick={toggleExpanded}
+              >
+                {expanded ? 
+                  <ChevronUp className="h-4 w-4" /> : 
+                  <ChevronDown className="h-4 w-4" />
+                }
+              </button>
+            </div>
           </Card>
         </ContextMenuTrigger>
           
