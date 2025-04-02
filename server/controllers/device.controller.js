@@ -306,7 +306,10 @@ exports.update = async (req, res) => {
                             assignedToId === null;
     
     // For regular edits, we want to preserve the original assignedToId if it's not explicitly changed
-    const updatedAssignedToId = assignedToId !== undefined ? assignedToId : device.assignedToId;
+    // Convert string 'null' to actual null value
+    const updatedAssignedToId = assignedToId !== undefined ? 
+                                (assignedToId === 'null' ? null : assignedToId) : 
+                                device.assignedToId;
     
     // For regular edits of assigned devices, keep as assigned
     const updatedStatus = (device.status === 'assigned' && !isBeingReleased) ? 

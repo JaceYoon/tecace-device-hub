@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -171,8 +172,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         receivedDate,
         notes: notes || null,
         devicePicture: devicePicture || null,
-        // Keep assignedToId as a string to match the Device type
-        // If it exists, convert it to string, otherwise set to null
+        // Properly handle null values for assignedToId
+        // Use null directly instead of 'null' string when assignedToId is null/undefined/empty
         assignedToId: assignedToId ? String(assignedToId) : null
       };
       
