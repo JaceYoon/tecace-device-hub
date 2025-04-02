@@ -221,7 +221,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
-  // Handle collapse toggle with stopPropagation to prevent card click events
+  // Handle expand toggle specifically for this card instance
   const toggleExpanded = (e: React.MouseEvent) => {
     e.stopPropagation();
     setExpanded(prev => !prev);
@@ -333,7 +333,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             
             <DeviceExpandButton 
               expanded={expanded} 
-              onToggle={toggleExpanded} 
+              onClick={toggleExpanded} 
             />
           </Card>
         </ContextMenuTrigger>
