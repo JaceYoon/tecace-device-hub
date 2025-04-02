@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,7 +7,8 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
   AlertCircle, Calendar, ChevronDown, ChevronUp, Cpu,
-  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image, Download, Flag, MoreVertical
+  Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image, Download, Flag, MoreVertical,
+  ChevronRight
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { formatDistanceToNow } from 'date-fns';
@@ -16,53 +16,6 @@ import { toast } from 'sonner';
 import DeviceEditDialog from './DeviceEditDialog';
 import { DeviceHistoryDialog } from './DeviceHistoryDialog';
 import ReportDeviceDialog from './ReportDeviceDialog';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Badge } from '@/components/ui/badge';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-  ContextMenuSeparator,
-  ContextMenuLabel,
-} from "@/components/ui/context-menu";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Input } from "@/components/ui/input";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-  DropdownMenuSub,
-  DropdownMenuSubTrigger,
-  DropdownMenuSubContent,
-  DropdownMenuPortal,
-} from "@/components/ui/dropdown-menu";
 
 interface DeviceCardProps {
   device: Device;
@@ -598,7 +551,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                           </Button>
                       )}
                       
-                      {/* Add Report button for non-admins */}
                       {user && !isAdmin && (
                         <ReportDeviceDialog 
                           device={device} 
@@ -610,7 +562,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 )}
               </CardFooter>
               
-              {/* Added collapse trigger button to bottom right */}
               <Collapsible open={expanded} onOpenChange={setExpanded}>
                 <CollapsibleTrigger className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors">
                   {expanded ? 
