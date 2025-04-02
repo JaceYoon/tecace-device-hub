@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Box, LogOut, Package, Settings, Smartphone, User } from 'lucide-react';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 
 const Navbar: React.FC = () => {
   const { user, isAuthenticated, isManager, logout } = useAuth();
@@ -67,6 +68,9 @@ const Navbar: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {/* Add ThemeToggle component */}
+            <ThemeToggle />
+            
             {isAuthenticated ? (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
