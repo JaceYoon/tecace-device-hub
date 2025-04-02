@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -172,9 +171,9 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         receivedDate,
         notes: notes || null,
         devicePicture: devicePicture || null,
-        // Only include ownership data if device was already assigned or has a value
-        // Convert empty string to null, and ensure 'null' string is converted to null
-        assignedToId: assignedToId ? Number(assignedToId) : null
+        // Keep assignedToId as a string to match the Device type
+        // If it exists, convert it to string, otherwise set to null
+        assignedToId: assignedToId ? String(assignedToId) : null
       };
       
       // If device is assigned, ensure status is correct
