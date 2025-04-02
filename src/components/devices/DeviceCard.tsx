@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,8 @@ interface DeviceCardProps {
   users?: User[];
   className?: string;
   showReturnControls?: boolean;
+  isExpanded?: boolean;
+  onToggleExpand?: (deviceId: string) => void;
 }
 
 const DeviceCard: React.FC<DeviceCardProps> = ({ 
@@ -29,7 +32,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   onAction, 
   users = [], 
   className, 
-  showReturnControls = false 
+  showReturnControls = false,
+  isExpanded = false,
+  onToggleExpand
 }) => {
   const { user, isManager, isAdmin } = useAuth();
   const [expanded, setExpanded] = useState(false);
@@ -52,8 +57,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   const assignedUserName = assignedUser?.name || device.assignedToName || 'Unknown User';
   
   const requestedByUser = users.find(u => u.id === device.requestedBy);
-
-  console.log(`DeviceCard for ${device.project} - assignedTo: ${device.assignedTo}, found user: ${assignedUser?.name || 'not found'}`);
 
   const showConfirmation = (title: string, description: string, action: () => void) => {
     setConfirmDialog({
@@ -220,9 +223,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
+  // Use the prop value if provided, otherwise use internal state
+  const displayExpanded = onToggleExpand ? isExpanded : expanded;
+
   const toggleExpanded = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpanded(prev => !prev);
+    if (onToggleExpand) {
+      onToggleExpand(device.id);
+    } else {
+      setExpanded(prev => !prev);
+    }
   };
 
   return (
@@ -298,7 +308,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                   </div>
                 </div>
 
-                {expanded && (
+                {displayExpanded && (
                   <DeviceCardDetails 
                     device={device} 
                     requestedByUser={requestedByUser}
@@ -330,7 +340,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </CardFooter>
             
             <DeviceExpandButton 
-              expanded={expanded} 
+              expanded={displayExpanded} 
               onClick={toggleExpanded} 
             />
           </Card>
