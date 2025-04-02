@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
 import { Device, DeviceRequest } from '@/types';
@@ -18,13 +17,11 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   
-  // Safely get auth context with fallback for when not initialized
   let authContext;
   try {
     authContext = useAuth();
   } catch (error) {
     console.error('Auth context not ready:', error);
-    // Provide default values that won't break the component
     authContext = {
       isAdmin: false,
       isManager: false, 
@@ -36,7 +33,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const { isAdmin, isManager, isAuthenticated, user } = authContext;
   
   const fetchData = async () => {
-    // Exit immediately if not authenticated
     if (!isAuthenticated || !user) {
       setDevices([]);
       setRequests([]);
@@ -48,13 +44,11 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
       setLoading(true);
       setError(null);
       
-      // Use Promise.allSettled to handle partial failures
       const results = await Promise.allSettled([
         dataService.getDevices(),
         dataService.devices.getAllRequests()
       ]);
       
-      // Handle devices result
       if (results[0].status === 'fulfilled') {
         console.log('StatusSummary - fetched devices:', results[0].value.length);
         setDevices(results[0].value);
@@ -63,7 +57,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
         setDevices([]);
       }
       
-      // Handle requests result
       if (results[1].status === 'fulfilled') {
         console.log('StatusSummary - fetched requests:', results[1].value.length);
         setRequests(results[1].value);
@@ -71,7 +64,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
         console.error('Error fetching requests:', results[1].reason);
         setRequests([]);
         
-        // Only show the toast for request errors if they're not network related
         const errorMessage = results[1].reason?.message || 'Unknown error';
         if (!errorMessage.includes('Failed to fetch') && 
             !errorMessage.includes('ECONNREFUSED')) {
@@ -80,7 +72,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
       }
     } catch (error) {
       console.error('Error fetching data for status summary:', error);
-      // Clear data on error to prevent stale data display
       setDevices([]);
       setRequests([]);
       setError((error as Error).message || 'An unknown error occurred');
@@ -90,11 +81,9 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   };
   
   useEffect(() => {
-    // Only fetch if authenticated
     if (isAuthenticated) {
       fetchData();
     } else {
-      // Reset data if not authenticated
       setDevices([]);
       setRequests([]);
       setLoading(false);
@@ -106,7 +95,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
     if (onRefresh) onRefresh();
   };
   
-  // If not authenticated, don't show anything
   if (!isAuthenticated) {
     return null;
   }
@@ -117,7 +105,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
   const stolenCount = devices.filter(d => d.status === 'stolen').length;
   const deadCount = devices.filter(d => d.status === 'dead').length;
   
-  // Count pending requests directly from the requests data
   const pendingCount = requests.filter(r => r.status === 'pending').length;
   
   const StatusCard = ({ 
@@ -151,10 +138,9 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Device Status Summary</h2>
         <Button 
-          variant="ghost" 
-          size="sm" 
           onClick={handleRefresh}
-          className="flex items-center"
+          className="flex items-center bg-slate-600 text-white border border-black hover:bg-slate-700"
+          size="sm"
         >
           <RefreshCw className="h-4 w-4 mr-1" />
           Refresh
