@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -295,459 +294,458 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
-  // Important: Each card now manages its own expanded state independently
+  // Handle collapse toggle with stopPropagation to prevent card click events
   const toggleExpanded = (e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent event bubbling
     setExpanded(prev => !prev);
   };
 
   return (
-      <>
-        <ContextMenu>
-          <ContextMenuTrigger>
-            <Card className={cn(
-                "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
-                {
-                  "border-red-300 bg-red-50/40": device.status === 'stolen',
-                  "border-amber-300 bg-amber-50/40": device.status === 'missing',
-                  "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
-                  "border-green-300 bg-green-50/40": device.status === 'assigned' && isDeviceOwner,
-                },
-                className
-            )}>
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <Collapsible open={expanded} onOpenChange={setExpanded}>
-                      <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
-                      <div className="mt-1">
-                        <CardDescription className="flex items-center gap-1">
-                          <Smartphone className="h-3.5 w-3.5" />
-                          {device.type}
-                        </CardDescription>
-                      </div>
-                    </Collapsible>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                    {isAdmin && (
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent className="w-56 p-0" align="end">
-                          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                            Device Actions
-                          </DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuSub>
-                            <DropdownMenuSubTrigger>
-                              <AlertCircle className="mr-2 h-4 w-4" />
-                              Change Status
-                            </DropdownMenuSubTrigger>
-                            <DropdownMenuPortal>
-                              <DropdownMenuSubContent className="w-48">
-                                <DropdownMenuItem onClick={() => handleStatusChange('missing')}>
-                                  <Flag className="mr-2 h-4 w-4 text-amber-500" />
-                                  Mark as Missing
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange('stolen')}>
-                                  <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-                                  Mark as Stolen
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange('dead')}>
-                                  <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
-                                  Mark as Dead
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleStatusChange('available')}>
-                                  <Check className="mr-2 h-4 w-4 text-green-500" />
-                                  Mark as Available
-                                </DropdownMenuItem>
-                              </DropdownMenuSubContent>
-                            </DropdownMenuPortal>
-                          </DropdownMenuSub>
-                          <DropdownMenuItem onSelect={() => setDeleteConfirmOpen(true)}>
-                            <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-                            Delete Device
-                          </DropdownMenuItem>
-                          <DeviceEditDialog 
-                            device={device} 
-                            onDeviceUpdated={onAction} 
-                            triggerElement={
-                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Edit Device
-                              </DropdownMenuItem>
-                            }
-                          />
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    )}
-                    <StatusBadge status={device.status} />
-                    {isRequested && (
-                        <span className="text-xs text-amber-600 flex items-center mt-1">
-                          <Clock className="h-3 w-3 mr-1" />
-                          Request Pending
-                        </span>
-                    )}
+    <>
+      <ContextMenu>
+        <ContextMenuTrigger>
+          <Card className={cn(
+            "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
+            {
+              "border-red-300 bg-red-50/40": device.status === 'stolen',
+              "border-amber-300 bg-amber-50/40": device.status === 'missing',
+              "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
+              "border-green-300 bg-green-50/40": device.status === 'assigned' && isDeviceOwner,
+            },
+            className
+          )}>
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
+                  <div className="mt-1">
+                    <CardDescription className="flex items-center gap-1">
+                      <Smartphone className="h-3.5 w-3.5" />
+                      {device.type}
+                    </CardDescription>
                   </div>
                 </div>
-              </CardHeader>
+                <div className="flex flex-col items-end gap-1">
+                  {isAdmin && (
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent className="w-56 p-0" align="end">
+                        <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                          Device Actions
+                        </DropdownMenuLabel>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuSub>
+                          <DropdownMenuSubTrigger>
+                            <AlertCircle className="mr-2 h-4 w-4" />
+                            Change Status
+                          </DropdownMenuSubTrigger>
+                          <DropdownMenuPortal>
+                            <DropdownMenuSubContent className="w-48">
+                              <DropdownMenuItem onClick={() => handleStatusChange('missing')}>
+                                <Flag className="mr-2 h-4 w-4 text-amber-500" />
+                                Mark as Missing
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange('stolen')}>
+                                <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
+                                Mark as Stolen
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange('dead')}>
+                                <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
+                                Mark as Dead
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleStatusChange('available')}>
+                                <Check className="mr-2 h-4 w-4 text-green-500" />
+                                Mark as Available
+                              </DropdownMenuItem>
+                            </DropdownMenuSubContent>
+                          </DropdownMenuPortal>
+                        </DropdownMenuSub>
+                        <DropdownMenuItem onSelect={() => setDeleteConfirmOpen(true)}>
+                          <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+                          Delete Device
+                        </DropdownMenuItem>
+                        <DeviceEditDialog 
+                          device={device} 
+                          onDeviceUpdated={onAction} 
+                          triggerElement={
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Edit Device
+                            </DropdownMenuItem>
+                          }
+                        />
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  )}
+                  <StatusBadge status={device.status} />
+                  {isRequested && (
+                      <span className="text-xs text-amber-600 flex items-center mt-1">
+                        <Clock className="h-3 w-3 mr-1" />
+                        Request Pending
+                      </span>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
 
-              <CardContent className="pb-3 space-y-3 flex-grow">
-                {device.status === 'assigned' && (
-                  <div className="flex items-center gap-1.5 bg-blue-50 text-blue-800 p-2 rounded-md">
-                    <UserIcon className="h-4 w-4" />
-                    <div>
-                      <span className="text-xs font-medium">Current Owner</span>
-                      <p className="text-sm font-medium">{assignedUserName}</p>
-                    </div>
+            <CardContent className="pb-3 space-y-3 flex-grow">
+              {device.status === 'assigned' && (
+                <div className="flex items-center gap-1.5 bg-blue-50 text-blue-800 p-2 rounded-md">
+                  <UserIcon className="h-4 w-4" />
+                  <div>
+                    <span className="text-xs font-medium">Current Owner</span>
+                    <p className="text-sm font-medium">{assignedUserName}</p>
                   </div>
-                )}
+                </div>
+              )}
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex items-start">
-                    <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-muted-foreground">Serial Number</p>
-                      <p className="font-mono text-xs">{device.serialNumber || 'N/A'}</p>
-                    </div>
+              <div className="space-y-2 text-sm">
+                <div className="flex items-start">
+                  <Hash className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-muted-foreground">Serial Number</p>
+                    <p className="font-mono text-xs">{device.serialNumber || 'N/A'}</p>
                   </div>
+                </div>
 
-                  <div className="flex items-start">
-                    <Cpu className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                    <div>
-                      <p className="text-muted-foreground">IMEI</p>
-                      <p className="font-mono text-xs">{device.imei || 'N/A'}</p>
-                    </div>
+                <div className="flex items-start">
+                  <Cpu className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-muted-foreground">IMEI</p>
+                    <p className="font-mono text-xs">{device.imei || 'N/A'}</p>
                   </div>
+                </div>
 
-                  <Collapsible open={expanded}>
-                    <CollapsibleContent>
-                      <div className="space-y-2 text-sm mt-2 pt-2 border-t">
-                        {device.deviceType && (
-                          <div className="flex items-start">
-                            <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-muted-foreground">Type</p>
-                              <p className="text-sm">{device.deviceType}</p>
-                            </div>
-                          </div>
-                        )}
+                {/* Collapsible content section */}
+                <Collapsible open={expanded} className="w-full">
+                  <CollapsibleContent className="space-y-2 text-sm mt-2 pt-2 border-t">
+                    {device.deviceType && (
+                      <div className="flex items-start">
+                        <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Type</p>
+                          <p className="text-sm">{device.deviceType}</p>
+                        </div>
+                      </div>
+                    )}
 
-                        {device.notes && (
-                          <div className="flex items-start">
-                            <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-muted-foreground">Notes</p>
-                              <p className="text-sm">{device.notes}</p>
-                            </div>
-                          </div>
-                        )}
+                    {device.notes && (
+                      <div className="flex items-start">
+                        <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Notes</p>
+                          <p className="text-sm">{device.notes}</p>
+                        </div>
+                      </div>
+                    )}
 
-                        {device.devicePicture && (
-                          <div className="flex items-start">
-                            <Image className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-muted-foreground">Device Picture</p>
-                              <div className="mt-1">
-                                <Dialog>
-                                  <DialogTrigger asChild>
-                                    <img 
-                                      src={device.devicePicture} 
-                                      alt="Device Picture" 
-                                      className="max-w-full h-auto max-h-24 rounded border border-muted cursor-pointer hover:opacity-80 transition-opacity" 
-                                    />
-                                  </DialogTrigger>
-                                  <DialogContent className="sm:max-w-xl">
-                                    <DialogHeader>
-                                      <DialogTitle className="flex justify-between items-center">
-                                        <span>Device Picture - {device.project}</span>
-                                      </DialogTitle>
-                                      <DialogDescription>
-                                        View full-sized device image
-                                      </DialogDescription>
-                                    </DialogHeader>
-                                    <div className="mt-2 flex justify-center">
-                                      <img 
-                                        src={device.devicePicture} 
-                                        alt="Device Picture" 
-                                        className="max-w-full max-h-[70vh] rounded" 
-                                      />
-                                    </div>
-                                    <div className="flex justify-end mt-4">
-                                      <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        className="flex items-center gap-1"
-                                        onClick={handleDownloadImage}
-                                      >
-                                        <Download className="h-4 w-4" />
-                                        Download
-                                      </Button>
-                                    </div>
-                                  </DialogContent>
-                                </Dialog>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-
-                        {requestedByUser && (
-                          <div className="flex items-start">
-                            <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                            <div>
-                              <p className="text-muted-foreground">Requested by</p>
-                              <p className="text-sm">{requestedByUser.name}</p>
-                            </div>
-                          </div>
-                        )}
-
-                        <div className="flex items-start">
-                          <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                          <div>
-                            <p className="text-muted-foreground">Last updated</p>
-                            <p className="text-xs">{formatDate(device.updatedAt)}</p>
+                    {device.devicePicture && (
+                      <div className="flex items-start">
+                        <Image className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Device Picture</p>
+                          <div className="mt-1">
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <img 
+                                  src={device.devicePicture} 
+                                  alt="Device Picture" 
+                                  className="max-w-full h-auto max-h-24 rounded border border-muted cursor-pointer hover:opacity-80 transition-opacity" 
+                                />
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-xl">
+                                <DialogHeader>
+                                  <DialogTitle className="flex justify-between items-center">
+                                    <span>Device Picture - {device.project}</span>
+                                  </DialogTitle>
+                                  <DialogDescription>
+                                    View full-sized device image
+                                  </DialogDescription>
+                                </DialogHeader>
+                                <div className="mt-2 flex justify-center">
+                                  <img 
+                                    src={device.devicePicture} 
+                                    alt="Device Picture" 
+                                    className="max-w-full max-h-[70vh] rounded" 
+                                  />
+                                </div>
+                                <div className="flex justify-end mt-4">
+                                  <Button 
+                                    variant="outline" 
+                                    size="sm" 
+                                    className="flex items-center gap-1"
+                                    onClick={handleDownloadImage}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    Download
+                                  </Button>
+                                </div>
+                              </DialogContent>
+                            </Dialog>
                           </div>
                         </div>
-                        
-                        {(isManager || isAdmin) && (
-                          <div className="mt-2 pt-2 border-t">
-                            <DeviceHistoryDialog device={device} users={users} />
-                          </div>
-                        )}
                       </div>
-                    </CollapsibleContent>
-                  </Collapsible>
-                </div>
-              </CardContent>
+                    )}
 
-              <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
-                {isAdmin ? (
-                    <div className="grid grid-cols-1 gap-2 w-full">
-                      {(device.status === 'missing' || device.status === 'stolen') && (
-                          <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleStatusChange('available')}
-                              className="text-xs col-span-1"
-                          >
-                            Mark as Available
-                          </Button>
-                      )}
+                    {requestedByUser && (
+                      <div className="flex items-start">
+                        <Clock className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-muted-foreground">Requested by</p>
+                          <p className="text-sm">{requestedByUser.name}</p>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex items-start">
+                      <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                      <div>
+                        <p className="text-muted-foreground">Last updated</p>
+                        <p className="text-xs">{formatDate(device.updatedAt)}</p>
+                      </div>
                     </div>
-                ) : (
-                    <>
-                      {device.status === 'available' && !isRequested && (
-                          <Button
-                              className="w-full"
-                              size="sm"
-                              onClick={handleRequestDevice}
-                              disabled={isProcessing}
-                          >
-                            {isProcessing ? (
-                              <>
-                                <Clock className="h-4 w-4 mr-1 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              <>
-                                Request Device
-                                <ChevronRight className="h-4 w-4 ml-1" />
-                              </>
-                            )}
-                          </Button>
-                      )}
+                    
+                    {(isManager || isAdmin) && (
+                      <div className="mt-2 pt-2 border-t">
+                        <DeviceHistoryDialog device={device} users={users} />
+                      </div>
+                    )}
+                  </CollapsibleContent>
+                </Collapsible>
+              </div>
+            </CardContent>
 
-                      {hasRequested && (
-                          <Button
-                              variant="secondary"
-                              className="w-full"
-                              size="sm"
-                              disabled
-                          >
-                            <Clock className="h-4 w-4 mr-1" />
-                            Request Pending
-                          </Button>
-                      )}
+            <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
+              {isAdmin ? (
+                  <div className="grid grid-cols-1 gap-2 w-full">
+                    {(device.status === 'missing' || device.status === 'stolen') && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleStatusChange('available')}
+                            className="text-xs col-span-1"
+                        >
+                          Mark as Available
+                        </Button>
+                    )}
+                  </div>
+              ) : (
+                  <>
+                    {device.status === 'available' && !isRequested && (
+                        <Button
+                            className="w-full"
+                            size="sm"
+                            onClick={handleRequestDevice}
+                            disabled={isProcessing}
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Clock className="h-4 w-4 mr-1 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>
+                              Request Device
+                              <ChevronRight className="h-4 w-4 ml-1" />
+                            </>
+                          )}
+                        </Button>
+                    )}
 
-                      {isRequestedByOthers && (
-                          <Button
-                              variant="outline"
-                              className="w-full"
-                              size="sm"
-                              disabled
-                          >
-                            <Clock className="h-4 w-4 mr-1" />
-                            Already Requested
-                          </Button>
-                      )}
+                    {hasRequested && (
+                        <Button
+                            variant="secondary"
+                            className="w-full"
+                            size="sm"
+                            disabled
+                        >
+                          <Clock className="h-4 w-4 mr-1" />
+                          Request Pending
+                        </Button>
+                    )}
 
-                      {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
-                          <Button
-                              variant="outline"
-                              className="w-full"
-                              size="sm"
-                              onClick={handleReleaseDevice}
-                              disabled={isProcessing}
-                          >
-                            {isProcessing ? (
-                              <>
-                                <Clock className="h-4 w-4 mr-1 animate-spin" />
-                                Processing...
-                              </>
-                            ) : (
-                              <>Return Device</>
-                            )}
-                          </Button>
-                      )}
-                      
-                      {user && !isAdmin && (
-                        <ReportDeviceDialog 
-                          device={device} 
-                          userId={user.id} 
-                          onReportSubmitted={onAction}
-                        />
-                      )}
-                    </>
-                )}
-              </CardFooter>
-              
-              <Collapsible open={expanded} onOpenChange={setExpanded}>
-                <CollapsibleTrigger className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" onClick={toggleExpanded}>
-                  {expanded ? 
-                    <ChevronUp className="h-4 w-4" /> : 
-                    <ChevronDown className="h-4 w-4" />
-                  }
-                </CollapsibleTrigger>
-              </Collapsible>
-            </Card>
-          </ContextMenuTrigger>
+                    {isRequestedByOthers && (
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            size="sm"
+                            disabled
+                        >
+                          <Clock className="h-4 w-4 mr-1" />
+                          Already Requested
+                        </Button>
+                    )}
+
+                    {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
+                        <Button
+                            variant="outline"
+                            className="w-full"
+                            size="sm"
+                            onClick={handleReleaseDevice}
+                            disabled={isProcessing}
+                        >
+                          {isProcessing ? (
+                            <>
+                              <Clock className="h-4 w-4 mr-1 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            <>Return Device</>
+                          )}
+                        </Button>
+                    )}
+                    
+                    {user && !isAdmin && (
+                      <ReportDeviceDialog 
+                        device={device} 
+                        userId={user.id} 
+                        onReportSubmitted={onAction}
+                      />
+                    )}
+                  </>
+              )}
+            </CardFooter>
             
-          {isAdmin && (
-            <ContextMenuContent>
-              <ContextMenuLabel>Device Actions</ContextMenuLabel>
-              <ContextMenuSeparator />
-              <ContextMenuItem onClick={() => handleStatusChange('missing')}>
-                <Flag className="mr-2 h-4 w-4 text-amber-500" />
-                Mark as Missing
-              </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleStatusChange('stolen')}>
-                <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-                Mark as Stolen
-              </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleStatusChange('dead')}>
-                <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
-                Mark as Dead
-              </ContextMenuItem>
-              <ContextMenuItem onClick={() => handleStatusChange('available')}>
-                <Check className="mr-2 h-4 w-4 text-green-500" />
-                Mark as Available
-              </ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem onClick={() => setDeleteConfirmOpen(true)}>
-                <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-                Delete Device
-              </ContextMenuItem>
-              <DeviceEditDialog 
-                device={device} 
-                onDeviceUpdated={onAction} 
-                triggerElement={
-                  <ContextMenuItem>
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit Device
-                  </ContextMenuItem>
-                }
-              />
-            </ContextMenuContent>
-          )}
-        </ContextMenu>
+            {/* Collapsible trigger button */}
+            <CollapsibleTrigger 
+              className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" 
+              onClick={toggleExpanded}
+            >
+              {expanded ? 
+                <ChevronUp className="h-4 w-4" /> : 
+                <ChevronDown className="h-4 w-4" />
+              }
+            </CollapsibleTrigger>
+          </Card>
+        </ContextMenuTrigger>
+          
+        {isAdmin && (
+          <ContextMenuContent>
+            <ContextMenuLabel>Device Actions</ContextMenuLabel>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => handleStatusChange('missing')}>
+              <Flag className="mr-2 h-4 w-4 text-amber-500" />
+              Mark as Missing
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleStatusChange('stolen')}>
+              <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
+              Mark as Stolen
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleStatusChange('dead')}>
+              <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
+              Mark as Dead
+            </ContextMenuItem>
+            <ContextMenuItem onClick={() => handleStatusChange('available')}>
+              <Check className="mr-2 h-4 w-4 text-green-500" />
+              Mark as Available
+            </ContextMenuItem>
+            <ContextMenuSeparator />
+            <ContextMenuItem onClick={() => setDeleteConfirmOpen(true)}>
+              <Trash2 className="mr-2 h-4 w-4 text-red-500" />
+              Delete Device
+            </ContextMenuItem>
+            <DeviceEditDialog 
+              device={device} 
+              onDeviceUpdated={onAction} 
+              triggerElement={
+                <ContextMenuItem>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit Device
+                </ContextMenuItem>
+              }
+            />
+          </ContextMenuContent>
+        )}
+      </ContextMenu>
 
-        <AlertDialog 
-          open={confirmDialog.isOpen} 
-          onOpenChange={(open) => {
-            if (!open) {
+      <AlertDialog 
+        open={confirmDialog.isOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            setIsProcessing(false);
+            setConfirmDialog(prev => ({...prev, isOpen: false}));
+          }
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmDialog.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
               setIsProcessing(false);
               setConfirmDialog(prev => ({...prev, isOpen: false}));
-            }
-          }}
-        >
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirmDialog.description}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel onClick={() => {
-                setIsProcessing(false);
-                setConfirmDialog(prev => ({...prev, isOpen: false}));
-              }}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={() => {
-                confirmDialog.action();
-                setConfirmDialog(prev => ({...prev, isOpen: false}));
-              }}>
-                Continue
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+            }}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              confirmDialog.action();
+              setConfirmDialog(prev => ({...prev, isOpen: false}));
+            }}>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Delete Device</DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. This will permanently delete the
-                device "{device.project}" and all associated data.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="py-4">
-              <p className="mb-2 text-sm text-muted-foreground">
-                Please type <span className="font-medium text-foreground">confirm</span> to continue:
-              </p>
-              <Input 
-                value={deleteConfirmText} 
-                onChange={(e) => setDeleteConfirmText(e.target.value)} 
-                placeholder="confirm"
-                className="mb-2"
-              />
-            </div>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => {
-                  setDeleteConfirmOpen(false);
-                  setDeleteConfirmText('');
-                }}
-              >
-                Cancel
-              </Button>
-              <Button 
-                variant="destructive" 
-                onClick={handleDeleteDevice}
-                disabled={isDeleting || deleteConfirmText !== 'confirm'}
-              >
-                {isDeleting ? (
-                  <>
-                    <Clock className="h-4 w-4 mr-1 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="h-4 w-4 mr-1" />
-                    Delete Device
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </>
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Device</DialogTitle>
+            <DialogDescription>
+              This action cannot be undone. This will permanently delete the
+              device "{device.project}" and all associated data.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="mb-2 text-sm text-muted-foreground">
+              Please type <span className="font-medium text-foreground">confirm</span> to continue:
+            </p>
+            <Input 
+              value={deleteConfirmText} 
+              onChange={(e) => setDeleteConfirmText(e.target.value)} 
+              placeholder="confirm"
+              className="mb-2"
+            />
+          </div>
+          <DialogFooter>
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                setDeleteConfirmOpen(false);
+                setDeleteConfirmText('');
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteDevice}
+              disabled={isDeleting || deleteConfirmText !== 'confirm'}
+            >
+              {isDeleting ? (
+                <>
+                  <Clock className="h-4 w-4 mr-1 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-1" />
+                  Delete Device
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
