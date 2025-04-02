@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -221,7 +220,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
-  // Handle expand toggle specifically for this card instance
   const toggleExpanded = (e: React.MouseEvent) => {
     e.stopPropagation();
     setExpanded(prev => !prev);
