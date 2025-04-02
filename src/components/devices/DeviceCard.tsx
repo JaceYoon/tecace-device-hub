@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -6,7 +7,7 @@ import StatusBadge from '@/components/ui/StatusBadge';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { cn } from '@/lib/utils';
 import {
-  AlertCircle, Calendar, ChevronDown, ChevronRight, Cpu,
+  AlertCircle, Calendar, ChevronDown, ChevronUp, Cpu,
   Hash, Smartphone, Trash2, User as UserIcon, Check, Clock, Edit, FileText, Box, Image, Download, Flag, MoreVertical
 } from 'lucide-react';
 import { dataService } from '@/services/data.service';
@@ -300,7 +301,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         <ContextMenu>
           <ContextMenuTrigger>
             <Card className={cn(
-                "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col",
+                "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
                 {
                   "border-red-300 bg-red-50/40": device.status === 'stolen',
                   "border-amber-300 bg-amber-50/40": device.status === 'missing',
@@ -313,13 +314,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 <div className="flex justify-between items-start">
                   <div>
                     <Collapsible open={expanded} onOpenChange={setExpanded}>
-                      <CollapsibleTrigger className="flex items-center text-left w-full">
-                        <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
-                        {expanded ?
-                          <ChevronDown className="h-4 w-4 ml-2" /> :
-                          <ChevronRight className="h-4 w-4 ml-2" />
-                        }
-                      </CollapsibleTrigger>
+                      <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
                       <div className="mt-1">
                         <CardDescription className="flex items-center gap-1">
                           <Smartphone className="h-3.5 w-3.5" />
@@ -614,6 +609,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                     </>
                 )}
               </CardFooter>
+              
+              {/* Added collapse trigger button to bottom right */}
+              <Collapsible open={expanded} onOpenChange={setExpanded}>
+                <CollapsibleTrigger className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors">
+                  {expanded ? 
+                    <ChevronUp className="h-4 w-4" /> : 
+                    <ChevronDown className="h-4 w-4" />
+                  }
+                </CollapsibleTrigger>
+              </Collapsible>
             </Card>
           </ContextMenuTrigger>
             
