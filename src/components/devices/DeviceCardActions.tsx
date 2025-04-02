@@ -124,6 +124,9 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
               onReportSubmitted={onAction}
             />
           )}
+          
+          {/* Empty div to create space before the collapse button */}
+          <div className="h-4"></div>
         </>
       )}
     </>
