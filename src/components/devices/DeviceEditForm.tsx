@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
@@ -158,22 +159,33 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     setIsSubmitting(true);
     
     try {
-      // Only include ownership data if device was already assigned
-      const updatedDevice = await dataService.updateDevice(device.id, {
+      // Prepare update data, ensuring assignedToId is properly handled
+      const updateData = {
         project,
         projectGroup,
         type,
         deviceType,
-        imei,
-        serialNumber,
+        imei: imei || null,
+        serialNumber: serialNumber || null,
         status,
-        deviceStatus: deviceStatus || undefined,
+        deviceStatus: deviceStatus || null,
         receivedDate,
-        notes: notes || undefined,
-        devicePicture: devicePicture || undefined,
-        ...(assignedToId ? { assignedToId } : {}),
-        ...(device.status === 'assigned' ? { status: 'assigned' } : {})
-      });
+        notes: notes || null,
+        devicePicture: devicePicture || null,
+        // Only include ownership data if device was already assigned or has a value
+        // Convert empty string to null, and ensure 'null' string is converted to null
+        assignedToId: assignedToId ? Number(assignedToId) : null
+      };
+      
+      // If device is assigned, ensure status is correct
+      if (device.status === 'assigned') {
+        updateData.status = 'assigned';
+      }
+      
+      console.log('Sending update with data:', updateData);
+      
+      // Update the device
+      const updatedDevice = await dataService.updateDevice(device.id, updateData);
       
       if (updatedDevice) {
         toast.success('Device updated successfully', {
