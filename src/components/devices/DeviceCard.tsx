@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -526,59 +525,17 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
               <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
                 {isAdmin ? (
-                    <div className="grid grid-cols-2 gap-2 w-full">
-                      {(device.status === 'available' || device.status === 'assigned') && (
-                          <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleStatusChange('missing')}
-                              className="text-xs"
-                          >
-                            Mark Missing
-                          </Button>
-                      )}
-
-                      {(device.status === 'available' || device.status === 'assigned') && (
-                          <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleStatusChange('stolen')}
-                              className="text-xs text-destructive"
-                          >
-                            Mark Stolen
-                          </Button>
-                      )}
-
+                    <div className="grid grid-cols-1 gap-2 w-full">
                       {(device.status === 'missing' || device.status === 'stolen') && (
                           <Button
                               variant="outline"
                               size="sm"
                               onClick={() => handleStatusChange('available')}
-                              className="text-xs col-span-2"
+                              className="text-xs col-span-1"
                           >
                             Mark as Available
                           </Button>
                       )}
-
-                      <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={handleDeleteDevice}
-                          className="text-xs col-span-2 mt-2"
-                          disabled={isDeleting}
-                      >
-                        {isDeleting ? (
-                            <>
-                              <Clock className="h-4 w-4 mr-1 animate-spin" />
-                              Deleting...
-                            </>
-                        ) : (
-                            <>
-                              <Trash2 className="h-4 w-4 mr-1" />
-                              Delete Device
-                            </>
-                        )}
-                      </Button>
                     </div>
                 ) : (
                     <>
@@ -699,7 +656,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           )}
         </ContextMenu>
 
-        {/* Confirmation dialog for actions */}
         <AlertDialog 
           open={confirmDialog.isOpen} 
           onOpenChange={(open) => {
@@ -733,7 +689,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           </AlertDialogContent>
         </AlertDialog>
 
-        {/* Delete confirmation dialog that requires typing "confirm" */}
         <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
           <DialogContent>
             <DialogHeader>
