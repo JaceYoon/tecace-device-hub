@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -293,6 +294,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   };
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
+
+  // Important: Each card now manages its own expanded state independently
+  const toggleExpanded = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent event bubbling
+    setExpanded(prev => !prev);
+  };
 
   return (
       <>
@@ -608,7 +615,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               </CardFooter>
               
               <Collapsible open={expanded} onOpenChange={setExpanded}>
-                <CollapsibleTrigger className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors">
+                <CollapsibleTrigger className="absolute bottom-2 right-2 rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" onClick={toggleExpanded}>
                   {expanded ? 
                     <ChevronUp className="h-4 w-4" /> : 
                     <ChevronDown className="h-4 w-4" />
