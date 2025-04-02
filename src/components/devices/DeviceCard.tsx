@@ -27,12 +27,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
-  Collapsible,
-  CollapsibleContent, 
-  CollapsibleTrigger
-} from "@/components/ui/collapsible";
-import { Input } from "@/components/ui/input";
-import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -61,6 +55,12 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import DeviceCardDetails from './DeviceCardDetails';
+import DeviceCardActions from './DeviceCardActions';
+import DeviceContextMenu from './DeviceContextMenu';
+import DeviceDeleteConfirm from './DeviceDeleteConfirm';
+import DeviceConfirmDialog from './DeviceConfirmDialog';
 
 interface DeviceCardProps {
   device: Device;
@@ -420,9 +420,9 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                   </div>
                 </div>
 
-                {/* Collapsible content section - Fix: ensure Collapsible wraps CollapsibleContent and CollapsibleTrigger */}
-                <Collapsible open={expanded} className="w-full">
-                  <CollapsibleContent className="space-y-2 text-sm mt-2 pt-2 border-t">
+                {/* Fixed: Only show additional content when expanded */}
+                {expanded && (
+                  <div className="space-y-2 text-sm mt-2 pt-2 border-t">
                     {device.deviceType && (
                       <div className="flex items-start">
                         <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
@@ -514,8 +514,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                         <DeviceHistoryDialog device={device} users={users} />
                       </div>
                     )}
-                  </CollapsibleContent>
-                </Collapsible>
+                  </div>
+                )}
               </div>
             </CardContent>
 
@@ -610,7 +610,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               )}
             </CardFooter>
             
-            {/* Fix: Move CollapsibleTrigger inside the Collapsible component */}
+            {/* Fix: Use a regular button instead of CollapsibleTrigger */}
             <div className="absolute bottom-2 right-2">
               <button 
                 className="rounded-full p-1 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" 
@@ -625,128 +625,42 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
           </Card>
         </ContextMenuTrigger>
           
-        {isAdmin && (
-          <ContextMenuContent>
-            <ContextMenuLabel>Device Actions</ContextMenuLabel>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => handleStatusChange('missing')}>
-              <Flag className="mr-2 h-4 w-4 text-amber-500" />
-              Mark as Missing
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('stolen')}>
-              <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-              Mark as Stolen
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('dead')}>
-              <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
-              Mark as Dead
-            </ContextMenuItem>
-            <ContextMenuItem onClick={() => handleStatusChange('available')}>
-              <Check className="mr-2 h-4 w-4 text-green-500" />
-              Mark as Available
-            </ContextMenuItem>
-            <ContextMenuSeparator />
-            <ContextMenuItem onClick={() => setDeleteConfirmOpen(true)}>
-              <Trash2 className="mr-2 h-4 w-4 text-red-500" />
-              Delete Device
-            </ContextMenuItem>
-            <DeviceEditDialog 
-              device={device} 
-              onDeviceUpdated={onAction} 
-              triggerElement={
-                <ContextMenuItem>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit Device
-                </ContextMenuItem>
-              }
-            />
-          </ContextMenuContent>
-        )}
+        <DeviceContextMenu 
+          device={device} 
+          onAction={onAction} 
+          onStatusChange={handleStatusChange} 
+          onDelete={() => setDeleteConfirmOpen(true)} 
+          isAdmin={isAdmin} 
+        />
       </ContextMenu>
 
-      <AlertDialog 
-        open={confirmDialog.isOpen} 
-        onOpenChange={(open) => {
-          if (!open) {
-            setIsProcessing(false);
-            setConfirmDialog(prev => ({...prev, isOpen: false}));
-          }
+      <DeviceConfirmDialog
+        open={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        description={confirmDialog.description}
+        onCancel={() => {
+          setIsProcessing(false);
+          setConfirmDialog(prev => ({...prev, isOpen: false}));
         }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{confirmDialog.title}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmDialog.description}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => {
-              setIsProcessing(false);
-              setConfirmDialog(prev => ({...prev, isOpen: false}));
-            }}>
-              Cancel
-            </AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              confirmDialog.action();
-              setConfirmDialog(prev => ({...prev, isOpen: false}));
-            }}>
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        onConfirm={() => {
+          confirmDialog.action();
+          setConfirmDialog(prev => ({...prev, isOpen: false}));
+        }}
+      />
 
-      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete Device</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone. This will permanently delete the
-              device "{device.project}" and all associated data.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="mb-2 text-sm text-muted-foreground">
-              Please type <span className="font-medium text-foreground">confirm</span> to continue:
-            </p>
-            <Input 
-              value={deleteConfirmText} 
-              onChange={(e) => setDeleteConfirmText(e.target.value)} 
-              placeholder="confirm"
-              className="mb-2"
-            />
-          </div>
-          <DialogFooter>
-            <Button 
-              variant="outline" 
-              onClick={() => {
-                setDeleteConfirmOpen(false);
-                setDeleteConfirmText('');
-              }}
-            >
-              Cancel
-            </Button>
-            <Button 
-              variant="destructive" 
-              onClick={handleDeleteDevice}
-              disabled={isDeleting || deleteConfirmText !== 'confirm'}
-            >
-              {isDeleting ? (
-                <>
-                  <Clock className="h-4 w-4 mr-1 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                <>
-                  <Trash2 className="h-4 w-4 mr-1" />
-                  Delete Device
-                </>
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeviceDeleteConfirm
+        open={deleteConfirmOpen}
+        onOpenChange={setDeleteConfirmOpen}
+        deviceName={device.project}
+        confirmText={deleteConfirmText}
+        onConfirmTextChange={setDeleteConfirmText}
+        onCancel={() => {
+          setDeleteConfirmOpen(false);
+          setDeleteConfirmText('');
+        }}
+        onDelete={handleDeleteDevice}
+        isDeleting={isDeleting}
+      />
     </>
   );
 };
