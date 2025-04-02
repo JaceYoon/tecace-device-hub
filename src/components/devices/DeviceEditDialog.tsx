@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Edit } from 'lucide-react';
 import { Device } from '@/types';
 import DeviceEditForm from './DeviceEditForm';
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu';
 
 interface DeviceEditDialogProps {
   device: Device;

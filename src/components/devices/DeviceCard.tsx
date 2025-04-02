@@ -42,10 +42,6 @@ import {
   ContextMenuItem,
   ContextMenuTrigger,
   ContextMenuSeparator,
-  ContextMenuSub,
-  ContextMenuSubContent,
-  ContextMenuSubTrigger,
-  ContextMenuLabel,
 } from "@/components/ui/context-menu";
 import {
   Popover,
@@ -53,6 +49,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
+  DropdownMenuPortal,
+} from "@/components/ui/dropdown-menu";
 
 interface DeviceCardProps {
   device: Device;
@@ -321,59 +329,59 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {isAdmin && (
-                      <Popover>
-                        <PopoverTrigger asChild>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
                             <MoreVertical className="h-4 w-4" />
                           </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-56 p-0" align="end">
-                          <div className="p-2">
-                            <ContextMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
-                              Device Actions
-                            </ContextMenuLabel>
-                          </div>
-                          <ContextMenuSeparator />
-                          <ContextMenuSub>
-                            <ContextMenuSubTrigger>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56 p-0" align="end">
+                          <DropdownMenuLabel className="px-2 py-1.5 text-xs font-semibold text-muted-foreground">
+                            Device Actions
+                          </DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
                               <AlertCircle className="mr-2 h-4 w-4" />
                               Change Status
-                            </ContextMenuSubTrigger>
-                            <ContextMenuSubContent className="w-48">
-                              <ContextMenuItem onClick={() => handleStatusChange('missing')}>
-                                <Flag className="mr-2 h-4 w-4 text-amber-500" />
-                                Mark as Missing
-                              </ContextMenuItem>
-                              <ContextMenuItem onClick={() => handleStatusChange('stolen')}>
-                                <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-                                Mark as Stolen
-                              </ContextMenuItem>
-                              <ContextMenuItem onClick={() => handleStatusChange('dead')}>
-                                <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
-                                Mark as Dead
-                              </ContextMenuItem>
-                              <ContextMenuItem onClick={() => handleStatusChange('available')}>
-                                <Check className="mr-2 h-4 w-4 text-green-500" />
-                                Mark as Available
-                              </ContextMenuItem>
-                            </ContextMenuSubContent>
-                          </ContextMenuSub>
-                          <ContextMenuItem onSelect={() => setDeleteConfirmOpen(true)}>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuPortal>
+                              <DropdownMenuSubContent className="w-48">
+                                <DropdownMenuItem onClick={() => handleStatusChange('missing')}>
+                                  <Flag className="mr-2 h-4 w-4 text-amber-500" />
+                                  Mark as Missing
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange('stolen')}>
+                                  <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
+                                  Mark as Stolen
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange('dead')}>
+                                  <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
+                                  Mark as Dead
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleStatusChange('available')}>
+                                  <Check className="mr-2 h-4 w-4 text-green-500" />
+                                  Mark as Available
+                                </DropdownMenuItem>
+                              </DropdownMenuSubContent>
+                            </DropdownMenuPortal>
+                          </DropdownMenuSub>
+                          <DropdownMenuItem onSelect={() => setDeleteConfirmOpen(true)}>
                             <Trash2 className="mr-2 h-4 w-4 text-red-500" />
                             Delete Device
-                          </ContextMenuItem>
+                          </DropdownMenuItem>
                           <DeviceEditDialog 
                             device={device} 
                             onDeviceUpdated={onAction} 
                             triggerElement={
-                              <ContextMenuItem onSelect={(e) => e.preventDefault()}>
+                              <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                 <Edit className="mr-2 h-4 w-4" />
                                 Edit Device
-                              </ContextMenuItem>
+                              </DropdownMenuItem>
                             }
                           />
-                        </PopoverContent>
-                      </Popover>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                     <StatusBadge status={device.status} />
                     {isRequested && (
@@ -654,31 +662,24 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             <ContextMenuContent>
               <ContextMenuLabel>Device Actions</ContextMenuLabel>
               <ContextMenuSeparator />
-              <ContextMenuSub>
-                <ContextMenuSubTrigger>
-                  <AlertCircle className="mr-2 h-4 w-4" />
-                  Change Status
-                </ContextMenuSubTrigger>
-                <ContextMenuSubContent className="w-48">
-                  <ContextMenuItem onClick={() => handleStatusChange('missing')}>
-                    <Flag className="mr-2 h-4 w-4 text-amber-500" />
-                    Mark as Missing
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => handleStatusChange('stolen')}>
-                    <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
-                    Mark as Stolen
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => handleStatusChange('dead')}>
-                    <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
-                    Mark as Dead
-                  </ContextMenuItem>
-                  <ContextMenuItem onClick={() => handleStatusChange('available')}>
-                    <Check className="mr-2 h-4 w-4 text-green-500" />
-                    Mark as Available
-                  </ContextMenuItem>
-                </ContextMenuSubContent>
-              </ContextMenuSub>
-              <ContextMenuItem onSelect={() => setDeleteConfirmOpen(true)}>
+              <ContextMenuItem onClick={() => handleStatusChange('missing')}>
+                <Flag className="mr-2 h-4 w-4 text-amber-500" />
+                Mark as Missing
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleStatusChange('stolen')}>
+                <AlertCircle className="mr-2 h-4 w-4 text-red-500" />
+                Mark as Stolen
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleStatusChange('dead')}>
+                <AlertCircle className="mr-2 h-4 w-4 text-gray-500" />
+                Mark as Dead
+              </ContextMenuItem>
+              <ContextMenuItem onClick={() => handleStatusChange('available')}>
+                <Check className="mr-2 h-4 w-4 text-green-500" />
+                Mark as Available
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem onClick={() => setDeleteConfirmOpen(true)}>
                 <Trash2 className="mr-2 h-4 w-4 text-red-500" />
                 Delete Device
               </ContextMenuItem>
@@ -686,7 +687,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 device={device} 
                 onDeviceUpdated={onAction} 
                 triggerElement={
-                  <ContextMenuItem onSelect={(e) => e.preventDefault()}>
+                  <ContextMenuItem>
                     <Edit className="mr-2 h-4 w-4" />
                     Edit Device
                   </ContextMenuItem>
