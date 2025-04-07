@@ -282,28 +282,24 @@ export const dataService = {
       if (request.type === 'return') {
         console.log('Processing warehouse return request for device:', request.deviceId);
         
-        // First update the device status to pending
-        await deviceService.update(request.deviceId, {
-          status: 'pending',
-          requestedBy: request.userId
-        });
-        
-        // Then create the return request
-        return await deviceService.requestDevice(
+        // Create the return request first
+        const returnRequest = await deviceService.requestDevice(
           request.deviceId,
           'return'
         );
-      }
-      
-      if (request.type === 'report') {
-        // First update the device status to pending
+        
+        // Then update the device status to pending
         await deviceService.update(request.deviceId, {
           status: 'pending',
           requestedBy: request.userId
         });
         
-        // Then create the report request
-        return await deviceService.requestDevice(
+        return returnRequest;
+      }
+      
+      if (request.type === 'report') {
+        // Create the report request first
+        const reportRequest = await deviceService.requestDevice(
           request.deviceId,
           'report',
           { 
@@ -311,6 +307,14 @@ export const dataService = {
             reason: request.reason
           }
         );
+        
+        // Then update the device status to pending
+        await deviceService.update(request.deviceId, {
+          status: 'pending',
+          requestedBy: request.userId
+        });
+        
+        return reportRequest;
       }
       
       // For all other request types, use the normal flow
