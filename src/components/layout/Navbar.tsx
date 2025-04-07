@@ -5,7 +5,7 @@ import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
 import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
-import ThemeToggle from '../ui/theme-toggle';
+import { ThemeToggle } from '../ui/theme-toggle';
 
 const Navbar = () => {
   const location = useLocation();

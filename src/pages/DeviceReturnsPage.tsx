@@ -171,7 +171,8 @@ const DeviceReturnsPage = () => {
   };
 
   return (
-    <PageContainer title="Device Returns Management">
+    <PageContainer className="py-6">
+      <h1 className="text-2xl font-bold mb-6">Device Returns Management</h1>
       <Tabs defaultValue="returnable">
         <TabsList className="mb-4">
           <TabsTrigger value="returnable">Returnable Devices</TabsTrigger>
