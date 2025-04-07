@@ -68,6 +68,13 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
       
       console.log('Submitting report with values:', values);
       
+      // First update the device status to pending immediately
+      await dataService.devices.update(device.id, {
+        status: 'pending',
+        requestedBy: userId
+      });
+      
+      // Then create the report request
       const request = await dataService.addRequest({
         deviceId: device.id,
         userId: userId,
