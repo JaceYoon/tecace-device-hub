@@ -173,15 +173,30 @@ const deviceService = {
       method: 'DELETE'
     }),
 
-  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> =>
-    apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
+  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
+    // Special handling for return requests to work around the database constraint issue
+    if (type === 'return') {
+      console.log('Processing return request with workaround for:', deviceId);
+      // Use the release type instead, but add a special reason to indicate it's a return
+      return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          type: 'release', // Use 'release' instead of 'return' to work around constraint
+          reason: `[RETURN] ${options?.reason || 'Device returned to warehouse'}`
+        })
+      });
+    }
+    
+    // For all other request types, proceed normally
+    return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ 
         type, 
         reportType: options?.reportType,
         reason: options?.reason
       })
-    }),
+    });
+  },
 
   processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
     apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
@@ -240,24 +255,26 @@ export const dataService = {
     console.log('Processing addRequest with:', request);
     
     try {
-      // For returns, use a different strategy
+      // Special handling for returns based on our workaround
       if (request.type === 'return') {
         console.log('Processing return request for device:', request.deviceId);
         
-        // First, create a release request (this should work with the database schema)
+        // Create a release request but mark it specially to indicate it's a return
         const releaseRequest = await deviceService.requestDevice(
           request.deviceId,
-          'release',
-          { reason: request.reason }
+          'release', // Using release type as a workaround
+          { 
+            reason: `[RETURN] ${request.reason || 'Device return requested'}`
+          }
         );
         
-        // Then update the device to mark it as returned
+        // After creating the release request, update the device status to indicate pending return
         await deviceService.update(request.deviceId, {
-          status: 'returned',
-          returnDate: new Date()
+          status: 'available', // Keep as available but update deviceStatus
+          deviceStatus: 'Pending warehouse return'
         });
         
-        console.log('Device marked as returned successfully');
+        console.log('Device marked as pending return successfully');
         return releaseRequest;
       }
       

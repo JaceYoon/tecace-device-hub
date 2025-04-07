@@ -45,6 +45,7 @@ const DeviceReturnsPage = () => {
     try {
       const allDevices = await dataService.devices.getAll();
       
+      // For returnable devices, include both available and devices marked for return
       const returnableDevices = allDevices.filter(
         device => device.status === 'available' || device.status === 'dead'
       );
@@ -54,8 +55,10 @@ const DeviceReturnsPage = () => {
       setReturnedDevices(returnedDevs);
       
       const requests = await dataService.devices.getAllRequests();
+      
+      // Find pending returns by checking for [RETURN] in the reason field (our workaround)
       const pendingReturns = requests.filter(
-        req => req.type === 'return' && req.status === 'pending'
+        req => req.reason && req.reason.includes('[RETURN]') && req.status === 'pending'
       );
       setPendingReturnRequests(pendingReturns);
       
@@ -103,12 +106,17 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Create a return request (this adds it to the pending queue)
+          // Create a return request using our workaround
           await dataService.devices.requestDevice(
             deviceId, 
             'return', 
             { reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}` }
           );
+          
+          // Also update device status to indicate pending return
+          await dataService.devices.update(deviceId, {
+            deviceStatus: 'Pending warehouse return'
+          });
           
           successCount++;
         } catch (error) {
@@ -155,10 +163,11 @@ const DeviceReturnsPage = () => {
           // Find the request to get the device ID
           const request = pendingReturnRequests.find(r => r.id === requestId);
           if (request) {
-            // Then update the device status to 'returned' - Fix the type error by passing a Date object
+            // Then update the device status to 'returned'
             await dataService.devices.update(request.deviceId, {
               status: 'returned',
-              returnDate: new Date(returnDate) // Convert returnDate to a Date object
+              returnDate: new Date(returnDate), // Convert returnDate to a Date object
+              deviceStatus: 'Returned to warehouse'
             });
           }
           
@@ -192,7 +201,19 @@ const DeviceReturnsPage = () => {
   const cancelReturnRequest = async (requestId: string) => {
     setIsProcessing(true);
     try {
+      // Get the device ID before cancelling
+      const request = pendingReturnRequests.find(r => r.id === requestId);
+      const deviceId = request?.deviceId;
+      
       await dataService.devices.cancelRequest(requestId);
+      
+      // Also update the device to remove the pending return status
+      if (deviceId) {
+        await dataService.devices.update(deviceId, {
+          deviceStatus: null
+        });
+      }
+      
       toast.success('Return request cancelled');
       loadData();
     } catch (error) {
