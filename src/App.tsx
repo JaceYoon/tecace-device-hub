@@ -9,6 +9,7 @@ import NotFound from './pages/NotFound';
 import DeviceManagement from './pages/DeviceManagement';
 import UserManagement from './pages/UserManagement';
 import ProfilePage from './pages/ProfilePage';
+import DeviceReturnsPage from './pages/DeviceReturnsPage';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { ThemeProvider } from 'next-themes';
 import LoginPage from './components/auth/LoginPage';
@@ -35,6 +36,7 @@ function App() {
                   <Route path="/" element={<LoginPage />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/device-management" element={<DeviceManagement />} />
+                  <Route path="/device-returns" element={<DeviceReturnsPage />} />
                   <Route path="/user-management" element={<UserManagement />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/login" element={<LoginPage />} />

@@ -1,145 +1,97 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { useAuth } from '@/components/auth/AuthProvider';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Box, LogOut, Package, Settings, Smartphone, User } from 'lucide-react';
-import { ThemeToggle } from '@/components/ui/theme-toggle';
+import React from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
+import { Button } from '../ui/button';
+import { cn } from '@/lib/utils';
+import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw } from 'lucide-react';
+import { useAuth } from '../auth/AuthProvider';
+import ThemeToggle from '../ui/theme-toggle';
 
-const Navbar: React.FC = () => {
-  const { user, isAuthenticated, isManager, logout } = useAuth();
-  const navigate = useNavigate();
-  const [imageError, setImageError] = useState(false);
+const Navbar = () => {
+  const location = useLocation();
+  const { logout, isAdmin, isManager } = useAuth();
 
-  // Reset image error state when user changes
-  useEffect(() => {
-    setImageError(false);
-  }, [user?.id]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
+  const isActive = (path: string) => {
+    return location.pathname === path;
   };
 
   return (
-    <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container flex h-14 items-center">
-        <div className="mr-4 flex">
-          <Link to="/" className="flex items-center space-x-2">
-            <Box className="h-6 w-6" />
-            <span className="hidden font-bold sm:inline-block">
-              TecAce Device Manager
-            </span>
-          </Link>
-        </div>
-
-        <div className="flex flex-1 items-center justify-between space-x-2 md:justify-end">
-          <div className="w-full flex-1 md:w-auto md:flex-none">
-            {isAuthenticated ? (
-              <div className="flex gap-6 md:gap-2">
-                <Link to="/dashboard">
-                  <Button variant="ghost" className="gap-2">
-                    <Smartphone className="h-[1.2rem] w-[1.2rem]" />
-                    <span className="hidden md:inline-block">My Devices</span>
-                  </Button>
-                </Link>
-
-                {isManager && (
-                  <Link to="/device-management">
-                    <Button variant="ghost" className="gap-2">
-                      <Package className="h-[1.2rem] w-[1.2rem]" />
-                      <span className="hidden md:inline-block">Manage Devices</span>
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            ) : (
-              <div />
-            )}
-          </div>
-
-          <div className="flex items-center gap-2">
-            {/* Add ThemeToggle component */}
-            <ThemeToggle />
+    <nav className="bg-background border-b">
+      <div className="container mx-auto px-4 flex justify-between items-center h-16">
+        <div className="flex items-center">
+          <NavLink to="/dashboard" className="flex items-center mr-6">
+            <Cpu className="h-6 w-6 mr-2 text-primary" />
+            <span className="text-xl font-semibold">TecAce</span>
+          </NavLink>
+          
+          <div className="hidden md:flex space-x-1">
+            <NavLink to="/dashboard">
+              <Button 
+                variant={isActive('/dashboard') ? 'default' : 'ghost'} 
+                className="flex items-center"
+              >
+                <Monitor className="h-4 w-4 mr-2" />
+                Dashboard
+              </Button>
+            </NavLink>
             
-            {isAuthenticated ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    className="relative h-8 w-8 rounded-full"
-                  >
-                    <Avatar className="h-8 w-8">
-                      {user?.avatarUrl && !imageError ? (
-                        <AvatarImage 
-                          src={user.avatarUrl} 
-                          alt={user.name} 
-                          onError={(e) => {
-                            console.error('Failed to load avatar image:', user.avatarUrl);
-                            setImageError(true);
-                          }}
-                        />
-                      ) : (
-                        <AvatarFallback>
-                          {user?.name
-                            ? user.name
-                                .split(' ')
-                                .map((n) => n[0])
-                                .join('')
-                            : 'U'}
-                        </AvatarFallback>
-                      )}
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56" align="end" forceMount>
-                  <DropdownMenuLabel className="font-normal">
-                    <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">
-                        {user?.name}
-                      </p>
-                      <p className="text-xs leading-none text-muted-foreground">
-                        {user?.email}
-                      </p>
-                    </div>
-                  </DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate('/profile')}>
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Profile</span>
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate('/dashboard')}>
-                    <Smartphone className="mr-2 h-4 w-4" />
-                    <span>My Devices</span>
-                  </DropdownMenuItem>
-                  {isManager && (
-                    <DropdownMenuItem
-                      onClick={() => navigate('/device-management')}
-                    >
-                      <Settings className="mr-2 h-4 w-4" />
-                      <span>Manage Devices</span>
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleLogout}>
-                    <LogOut className="mr-2 h-4 w-4" />
-                    <span>Log out</span>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <Button onClick={() => navigate('/login')}>Login</Button>
+            <NavLink to="/device-management">
+              <Button 
+                variant={isActive('/device-management') ? 'default' : 'ghost'} 
+                className="flex items-center"
+              >
+                <Package className="h-4 w-4 mr-2" />
+                Devices
+              </Button>
+            </NavLink>
+            
+            {isAdmin && (
+              <NavLink to="/device-returns">
+                <Button 
+                  variant={isActive('/device-returns') ? 'default' : 'ghost'} 
+                  className="flex items-center"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Returns
+                </Button>
+              </NavLink>
+            )}
+            
+            {isAdmin && (
+              <NavLink to="/user-management">
+                <Button 
+                  variant={isActive('/user-management') ? 'default' : 'ghost'} 
+                  className="flex items-center"
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  Users
+                </Button>
+              </NavLink>
             )}
           </div>
+        </div>
+        
+        <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          
+          <NavLink to="/profile">
+            <Button 
+              variant={isActive('/profile') ? 'default' : 'ghost'} 
+              className="flex items-center"
+            >
+              <User className="h-4 w-4 mr-2" />
+              Profile
+            </Button>
+          </NavLink>
+          
+          <Button 
+            variant="outline" 
+            className="flex items-center" 
+            onClick={logout}
+          >
+            <LogOut className="h-4 w-4 mr-2" />
+            Log Out
+          </Button>
         </div>
       </div>
     </nav>
