@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -98,27 +97,35 @@ const DeviceReturnsPage = () => {
 
   const submitReturnRequests = async () => {
     setIsProcessing(true);
+    let successCount = 0;
+    let errorCount = 0;
+    
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Update to add status property to match the type requirements
-          await dataService.addRequest({
+          await dataService.devices.requestDevice(
             deviceId,
-            type: 'return',
-            status: 'pending', // Add this to fix TypeScript error
-            reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`,
-            userId: user?.id || '',
-          });
+            'return',
+            { reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}` }
+          );
+          successCount++;
         } catch (error) {
+          errorCount++;
+          console.error(`Error processing return for device ${deviceId}:`, error);
           if (error instanceof Error && error.message.includes('must be released')) {
             toast.error(`Device must be released before it can be returned to warehouse`);
-          } else {
-            console.error(`Error processing return for device ${deviceId}:`, error);
           }
-          continue;
         }
       }
-      toast.success('Return requests created successfully');
+      
+      if (successCount > 0) {
+        toast.success(`${successCount} return request(s) created successfully`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`Failed to create ${errorCount} return request(s)`);
+      }
+      
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       loadData();

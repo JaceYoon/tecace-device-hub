@@ -405,6 +405,8 @@ exports.requestDevice = async (req, res) => {
   try {
     const { type, reportType, reason } = req.body; // Added reportType and reason
 
+    console.log('Request device input:', { type, reportType, reason, deviceId: req.params.id });
+
     if (!type || !['assign', 'release', 'report', 'return'].includes(type)) {
       return res.status(400).json({ message: 'Invalid request type' });
     }

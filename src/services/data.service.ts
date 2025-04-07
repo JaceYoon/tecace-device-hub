@@ -243,18 +243,7 @@ export const dataService = {
         // If the API fails due to ownership issues, try the fallback approach
         if (apiError instanceof Error && apiError.message.includes('not assigned to you')) {
           console.log('Using fallback for device release due to ownership issue');
-          
-          // Try immediate local update as fallback
-          const localDevice = await deviceStore.updateDevice(id, {
-            assignedTo: undefined,
-            assignedToId: undefined,
-            status: 'available',
-          });
-          
-          // Trigger refresh
-          setTimeout(() => dataService.triggerRefresh(), 300);
-          
-          return localDevice;
+          throw apiError;
         }
         throw apiError;
       }
@@ -291,28 +280,14 @@ export const dataService = {
           // Small delay to ensure device updates are processed first
           await new Promise(resolve => setTimeout(resolve, 200));
           
-          // Then create the request (which might fail, but that's ok since device is already released)
-          try {
-            const newRequest = await deviceService.requestDevice(
-              request.deviceId,
-              request.type as 'assign' | 'release'
-            );
-            
-            console.log('Release request added successfully:', newRequest);
-            return newRequest;
-          } catch (requestError) {
-            // If API request fails, create a local request record instead
-            console.log('API release request failed, creating local record instead');
-            const localRequest = requestStore.addRequest({
-              ...request,
-              status: 'approved' // Auto-approve local release requests
-            });
-            
-            // Trigger refresh
-            setTimeout(() => dataService.triggerRefresh(), 300);
-            
-            return localRequest;
-          }
+          // Then create the request
+          const newRequest = await deviceService.requestDevice(
+            request.deviceId,
+            request.type as 'assign' | 'release'
+          );
+          
+          console.log('Release request added successfully:', newRequest);
+          return newRequest;
         } catch (deviceUpdateError) {
           console.error('Error updating device during release:', deviceUpdateError);
           // If direct update fails, try the API request as fallback
@@ -336,118 +311,43 @@ export const dataService = {
           throw new Error('Invalid report type');
         }
         
-        // Try using API first with fallback to local storage for database enum issues
-        try {
-          // First try the API
-          const newRequest = await apiCall<DeviceRequest>(`/devices/${request.deviceId}/request`, {
-            method: 'POST',
-            body: JSON.stringify({ 
-              type: request.type,
-              reportType: request.reportType,
-              reason: request.reason 
-            })
-          });
-          
-          console.log('Report request added successfully via API:', newRequest);
-          
-          // Trigger refresh callback with a delay
-          setTimeout(() => {
-            dataService.triggerRefresh();
-          }, 300);
-          
-          return newRequest;
-        } catch (error) {
-          console.error('Error creating report request via API:', error);
-          
-          // If the error is about data truncation for the type column, use local storage
-          if (error instanceof Error && 
-              (error.message.includes('Data truncated for column') || 
-               error.message.includes('type'))) {
-            
-            console.log('Using local storage fallback for report request due to database enum constraint');
-            
-            // Create a fallback local request
-            const localRequest = requestStore.addRequest({
-              ...request,
-              // Set to pending since it's a report request
-              status: 'pending'
-            });
-            
-            // Update device to show it's been reported
-            deviceStore.updateDevice(request.deviceId, {
-              requestedBy: request.userId
-            });
-            
-            // Trigger refresh
-            setTimeout(() => dataService.triggerRefresh(), 300);
-            
-            // Show a warning to the user about using local storage
-            toast.warning('Server database needs updating. Using local storage for now.', {
-              description: 'Your report has been saved locally. Please contact your administrator.'
-            });
-            
-            return localRequest;
+        // Use API for report requests
+        const newRequest = await deviceService.requestDevice(
+          request.deviceId,
+          'report',
+          { 
+            reportType: request.reportType,
+            reason: request.reason 
           }
-          
-          // Re-throw the error if it's not related to the enum constraint
-          throw error;
-        }
+        );
+        
+        console.log('Report request added successfully via API:', newRequest);
+        
+        // Trigger refresh callback with a delay
+        setTimeout(() => {
+          dataService.triggerRefresh();
+        }, 300);
+        
+        return newRequest;
       } else if (request.type === 'return') {
         // Special handling for return requests
-        try {
-          // First try the API
-          const newRequest = await deviceService.requestDevice(
-            request.deviceId,
-            'return' as any, // Force type to avoid TypeScript errors - the server model has been updated
-            { reason: request.reason }
-          );
-          
-          console.log('Return request added successfully via API:', newRequest);
-          
-          // Trigger refresh callback with a delay
-          setTimeout(() => {
-            dataService.triggerRefresh();
-          }, 300);
-          
-          return newRequest;
-        } catch (error) {
-          console.error('Error creating return request via API:', error);
-          
-          // More specific error handling for database enum issues
-          if (error instanceof Error && 
-              (error.message.includes('Data truncated for column') || 
-               error.message.includes('type') ||
-               error.message.includes('enum'))) {
-            
-            console.log('Using local storage fallback for return request due to database enum constraint');
-            
-            // Create a fallback local request
-            const localRequest = requestStore.addRequest({
-              ...request,
-              // Use the status passed or default to pending
-              status: request.status || 'pending'
-            });
-            
-            // Update device to show it's been requested for return
-            deviceStore.updateDevice(request.deviceId, {
-              requestedBy: request.userId,
-              deviceStatus: 'Pending warehouse return'
-            });
-            
-            // Trigger refresh
-            setTimeout(() => dataService.triggerRefresh(), 300);
-            
-            // Show a more informative warning to the user about using local storage
-            toast.warning('Server database needs updating. Using local storage for now.', {
-              description: 'The server needs to be restarted after the model update. Your return request has been saved locally.'
-            });
-            
-            return localRequest;
-          }
-          
-          // Re-throw the error if it's not related to the enum constraint
-          throw error;
-        }
+        console.log('Processing return request');
+        
+        // Use the API for return requests
+        const newRequest = await deviceService.requestDevice(
+          request.deviceId,
+          'return',
+          { reason: request.reason }
+        );
+        
+        console.log('Return request added successfully via API:', newRequest);
+        
+        // Trigger refresh callback with a delay
+        setTimeout(() => {
+          dataService.triggerRefresh();
+        }, 300);
+        
+        return newRequest;
       } else {
         // For non-release, non-report, non-return requests (assign), use normal flow
         const newRequest = await deviceService.requestDevice(
