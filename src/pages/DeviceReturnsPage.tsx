@@ -103,12 +103,11 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          const response = await dataService.addRequest({
+          const response = await dataService.devices.requestDevice(
             deviceId,
-            userId: user?.id || '',
-            type: 'return',
-            status: 'pending'
-          });
+            'return',
+            { reason: 'Device returned to warehouse' }
+          );
           
           successCount++;
         } catch (error) {
