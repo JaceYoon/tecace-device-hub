@@ -82,7 +82,14 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       
       // Check for data truncation errors with more specific error message
       if (errorData.message && errorData.message.includes('Data truncated for column')) {
-        throw new Error(`Database constraint error. Please check API and database compatibility.`);
+        console.error('Database constraint error:', errorData.message);
+        
+        // For device status updates, we'll handle it differently
+        if (endpoint.includes('/devices/') && options.method === 'PUT') {
+          throw new Error(`Database constraint error: Could not update device status. The server database may have different constraints than expected.`);
+        } else {
+          throw new Error(`Database constraint error. Please check API and database compatibility.`);
+        }
       }
       
       throw new Error(errorData.message || `API error: ${response.status}`);

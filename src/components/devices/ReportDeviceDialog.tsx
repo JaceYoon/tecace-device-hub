@@ -68,14 +68,9 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
       
       console.log('Submitting report with values:', values);
       
-      // First, update the device status to pending immediately for instant UI feedback
-      await dataService.updateDevice(device.id, {
-        status: 'pending',
-        requestedBy: userId
-      });
-      
-      // Then create the report request
-      const request = await dataService.addRequest({
+      // Create the report request first before updating the device status
+      // This ensures we have a record of the report in case the status update fails
+      await dataService.addRequest({
         deviceId: device.id,
         userId: userId,
         status: 'pending',
@@ -83,6 +78,18 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
         reportType: values.reportType,
         reason: values.reason,
       });
+      
+      try {
+        // Then update the device status to pending
+        await dataService.updateDevice(device.id, {
+          status: 'pending',
+          requestedBy: userId
+        });
+      } catch (error) {
+        console.error('Error updating device status:', error);
+        // Continue anyway since the report was created
+        toast.warning('Report submitted, but device status could not be updated');
+      }
       
       toast.success('Report submitted successfully', {
         description: 'An administrator will review your report'

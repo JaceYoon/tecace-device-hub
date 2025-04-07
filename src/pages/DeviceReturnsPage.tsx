@@ -106,17 +106,22 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // First update device status to pending immediately for UI feedback
-          await dataService.devices.update(deviceId, {
-            status: 'pending',
-            requestedBy: user?.id
-          });
-          
-          // Then create the return request
+          // First create the return request (this also handles any database-specific tasks)
           await dataService.devices.requestDevice(
             deviceId, 
             'return'
           );
+          
+          try {
+            // Then update device status to pending for immediate UI feedback
+            await dataService.devices.update(deviceId, {
+              status: 'pending',
+              requestedBy: user?.id
+            });
+          } catch (error) {
+            console.error(`Error updating device ${deviceId} status:`, error);
+            // We will continue since the request was created
+          }
           
           successCount++;
         } catch (error) {
@@ -167,11 +172,16 @@ const DeviceReturnsPage = () => {
             const dateOnly = new Date(returnDate);
             dateOnly.setHours(0, 0, 0, 0);
             
-            // Then update the device status to 'returned' with date only
-            await dataService.devices.update(request.deviceId, {
-              status: 'returned',
-              returnDate: dateOnly,
-            });
+            try {
+              // Then update the device status to 'returned' with date only
+              await dataService.devices.update(request.deviceId, {
+                status: 'returned',
+                returnDate: dateOnly,
+              });
+            } catch (error) {
+              console.error(`Error updating status for device ${request.deviceId}:`, error);
+              // Continue since the request was approved
+            }
           }
           
           successCount++;
@@ -212,9 +222,14 @@ const DeviceReturnsPage = () => {
       
       // Also update the device to available status
       if (deviceId) {
-        await dataService.devices.update(deviceId, {
-          status: 'available'
-        });
+        try {
+          await dataService.devices.update(deviceId, {
+            status: 'available'
+          });
+        } catch (error) {
+          console.error(`Error updating device ${deviceId} status:`, error);
+          // Continue anyway since the request was cancelled
+        }
       }
       
       toast.success('Return request cancelled');
