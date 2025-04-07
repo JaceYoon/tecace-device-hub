@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -103,11 +104,14 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          const response = await dataService.devices.requestDevice(
-            deviceId,
-            'return',
-            { reason: 'Device returned to warehouse' }
-          );
+          // Use addRequest with properly formatted object instead of requestDevice
+          // This approach is more reliable when facing database constraints
+          await dataService.addRequest({
+            deviceId: deviceId,
+            userId: user?.id || '',
+            type: 'return',
+            reason: 'Device returned to warehouse'
+          });
           
           successCount++;
         } catch (error) {
