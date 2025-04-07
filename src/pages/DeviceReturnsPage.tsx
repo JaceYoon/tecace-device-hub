@@ -155,10 +155,10 @@ const DeviceReturnsPage = () => {
           // Find the request to get the device ID
           const request = pendingReturnRequests.find(r => r.id === requestId);
           if (request) {
-            // Then update the device status to 'returned'
+            // Then update the device status to 'returned' - Fix the type error by passing a Date object
             await dataService.devices.update(request.deviceId, {
               status: 'returned',
-              returnDate: returnDate.toISOString()
+              returnDate: new Date(returnDate) // Convert returnDate to a Date object
             });
           }
           
