@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -165,7 +164,7 @@ const DeviceReturnsPage = () => {
   const cancelReturnRequest = async (requestId: string) => {
     setIsProcessing(true);
     try {
-      await dataService.devices.processRequest(requestId, 'rejected');
+      await dataService.devices.cancelRequest(requestId);
       toast.success('Return request cancelled');
       loadData();
     } catch (error) {
