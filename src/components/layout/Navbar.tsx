@@ -80,9 +80,9 @@ const Navbar = () => {
               variant={isActive('/profile') ? 'default' : 'ghost'} 
               className="flex items-center"
             >
-              {user?.avatar ? (
+              {user?.avatarUrl ? (
                 <Avatar className="h-6 w-6 mr-2">
-                  <AvatarImage src={user.avatar} alt={user?.name || 'User'} />
+                  <AvatarImage src={user.avatarUrl} alt={user?.name || 'User'} />
                   <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
                 </Avatar>
               ) : (
