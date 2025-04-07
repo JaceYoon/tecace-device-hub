@@ -398,8 +398,62 @@ export const dataService = {
           // Re-throw the error if it's not related to the enum constraint
           throw error;
         }
+      } else if (request.type === 'return') {
+        // Special handling for return requests
+        try {
+          // First try the API
+          const newRequest = await deviceService.requestDevice(
+            request.deviceId,
+            'return',
+            { reason: request.reason }
+          );
+          
+          console.log('Return request added successfully via API:', newRequest);
+          
+          // Trigger refresh callback with a delay
+          setTimeout(() => {
+            dataService.triggerRefresh();
+          }, 300);
+          
+          return newRequest;
+        } catch (error) {
+          console.error('Error creating return request via API:', error);
+          
+          // If there's a data truncation error, use local storage
+          if (error instanceof Error && 
+              error.message.includes('Data truncated for column')) {
+            
+            console.log('Using local storage fallback for return request due to database enum constraint');
+            
+            // Create a fallback local request
+            const localRequest = requestStore.addRequest({
+              ...request,
+              // Use the status passed or default to pending
+              status: request.status || 'pending'
+            });
+            
+            // Update device to show it's been requested for return
+            deviceStore.updateDevice(request.deviceId, {
+              requestedBy: request.userId,
+              deviceStatus: 'Pending warehouse return'
+            });
+            
+            // Trigger refresh
+            setTimeout(() => dataService.triggerRefresh(), 300);
+            
+            // Show a warning to the user about using local storage
+            toast.warning('Server database needs updating. Using local storage for now.', {
+              description: 'Your return request has been saved locally. Please contact your administrator.'
+            });
+            
+            return localRequest;
+          }
+          
+          // Re-throw the error if it's not related to the enum constraint
+          throw error;
+        }
       } else {
-        // For non-release requests (assign), use normal flow
+        // For non-release, non-report, non-return requests (assign), use normal flow
         const newRequest = await deviceService.requestDevice(
           request.deviceId,
           request.type as 'assign' | 'release'

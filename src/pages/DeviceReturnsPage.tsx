@@ -101,10 +101,11 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Fix here: Use the addRequest method instead of requestDevice with 3 args
+          // Update to add status property to match the type requirements
           await dataService.addRequest({
             deviceId,
             type: 'return',
+            status: 'pending', // Add this to fix TypeScript error
             reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`,
             userId: user?.id || '',
           });
