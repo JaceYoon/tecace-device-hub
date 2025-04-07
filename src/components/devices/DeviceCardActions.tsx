@@ -117,7 +117,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
           
-          {userId && !isAdmin && (
+          {userId && !isAdmin && device.status !== 'pending' && (
             <ReportDeviceDialog 
               device={device} 
               userId={userId} 

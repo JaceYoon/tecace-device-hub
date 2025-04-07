@@ -1,4 +1,3 @@
-
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -415,9 +414,6 @@ exports.requestDevice = async (req, res) => {
       return res.status(400).json({ message: 'Invalid request type' });
     }
 
-    // Special case for return requests - check if reason has [RETURN] prefix
-    const isReturnRequest = type === 'return' || (reason && reason.includes('[RETURN]'));
-    
     // Validate reportType if this is a report request
     if (type === 'report' && (!reportType || !['missing', 'stolen', 'dead'].includes(reportType))) {
       return res.status(400).json({ message: 'Invalid report type' });
@@ -448,13 +444,13 @@ exports.requestDevice = async (req, res) => {
     }
 
     // Validate release request - skip validation for admins
-    if (type === 'release' && !isReturnRequest && device.assignedToId !== req.user.id && req.user.role !== 'admin') {
+    if (type === 'release' && device.assignedToId !== req.user.id && req.user.role !== 'admin') {
       return res.status(400).json({ message: 'Device is not assigned to you' });
     }
     
     // Validate return request - only available devices can be returned to warehouse
     // Assigned devices must be released first
-    if (isReturnRequest && device.status === 'assigned') {
+    if (type === 'return' && device.status === 'assigned') {
       return res.status(400).json({ message: 'Device must be released before it can be returned to warehouse' });
     }
 
@@ -463,40 +459,26 @@ exports.requestDevice = async (req, res) => {
     let processedAt = null;
     let processedById = null;
     
-    if (type === 'release' && !isReturnRequest) {
+    if (type === 'release') {
       status = 'approved';
       processedAt = new Date();
       processedById = req.user.id;
     }
 
-    // For return requests using our workaround, keep them pending
-    if (isReturnRequest) {
-      // If using 'release' type with [RETURN] reason, keep as pending
-      status = 'pending';
-      processedAt = null;
-      processedById = null;
-    }
-
-    // Create request - handle return requests special case for older systems
-    // Use 'release' as the type for return requests (workaround)
-    const requestType = type === 'return' ? 'release' : type;
-    
-    // Set a simple [RETURN] reason for return requests, otherwise use provided reason
-    const finalReason = isReturnRequest ? '[RETURN]' : reason;
-    
+    // Create request - handle return requests properly
     const request = await Request.create({
-      type: requestType,
+      type: type, // Use the exact type now that 'return' is a valid type
       reportType: type === 'report' ? reportType : null,
       status,
       deviceId: device.id,
       userId: req.user.id,
       processedAt,
       processedById,
-      reason: finalReason
+      reason
     });
 
     // If it's a release request, update the device immediately
-    if (type === 'release' && !isReturnRequest) {
+    if (type === 'release') {
       await device.update({
         status: 'available',
         assignedToId: null,
@@ -506,7 +488,7 @@ exports.requestDevice = async (req, res) => {
       // Update the device to indicate it has a pending request
       device.requestedBy = req.user.id;
       await device.save();
-    } else if (type === 'report' || isReturnRequest) {
+    } else if (type === 'report' || type === 'return') {
       // For report/return requests, mark the device as pending right away
       try {
         await device.update({
@@ -550,9 +532,6 @@ exports.processRequest = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
-    // Check if this is a return request (has [RETURN] reason)
-    const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
-
     // Update request
     request.status = status;
     request.processedById = req.user.id;
@@ -569,25 +548,12 @@ exports.processRequest = async (req, res) => {
           requestedBy: null
         });
       } else if (request.type === 'release') {
-        if (isReturnRequest) {
-          // For return requests, update status to 'returned'
-          // Ensure returnDate is set to the date only (no time component)
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          
-          await device.update({
-            status: 'returned',
-            returnDate: today,
-            requestedBy: null
-          });
-        } else {
-          // Regular release
-          await device.update({
-            status: 'available',
-            assignedToId: null,
-            requestedBy: null
-          });
-        }
+        // Regular release
+        await device.update({
+          status: 'available',
+          assignedToId: null,
+          requestedBy: null
+        });
       } else if (request.type === 'report') {
         // Handle report based on reportType
         await device.update({
@@ -595,12 +561,23 @@ exports.processRequest = async (req, res) => {
           requestedBy: null,
           assignedToId: null
         });
+      } else if (request.type === 'return') {
+        // For return requests, update status to 'returned'
+        // Ensure returnDate is set to the date only (no time component)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        await device.update({
+          status: 'returned',
+          returnDate: today,
+          requestedBy: null
+        });
       }
     } else if (status === 'rejected') {
-      // If request rejected, just clear the requestedBy field
+      // If request rejected, clear the requestedBy field and reset status to available
       await device.update({
         requestedBy: null,
-        status: device.status === 'pending' ? 'available' : device.status
+        status: 'available' // Always reset to available on reject
       });
     }
 

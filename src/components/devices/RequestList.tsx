@@ -116,20 +116,16 @@ const RequestList: React.FC<RequestListProps> = ({
   };
 
   const getDeviceName = (request: DeviceRequest) => {
-    // First try to get from devices array
     const deviceInfo = getDeviceInfo(request.deviceId);
     
-    // If device is found, use its project name
     if (deviceInfo.name !== 'Unknown Device') {
       return deviceInfo.name;
     }
     
-    // If not found in devices but device is fully populated in request
     if (request.device?.project) {
       return request.device.project;
     }
     
-    // Fallback to deviceName if available (from our client-side workaround)
     if (request.deviceName) {
       return request.deviceName;
     }
@@ -137,27 +133,19 @@ const RequestList: React.FC<RequestListProps> = ({
     return 'N/A';
   };
 
-  // Filter requests based on userId prop if provided and exclude reports (handled separately)
-  // Also exclude return requests (handled in DeviceReturnsPage)
   let filteredRequests = requests.filter(request => {
-    // First exclude returns (requests with [RETURN] in the reason)
-    const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
-    if (isReturnRequest) return false;
+    if (request.type === 'return') return false;
     
-    // Then exclude reports which are handled separately
     return request.type !== 'report';
   });
   
   if (userId) {
-    // When viewing "My Requests" tab, show ALL requests for this user (not just pending)
     filteredRequests = filteredRequests.filter(request => request.userId === userId);
     console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
   } else {
-    // For admin view, only show pending requests that need action
     filteredRequests = filteredRequests.filter(request => request.status === 'pending');
   }
 
-  // If not admin, only show requests that belong to current user
   if (!isAdmin && !userId && user) {
     filteredRequests = filteredRequests.filter(request => request.userId === user.id && request.status === 'pending');
   }
@@ -243,7 +231,6 @@ const RequestList: React.FC<RequestListProps> = ({
                               </Button>
                             </>
                           )}
-                          {/* Show Cancel button for non-admin users for their own pending requests */}
                           {!isAdmin && user && request.userId === user.id && request.status === 'pending' && (
                             <Button
                               variant="destructive"

@@ -1,4 +1,3 @@
-
 import { DeviceRequest, RequestStatus, DeviceStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
@@ -74,15 +73,14 @@ class RequestStore {
       ...request,
       id: `request-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       requestedAt: new Date(),
-      status: request.type === 'release' ? 'approved' : 'pending', // Auto-approve release requests
+      status: request.type === 'release' ? 'approved' : 'pending', // Auto-approve release requests only
     };
     
     // First check if there's already a pending request for this device
-    if (request.type === 'assign') {
+    if (request.type === 'assign' || request.type === 'report' || request.type === 'return') {
       const existingRequest = this.requests.find(
         r => r.deviceId === request.deviceId && 
-             r.status === 'pending' && 
-             r.type === 'assign'
+             r.status === 'pending'
       );
       
       if (existingRequest) {
@@ -96,60 +94,39 @@ class RequestStore {
     
     // Handle release requests immediately to improve UI responsiveness
     if (request.type === 'release') {
-      // Check if this is a return request or a normal release
-      const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
+      // Auto-process regular device release - immediately update device status
+      deviceStore.updateDevice(request.deviceId, {
+        assignedTo: undefined,
+        assignedToId: undefined,
+        status: 'available',
+      });
       
-      if (isReturnRequest) {
-        // For return requests, update the device status to pending
-        deviceStore.updateDevice(request.deviceId, {
-          status: 'pending',
-          requestedBy: request.userId
-        });
-        
-        console.log(`Device ${request.deviceId} marked as pending return`);
-      } else {
-        // Auto-process regular device release - immediately update device status
-        deviceStore.updateDevice(request.deviceId, {
-          assignedTo: undefined,
-          assignedToId: undefined,
-          status: 'available',
-        });
-        
-        // Mark any assign requests for this device from this user as 'returned'
-        const assignRequests = this.requests.filter(
-          r => r.deviceId === request.deviceId && 
-              r.userId === request.userId && 
-              r.type === 'assign' && 
-              r.status === 'approved'
-        );
-        
-        assignRequests.forEach(r => {
-          r.status = 'returned';
-        });
-        
-        console.log(`Device ${request.deviceId} released (status set to available)`);
-      }
+      // Mark any assign requests for this device from this user as 'returned'
+      const assignRequests = this.requests.filter(
+        r => r.deviceId === request.deviceId && 
+            r.userId === request.userId && 
+            r.type === 'assign' && 
+            r.status === 'approved'
+      );
+      
+      assignRequests.forEach(r => {
+        r.status = 'returned';
+      });
+      
+      console.log(`Device ${request.deviceId} released (status set to available)`);
     } else if (request.type === 'assign') {
       // Update device requestedBy field
       deviceStore.updateDevice(request.deviceId, {
         requestedBy: request.userId,
       });
-    } else if (request.type === 'report') {
-      // For report requests, just mark the device as pending
+    } else if (request.type === 'report' || request.type === 'return') {
+      // For report/return requests, mark the device as pending
       deviceStore.updateDevice(request.deviceId, {
         status: 'pending',
         requestedBy: request.userId
       });
       
-      console.log(`Device ${request.deviceId} marked as pending due to report`);
-    } else if (request.type === 'return') {
-      // For return requests, update the device status to pending
-      deviceStore.updateDevice(request.deviceId, {
-        status: 'pending',
-        requestedBy: request.userId
-      });
-      
-      console.log(`Device ${request.deviceId} marked as pending warehouse return`);
+      console.log(`Device ${request.deviceId} marked as pending due to ${request.type}`);
     }
     
     // Persist to localStorage

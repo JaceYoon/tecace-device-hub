@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Device, User } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
@@ -62,6 +62,13 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     },
   });
 
+  // Reset form when dialog closes
+  useEffect(() => {
+    if (!open) {
+      form.reset();
+    }
+  }, [open, form]);
+
   // Check if device already has a pending request
   const hasPendingRequest = device.status === 'pending' || device.requestedBy !== undefined;
 
@@ -78,8 +85,7 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
       
       console.log('Submitting report with values:', values);
       
-      // Create the report request first before updating the device status
-      // This ensures we have a record of the report in case the status update fails
+      // Create the report request - the API will update the device status to pending
       await dataService.addRequest({
         deviceId: device.id,
         userId: userId,
@@ -88,21 +94,6 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
         reportType: values.reportType,
         reason: values.reason,
       });
-      
-      // Update UI optimistically
-      const updatedDevice = {...device, status: 'pending'};
-      
-      try {
-        // Then try to update the device status to pending
-        await dataService.updateDevice(device.id, {
-          status: 'pending',
-          requestedBy: userId
-        });
-      } catch (error) {
-        console.error('Error updating device status:', error);
-        // Fallback to client-side state updates for UI responsiveness
-        toast.warning('Report submitted, but device status will update when the page refreshes');
-      }
       
       toast.success('Report submitted successfully', {
         description: 'An administrator will review your report'

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -56,9 +55,9 @@ const DeviceReturnsPage = () => {
       
       const requests = await dataService.devices.getAllRequests();
       
-      // Find pending returns by checking for [RETURN] in the reason field (our workaround)
+      // Find pending returns - specifically use type 'return' now
       const pendingReturns = requests.filter(
-        req => req.reason && req.reason.includes('[RETURN]') && req.status === 'pending'
+        req => req.type === 'return' && req.status === 'pending'
       );
       setPendingReturnRequests(pendingReturns);
       
@@ -107,25 +106,15 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // First create the return request
-          await dataService.devices.requestDevice(
+          // Create the return request using the proper 'return' type now
+          const response = await dataService.devices.requestDevice(
             deviceId, 
-            'return'
+            'return' // Use 'return' type directly now
           );
           
-          try {
-            // Then try to update device status to pending for immediate UI feedback
-            await dataService.devices.update(deviceId, {
-              status: 'pending',
-              requestedBy: user?.id
-            });
-            uiUpdated = true;
-          } catch (error) {
-            console.error(`Error updating device ${deviceId} status:`, error);
-            // Continue since the request was created, but status update failed
-          }
-          
           successCount++;
+          
+          // Don't need to separately update device status since the API now does this
         } catch (error) {
           errorCount++;
           console.error(`Error processing return for device ${deviceId}:`, error);
@@ -133,11 +122,7 @@ const DeviceReturnsPage = () => {
       }
       
       if (successCount > 0) {
-        if (!uiUpdated) {
-          toast.warning(`${successCount} device(s) added to return queue, but status will update when page refreshes`);
-        } else {
-          toast.success(`${successCount} device(s) added to return queue`);
-        }
+        toast.success(`${successCount} device(s) added to return queue`);
       }
       
       if (errorCount > 0) {
