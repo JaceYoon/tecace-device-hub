@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -34,7 +33,6 @@ const DeviceReturnsPage = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Redirect if not admin
   useEffect(() => {
     if (!isAdmin) {
       navigate('/dashboard');
@@ -42,24 +40,19 @@ const DeviceReturnsPage = () => {
     }
   }, [isAdmin, navigate]);
 
-  // Load data
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // Get all devices
       const allDevices = await dataService.devices.getAll();
       
-      // Get devices that can be returned (available, but not assigned - must be released first)
       const returnableDevices = allDevices.filter(
         device => device.status === 'available' || device.status === 'dead'
       );
       setDevices(returnableDevices);
       
-      // Get returned devices
       const returnedDevs = allDevices.filter(device => device.status === 'returned');
       setReturnedDevices(returnedDevs);
       
-      // Get pending return requests
       const requests = await dataService.devices.getAllRequests();
       const pendingReturns = requests.filter(
         req => req.type === 'return' && req.status === 'pending'
@@ -105,10 +98,8 @@ const DeviceReturnsPage = () => {
   const submitReturnRequests = async () => {
     setIsProcessing(true);
     try {
-      // Create return requests for all selected devices
       for (const deviceId of selectedDevices) {
         try {
-          // Create a pending warehouse return request
           await dataService.devices.requestDevice(deviceId, 'return', {
             reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`
           });
@@ -118,7 +109,7 @@ const DeviceReturnsPage = () => {
           } else {
             console.error(`Error processing return for device ${deviceId}:`, error);
           }
-          // Continue with other devices even if one fails
+          continue;
         }
       }
       toast.success('Return requests created successfully');
@@ -141,11 +132,9 @@ const DeviceReturnsPage = () => {
 
     setIsProcessing(true);
     try {
-      // Process all selected return requests
       for (const requestId of selectedPendingReturns) {
         const request = pendingReturnRequests.find(r => r.id === requestId);
         if (request) {
-          // Approve the return request - this line had the wrong arguments
           await dataService.devices.processRequest(requestId, 'approved');
         }
       }
@@ -194,7 +183,6 @@ const DeviceReturnsPage = () => {
           <TabsTrigger value="returned">Returned Devices</TabsTrigger>
         </TabsList>
         
-        {/* Tab 1: Returnable devices */}
         <TabsContent value="returnable">
           <div className="mb-4 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Available & Dead Devices</h2>
@@ -253,7 +241,6 @@ const DeviceReturnsPage = () => {
           )}
         </TabsContent>
         
-        {/* Tab 2: Pending Return Requests */}
         <TabsContent value="pending">
           <div className="mb-4 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Pending Return Requests</h2>
@@ -330,7 +317,6 @@ const DeviceReturnsPage = () => {
           )}
         </TabsContent>
         
-        {/* Tab 3: Returned Devices */}
         <TabsContent value="returned">
           <div className="mb-4 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Returned Devices</h2>
@@ -384,7 +370,6 @@ const DeviceReturnsPage = () => {
         </TabsContent>
       </Tabs>
       
-      {/* Return Date Dialog */}
       <Dialog open={openReturnDateDialog} onOpenChange={setOpenReturnDateDialog}>
         <DialogContent>
           <DialogHeader>
@@ -430,7 +415,6 @@ const DeviceReturnsPage = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Confirm Return Dialog */}
       <Dialog open={openConfirmDialog} onOpenChange={setOpenConfirmDialog}>
         <DialogContent>
           <DialogHeader>
