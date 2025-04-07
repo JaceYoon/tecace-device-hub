@@ -36,8 +36,11 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
-  // Check if device has pending status or has an active request
-  const deviceIsPending = device.status === 'pending' || device.requestedBy !== undefined;
+  // Improved check for device pending status
+  // A device should only be considered pending if it has an active request
+  // or its status is explicitly set to 'pending'
+  const deviceIsPending = device.status === 'pending' || 
+                         (device.requestedBy !== undefined && device.requestedBy !== "");
 
   return (
     <>
@@ -56,22 +59,17 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
         </div>
       ) : (
         <>
-          {device.status === 'available' && !isRequested && (
+          {device.status === 'available' && !isRequested && !deviceIsPending && (
             <Button
               className="w-full"
               size="sm"
               onClick={onRequestDevice}
-              disabled={isProcessing || deviceIsPending}
+              disabled={isProcessing}
             >
               {isProcessing ? (
                 <>
                   <Clock className="h-4 w-4 mr-1 animate-spin" />
                   Processing...
-                </>
-              ) : deviceIsPending ? (
-                <>
-                  <Clock className="h-4 w-4 mr-1" />
-                  Device Pending
                 </>
               ) : (
                 <>
@@ -106,6 +104,18 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
 
+          {deviceIsPending && !hasRequested && !isRequestedByOthers && device.status === 'available' && (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="sm"
+              disabled
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Device Pending
+            </Button>
+          )}
+
           {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
             <Button
               variant="outline"
@@ -125,7 +135,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
           
-          {userId && !isAdmin && device.status !== 'pending' && !deviceIsPending && (
+          {userId && !isAdmin && !deviceIsPending && device.status === 'available' && (
             <ReportDeviceDialog 
               device={device} 
               userId={userId} 
