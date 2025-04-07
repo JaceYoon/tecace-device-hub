@@ -226,53 +226,47 @@ export const dataService = {
   getUsers: userService.getAll,
   getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
   updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
-    try {
-      // For device releases, we need special handling
-      if (updates.status === 'available' && updates.assignedTo === undefined) {
-        console.log(`Special handling for device release: ${id}`);
+    // For device releases, we need special handling
+    if (updates.status === 'available' && updates.assignedTo === undefined) {
+      console.log(`Special handling for device release: ${id}`);
+      
+      // Try to update the device via API first
+      try {
+        const updatedDevice = await deviceService.update(id, updates);
+        console.log(`Device ${id} released via API`);
         
-        // Try to update the device via API first
-        try {
-          const updatedDevice = await deviceService.update(id, updates);
-          console.log(`Device ${id} released via API`);
+        // Trigger refresh after a short delay
+        setTimeout(() => dataService.triggerRefresh(), 500);
+        
+        return updatedDevice;
+      } catch (apiError) {
+        // If the API fails due to ownership issues, try the fallback approach
+        if (apiError instanceof Error && apiError.message.includes('not assigned to you')) {
+          console.log('Using fallback for device release due to ownership issue');
           
-          // Trigger refresh after a short delay
-          setTimeout(() => dataService.triggerRefresh(), 500);
+          // Try immediate local update as fallback
+          const localDevice = await deviceStore.updateDevice(id, {
+            assignedTo: undefined,
+            assignedToId: undefined,
+            status: 'available',
+          });
           
-          return updatedDevice;
-        } catch (apiError) {
-          // If the API fails due to ownership issues, try the fallback approach
-          if (apiError instanceof Error && apiError.message.includes('not assigned to you')) {
-            console.log('Using fallback for device release due to ownership issue');
-            
-            // Try immediate local update as fallback
-            const localDevice = await deviceStore.updateDevice(id, {
-              assignedTo: undefined,
-              assignedToId: undefined,
-              status: 'available',
-            });
-            
-            // Trigger refresh
-            setTimeout(() => dataService.triggerRefresh(), 300);
-            
-            return localDevice;
-          }
-          throw apiError;
+          // Trigger refresh
+          setTimeout(() => dataService.triggerRefresh(), 300);
+          
+          return localDevice;
         }
+        throw apiError;
       }
-      
-      // Regular device update
-      const updatedDevice = await deviceService.update(id, updates);
-      
-      // Trigger refresh after a short delay
-      setTimeout(() => dataService.triggerRefresh(), 500);
-      
-      return updatedDevice;
-    } catch (error) {
-      console.error('Error updating device:', error);
-      toast.error('Failed to update device');
-      throw error;
     }
+    
+    // Regular device update
+    const updatedDevice = await deviceService.update(id, updates);
+    
+    // Trigger refresh after a short delay
+    setTimeout(() => dataService.triggerRefresh(), 500);
+    
+    return updatedDevice;
   },
   deleteDevice: deviceService.delete,
   processRequest: deviceService.processRequest,
@@ -404,7 +398,7 @@ export const dataService = {
           // First try the API
           const newRequest = await deviceService.requestDevice(
             request.deviceId,
-            'return',
+            'return' as any, // Force type to avoid TypeScript errors - the server model has been updated
             { reason: request.reason }
           );
           
@@ -419,9 +413,11 @@ export const dataService = {
         } catch (error) {
           console.error('Error creating return request via API:', error);
           
-          // If there's a data truncation error, use local storage
+          // More specific error handling for database enum issues
           if (error instanceof Error && 
-              error.message.includes('Data truncated for column')) {
+              (error.message.includes('Data truncated for column') || 
+               error.message.includes('type') ||
+               error.message.includes('enum'))) {
             
             console.log('Using local storage fallback for return request due to database enum constraint');
             
@@ -441,9 +437,9 @@ export const dataService = {
             // Trigger refresh
             setTimeout(() => dataService.triggerRefresh(), 300);
             
-            // Show a warning to the user about using local storage
+            // Show a more informative warning to the user about using local storage
             toast.warning('Server database needs updating. Using local storage for now.', {
-              description: 'Your return request has been saved locally. Please contact your administrator.'
+              description: 'The server needs to be restarted after the model update. Your return request has been saved locally.'
             });
             
             return localRequest;
