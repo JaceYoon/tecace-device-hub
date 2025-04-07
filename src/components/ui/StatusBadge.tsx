@@ -3,7 +3,7 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui/badge';
 import { DeviceStatus } from '@/types';
-import { AlertCircle, Check, HelpCircle, ShieldAlert, ArrowLeft, Zap } from 'lucide-react';
+import { AlertCircle, Check, HelpCircle, ShieldAlert, ArrowLeft, Zap, Clock } from 'lucide-react';
 
 interface StatusBadgeProps {
   status: DeviceStatus;
@@ -59,6 +59,13 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
           variant: 'outline' as const,
           className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100',
           icon: Zap
+        };
+      case 'pending':
+        return {
+          label: 'Pending',
+          variant: 'outline' as const,
+          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+          icon: Clock
         };
       default:
         return {

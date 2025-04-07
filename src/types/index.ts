@@ -11,7 +11,7 @@ export interface User {
   avatarUrl?: string;
 }
 
-export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen' | 'returned' | 'dead';
+export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen' | 'returned' | 'dead' | 'pending';
 export type DeviceTypeCategory = 'C-Type' | 'Lunchbox';
 export type DeviceTypeValue = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | 'Accessory' | 'Other';
 
@@ -23,7 +23,7 @@ export interface Device {
   deviceType?: DeviceTypeCategory;
   imei?: string;
   serialNumber?: string;
-  status: 'available' | 'assigned' | 'missing' | 'stolen' | 'returned' | 'dead';
+  status: 'available' | 'assigned' | 'missing' | 'stolen' | 'returned' | 'dead' | 'pending';
   deviceStatus?: string;
   receivedDate?: Date;
   returnDate?: Date;

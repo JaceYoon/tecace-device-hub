@@ -32,7 +32,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: true
     },
     status: {
-      type: Sequelize.ENUM('available', 'assigned', 'missing', 'stolen', 'returned', 'dead'),
+      type: Sequelize.ENUM('available', 'assigned', 'missing', 'stolen', 'returned', 'dead', 'pending'),
       defaultValue: 'available'
     },
     deviceStatus: {
