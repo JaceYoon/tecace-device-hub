@@ -103,6 +103,7 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
+          // Use 'return' type explicitly
           await dataService.devices.requestDevice(
             deviceId,
             'return',

@@ -183,7 +183,7 @@ const deviceService = {
   requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
     console.log(`Sending ${type} request for device ${deviceId} with options:`, options);
     
-    // All requests now use the actual type directly
+    // Pass the type directly without any conversion
     return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ 
