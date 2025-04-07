@@ -103,17 +103,12 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Using direct API call with proper type
-          await dataService.post(`/devices/${deviceId}/request`, {
-            type: 'release', // Using 'release' instead of 'return' due to database schema constraints
-            reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`
-          });
-          
-          // After releasing, mark as returned in a separate update
-          await dataService.put(`/devices/${deviceId}`, {
-            status: 'returned',
-            returnDate: returnDate.toISOString()
-          });
+          // Create a return request (this adds it to the pending queue)
+          await dataService.devices.requestDevice(
+            deviceId, 
+            'return', 
+            { reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}` }
+          );
           
           successCount++;
         } catch (error) {
@@ -123,11 +118,11 @@ const DeviceReturnsPage = () => {
       }
       
       if (successCount > 0) {
-        toast.success(`${successCount} device(s) returned successfully`);
+        toast.success(`${successCount} device(s) added to return queue`);
       }
       
       if (errorCount > 0) {
-        toast.error(`Failed to return ${errorCount} device(s)`);
+        toast.error(`Failed to queue ${errorCount} device(s) for return`);
       }
       
       setSelectedDevices([]);
@@ -149,10 +144,39 @@ const DeviceReturnsPage = () => {
 
     setIsProcessing(true);
     try {
+      let successCount = 0;
+      let errorCount = 0;
+      
       for (const requestId of selectedPendingReturns) {
-        await dataService.devices.processRequest(requestId, 'approved');
+        try {
+          // First, approve the return request
+          await dataService.devices.processRequest(requestId, 'approved');
+          
+          // Find the request to get the device ID
+          const request = pendingReturnRequests.find(r => r.id === requestId);
+          if (request) {
+            // Then update the device status to 'returned'
+            await dataService.devices.update(request.deviceId, {
+              status: 'returned',
+              returnDate: returnDate.toISOString()
+            });
+          }
+          
+          successCount++;
+        } catch (error) {
+          errorCount++;
+          console.error(`Error confirming return for request ${requestId}:`, error);
+        }
       }
-      toast.success('Devices returned successfully');
+      
+      if (successCount > 0) {
+        toast.success(`${successCount} device(s) returned successfully`);
+      }
+      
+      if (errorCount > 0) {
+        toast.error(`Failed to return ${errorCount} device(s)`);
+      }
+      
       setSelectedPendingReturns([]);
       setConfirmText('');
       setOpenConfirmDialog(false);
