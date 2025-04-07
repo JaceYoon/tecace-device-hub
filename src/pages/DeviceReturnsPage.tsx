@@ -109,13 +109,12 @@ const DeviceReturnsPage = () => {
           // Create a return request using our workaround
           await dataService.devices.requestDevice(
             deviceId, 
-            'return', 
-            { reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}` }
+            'return'
           );
           
           // Also update device status to indicate pending return
           await dataService.devices.update(deviceId, {
-            deviceStatus: 'Pending warehouse return'
+            status: 'pending'
           });
           
           successCount++;
@@ -163,11 +162,14 @@ const DeviceReturnsPage = () => {
           // Find the request to get the device ID
           const request = pendingReturnRequests.find(r => r.id === requestId);
           if (request) {
-            // Then update the device status to 'returned'
+            // Format returnDate to include only the date part (no time)
+            const dateOnly = new Date(returnDate);
+            dateOnly.setHours(0, 0, 0, 0);
+            
+            // Then update the device status to 'returned' with date only
             await dataService.devices.update(request.deviceId, {
               status: 'returned',
-              returnDate: new Date(returnDate), // Convert returnDate to a Date object
-              deviceStatus: 'Returned to warehouse'
+              returnDate: dateOnly,
             });
           }
           
@@ -207,10 +209,10 @@ const DeviceReturnsPage = () => {
       
       await dataService.devices.cancelRequest(requestId);
       
-      // Also update the device to remove the pending return status
+      // Also update the device to available status
       if (deviceId) {
         await dataService.devices.update(deviceId, {
-          deviceStatus: null
+          status: 'available'
         });
       }
       
@@ -230,6 +232,12 @@ const DeviceReturnsPage = () => {
       return;
     }
     setOpenConfirmDialog(true);
+  };
+
+  const getDeviceData = (deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId) || 
+                   returnedDevices.find(d => d.id === deviceId);
+    return device || null;
   };
 
   return (
@@ -320,7 +328,7 @@ const DeviceReturnsPage = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {pendingReturnRequests.map(request => {
-                const device = devices.find(d => d.id === request.deviceId);
+                const device = getDeviceData(request.deviceId);
                 return (
                   <Card key={request.id} className="relative">
                     <CardHeader className="pb-2">
@@ -332,7 +340,7 @@ const DeviceReturnsPage = () => {
                             id={`request-${request.id}`}
                           />
                           <div>
-                            <CardTitle className="text-lg">{device?.project || request.deviceName || 'Unknown Device'}</CardTitle>
+                            <CardTitle className="text-lg">{device?.project || 'Unknown Device'}</CardTitle>
                             <CardDescription>{device?.type || 'Unknown Type'}</CardDescription>
                           </div>
                         </div>
@@ -361,12 +369,6 @@ const DeviceReturnsPage = () => {
                           <span className="text-muted-foreground">Requested On:</span> 
                           <span>{request.requestedAt ? format(new Date(request.requestedAt), 'PPP') : 'N/A'}</span>
                         </div>
-                        {request.reason && (
-                          <div>
-                            <span className="text-muted-foreground">Reason:</span> 
-                            <span>{request.reason}</span>
-                          </div>
-                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -418,7 +420,7 @@ const DeviceReturnsPage = () => {
                       </div>
                       <div>
                         <span className="text-muted-foreground">Return Date:</span> 
-                        <span>{device.returnDate ? format(new Date(device.returnDate), 'PPP') : 'N/A'}</span>
+                        <span>{device.returnDate ? format(new Date(device.returnDate), 'PP') : 'N/A'}</span>
                       </div>
                     </div>
                   </CardContent>
@@ -443,7 +445,7 @@ const DeviceReturnsPage = () => {
               <PopoverTrigger asChild>
                 <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
                   <CalendarIcon className="mr-2 h-4 w-4" />
-                  {returnDate ? format(returnDate, 'PPP') : <span>Pick a date</span>}
+                  {returnDate ? format(returnDate, 'PP') : <span>Pick a date</span>}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -492,7 +494,7 @@ const DeviceReturnsPage = () => {
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-[240px] justify-start text-left font-normal">
                     <CalendarIcon className="mr-2 h-4 w-4" />
-                    {returnDate ? format(returnDate, 'PPP') : <span>Pick a return date</span>}
+                    {returnDate ? format(returnDate, 'PP') : <span>Pick a return date</span>}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0" align="start">

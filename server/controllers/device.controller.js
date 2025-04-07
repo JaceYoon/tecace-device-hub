@@ -17,6 +17,14 @@ exports.create = async (req, res) => {
       return res.status(400).json({ message: 'Required fields missing (project, type, projectGroup)' });
     }
 
+    // Format receivedDate to remove time part if provided
+    let formattedReceivedDate = null;
+    if (receivedDate) {
+      const date = new Date(receivedDate);
+      date.setHours(0, 0, 0, 0);
+      formattedReceivedDate = date;
+    }
+
     // Create device with explicit null handling for optional fields
     const deviceData = {
       project,
@@ -25,7 +33,7 @@ exports.create = async (req, res) => {
       imei: imei || null,
       serialNumber: serialNumber || null,
       deviceStatus: deviceStatus || null,
-      receivedDate: receivedDate || null,
+      receivedDate: formattedReceivedDate,
       notes: notes || null,
       devicePicture: devicePicture || null,
       addedById: req.user ? req.user.id : null,
@@ -269,12 +277,28 @@ exports.getDeviceHistory = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, notes, assignedToId, devicePicture } = req.body;
+    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, returnDate, notes, assignedToId, devicePicture } = req.body;
 
     const device = await Device.findByPk(req.params.id);
 
     if (!device) {
       return res.status(404).json({ message: 'Device not found' });
+    }
+
+    // Format receivedDate to remove time part if provided
+    let formattedReceivedDate = receivedDate;
+    if (receivedDate) {
+      const date = new Date(receivedDate);
+      date.setHours(0, 0, 0, 0);
+      formattedReceivedDate = date;
+    }
+
+    // Format returnDate to remove time part if provided
+    let formattedReturnDate = returnDate;
+    if (returnDate) {
+      const date = new Date(returnDate);
+      date.setHours(0, 0, 0, 0);
+      formattedReturnDate = date;
     }
 
     // For report-related statuses (missing, stolen, dead), verify the status is allowed
@@ -324,7 +348,8 @@ exports.update = async (req, res) => {
       serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
       status: updatedStatus,
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
-      receivedDate: receivedDate !== undefined ? receivedDate : device.receivedDate,
+      receivedDate: formattedReceivedDate !== undefined ? formattedReceivedDate : device.receivedDate,
+      returnDate: formattedReturnDate !== undefined ? formattedReturnDate : device.returnDate,
       notes: notes !== undefined ? notes : device.notes,
       devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
       assignedToId: updatedAssignedToId
@@ -342,8 +367,7 @@ exports.update = async (req, res) => {
         userId: device.assignedToId, // The user who was assigned the device
         processedById: req.user.id,  // The admin/manager who processed the release
         requestedAt: new Date(),
-        processedAt: new Date(),
-        reason: 'Device returned by user'
+        processedAt: new Date()
       });
       
       // Mark any previous 'assign' requests as 'returned'
@@ -403,16 +427,16 @@ exports.delete = async (req, res) => {
 // Request a device
 exports.requestDevice = async (req, res) => {
   try {
-    const { type, reportType, reason } = req.body; // Added reportType and reason
+    const { type, reportType } = req.body;
 
-    console.log('Request device input:', { type, reportType, reason, deviceId: req.params.id });
+    console.log('Request device input:', { type, reportType, deviceId: req.params.id });
 
     if (!type || !['assign', 'release', 'report', 'return'].includes(type)) {
       return res.status(400).json({ message: 'Invalid request type' });
     }
 
     // Special case for return requests - check if reason has [RETURN] prefix
-    const isReturnRequest = type === 'return' || (reason && reason.includes('[RETURN]'));
+    const isReturnRequest = type === 'return' || (req.body.reason && req.body.reason.includes('[RETURN]'));
     
     // Validate reportType if this is a report request
     if (type === 'report' && (!reportType || !['missing', 'stolen', 'dead'].includes(reportType))) {
@@ -473,7 +497,11 @@ exports.requestDevice = async (req, res) => {
     }
 
     // Create request - handle return requests special case for older systems
+    // Use 'release' as the type for return requests (workaround)
     const requestType = type === 'return' ? 'release' : type;
+    
+    // Set a simple [RETURN] reason for return requests
+    const reason = isReturnRequest ? '[RETURN]' : null;
     
     const request = await Request.create({
       type: requestType,
@@ -483,7 +511,7 @@ exports.requestDevice = async (req, res) => {
       userId: req.user.id,
       processedAt,
       processedById,
-      reason: reason || (type === 'release' ? 'Device returned by user' : null)
+      reason
     });
 
     // If it's a release request, update the device immediately
@@ -497,40 +525,21 @@ exports.requestDevice = async (req, res) => {
       // Update the device to indicate it has a pending request
       device.requestedBy = req.user.id;
       await device.save();
-    } else if (type === 'report') {
-      // For report requests, mark the device as pending right away
+    } else if (type === 'report' || isReturnRequest) {
+      // For report/return requests, mark the device as pending right away
       try {
         await device.update({
           status: 'pending',
           requestedBy: req.user.id
         });
       } catch (error) {
-        // If status update fails due to column constraint
-        if (error.message.includes('Data truncated for column') || 
-            error.message.includes('status')) {
-          console.error('Error updating device status due to database constraint:', error.message);
-          
-          // Use fallback: Update deviceStatus field instead
-          await device.update({
-            deviceStatus: `Pending report as ${reportType}`,
-            requestedBy: req.user.id
-          });
-        } else {
-          // For other errors, re-throw
-          throw error;
-        }
+        console.error('Error updating device status:', error);
       }
-    } else if (isReturnRequest) {
-      // For return requests (warehouse returns), mark device as having a pending return request
-      await device.update({
-        requestedBy: req.user.id,
-        deviceStatus: 'Pending warehouse return'
-      });
     }
 
     res.status(201).json(request);
   } catch (err) {
-    console.error("Error creating device request:", err);
+    console.error('Error processing request:', err);
     res.status(500).json({ message: err.message });
   }
 };
@@ -538,197 +547,14 @@ exports.requestDevice = async (req, res) => {
 // Process a device request
 exports.processRequest = async (req, res) => {
   try {
-    const { status } = req.body; // 'approved' or 'rejected'
+    const { status } = req.body;
+    const requestId = req.params.id;
 
-    if (!status || !['approved', 'rejected'].includes(status)) {
+    if (!['approved', 'rejected'].includes(status)) {
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    const request = await Request.findByPk(req.params.id, {
-      include: [
-        { model: Device, as: 'device' },
-        { model: User, as: 'user' }
-      ]
-    });
-
-    if (!request) {
-      return res.status(404).json({ message: 'Request not found' });
-    }
-
-    if (request.status !== 'pending') {
-      return res.status(400).json({ message: 'Request has already been processed' });
-    }
-
-    // Auto-approve if it's a release request
-    let finalStatus = status;
-    if (request.type === 'release') {
-      finalStatus = 'approved';
-    }
-
-    // Update request
-    await request.update({
-      status: finalStatus,
-      processedById: req.user.id,
-      processedAt: new Date()
-    });
-
-    // If approved, update device
-    if (finalStatus === 'approved') {
-      const device = await Device.findByPk(request.deviceId);
-
-      if (request.type === 'assign') {
-        // Update device assignment
-        await device.update({
-          status: 'assigned',
-          assignedToId: request.userId,
-          requestedBy: null
-        });
-      } else if (request.type === 'release') {
-        // Update device status immediately for release
-        await device.update({
-          status: 'available',
-          assignedToId: null,
-          requestedBy: null
-        });
-        
-        // Mark any previous 'assign' requests as 'returned'
-        await Request.update(
-          { status: 'returned' },
-          { 
-            where: { 
-              deviceId: request.deviceId,
-              userId: request.userId,
-              type: 'assign',
-              status: 'approved'
-            }
-          }
-        );
-      } else if (request.type === 'report' && request.reportType) {
-        // For report requests, update the device status to the reported issue type
-        try {
-          // If device is owned by someone, release the ownership
-          let isAssigned = device.assignedToId !== null;
-          let previousOwnerId = device.assignedToId;
-          
-          // Try to directly update the device status
-          await device.update({
-            status: request.reportType,
-            assignedToId: null, // Release ownership
-            requestedBy: null
-          });
-          
-          // If device was assigned, create an auto-approved release request to track history
-          if (isAssigned && previousOwnerId) {
-            console.log(`Automatically releasing device ${device.id} after report approval`);
-            
-            await Request.create({
-              type: 'release',
-              status: 'approved',
-              deviceId: device.id,
-              userId: previousOwnerId,
-              processedById: req.user.id,
-              requestedAt: new Date(),
-              processedAt: new Date(),
-              reason: `Auto-released due to device being reported as ${request.reportType}`
-            });
-            
-            // Mark any previous 'assign' requests as 'returned'
-            await Request.update(
-              { status: 'returned' },
-              { 
-                where: { 
-                  deviceId: device.id,
-                  userId: previousOwnerId,
-                  type: 'assign',
-                  status: 'approved'
-                }
-              }
-            );
-          }
-        } catch (error) {
-          // If status update fails due to database constraint
-          if (error.message.includes('Data truncated for column') || 
-              error.message.includes('status')) {
-            console.error('Error updating device status due to database constraint:', error.message);
-            
-            // Get current owner information before updating
-            let isAssigned = device.assignedToId !== null;
-            let previousOwnerId = device.assignedToId;
-            
-            // Use fallback: Update deviceStatus field instead and keep status as available
-            await device.update({
-              status: 'available', // Keep as available since db doesn't support other values
-              deviceStatus: `Reported as ${request.reportType}`, // Set descriptive device status
-              assignedToId: null, // Release ownership
-              requestedBy: null
-            });
-            
-            // If device was assigned, create an auto-approved release request to track history
-            if (isAssigned && previousOwnerId) {
-              console.log(`Automatically releasing device ${device.id} after report approval (fallback method)`);
-              
-              await Request.create({
-                type: 'release',
-                status: 'approved',
-                deviceId: device.id,
-                userId: previousOwnerId,
-                processedById: req.user.id,
-                requestedAt: new Date(),
-                processedAt: new Date(),
-                reason: `Auto-released due to device being reported as ${request.reportType}`
-              });
-              
-              // Mark any previous 'assign' requests as 'returned'
-              await Request.update(
-                { status: 'returned' },
-                { 
-                  where: { 
-                    deviceId: device.id,
-                    userId: previousOwnerId,
-                    type: 'assign',
-                    status: 'approved'
-                  }
-                }
-              );
-            }
-          } else {
-            // For other errors, re-throw
-            throw error;
-          }
-        }
-      } else if (request.type === 'return') {
-        // For warehouse return requests, change the device status to 'returned'
-        await device.update({
-          status: 'returned',
-          returnDate: new Date(),
-          requestedBy: null,
-          deviceStatus: 'Returned to warehouse'
-        });
-      }
-    } else {
-      // If rejected, just clear the requestedBy field
-      const device = await Device.findByPk(request.deviceId);
-      await device.update({
-        requestedBy: null,
-        // If it was a report request that was rejected, restore the previous status
-        status: request.type === 'report' ? 'available' : device.status,
-        // Clear the pending report/return message if present
-        deviceStatus: (device.deviceStatus?.includes('Pending report') || device.deviceStatus?.includes('Pending warehouse return')) 
-          ? null : device.deviceStatus
-      });
-    }
-
-    res.json(request);
-  } catch (err) {
-    console.error("Error processing request:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-// Cancel a device request
-exports.cancelRequest = async (req, res) => {
-  try {
-    const request = await Request.findByPk(req.params.id, {
+    const request = await Request.findByPk(requestId, {
       include: [
         { model: Device, as: 'device' }
       ]
@@ -738,64 +564,165 @@ exports.cancelRequest = async (req, res) => {
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    if (request.status !== 'pending') {
-      return res.status(400).json({ message: 'Only pending requests can be cancelled' });
+    const device = await Device.findByPk(request.deviceId);
+    if (!device) {
+      return res.status(404).json({ message: 'Device not found' });
     }
 
-    // Users can only cancel their own requests
-    if (request.userId !== req.user.id) {
-      return res.status(403).json({ message: 'You can only cancel your own requests' });
-    }
+    // Check if this is a return request (has [RETURN] reason)
+    const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
 
     // Update request
-    await request.update({
-      status: 'cancelled',
-      processedById: req.user.id,
-      processedAt: new Date()
-    });
+    request.status = status;
+    request.processedById = req.user.id;
+    request.processedAt = new Date();
+    await request.save();
 
-    // Clear the requestedBy field on the device
-    const device = await Device.findByPk(request.deviceId);
-    if (device) {
+    // Handle device updates based on request type and status
+    if (status === 'approved') {
+      if (request.type === 'assign') {
+        // Assign device to user
+        await device.update({
+          status: 'assigned',
+          assignedToId: request.userId,
+          requestedBy: null
+        });
+      } else if (request.type === 'release') {
+        if (isReturnRequest) {
+          // For return requests, update status to 'returned'
+          // Ensure returnDate is set to the date only (no time component)
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
+          await device.update({
+            status: 'returned',
+            returnDate: today,
+            requestedBy: null
+          });
+        } else {
+          // Regular release
+          await device.update({
+            status: 'available',
+            assignedToId: null,
+            requestedBy: null
+          });
+        }
+      } else if (request.type === 'report') {
+        // Handle report based on reportType
+        await device.update({
+          status: request.reportType || 'missing',
+          requestedBy: null,
+          assignedToId: null
+        });
+      }
+    } else if (status === 'rejected') {
+      // If request rejected, just clear the requestedBy field
       await device.update({
-        requestedBy: null
+        requestedBy: null,
+        status: device.status === 'pending' ? 'available' : device.status
       });
     }
 
     res.json(request);
   } catch (err) {
-    console.error("Error cancelling request:", err);
+    console.error('Error processing request:', err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// Find all requests
-exports.findAllRequests = async (req, res) => {
+// Cancel a device request
+exports.cancelRequest = async (req, res) => {
   try {
-    let condition = {};
+    const requestId = req.params.id;
+    const request = await Request.findByPk(requestId);
 
-    // Regular users should only see their own requests
-    if (req.user.role !== 'admin' && req.user.role !== 'manager') {
-      condition.userId = req.user.id;
+    if (!request) {
+      return res.status(404).json({ message: 'Request not found' });
     }
 
-    console.log("User role for requests:", req.user.role);
-    console.log("Request condition:", JSON.stringify(condition));
+    // Only the requester or an admin can cancel the request
+    if (request.userId !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
 
+    // Update request status
+    request.status = 'cancelled';
+    request.processedById = req.user.id;
+    request.processedAt = new Date();
+    await request.save();
+
+    // Update device
+    const device = await Device.findByPk(request.deviceId);
+    if (device) {
+      // Clear requestedBy and update status from 'pending' to 'available' if needed
+      const updates = { 
+        requestedBy: null
+      };
+      
+      // If device is in pending status and this is a return/report request, reset to available
+      if (device.status === 'pending') {
+        const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
+        if (isReturnRequest || request.type === 'report') {
+          updates.status = 'available';
+        }
+      }
+      
+      await device.update(updates);
+    }
+
+    res.json(request);
+  } catch (err) {
+    console.error('Error cancelling request:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Find all device requests
+exports.findAllRequests = async (req, res) => {
+  try {
     const requests = await Request.findAll({
-      where: condition,
       include: [
-        { model: Device, as: 'device' },  // Explicitly specify the alias here
-        { model: User, as: 'user' },      // Explicitly specify the alias here
-        { model: User, as: 'processedBy' }
+        { 
+          model: Device, 
+          as: 'device',
+          attributes: ['id', 'project', 'type', 'serialNumber', 'imei', 'status']
+        },
+        { 
+          model: User, 
+          as: 'user',
+          attributes: ['id', 'name', 'email'] 
+        },
+        { 
+          model: User, 
+          as: 'processedBy',
+          attributes: ['id', 'name', 'email'] 
+        }
       ],
-      order: [['createdAt', 'DESC']]
+      order: [['requestedAt', 'DESC']]
     });
 
-    console.log(`Found ${requests.length} requests`);
-    res.json(requests);
+    // Transform the response to ensure consistent data types for IDs
+    const formattedRequests = requests.map(request => {
+      const requestJson = request.toJSON();
+      
+      // Ensure IDs are consistent strings
+      if (requestJson.id) requestJson.id = String(requestJson.id);
+      if (requestJson.deviceId) requestJson.deviceId = String(requestJson.deviceId);
+      if (requestJson.userId) requestJson.userId = String(requestJson.userId);
+      if (requestJson.processedById) requestJson.processedById = String(requestJson.processedById);
+      
+      // Add device details
+      if (requestJson.device) {
+        requestJson.deviceName = requestJson.device.project;
+        requestJson.deviceType = requestJson.device.type;
+      }
+      
+      return requestJson;
+    });
+
+    res.json(formattedRequests);
   } catch (err) {
-    console.error("Error fetching requests:", err);
+    console.error('Error fetching all requests:', err);
     res.status(500).json({ message: err.message });
   }
 };

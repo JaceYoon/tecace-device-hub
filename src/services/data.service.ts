@@ -182,7 +182,7 @@ const deviceService = {
         method: 'POST',
         body: JSON.stringify({ 
           type: 'release', // Use 'release' instead of 'return' to work around constraint
-          reason: `[RETURN] ${options?.reason || 'Device returned to warehouse'}`
+          reason: `[RETURN]`
         })
       });
     }
@@ -192,8 +192,7 @@ const deviceService = {
       method: 'POST',
       body: JSON.stringify({ 
         type, 
-        reportType: options?.reportType,
-        reason: options?.reason
+        reportType: options?.reportType
       })
     });
   },
@@ -264,14 +263,13 @@ export const dataService = {
           request.deviceId,
           'release', // Using release type as a workaround
           { 
-            reason: `[RETURN] ${request.reason || 'Device return requested'}`
+            reason: `[RETURN]`
           }
         );
         
-        // After creating the release request, update the device status to indicate pending return
+        // After creating the release request, update the device status to pending
         await deviceService.update(request.deviceId, {
-          status: 'available', // Keep as available but update deviceStatus
-          deviceStatus: 'Pending warehouse return'
+          status: 'pending', // Change status to pending instead of using deviceStatus
         });
         
         console.log('Device marked as pending return successfully');
@@ -283,8 +281,7 @@ export const dataService = {
         request.deviceId,
         request.type as 'assign' | 'release' | 'report',
         { 
-          reportType: request.reportType as 'missing' | 'stolen' | 'dead',
-          reason: request.reason 
+          reportType: request.reportType as 'missing' | 'stolen' | 'dead'
         }
       );
     } catch (error) {

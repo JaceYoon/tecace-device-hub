@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
-import { DeviceRequest, User } from '@/types';
+import { DeviceRequest, User, Device } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHeader, TableRow, TableHead, TableBody, TableCell } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
@@ -27,6 +27,7 @@ const RequestList: React.FC<RequestListProps> = ({
 }) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const { isAdmin, user } = useAuth();
   const [processing, setProcessing] = useState<string | null>(null);
@@ -34,13 +35,15 @@ const RequestList: React.FC<RequestListProps> = ({
   const fetchData = async () => {
     setLoading(true);
     try {
-      const [requestsData, usersData] = await Promise.all([
+      const [requestsData, usersData, devicesData] = await Promise.all([
         dataService.devices.getAllRequests(),
-        dataService.users.getAll()
+        dataService.users.getAll(),
+        dataService.devices.getAll()
       ]);
       console.log("Fetched requests:", requestsData.length);
       setRequests(requestsData);
       setUsers(usersData);
+      setDevices(devicesData);
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast.error('Failed to load device requests');
@@ -103,8 +106,26 @@ const RequestList: React.FC<RequestListProps> = ({
     return user ? user.name : 'Unknown User';
   };
 
+  const getDeviceInfo = (deviceId: string) => {
+    const device = devices.find(d => d.id === deviceId);
+    return {
+      name: device ? device.project : 'Unknown Device',
+      type: device ? device.type : 'Unknown Type',
+      serialNumber: device ? device.serialNumber : 'N/A',
+      imei: device ? device.imei : 'N/A'
+    };
+  };
+
   const getDeviceName = (request: DeviceRequest) => {
-    // Handle both cases: when device is fully populated or when we need to extract from deviceName
+    // First try to get from devices array
+    const deviceInfo = getDeviceInfo(request.deviceId);
+    
+    // If device is found, use its project name
+    if (deviceInfo.name !== 'Unknown Device') {
+      return deviceInfo.name;
+    }
+    
+    // If not found in devices but device is fully populated in request
     if (request.device?.project) {
       return request.device.project;
     }
@@ -159,85 +180,88 @@ const RequestList: React.FC<RequestListProps> = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredRequests.map(request => (
-                  <TableRow key={request.id}>
-                    <TableCell>{getDeviceName(request)}</TableCell>
-                    <TableCell>{getUserName(request.userId)}</TableCell>
-                    <TableCell>
-                      <RequestStatusBadge status={request.status} />
-                    </TableCell>
-                    <TableCell>
-                      {formatDistanceToNow(new Date(request.requestedAt), {
-                        addSuffix: true,
-                      })}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {isAdmin && request.status === 'pending' && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleApprove(request.id)}
-                              disabled={processing === request.id}
-                            >
-                              {processing === request.id ? (
-                                <>
-                                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Approving...
-                                </>
-                              ) : (
-                                <>
-                                  <Check className="mr-2 h-4 w-4" />
-                                  Approve
-                                </>
-                              )}
-                            </Button>
+                {filteredRequests.map(request => {
+                  const deviceInfo = getDeviceInfo(request.deviceId);
+                  return (
+                    <TableRow key={request.id}>
+                      <TableCell>{getDeviceName(request)}</TableCell>
+                      <TableCell>{getUserName(request.userId)}</TableCell>
+                      <TableCell>
+                        <RequestStatusBadge status={request.status} />
+                      </TableCell>
+                      <TableCell>
+                        {formatDistanceToNow(new Date(request.requestedAt), {
+                          addSuffix: true,
+                        })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {isAdmin && request.status === 'pending' && (
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleApprove(request.id)}
+                                disabled={processing === request.id}
+                              >
+                                {processing === request.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Approving...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Check className="mr-2 h-4 w-4" />
+                                    Approve
+                                  </>
+                                )}
+                              </Button>
+                              <Button
+                                variant="destructive"
+                                size="sm"
+                                onClick={() => handleReject(request.id)}
+                                disabled={processing === request.id}
+                              >
+                                {processing === request.id ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Rejecting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <X className="mr-2 h-4 w-4" />
+                                    Reject
+                                  </>
+                                )}
+                              </Button>
+                            </>
+                          )}
+                          {/* Show Cancel button for non-admin users for their own pending requests */}
+                          {!isAdmin && user && request.userId === user.id && request.status === 'pending' && (
                             <Button
                               variant="destructive"
                               size="sm"
-                              onClick={() => handleReject(request.id)}
+                              onClick={() => handleCancel(request.id)}
                               disabled={processing === request.id}
                             >
                               {processing === request.id ? (
                                 <>
                                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                  Rejecting...
+                                  Cancelling...
                                 </>
                               ) : (
                                 <>
                                   <X className="mr-2 h-4 w-4" />
-                                  Reject
+                                  Cancel
                                 </>
                               )}
                             </Button>
-                          </>
-                        )}
-                        {/* Show Cancel button for non-admin users for their own pending requests */}
-                        {!isAdmin && user && request.userId === user.id && request.status === 'pending' && (
-                          <Button
-                            variant="destructive"
-                            size="sm"
-                            onClick={() => handleCancel(request.id)}
-                            disabled={processing === request.id}
-                          >
-                            {processing === request.id ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Cancelling...
-                              </>
-                            ) : (
-                              <>
-                                <X className="mr-2 h-4 w-4" />
-                                Cancel
-                              </>
-                            )}
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

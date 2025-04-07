@@ -96,26 +96,39 @@ class RequestStore {
     
     // Handle release requests immediately to improve UI responsiveness
     if (request.type === 'release') {
-      // Auto-process device release - immediately update device status
-      deviceStore.updateDevice(request.deviceId, {
-        assignedTo: undefined,
-        assignedToId: undefined,
-        status: 'available',
-      });
+      // Check if this is a return request or a normal release
+      const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
       
-      // Mark any assign requests for this device from this user as 'returned'
-      const assignRequests = this.requests.filter(
-        r => r.deviceId === request.deviceId && 
-             r.userId === request.userId && 
-             r.type === 'assign' && 
-             r.status === 'approved'
-      );
-      
-      assignRequests.forEach(r => {
-        r.status = 'returned';
-      });
-      
-      console.log(`Device ${request.deviceId} released (status set to available)`);
+      if (isReturnRequest) {
+        // For return requests, update the device status to pending
+        deviceStore.updateDevice(request.deviceId, {
+          status: 'pending',
+          requestedBy: request.userId
+        });
+        
+        console.log(`Device ${request.deviceId} marked as pending return`);
+      } else {
+        // Auto-process regular device release - immediately update device status
+        deviceStore.updateDevice(request.deviceId, {
+          assignedTo: undefined,
+          assignedToId: undefined,
+          status: 'available',
+        });
+        
+        // Mark any assign requests for this device from this user as 'returned'
+        const assignRequests = this.requests.filter(
+          r => r.deviceId === request.deviceId && 
+              r.userId === request.userId && 
+              r.type === 'assign' && 
+              r.status === 'approved'
+        );
+        
+        assignRequests.forEach(r => {
+          r.status = 'returned';
+        });
+        
+        console.log(`Device ${request.deviceId} released (status set to available)`);
+      }
     } else if (request.type === 'assign') {
       // Update device requestedBy field
       deviceStore.updateDevice(request.deviceId, {
@@ -123,20 +136,17 @@ class RequestStore {
       });
     } else if (request.type === 'report') {
       // For report requests, immediately mark the device as pending
-      const updatedStatus: DeviceStatus = 'available'; // Use 'available' as status
-      
       deviceStore.updateDevice(request.deviceId, {
-        status: updatedStatus,
-        requestedBy: request.userId,
-        deviceStatus: `Pending report: ${request.reportType}`
+        status: 'pending',
+        requestedBy: request.userId
       });
       
       console.log(`Device ${request.deviceId} marked as pending due to report`);
     } else if (request.type === 'return') {
-      // For return requests, update the device status to indicate pending return
+      // For return requests, update the device status to pending
       deviceStore.updateDevice(request.deviceId, {
-        requestedBy: request.userId,
-        deviceStatus: 'Pending warehouse return'
+        status: 'pending',
+        requestedBy: request.userId
       });
       
       console.log(`Device ${request.deviceId} marked as pending warehouse return`);
@@ -179,6 +189,9 @@ class RequestStore {
       processedBy: managerId
     };
     
+    // Check if this is a return request
+    const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
+    
     // If approved, update the device assignment
     if (status === 'approved') {
       console.log(`Approved request: updating device ${request.deviceId}`);
@@ -190,49 +203,57 @@ class RequestStore {
           status: 'assigned',
         });
       } else if (request.type === 'release') {
-        deviceStore.updateDevice(request.deviceId, {
-          assignedTo: undefined,
-          assignedToId: undefined,
-          requestedBy: undefined,
-          status: 'available',
-        });
-        
-        // Mark any assign requests for this device from this user as 'returned'
-        const assignRequests = this.requests.filter(
-          r => r.deviceId === request.deviceId && 
-               r.userId === request.userId && 
-               r.type === 'assign' && 
-               r.status === 'approved'
-        );
-        
-        assignRequests.forEach(r => {
-          const idx = this.requests.findIndex(req => req.id === r.id);
-          if (idx !== -1) {
-            this.requests[idx] = {
-              ...this.requests[idx],
-              status: 'returned',
-              processedAt: new Date(),
-              processedBy: managerId
-            };
-          }
-        });
+        if (isReturnRequest) {
+          // For warehouse return requests
+          deviceStore.updateDevice(request.deviceId, {
+            status: 'returned',
+            returnDate: new Date(),
+            requestedBy: undefined
+          });
+          
+          console.log(`Device ${request.deviceId} returned to warehouse`);
+        } else {
+          // Regular release
+          deviceStore.updateDevice(request.deviceId, {
+            assignedTo: undefined,
+            assignedToId: undefined,
+            requestedBy: undefined,
+            status: 'available',
+          });
+          
+          // Mark any assign requests for this device from this user as 'returned'
+          const assignRequests = this.requests.filter(
+            r => r.deviceId === request.deviceId && 
+                r.userId === request.userId && 
+                r.type === 'assign' && 
+                r.status === 'approved'
+          );
+          
+          assignRequests.forEach(r => {
+            const idx = this.requests.findIndex(req => req.id === r.id);
+            if (idx !== -1) {
+              this.requests[idx] = {
+                ...this.requests[idx],
+                status: 'returned',
+                processedAt: new Date(),
+                processedBy: managerId
+              };
+            }
+          });
+        }
       } else if (request.type === 'report' && request.reportType) {
         // Get device to check current ownership
         const device = deviceStore.getDeviceById(request.deviceId);
         const isAssigned = device && device.assignedToId;
         const previousOwnerId = device?.assignedToId;
         
-        // Handle report requests by updating device status to the reported issue
-        // This is the key fix - ensure we use the reportType as the device status
-        const reportStatus = request.reportType as DeviceStatus;
-        
+        // Handle report requests
         deviceStore.updateDevice(request.deviceId, {
-          status: reportStatus, // Use the report type (missing, stolen, dead) as the device status
+          status: request.reportType as DeviceStatus, // Use the report type as status
           requestedBy: undefined,
           // Release ownership when report is approved
           assignedTo: undefined,
-          assignedToId: undefined,
-          deviceStatus: `Reported as ${request.reportType}: ${request.reason || ''}`
+          assignedToId: undefined
         });
         
         // If device was assigned, create an auto-released request to track history
@@ -248,8 +269,7 @@ class RequestStore {
             userId: previousOwnerId,
             requestedAt: new Date(),
             processedAt: new Date(),
-            processedBy: managerId,
-            reason: `Auto-released due to device being reported as ${request.reportType}`
+            processedBy: managerId
           };
           
           this.requests.push(releaseRequest);
@@ -257,9 +277,9 @@ class RequestStore {
           // Mark any assign requests as returned
           const assignRequests = this.requests.filter(
             r => r.deviceId === request.deviceId && 
-                 r.userId === previousOwnerId && 
-                 r.type === 'assign' && 
-                 r.status === 'approved'
+                r.userId === previousOwnerId && 
+                r.type === 'assign' && 
+                r.status === 'approved'
           );
           
           assignRequests.forEach(r => {
@@ -274,27 +294,24 @@ class RequestStore {
             }
           });
         }
-      } else if (request.type === 'return') {
-        // For warehouse return, update device status to returned
-        deviceStore.updateDevice(request.deviceId, {
-          status: 'returned',
-          returnDate: new Date(),
-          requestedBy: undefined,
-          deviceStatus: 'Returned to warehouse'
-        });
-        
-        console.log(`Device ${request.deviceId} returned to warehouse`);
       }
     } else if (status === 'rejected' || status === 'cancelled') {
-      // If rejected or cancelled, clear the requestedBy field
+      // If rejected or cancelled, clear the requestedBy field and reset status if pending
       console.log(`Request ${status}: clearing requestedBy for device ${request.deviceId}`);
-      deviceStore.updateDevice(request.deviceId, {
-        requestedBy: undefined,
-        // If it was a report that was rejected, restore status
-        status: request.type === 'report' ? 'available' : undefined,
-        // Clear any pending report message
-        deviceStatus: request.type === 'report' || request.type === 'return' ? undefined : undefined,
-      });
+      
+      const device = deviceStore.getDeviceById(request.deviceId);
+      if (device && device.status === 'pending') {
+        // Reset device to available state
+        deviceStore.updateDevice(request.deviceId, {
+          requestedBy: undefined,
+          status: 'available'
+        });
+      } else {
+        // Just clear the requestedBy field
+        deviceStore.updateDevice(request.deviceId, {
+          requestedBy: undefined
+        });
+      }
     }
     
     // Persist to localStorage
@@ -341,12 +358,20 @@ class RequestStore {
       processedBy: userId // In this case, the requester is processing their own request
     };
     
-    // Clear the requestedBy field on the device
-    deviceStore.updateDevice(request.deviceId, {
-      requestedBy: undefined,
-      // Clear device status for return/report requests
-      deviceStatus: request.type === 'return' || request.type === 'report' ? undefined : undefined,
-    });
+    // Check if device status is pending and update to available
+    const device = deviceStore.getDeviceById(request.deviceId);
+    if (device && device.status === 'pending') {
+      // Reset device to available state
+      deviceStore.updateDevice(request.deviceId, {
+        requestedBy: undefined,
+        status: 'available'
+      });
+    } else {
+      // Just clear the requestedBy field
+      deviceStore.updateDevice(request.deviceId, {
+        requestedBy: undefined
+      });
+    }
     
     // Persist to localStorage
     localStorage.setItem('tecace_requests', JSON.stringify(this.requests));
