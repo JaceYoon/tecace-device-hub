@@ -296,7 +296,7 @@ export const dataService = {
             deviceId: request.deviceId,
             userId: request.userId,
             type: 'return',
-            status: 'pending',
+            status: request.status || 'pending',
             reason: request.reason || 'Device returned to warehouse',
             requestedAt: new Date()
           } as DeviceRequest;
@@ -310,8 +310,6 @@ export const dataService = {
           return mockRequest;
         }
       }
-      
-      // ... keep existing code (handling other request types)
       
       // For all other request types, use the normal flow
       return await deviceService.requestDevice(

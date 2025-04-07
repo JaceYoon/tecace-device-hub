@@ -104,12 +104,12 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Use addRequest with properly formatted object instead of requestDevice
-          // This approach is more reliable when facing database constraints
+          // Add the required status field to meet the TypeScript type requirements
           await dataService.addRequest({
             deviceId: deviceId,
             userId: user?.id || '',
             type: 'return',
+            status: 'pending', // Add the required status field
             reason: 'Device returned to warehouse'
           });
           
