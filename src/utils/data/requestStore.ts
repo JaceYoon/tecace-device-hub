@@ -1,3 +1,4 @@
+
 import { DeviceRequest, RequestStatus, DeviceStatus } from '@/types';
 import { deviceStore } from './deviceStore';
 
@@ -131,6 +132,14 @@ class RequestStore {
       });
       
       console.log(`Device ${request.deviceId} marked as pending due to report`);
+    } else if (request.type === 'return') {
+      // For return requests, update the device status to indicate pending return
+      deviceStore.updateDevice(request.deviceId, {
+        requestedBy: request.userId,
+        deviceStatus: 'Pending warehouse return'
+      });
+      
+      console.log(`Device ${request.deviceId} marked as pending warehouse return`);
     }
     
     // Persist to localStorage
@@ -265,6 +274,16 @@ class RequestStore {
             }
           });
         }
+      } else if (request.type === 'return') {
+        // For warehouse return, update device status to returned
+        deviceStore.updateDevice(request.deviceId, {
+          status: 'returned',
+          returnDate: new Date(),
+          requestedBy: undefined,
+          deviceStatus: 'Returned to warehouse'
+        });
+        
+        console.log(`Device ${request.deviceId} returned to warehouse`);
       }
     } else if (status === 'rejected' || status === 'cancelled') {
       // If rejected or cancelled, clear the requestedBy field
@@ -274,7 +293,7 @@ class RequestStore {
         // If it was a report that was rejected, restore status
         status: request.type === 'report' ? 'available' : undefined,
         // Clear any pending report message
-        deviceStatus: request.type === 'report' ? undefined : undefined,
+        deviceStatus: request.type === 'report' || request.type === 'return' ? undefined : undefined,
       });
     }
     
@@ -325,6 +344,8 @@ class RequestStore {
     // Clear the requestedBy field on the device
     deviceStore.updateDevice(request.deviceId, {
       requestedBy: undefined,
+      // Clear device status for return/report requests
+      deviceStatus: request.type === 'return' || request.type === 'report' ? undefined : undefined,
     });
     
     // Persist to localStorage

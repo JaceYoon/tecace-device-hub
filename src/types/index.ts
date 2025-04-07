@@ -46,7 +46,7 @@ export interface DeviceRequest {
   deviceId: string;
   userId: string;
   status: RequestStatus;
-  type: 'assign' | 'release' | 'report';
+  type: 'assign' | 'release' | 'report' | 'return';
   reportType?: 'missing' | 'stolen' | 'dead';
   reason?: string;
   requestedAt: Date;

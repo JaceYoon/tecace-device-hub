@@ -168,10 +168,14 @@ export const deviceService = {
       method: 'DELETE'
     }),
 
-  requestDevice: (deviceId: string, type: 'assign' | 'release'): Promise<DeviceRequest> =>
+  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> =>
     apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
-      body: JSON.stringify({ type })
+      body: JSON.stringify({ 
+        type, 
+        reportType: options?.reportType,
+        reason: options?.reason
+      })
     }),
 
   processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>

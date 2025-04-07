@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -10,7 +11,7 @@ import { Device, DeviceRequest } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 import { format } from 'date-fns';
-import { CheckCircle2, CalendarIcon, AlertCircle, Package } from 'lucide-react';
+import { CheckCircle2, CalendarIcon, AlertCircle, Package, RefreshCw, X } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,9 +49,9 @@ const DeviceReturnsPage = () => {
       // Get all devices
       const allDevices = await dataService.devices.getAll();
       
-      // Get devices that can be returned (available, assigned, dead)
+      // Get devices that can be returned (available, but not assigned - must be released first)
       const returnableDevices = allDevices.filter(
-        device => ['available', 'assigned', 'dead'].includes(device.status)
+        device => device.status === 'available' || device.status === 'dead'
       );
       setDevices(returnableDevices);
       
@@ -61,7 +62,7 @@ const DeviceReturnsPage = () => {
       // Get pending return requests
       const requests = await dataService.devices.getAllRequests();
       const pendingReturns = requests.filter(
-        req => req.type === 'release' && req.status === 'pending'
+        req => req.type === 'return' && req.status === 'pending'
       );
       setPendingReturnRequests(pendingReturns);
       
@@ -107,21 +108,16 @@ const DeviceReturnsPage = () => {
       // Create return requests for all selected devices
       for (const deviceId of selectedDevices) {
         try {
-          // Create a direct update (for admins) to mark device as pending return
-          await dataService.updateDevice(deviceId, {
-            requestedBy: user?.id
-          });
-          
-          // Create a pending return request
-          await dataService.addRequest({
-            deviceId,
-            userId: user?.id || '',
-            status: 'pending',
-            type: 'release',
-            reason: `Scheduled return on ${format(returnDate, 'yyyy-MM-dd')}`,
+          // Create a pending warehouse return request
+          await dataService.devices.requestDevice(deviceId, 'return', {
+            reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`
           });
         } catch (error) {
-          console.error(`Error processing return for device ${deviceId}:`, error);
+          if (error instanceof Error && error.message.includes('must be released')) {
+            toast.error(`Device must be released before it can be returned to warehouse`);
+          } else {
+            console.error(`Error processing return for device ${deviceId}:`, error);
+          }
           // Continue with other devices even if one fails
         }
       }
@@ -150,13 +146,7 @@ const DeviceReturnsPage = () => {
         const request = pendingReturnRequests.find(r => r.id === requestId);
         if (request) {
           // Approve the return request
-          await dataService.processRequest(requestId, 'approved');
-          
-          // Update the device status to returned and set return date
-          await dataService.updateDevice(request.deviceId, {
-            status: 'returned',
-            returnDate: returnDate,
-          });
+          await dataService.devices.processRequest(requestId, 'approved');
         }
       }
       toast.success('Devices returned successfully');
@@ -167,6 +157,20 @@ const DeviceReturnsPage = () => {
     } catch (error) {
       console.error('Error confirming returns:', error);
       toast.error('Failed to process returns');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const cancelReturnRequest = async (requestId: string) => {
+    setIsProcessing(true);
+    try {
+      await dataService.devices.processRequest(requestId, 'rejected');
+      toast.success('Return request cancelled');
+      loadData();
+    } catch (error) {
+      console.error('Error cancelling return request:', error);
+      toast.error('Failed to cancel return request');
     } finally {
       setIsProcessing(false);
     }
@@ -193,7 +197,7 @@ const DeviceReturnsPage = () => {
         {/* Tab 1: Returnable devices */}
         <TabsContent value="returnable">
           <div className="mb-4 flex justify-between items-center">
-            <h2 className="text-xl font-semibold">Available, Assigned & Dead Devices</h2>
+            <h2 className="text-xl font-semibold">Available & Dead Devices</h2>
             <Button 
               onClick={handleCreateReturnRequests}
               disabled={selectedDevices.length === 0}
@@ -237,9 +241,8 @@ const DeviceReturnsPage = () => {
                         <span className="font-mono">{device.imei || 'N/A'}</span>
                       </div>
                       {device.assignedTo && (
-                        <div>
-                          <span className="text-muted-foreground">Assigned To:</span> 
-                          <span>{device.assignedToName || 'Unknown User'}</span>
+                        <div className="text-amber-600 font-semibold">
+                          Note: This device must be released first before returning
                         </div>
                       )}
                     </div>
@@ -283,11 +286,19 @@ const DeviceReturnsPage = () => {
                             id={`request-${request.id}`}
                           />
                           <div>
-                            <CardTitle className="text-lg">{device?.project || 'Unknown Device'}</CardTitle>
+                            <CardTitle className="text-lg">{device?.project || request.deviceName || 'Unknown Device'}</CardTitle>
                             <CardDescription>{device?.type || 'Unknown Type'}</CardDescription>
                           </div>
                         </div>
-                        <StatusBadge status={device?.status || 'available'} />
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-destructive"
+                          onClick={() => cancelReturnRequest(request.id)}
+                          disabled={isProcessing}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
                       </div>
                     </CardHeader>
                     <CardContent>
@@ -321,8 +332,16 @@ const DeviceReturnsPage = () => {
         
         {/* Tab 3: Returned Devices */}
         <TabsContent value="returned">
-          <div className="mb-4">
+          <div className="mb-4 flex justify-between items-center">
             <h2 className="text-xl font-semibold">Returned Devices</h2>
+            <Button 
+              variant="outline" 
+              onClick={loadData}
+              size="sm"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Refresh
+            </Button>
           </div>
           
           {isLoading ? (
@@ -371,7 +390,7 @@ const DeviceReturnsPage = () => {
           <DialogHeader>
             <DialogTitle>Set Return Date</DialogTitle>
             <DialogDescription>
-              Select the date when these devices should be returned
+              Select the date when these devices should be returned to the warehouse
             </DialogDescription>
           </DialogHeader>
           

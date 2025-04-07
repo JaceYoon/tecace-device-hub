@@ -405,7 +405,7 @@ exports.requestDevice = async (req, res) => {
   try {
     const { type, reportType, reason } = req.body; // Added reportType and reason
 
-    if (!type || !['assign', 'release', 'report'].includes(type)) {
+    if (!type || !['assign', 'release', 'report', 'return'].includes(type)) {
       return res.status(400).json({ message: 'Invalid request type' });
     }
 
@@ -441,11 +441,23 @@ exports.requestDevice = async (req, res) => {
     if (type === 'release' && device.assignedToId !== req.user.id && req.user.role !== 'admin') {
       return res.status(400).json({ message: 'Device is not assigned to you' });
     }
+    
+    // Validate return request - only available devices can be returned to warehouse
+    // Assigned devices must be released first
+    if (type === 'return' && device.status === 'assigned') {
+      return res.status(400).json({ message: 'Device must be released before it can be returned to warehouse' });
+    }
 
-    // If it's a release request, auto-approve it (for any user, including admin)
-    const status = type === 'release' ? 'approved' : 'pending';
-    const processedAt = type === 'release' ? new Date() : null;
-    const processedById = type === 'release' ? req.user.id : null;
+    // Auto-approve release requests (for any user, including admin)
+    let status = 'pending';
+    let processedAt = null;
+    let processedById = null;
+    
+    if (type === 'release') {
+      status = 'approved';
+      processedAt = new Date();
+      processedById = req.user.id;
+    }
 
     // Create request
     const request = await Request.create({
@@ -494,6 +506,12 @@ exports.requestDevice = async (req, res) => {
           throw error;
         }
       }
+    } else if (type === 'return') {
+      // For return requests (warehouse returns), mark device as having a pending return request
+      await device.update({
+        requestedBy: req.user.id,
+        deviceStatus: 'Pending warehouse return'
+      });
     }
 
     res.status(201).json(request);
@@ -614,7 +632,7 @@ exports.processRequest = async (req, res) => {
             );
           }
         } catch (error) {
-          // If status update fails due to column constraint
+          // If status update fails due to database constraint
           if (error.message.includes('Data truncated for column') || 
               error.message.includes('status')) {
             console.error('Error updating device status due to database constraint:', error.message);
@@ -664,6 +682,14 @@ exports.processRequest = async (req, res) => {
             throw error;
           }
         }
+      } else if (request.type === 'return') {
+        // For warehouse return requests, change the device status to 'returned'
+        await device.update({
+          status: 'returned',
+          returnDate: new Date(),
+          requestedBy: null,
+          deviceStatus: 'Returned to warehouse'
+        });
       }
     } else {
       // If rejected, just clear the requestedBy field
@@ -672,8 +698,9 @@ exports.processRequest = async (req, res) => {
         requestedBy: null,
         // If it was a report request that was rejected, restore the previous status
         status: request.type === 'report' ? 'available' : device.status,
-        // Clear the pending report message if present
-        deviceStatus: device.deviceStatus?.includes('Pending report') ? null : device.deviceStatus
+        // Clear the pending report/return message if present
+        deviceStatus: (device.deviceStatus?.includes('Pending report') || device.deviceStatus?.includes('Pending warehouse return')) 
+          ? null : device.deviceStatus
       });
     }
 

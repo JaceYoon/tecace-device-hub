@@ -7,7 +7,7 @@ module.exports = (sequelize, Sequelize) => {
       autoIncrement: true
     },
     type: {
-      type: Sequelize.ENUM('assign', 'release', 'report'),
+      type: Sequelize.ENUM('assign', 'release', 'report', 'return'),
       allowNull: false
     },
     reportType: {
