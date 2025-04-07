@@ -79,6 +79,12 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(`API error response: ${response.status}`, errorData);
+      
+      // Check for data truncation errors with more specific error message
+      if (errorData.message && errorData.message.includes('Data truncated for column')) {
+        throw new Error(`Database constraint error. Please check API and database compatibility.`);
+      }
+      
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
@@ -224,146 +230,46 @@ export const dataService = {
   getDeviceHistory: deviceService.getDeviceHistory,
   getDevices: deviceService.getAll,
   getUsers: userService.getAll,
-  getRequests: deviceService.getAllRequests, // Add this method for backward compatibility
-  updateDevice: async (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
-    // For device releases, we need special handling
-    if (updates.status === 'available' && updates.assignedTo === undefined) {
-      console.log(`Special handling for device release: ${id}`);
-      
-      // Try to update the device via API first
-      try {
-        const updatedDevice = await deviceService.update(id, updates);
-        console.log(`Device ${id} released via API`);
-        
-        // Trigger refresh after a short delay
-        setTimeout(() => dataService.triggerRefresh(), 500);
-        
-        return updatedDevice;
-      } catch (apiError) {
-        // If the API fails due to ownership issues, try the fallback approach
-        if (apiError instanceof Error && apiError.message.includes('not assigned to you')) {
-          console.log('Using fallback for device release due to ownership issue');
-          throw apiError;
-        }
-        throw apiError;
-      }
-    }
-    
-    // Regular device update
-    const updatedDevice = await deviceService.update(id, updates);
-    
-    // Trigger refresh after a short delay
-    setTimeout(() => dataService.triggerRefresh(), 500);
-    
-    return updatedDevice;
-  },
+  getRequests: deviceService.getAllRequests,
+  updateDevice: deviceService.update,
   deleteDevice: deviceService.delete,
   processRequest: deviceService.processRequest,
   addDevice: deviceService.create,
   
   addRequest: async (request: Omit<DeviceRequest, 'id' | 'requestedAt'>): Promise<DeviceRequest> => {
+    console.log('Processing addRequest with:', request);
+    
     try {
-      console.log('Processing addRequest with:', request);
-      
-      // If it's a release request, first update the device to prevent loops
-      if (request.type === 'release') {
-        try {
-          // First update the device to release it
-          await dataService.updateDevice(request.deviceId, {
-            assignedTo: undefined,
-            assignedToId: undefined,
-            status: 'available',
-          });
-          
-          console.log(`Device ${request.deviceId} released directly during request creation`);
-          
-          // Small delay to ensure device updates are processed first
-          await new Promise(resolve => setTimeout(resolve, 200));
-          
-          // Then create the request
-          const newRequest = await deviceService.requestDevice(
-            request.deviceId,
-            request.type as 'assign' | 'release'
-          );
-          
-          console.log('Release request added successfully:', newRequest);
-          return newRequest;
-        } catch (deviceUpdateError) {
-          console.error('Error updating device during release:', deviceUpdateError);
-          // If direct update fails, try the API request as fallback
-          const newRequest = await deviceService.requestDevice(
-            request.deviceId,
-            request.type as 'assign' | 'release'
-          );
-          
-          console.log('Release request added via API fallback:', newRequest);
-          
-          // Trigger refresh
-          setTimeout(() => dataService.triggerRefresh(), 300);
-          
-          return newRequest;
-        }
-      } else if (request.type === 'report') {
-        // Special handling for report requests
-        console.log('Processing report request with type:', request.reportType);
+      // For returns, use a different strategy
+      if (request.type === 'return') {
+        console.log('Processing return request for device:', request.deviceId);
         
-        if (!request.reportType || !['missing', 'stolen', 'dead'].includes(request.reportType)) {
-          throw new Error('Invalid report type');
-        }
-        
-        // Use API for report requests
-        const newRequest = await deviceService.requestDevice(
+        // First, create a release request (this should work with the database schema)
+        const releaseRequest = await deviceService.requestDevice(
           request.deviceId,
-          'report',
-          { 
-            reportType: request.reportType,
-            reason: request.reason 
-          }
-        );
-        
-        console.log('Report request added successfully via API:', newRequest);
-        
-        // Trigger refresh callback with a delay
-        setTimeout(() => {
-          dataService.triggerRefresh();
-        }, 300);
-        
-        return newRequest;
-      } else if (request.type === 'return') {
-        // Special handling for return requests
-        console.log('Processing return request');
-        
-        // Use the API for return requests
-        const newRequest = await deviceService.requestDevice(
-          request.deviceId,
-          'return',
+          'release',
           { reason: request.reason }
         );
         
-        console.log('Return request added successfully via API:', newRequest);
+        // Then update the device to mark it as returned
+        await deviceService.update(request.deviceId, {
+          status: 'returned',
+          returnDate: new Date()
+        });
         
-        // Trigger refresh callback with a delay
-        setTimeout(() => {
-          dataService.triggerRefresh();
-        }, 300);
-        
-        return newRequest;
-      } else {
-        // For non-release, non-report, non-return requests (assign), use normal flow
-        const newRequest = await deviceService.requestDevice(
-          request.deviceId,
-          request.type as 'assign' | 'release'
-        );
-        
-        console.log('Request added successfully:', newRequest);
-        
-        // Trigger refresh callback with a delay to avoid immediate refresh loops
-        setTimeout(() => {
-          dataService.triggerRefresh();
-        }, 300);
-        
-        return newRequest;
+        console.log('Device marked as returned successfully');
+        return releaseRequest;
       }
+      
+      // For all other request types, use the normal flow
+      return await deviceService.requestDevice(
+        request.deviceId,
+        request.type as 'assign' | 'release' | 'report',
+        { 
+          reportType: request.reportType as 'missing' | 'stolen' | 'dead',
+          reason: request.reason 
+        }
+      );
     } catch (error) {
       console.error('Error adding request:', error);
       toast.error('Failed to process device request');

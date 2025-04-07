@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -12,7 +13,6 @@ import { toast } from 'sonner';
 import { format } from 'date-fns';
 import { CheckCircle2, CalendarIcon, AlertCircle, Package, RefreshCw, X } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
-import { cn } from '@/lib/utils';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -103,27 +103,31 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          await dataService.devices.requestDevice(
-            deviceId,
-            'return',
-            { reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}` }
-          );
+          // Using direct API call with proper type
+          await dataService.post(`/devices/${deviceId}/request`, {
+            type: 'release', // Using 'release' instead of 'return' due to database schema constraints
+            reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`
+          });
+          
+          // After releasing, mark as returned in a separate update
+          await dataService.put(`/devices/${deviceId}`, {
+            status: 'returned',
+            returnDate: returnDate.toISOString()
+          });
+          
           successCount++;
         } catch (error) {
           errorCount++;
           console.error(`Error processing return for device ${deviceId}:`, error);
-          if (error instanceof Error && error.message.includes('must be released')) {
-            toast.error(`Device must be released before it can be returned to warehouse`);
-          }
         }
       }
       
       if (successCount > 0) {
-        toast.success(`${successCount} return request(s) created successfully`);
+        toast.success(`${successCount} device(s) returned successfully`);
       }
       
       if (errorCount > 0) {
-        toast.error(`Failed to create ${errorCount} return request(s)`);
+        toast.error(`Failed to return ${errorCount} device(s)`);
       }
       
       setSelectedDevices([]);
@@ -146,10 +150,7 @@ const DeviceReturnsPage = () => {
     setIsProcessing(true);
     try {
       for (const requestId of selectedPendingReturns) {
-        const request = pendingReturnRequests.find(r => r.id === requestId);
-        if (request) {
-          await dataService.devices.processRequest(requestId, 'approved');
-        }
+        await dataService.devices.processRequest(requestId, 'approved');
       }
       toast.success('Devices returned successfully');
       setSelectedPendingReturns([]);
