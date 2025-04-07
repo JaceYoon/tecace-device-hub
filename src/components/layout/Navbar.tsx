@@ -1,10 +1,11 @@
+
 import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { ModeToggle } from '../ui/ModeToggle';
+import { ThemeToggle } from '@/components/ui/theme-toggle';
 import { useToast } from '../ui/use-toast';
 import { toast } from 'sonner';
 
@@ -68,7 +69,7 @@ const Navbar = () => {
               </Button>
             </NavLink>
           )}
-        <ModeToggle />
+        <ThemeToggle />
         </div>
       </div>
     </header>
