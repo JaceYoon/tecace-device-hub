@@ -62,7 +62,17 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     },
   });
 
+  // Check if device already has a pending request
+  const hasPendingRequest = device.status === 'pending' || device.requestedBy !== undefined;
+
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    // Check again if the device already has a pending request
+    if (hasPendingRequest) {
+      toast.error('There is already a pending request for this device');
+      setOpen(false);
+      return;
+    }
+
     try {
       setIsSubmitting(true);
       
@@ -106,13 +116,24 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
       }
     } catch (error) {
       console.error('Error submitting report:', error);
-      toast.error('Failed to submit report', {
-        description: 'Please try again later'
-      });
+      
+      // Check if it's a duplicate request error
+      if (error instanceof Error && error.message.includes('already a pending request')) {
+        toast.error('This device already has a pending request', {
+          description: 'Please wait for the current request to be processed'
+        });
+      } else {
+        toast.error('Failed to submit report', {
+          description: 'Please try again later'
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  // Disable the report button if the device already has a pending request
+  const isReportButtonDisabled = hasPendingRequest;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -121,9 +142,10 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
           variant="outline" 
           size="sm" 
           className="w-full bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
+          disabled={isReportButtonDisabled}
         >
           <Flag className="mr-2 h-4 w-4" />
-          Report Issue
+          {isReportButtonDisabled ? 'Request Pending' : 'Report Issue'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

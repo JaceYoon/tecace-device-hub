@@ -1,3 +1,4 @@
+
 const db = require('../models');
 const Device = db.device;
 const User = db.user;
@@ -437,6 +438,7 @@ exports.requestDevice = async (req, res) => {
     });
 
     if (existingRequest) {
+      console.log(`Rejected duplicate request: Device ${device.id} already has a pending request (${existingRequest.id})`);
       return res.status(400).json({ message: 'There is already a pending request for this device' });
     }
 
