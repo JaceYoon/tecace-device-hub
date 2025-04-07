@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -144,7 +145,7 @@ const DeviceReturnsPage = () => {
       for (const requestId of selectedPendingReturns) {
         const request = pendingReturnRequests.find(r => r.id === requestId);
         if (request) {
-          // Approve the return request
+          // Approve the return request - this line had the wrong arguments
           await dataService.devices.processRequest(requestId, 'approved');
         }
       }
