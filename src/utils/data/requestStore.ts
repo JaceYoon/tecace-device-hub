@@ -92,7 +92,7 @@ class RequestStore {
     
     this.requests.push(newRequest);
     
-    // Handle release requests immediately to improve UI responsiveness
+    // Handle different request types
     if (request.type === 'release') {
       // Auto-process regular device release - immediately update device status
       deviceStore.updateDevice(request.deviceId, {
@@ -166,9 +166,6 @@ class RequestStore {
       processedBy: managerId
     };
     
-    // Check if this is a return request
-    const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
-    
     // If approved, update the device assignment
     if (status === 'approved') {
       console.log(`Approved request: updating device ${request.deviceId}`);
@@ -180,47 +177,38 @@ class RequestStore {
           status: 'assigned',
         });
       } else if (request.type === 'release') {
-        if (isReturnRequest) {
-          // For warehouse return requests, set a clean date without time component
-          const today = new Date();
-          today.setHours(0, 0, 0, 0);
-          
-          deviceStore.updateDevice(request.deviceId, {
-            status: 'returned',
-            returnDate: today,
-            requestedBy: undefined
-          });
-          
-          console.log(`Device ${request.deviceId} returned to warehouse`);
-        } else {
-          // Regular release
-          deviceStore.updateDevice(request.deviceId, {
-            assignedTo: undefined,
-            assignedToId: undefined,
-            requestedBy: undefined,
-            status: 'available',
-          });
-          
-          // Mark any assign requests for this device from this user as 'returned'
-          const assignRequests = this.requests.filter(
-            r => r.deviceId === request.deviceId && 
-                r.userId === request.userId && 
-                r.type === 'assign' && 
-                r.status === 'approved'
-          );
-          
-          assignRequests.forEach(r => {
-            const idx = this.requests.findIndex(req => req.id === r.id);
-            if (idx !== -1) {
-              this.requests[idx] = {
-                ...this.requests[idx],
-                status: 'returned',
-                processedAt: new Date(),
-                processedBy: managerId
-              };
-            }
-          });
-        }
+        // Auto-process regular device release - immediately update device status
+        deviceStore.updateDevice(request.deviceId, {
+          assignedTo: undefined,
+          assignedToId: undefined,
+          status: 'available',
+        });
+        
+        // Mark any assign requests for this device from this user as 'returned'
+        const assignRequests = this.requests.filter(
+          r => r.deviceId === request.deviceId && 
+              r.userId === request.userId && 
+              r.type === 'assign' && 
+              r.status === 'approved'
+        );
+        
+        assignRequests.forEach(r => {
+          r.status = 'returned';
+        });
+        
+        console.log(`Device ${request.deviceId} released (status set to available)`);
+      } else if (request.type === 'return') {
+        // For return requests, set device status to returned
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        deviceStore.updateDevice(request.deviceId, {
+          status: 'returned',
+          returnDate: today,
+          requestedBy: undefined
+        });
+        
+        console.log(`Device ${request.deviceId} returned to warehouse`);
       } else if (request.type === 'report' && request.reportType) {
         // Get device to check current ownership
         const device = deviceStore.getDeviceById(request.deviceId);

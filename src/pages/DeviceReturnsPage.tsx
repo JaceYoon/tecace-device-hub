@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -105,11 +106,12 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Create the return request using the proper 'return' type now
-          const response = await dataService.devices.requestDevice(
-            deviceId, 
-            'return' // Use 'return' type directly now
-          );
+          // Create a proper return request with the correct type
+          const response = await dataService.addRequest({
+            deviceId,
+            userId: user?.id || '',
+            type: 'return'
+          });
           
           successCount++;
         } catch (error) {

@@ -181,32 +181,7 @@ const deviceService = {
     }),
 
   requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
-      // Special handling for return requests to work around the database constraint issue
-      if (type === 'return') {
-        console.log('Processing return request with workaround for:', deviceId);
-        // Use the release type instead, but add a special reason to indicate it's a return
-        return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
-          method: 'POST',
-          body: JSON.stringify({
-            type: 'return', // Use 'release' instead of 'return' to work around constraint
-            reason: `[RETURN]`
-          })
-        });
-      }
-    
-    // For report requests, include the reason and reportType
-    if (type === 'report') {
-      return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          type,
-          reportType: options?.reportType,
-          reason: options?.reason
-        })
-      });
-    }
-    
-    // For all other request types, proceed normally
+    // Send the appropriate request according to the type
     return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ 
@@ -274,26 +249,26 @@ export const dataService = {
     console.log('Processing addRequest with:', request);
     
     try {
-      // Special handling for returns based on our workaround
+      // Handle each request type appropriately
       if (request.type === 'return') {
         console.log('Processing return request for device:', request.deviceId);
         
-        // Create a release request but mark it specially to indicate it's a return
-        const releaseRequest = await deviceService.requestDevice(
+        // Create a proper return request
+        const returnRequest = await deviceService.requestDevice(
           request.deviceId,
-          'release', // Using release type as a workaround
+          'return',
           { 
-            reason: `[RETURN]`
+            reason: request.reason
           }
         );
         
-        // After creating the release request, update the device status to pending
+        // After creating the return request, update the device status to pending
         await deviceService.update(request.deviceId, {
           status: 'pending',
         });
         
         console.log('Device marked as pending return successfully');
-        return releaseRequest;
+        return returnRequest;
       }
       
       if (request.type === 'report') {
@@ -311,7 +286,7 @@ export const dataService = {
       // For all other request types, use the normal flow
       return await deviceService.requestDevice(
         request.deviceId,
-        request.type as 'assign' | 'release' | 'report',
+        request.type as 'assign' | 'release' | 'report' | 'return',
         { 
           reportType: request.reportType as 'missing' | 'stolen' | 'dead',
           reason: request.reason
