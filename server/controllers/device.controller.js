@@ -465,7 +465,6 @@ exports.requestDevice = async (req, res) => {
       processedById = req.user.id;
     }
 
-    // IMPORTANT: Use the actual request type without modification
     // Create request with the exact type specified
     const request = await Request.create({
       type: type, // Use the actual type passed in (including 'return')
@@ -490,11 +489,12 @@ exports.requestDevice = async (req, res) => {
       device.requestedBy = req.user.id;
       await device.save();
     } else if (type === 'report' || type === 'return') {
-      // For report/return requests, mark the device with pending status
+      // For report/return requests, mark the device status as "available" but with a requestedBy
+      // This works around database constraints but still allows us to identify pending devices
       try {
         await device.update({
-          status: 'pending',
-          requestedBy: req.user.id
+          status: 'available', // Use "available" instead of "pending" to avoid database constraint errors
+          requestedBy: req.user.id // Keep track of who requested this action
         });
       } catch (error) {
         console.error('Error updating device status:', error);

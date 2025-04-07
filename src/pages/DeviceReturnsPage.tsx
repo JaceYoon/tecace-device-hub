@@ -103,7 +103,6 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Use 'return' type explicitly
           await dataService.devices.requestDevice(
             deviceId,
             'return',
@@ -111,15 +110,6 @@ const DeviceReturnsPage = () => {
               reason: 'Device returned to warehouse'
             }
           );
-          
-          try {
-            await dataService.devices.update(deviceId, {
-              status: 'pending',
-              requestedBy: user?.id
-            });
-          } catch (error) {
-            console.error(`Error updating device ${deviceId} status:`, error);
-          }
           
           successCount++;
         } catch (error) {

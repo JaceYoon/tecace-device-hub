@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
 import { DeviceRequest, User, Device } from '@/types';
@@ -133,9 +134,13 @@ const RequestList: React.FC<RequestListProps> = ({
     return 'N/A';
   };
 
+  // Show all requests except return requests on the regular RequestList
+  // Return requests are handled separately on the DeviceReturnsPage
   let filteredRequests = requests.filter(request => {
+    // Filter out 'return' type requests by default
     if (request.type === 'return') return false;
     
+    // Also filter out report requests for now
     return request.type !== 'report';
   });
   
