@@ -301,27 +301,6 @@ exports.update = async (req, res) => {
       formattedReturnDate = date;
     }
 
-    // For report-related statuses (missing, stolen, dead), verify the status is allowed
-    // This is a workaround for database schema issues
-    let finalStatus = status;
-    if (status && ['missing', 'stolen', 'dead'].includes(status)) {
-      // Check if the device status enum includes these values
-      try {
-        // Try to update with the requested status
-        await device.update({ status });
-        finalStatus = status;
-      } catch (statusError) {
-        // If status update fails, fallback to 'available' but mark deviceStatus field
-        console.error(`Error setting device status to '${status}', using fallback:`, statusError.message);
-        finalStatus = 'available';
-        
-        // Update deviceStatus field instead to track the reported issue
-        await device.update({ 
-          deviceStatus: `Reported as ${status} but status column constraint prevented update`
-        });
-      }
-    }
-
     // Only consider it being released if status explicitly changes from assigned to available
     // AND assignedToId is explicitly set to null
     const isBeingReleased = device.status === 'assigned' && 
@@ -337,7 +316,7 @@ exports.update = async (req, res) => {
     
     // For regular edits of assigned devices, keep as assigned
     const updatedStatus = (device.status === 'assigned' && !isBeingReleased) ? 
-                          'assigned' : (finalStatus || device.status);
+                          'assigned' : (status || device.status);
     
     // Update device
     await device.update({
@@ -427,16 +406,16 @@ exports.delete = async (req, res) => {
 // Request a device
 exports.requestDevice = async (req, res) => {
   try {
-    const { type, reportType } = req.body;
+    const { type, reportType, reason } = req.body;
 
-    console.log('Request device input:', { type, reportType, deviceId: req.params.id });
+    console.log('Request device input:', { type, reportType, reason, deviceId: req.params.id });
 
     if (!type || !['assign', 'release', 'report', 'return'].includes(type)) {
       return res.status(400).json({ message: 'Invalid request type' });
     }
 
     // Special case for return requests - check if reason has [RETURN] prefix
-    const isReturnRequest = type === 'return' || (req.body.reason && req.body.reason.includes('[RETURN]'));
+    const isReturnRequest = type === 'return' || (reason && reason.includes('[RETURN]'));
     
     // Validate reportType if this is a report request
     if (type === 'report' && (!reportType || !['missing', 'stolen', 'dead'].includes(reportType))) {
@@ -500,8 +479,8 @@ exports.requestDevice = async (req, res) => {
     // Use 'release' as the type for return requests (workaround)
     const requestType = type === 'return' ? 'release' : type;
     
-    // Set a simple [RETURN] reason for return requests
-    const reason = isReturnRequest ? '[RETURN]' : null;
+    // Set a simple [RETURN] reason for return requests, otherwise use provided reason
+    const finalReason = isReturnRequest ? '[RETURN]' : reason;
     
     const request = await Request.create({
       type: requestType,
@@ -511,7 +490,7 @@ exports.requestDevice = async (req, res) => {
       userId: req.user.id,
       processedAt,
       processedById,
-      reason
+      reason: finalReason
     });
 
     // If it's a release request, update the device immediately

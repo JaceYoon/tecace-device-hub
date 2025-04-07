@@ -135,7 +135,7 @@ class RequestStore {
         requestedBy: request.userId,
       });
     } else if (request.type === 'report') {
-      // For report requests, immediately mark the device as pending
+      // For report requests, just mark the device as pending
       deviceStore.updateDevice(request.deviceId, {
         status: 'pending',
         requestedBy: request.userId
@@ -204,10 +204,13 @@ class RequestStore {
         });
       } else if (request.type === 'release') {
         if (isReturnRequest) {
-          // For warehouse return requests
+          // For warehouse return requests, set a clean date without time component
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          
           deviceStore.updateDevice(request.deviceId, {
             status: 'returned',
-            returnDate: new Date(),
+            returnDate: today,
             requestedBy: undefined
           });
           
@@ -247,7 +250,7 @@ class RequestStore {
         const isAssigned = device && device.assignedToId;
         const previousOwnerId = device?.assignedToId;
         
-        // Handle report requests
+        // Handle report requests - set to appropriate status
         deviceStore.updateDevice(request.deviceId, {
           status: request.reportType as DeviceStatus, // Use the report type as status
           requestedBy: undefined,
@@ -296,7 +299,7 @@ class RequestStore {
         }
       }
     } else if (status === 'rejected' || status === 'cancelled') {
-      // If rejected or cancelled, clear the requestedBy field and reset status if pending
+      // If request rejected or cancelled, clear the requestedBy field and reset status if pending
       console.log(`Request ${status}: clearing requestedBy for device ${request.deviceId}`);
       
       const device = deviceStore.getDeviceById(request.deviceId);

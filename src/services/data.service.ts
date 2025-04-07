@@ -187,12 +187,25 @@ const deviceService = {
       });
     }
     
+    // For report requests, include the reason and reportType
+    if (type === 'report') {
+      return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
+        method: 'POST',
+        body: JSON.stringify({ 
+          type,
+          reportType: options?.reportType,
+          reason: options?.reason
+        })
+      });
+    }
+    
     // For all other request types, proceed normally
     return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ 
         type, 
-        reportType: options?.reportType
+        reportType: options?.reportType,
+        reason: options?.reason
       })
     });
   },
@@ -269,11 +282,23 @@ export const dataService = {
         
         // After creating the release request, update the device status to pending
         await deviceService.update(request.deviceId, {
-          status: 'pending', // Change status to pending instead of using deviceStatus
+          status: 'pending',
         });
         
         console.log('Device marked as pending return successfully');
         return releaseRequest;
+      }
+      
+      if (request.type === 'report') {
+        // Pass both reportType and reason for report requests
+        return await deviceService.requestDevice(
+          request.deviceId,
+          'report',
+          { 
+            reportType: request.reportType as 'missing' | 'stolen' | 'dead',
+            reason: request.reason
+          }
+        );
       }
       
       // For all other request types, use the normal flow
@@ -281,7 +306,8 @@ export const dataService = {
         request.deviceId,
         request.type as 'assign' | 'release' | 'report',
         { 
-          reportType: request.reportType as 'missing' | 'stolen' | 'dead'
+          reportType: request.reportType as 'missing' | 'stolen' | 'dead',
+          reason: request.reason
         }
       );
     } catch (error) {
