@@ -181,18 +181,18 @@ const deviceService = {
     }),
 
   requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
-    // Special handling for return requests to work around the database constraint issue
-    if (type === 'return') {
-      console.log('Processing return request with workaround for:', deviceId);
-      // Use the release type instead, but add a special reason to indicate it's a return
-      return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          type: 'release', // Use 'release' instead of 'return' to work around constraint
-          reason: `[RETURN]`
-        })
-      });
-    }
+      // Special handling for return requests to work around the database constraint issue
+      if (type === 'return') {
+        console.log('Processing return request with workaround for:', deviceId);
+        // Use the release type instead, but add a special reason to indicate it's a return
+        return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
+          method: 'POST',
+          body: JSON.stringify({
+            type: 'return', // Use 'release' instead of 'return' to work around constraint
+            reason: `[RETURN]`
+          })
+        });
+      }
     
     // For report requests, include the reason and reportType
     if (type === 'report') {
