@@ -445,7 +445,11 @@ exports.requestDevice = async (req, res) => {
 
     // Validate release request - skip validation for admins
     if (type === 'release' && device.assignedToId !== req.user.id && req.user.role !== 'admin') {
-      return res.status(400).json({ message: 'Device is not assigned to you' });
+      // Special handling for admin-initiated returns marked with [RETURN]
+      const isReturnRequest = reason && reason.includes('[RETURN]');
+      if (!isReturnRequest || req.user.role !== 'admin') {
+        return res.status(400).json({ message: 'Device is not assigned to you' });
+      }
     }
     
     // Validate return request - only available devices can be returned to warehouse
@@ -465,16 +469,23 @@ exports.requestDevice = async (req, res) => {
       processedById = req.user.id;
     }
 
+    // Check if this is actually a return request masquerading as a release
+    const isReturnRequest = reason && reason.includes('[RETURN]');
+    const actualType = isReturnRequest ? 'return' : type;
+    
+    // But we'll still use 'release' for DB compatibility if needed
+    const dbType = (actualType === 'return') ? 'release' : actualType;
+
     // Create request with the exact type specified
     const request = await Request.create({
-      type, // This could be 'assign', 'release', 'report', or 'return'
+      type: dbType, // Use compatible type for database
       reportType: type === 'report' ? reportType : null,
       status,
       deviceId: device.id,
       userId: req.user.id,
       processedAt,
       processedById,
-      reason
+      reason: reason
     });
 
     // If it's a release request, update the device immediately
@@ -488,16 +499,23 @@ exports.requestDevice = async (req, res) => {
       // Update the device to indicate it has a pending request
       device.requestedBy = req.user.id;
       await device.save();
-    } else if (type === 'report' || type === 'return') {
-      // For report/return requests, mark the device as pending right away
+    } else if (type === 'report' || type === 'return' || isReturnRequest) {
+      // For report/return requests, mark the device with a compatible status
       try {
         await device.update({
-          status: 'pending',
+          status: 'available', // Use 'available' instead of 'pending' to avoid constraint errors
           requestedBy: req.user.id
         });
       } catch (error) {
         console.error('Error updating device status:', error);
       }
+    }
+
+    // For return requests, modify the response to show 'return' type
+    if (isReturnRequest) {
+      const returnRequest = request.toJSON();
+      returnRequest.type = 'return'; // Override type in response
+      return res.status(201).json(returnRequest);
     }
 
     res.status(201).json(request);
