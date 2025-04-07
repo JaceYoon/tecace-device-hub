@@ -36,6 +36,9 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
+  // Device has a pending status (for any reason including reports or returns)
+  const deviceIsPending = device.status === 'pending';
+
   return (
     <>
       {isAdmin ? (
@@ -58,12 +61,17 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
               className="w-full"
               size="sm"
               onClick={onRequestDevice}
-              disabled={isProcessing}
+              disabled={isProcessing || deviceIsPending}
             >
               {isProcessing ? (
                 <>
                   <Clock className="h-4 w-4 mr-1 animate-spin" />
                   Processing...
+                </>
+              ) : deviceIsPending ? (
+                <>
+                  <Clock className="h-4 w-4 mr-1" />
+                  Device Pending
                 </>
               ) : (
                 <>

@@ -101,7 +101,6 @@ const DeviceReturnsPage = () => {
     setIsProcessing(true);
     let successCount = 0;
     let errorCount = 0;
-    let uiUpdated = false;
     
     try {
       for (const deviceId of selectedDevices) {
@@ -113,8 +112,6 @@ const DeviceReturnsPage = () => {
           );
           
           successCount++;
-          
-          // Don't need to separately update device status since the API now does this
         } catch (error) {
           errorCount++;
           console.error(`Error processing return for device ${deviceId}:`, error);

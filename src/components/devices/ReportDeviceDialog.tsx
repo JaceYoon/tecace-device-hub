@@ -1,4 +1,3 @@
-
 import React, { useEffect } from 'react';
 import { Device, User } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -62,18 +61,15 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     },
   });
 
-  // Reset form when dialog closes
   useEffect(() => {
     if (!open) {
       form.reset();
     }
   }, [open, form]);
 
-  // Check if device already has a pending request
   const hasPendingRequest = device.status === 'pending' || device.requestedBy !== undefined;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
-    // Check again if the device already has a pending request
     if (hasPendingRequest) {
       toast.error('There is already a pending request for this device');
       setOpen(false);
@@ -85,7 +81,6 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
       
       console.log('Submitting report with values:', values);
       
-      // Create the report request - the API will update the device status to pending
       await dataService.addRequest({
         deviceId: device.id,
         userId: userId,
@@ -108,7 +103,6 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     } catch (error) {
       console.error('Error submitting report:', error);
       
-      // Check if it's a duplicate request error
       if (error instanceof Error && error.message.includes('already a pending request')) {
         toast.error('This device already has a pending request', {
           description: 'Please wait for the current request to be processed'
@@ -123,7 +117,6 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     }
   };
 
-  // Disable the report button if the device already has a pending request
   const isReportButtonDisabled = hasPendingRequest;
 
   return (
