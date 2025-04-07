@@ -106,16 +106,17 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Create a return request using our workaround
+          // First update device status to pending immediately for UI feedback
+          await dataService.devices.update(deviceId, {
+            status: 'pending',
+            requestedBy: user?.id
+          });
+          
+          // Then create the return request
           await dataService.devices.requestDevice(
             deviceId, 
             'return'
           );
-          
-          // Also update device status to indicate pending return
-          await dataService.devices.update(deviceId, {
-            status: 'pending'
-          });
           
           successCount++;
         } catch (error) {

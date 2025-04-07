@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { dataService } from '@/services/data.service';
 import { DeviceRequest, User, Device } from '@/types';
@@ -139,7 +138,15 @@ const RequestList: React.FC<RequestListProps> = ({
   };
 
   // Filter requests based on userId prop if provided and exclude reports (handled separately)
-  let filteredRequests = requests.filter(request => request.type !== 'report');
+  // Also exclude return requests (handled in DeviceReturnsPage)
+  let filteredRequests = requests.filter(request => {
+    // First exclude returns (requests with [RETURN] in the reason)
+    const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
+    if (isReturnRequest) return false;
+    
+    // Then exclude reports which are handled separately
+    return request.type !== 'report';
+  });
   
   if (userId) {
     // When viewing "My Requests" tab, show ALL requests for this user (not just pending)

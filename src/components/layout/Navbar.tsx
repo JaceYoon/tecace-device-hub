@@ -6,10 +6,11 @@ import { cn } from '@/lib/utils';
 import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { ThemeToggle } from '../ui/theme-toggle';
+import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const Navbar = () => {
   const location = useLocation();
-  const { logout, isAdmin, isManager } = useAuth();
+  const { logout, isAdmin, isManager, user } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -79,7 +80,14 @@ const Navbar = () => {
               variant={isActive('/profile') ? 'default' : 'ghost'} 
               className="flex items-center"
             >
-              <User className="h-4 w-4 mr-2" />
+              {user?.avatar ? (
+                <Avatar className="h-6 w-6 mr-2">
+                  <AvatarImage src={user.avatar} alt={user?.name || 'User'} />
+                  <AvatarFallback>{user?.name?.charAt(0) || 'U'}</AvatarFallback>
+                </Avatar>
+              ) : (
+                <User className="h-4 w-4 mr-2" />
+              )}
               Profile
             </Button>
           </NavLink>
