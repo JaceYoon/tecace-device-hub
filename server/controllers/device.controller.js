@@ -465,9 +465,9 @@ exports.requestDevice = async (req, res) => {
       processedById = req.user.id;
     }
 
-    // Create request - handle return requests properly
+    // Create request with the exact type specified
     const request = await Request.create({
-      type: type, // Use the exact type now that 'return' is a valid type
+      type, // This could be 'assign', 'release', 'report', or 'return'
       reportType: type === 'report' ? reportType : null,
       status,
       deviceId: device.id,

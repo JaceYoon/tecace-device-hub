@@ -36,8 +36,8 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
-  // Device has a pending status (for any reason including reports or returns)
-  const deviceIsPending = device.status === 'pending';
+  // Check if device has pending status or has an active request
+  const deviceIsPending = device.status === 'pending' || device.requestedBy !== undefined;
 
   return (
     <>

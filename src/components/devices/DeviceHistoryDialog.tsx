@@ -187,7 +187,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     }
     
     // Sort entries - current owner first, then by most recent assignment date
-    return consolidatedEntries.sort((a, b) => {
+    const processedEntries = consolidatedEntries.sort((a, b) => {
       // Current owner always comes first
       if (a.isCurrentOwner) return -1;
       if (b.isCurrentOwner) return 1;
@@ -196,6 +196,13 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       const dateA = new Date(a.assignedAt).getTime();
       const dateB = new Date(b.assignedAt).getTime();
       return dateB - dateA; // Newest first
+    });
+    
+    // Filter out entries with invalid dates (dates from 1970 or earlier)
+    return processedEntries.filter(entry => {
+      const assignedDate = new Date(entry.assignedAt);
+      // Filter out entries from before 1980 (these are likely invalid)
+      return assignedDate.getFullYear() > 1980;
     });
   };
   
@@ -248,7 +255,12 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
   const formatDateOnly = (dateString: string | null) => {
     if (!dateString) return 'N/A';
     try {
-      return format(new Date(dateString), 'MMM d, yyyy');
+      const date = new Date(dateString);
+      // Check if this is a valid date (not from 1970)
+      if (date.getFullYear() < 1980) {
+        return 'N/A';
+      }
+      return format(date, 'MMM d, yyyy');
     } catch (error) {
       console.error('Error formatting date:', error);
       return 'Invalid date';
@@ -264,7 +276,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         </Button>
       </DialogTrigger>
       
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Ownership History</DialogTitle>
           <DialogDescription>
@@ -272,7 +284,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
           </DialogDescription>
         </DialogHeader>
         
-        <div className="py-4">
+        <div className="py-4 overflow-y-auto">
           <h3 className="font-semibold mb-2">{device.project} - {device.serialNumber || 'No S/N'}</h3>
           
           <div className="text-xs text-muted-foreground mb-3">
