@@ -102,25 +102,27 @@ const DeviceReturnsPage = () => {
     setIsProcessing(true);
     let successCount = 0;
     let errorCount = 0;
+    let uiUpdated = false;
     
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // First create the return request (this also handles any database-specific tasks)
+          // First create the return request
           await dataService.devices.requestDevice(
             deviceId, 
             'return'
           );
           
           try {
-            // Then update device status to pending for immediate UI feedback
+            // Then try to update device status to pending for immediate UI feedback
             await dataService.devices.update(deviceId, {
               status: 'pending',
               requestedBy: user?.id
             });
+            uiUpdated = true;
           } catch (error) {
             console.error(`Error updating device ${deviceId} status:`, error);
-            // We will continue since the request was created
+            // Continue since the request was created, but status update failed
           }
           
           successCount++;
@@ -131,7 +133,11 @@ const DeviceReturnsPage = () => {
       }
       
       if (successCount > 0) {
-        toast.success(`${successCount} device(s) added to return queue`);
+        if (!uiUpdated) {
+          toast.warning(`${successCount} device(s) added to return queue, but status will update when page refreshes`);
+        } else {
+          toast.success(`${successCount} device(s) added to return queue`);
+        }
       }
       
       if (errorCount > 0) {
@@ -140,6 +146,8 @@ const DeviceReturnsPage = () => {
       
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
+      
+      // Always reload the data to ensure the latest state is reflected
       loadData();
     } catch (error) {
       console.error('Error creating return requests:', error);

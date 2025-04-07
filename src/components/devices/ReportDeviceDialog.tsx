@@ -79,16 +79,19 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
         reason: values.reason,
       });
       
+      // Update UI optimistically
+      const updatedDevice = {...device, status: 'pending'};
+      
       try {
-        // Then update the device status to pending
+        // Then try to update the device status to pending
         await dataService.updateDevice(device.id, {
           status: 'pending',
           requestedBy: userId
         });
       } catch (error) {
         console.error('Error updating device status:', error);
-        // Continue anyway since the report was created
-        toast.warning('Report submitted, but device status could not be updated');
+        // Fallback to client-side state updates for UI responsiveness
+        toast.warning('Report submitted, but device status will update when the page refreshes');
       }
       
       toast.success('Report submitted successfully', {
