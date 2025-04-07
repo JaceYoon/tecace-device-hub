@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -45,7 +44,6 @@ const DeviceReturnsPage = () => {
     try {
       const allDevices = await dataService.devices.getAll();
       
-      // For returnable devices, include both available and devices marked for return
       const returnableDevices = allDevices.filter(
         device => device.status === 'available' || device.status === 'dead'
       );
@@ -56,7 +54,6 @@ const DeviceReturnsPage = () => {
       
       const requests = await dataService.devices.getAllRequests();
       
-      // Find pending returns - specifically use type 'return' now
       const pendingReturns = requests.filter(
         req => req.type === 'return' && req.status === 'pending'
       );
@@ -106,11 +103,11 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Create a proper return request with the correct type
           const response = await dataService.addRequest({
             deviceId,
             userId: user?.id || '',
-            type: 'return'
+            type: 'return',
+            status: 'pending'
           });
           
           successCount++;
@@ -131,7 +128,6 @@ const DeviceReturnsPage = () => {
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       
-      // Always reload the data to ensure the latest state is reflected
       loadData();
     } catch (error) {
       console.error('Error creating return requests:', error);
@@ -154,25 +150,20 @@ const DeviceReturnsPage = () => {
       
       for (const requestId of selectedPendingReturns) {
         try {
-          // First, approve the return request
           await dataService.devices.processRequest(requestId, 'approved');
           
-          // Find the request to get the device ID
           const request = pendingReturnRequests.find(r => r.id === requestId);
           if (request) {
-            // Format returnDate to include only the date part (no time)
             const dateOnly = new Date(returnDate);
             dateOnly.setHours(0, 0, 0, 0);
             
             try {
-              // Then update the device status to 'returned' with date only
               await dataService.devices.update(request.deviceId, {
                 status: 'returned',
                 returnDate: dateOnly,
               });
             } catch (error) {
               console.error(`Error updating status for device ${request.deviceId}:`, error);
-              // Continue since the request was approved
             }
           }
           
@@ -206,13 +197,11 @@ const DeviceReturnsPage = () => {
   const cancelReturnRequest = async (requestId: string) => {
     setIsProcessing(true);
     try {
-      // Get the device ID before cancelling
       const request = pendingReturnRequests.find(r => r.id === requestId);
       const deviceId = request?.deviceId;
       
       await dataService.devices.cancelRequest(requestId);
       
-      // Also update the device to available status
       if (deviceId) {
         try {
           await dataService.devices.update(deviceId, {
@@ -220,7 +209,6 @@ const DeviceReturnsPage = () => {
           });
         } catch (error) {
           console.error(`Error updating device ${deviceId} status:`, error);
-          // Continue anyway since the request was cancelled
         }
       }
       
