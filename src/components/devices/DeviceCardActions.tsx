@@ -36,11 +36,13 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
-  // Improved check for device pending status
-  // A device should only be considered pending if it has an active request
-  // or its status is explicitly set to 'pending'
-  const deviceIsPending = device.status === 'pending' || 
-                         (device.requestedBy !== undefined && device.requestedBy !== "");
+  // Fixed conditional logic to properly detect pending status
+  // Only consider a device pending if it's explicitly marked as pending OR has a non-empty requestedBy field
+  const deviceHasPendingRequest = device.requestedBy !== undefined && device.requestedBy !== "";
+  const deviceIsPending = device.status === 'pending';
+  
+  // True pending state is either the device is in pending status OR has an active request
+  const isPending = deviceIsPending || deviceHasPendingRequest;
 
   return (
     <>
@@ -59,7 +61,8 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
         </div>
       ) : (
         <>
-          {device.status === 'available' && !isRequested && !deviceIsPending && (
+          {/* Request Device button - show when available and no pending requests */}
+          {device.status === 'available' && !isRequested && !isPending && (
             <Button
               className="w-full"
               size="sm"
@@ -80,6 +83,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
 
+          {/* Pending Request button */}
           {hasRequested && (
             <Button
               variant="secondary"
@@ -92,6 +96,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
 
+          {/* Already Requested button */}
           {isRequestedByOthers && (
             <Button
               variant="outline"
@@ -104,7 +109,8 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
 
-          {deviceIsPending && !hasRequested && !isRequestedByOthers && device.status === 'available' && (
+          {/* Device Pending status button */}
+          {deviceIsPending && !hasRequested && !isRequestedByOthers && (
             <Button
               variant="outline"
               className="w-full"
@@ -116,6 +122,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
 
+          {/* Return Device button */}
           {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
             <Button
               variant="outline"
@@ -135,7 +142,8 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
           
-          {userId && !isAdmin && !deviceIsPending && device.status === 'available' && (
+          {/* Report Issue button - only show for available devices without pending requests */}
+          {userId && !isAdmin && device.status === 'available' && !isPending && (
             <ReportDeviceDialog 
               device={device} 
               userId={userId} 

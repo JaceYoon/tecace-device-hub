@@ -1,6 +1,5 @@
-
 import React, { useEffect } from 'react';
-import { Device, User } from '@/types';
+import { Device } from '@/types';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -68,8 +67,9 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     }
   }, [open, form]);
 
-  // Improved check for pending requests
-  const hasPendingRequest = device.requestedBy !== undefined && device.requestedBy !== "";
+  const deviceHasPendingRequest = device.requestedBy !== undefined && device.requestedBy !== "";
+  const deviceIsPending = device.status === 'pending';
+  const hasPendingRequest = deviceIsPending || deviceHasPendingRequest;
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     if (hasPendingRequest) {
