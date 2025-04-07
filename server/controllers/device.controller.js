@@ -437,8 +437,8 @@ exports.requestDevice = async (req, res) => {
       return res.status(400).json({ message: 'Device is not available' });
     }
 
-    // Validate release request
-    if (type === 'release' && device.assignedToId !== req.user.id) {
+    // Validate release request - skip validation for admins
+    if (type === 'release' && device.assignedToId !== req.user.id && req.user.role !== 'admin') {
       return res.status(400).json({ message: 'Device is not assigned to you' });
     }
 

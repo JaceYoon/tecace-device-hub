@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -107,13 +106,24 @@ const DeviceReturnsPage = () => {
     try {
       // Create return requests for all selected devices
       for (const deviceId of selectedDevices) {
-        await dataService.addRequest({
-          deviceId,
-          userId: user?.id || '',
-          status: 'pending',
-          type: 'release',
-          reason: `Scheduled return on ${format(returnDate, 'yyyy-MM-dd')}`,
-        });
+        try {
+          // Create a direct update (for admins) to mark device as pending return
+          await dataService.updateDevice(deviceId, {
+            requestedBy: user?.id
+          });
+          
+          // Create a pending return request
+          await dataService.addRequest({
+            deviceId,
+            userId: user?.id || '',
+            status: 'pending',
+            type: 'release',
+            reason: `Scheduled return on ${format(returnDate, 'yyyy-MM-dd')}`,
+          });
+        } catch (error) {
+          console.error(`Error processing return for device ${deviceId}:`, error);
+          // Continue with other devices even if one fails
+        }
       }
       toast.success('Return requests created successfully');
       setSelectedDevices([]);
