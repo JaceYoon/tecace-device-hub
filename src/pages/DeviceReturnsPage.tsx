@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -100,8 +101,12 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          await dataService.devices.requestDevice(deviceId, 'return', {
-            reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`
+          // Fix here: Use the addRequest method instead of requestDevice with 3 args
+          await dataService.addRequest({
+            deviceId,
+            type: 'return',
+            reason: `Scheduled warehouse return on ${format(returnDate, 'yyyy-MM-dd')}`,
+            userId: user?.id || '',
           });
         } catch (error) {
           if (error instanceof Error && error.message.includes('must be released')) {
