@@ -1,4 +1,3 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
@@ -184,24 +183,7 @@ const deviceService = {
   requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
     console.log(`Sending ${type} request for device ${deviceId} with options:`, options);
     
-    // Check if this is a return request
-    const isReturnRequest = type === 'return' || (options?.reason && options.reason.includes('[RETURN]'));
-    
-    // Special handling for return requests due to database constraints
-    if (type === 'return' || isReturnRequest) {
-      console.log('Using special handling for return request');
-      
-      // Use release type instead to avoid database constraint issues
-      return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
-        method: 'POST',
-        body: JSON.stringify({ 
-          type: 'release', // Use release as type which is definitely in DB schema
-          reason: options?.reason || 'Device returned to warehouse [RETURN]'
-        })
-      });
-    }
-    
-    // Normal path for other request types
+    // All requests now use the actual type directly
     return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ 
@@ -269,61 +251,7 @@ export const dataService = {
     console.log('Processing addRequest with:', request);
     
     try {
-      // Special handling for return requests due to database constraints
-      if (request.type === 'return') {
-        console.log('Processing return request for device:', request.deviceId);
-        
-        try {
-          // Create a release request but mark it as return in the reason
-          const returnRequest = await deviceService.requestDevice(
-            request.deviceId,
-            'release', // Use release type which is accepted by DB
-            {
-              reason: request.reason ? `${request.reason} [RETURN]` : 'Device returned to warehouse [RETURN]'
-            }
-          );
-          
-          // After creating the return request, update the device status to available
-          // Don't use 'pending' since it might not be in the enum in the DB
-          await deviceService.update(request.deviceId, {
-            status: 'available',
-            requestedBy: request.userId
-          });
-          
-          console.log('Device marked for return successfully');
-          return returnRequest;
-        } catch (error) {
-          console.error('Special handling for return also failed:', error);
-          
-          // Fallback to mock implementation if API fails
-          console.log('Using fallback implementation for returns');
-          
-          // Create a mock request object
-          const mockRequest = {
-            id: `request-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-            deviceId: request.deviceId,
-            userId: request.userId,
-            type: 'release', // Use release since return might not be in DB
-            status: request.status || 'pending',
-            reason: (request.reason || 'Device returned to warehouse') + ' [RETURN]',
-            requestedAt: new Date()
-          } as DeviceRequest;
-          
-          try {
-            // Update the device to available status to avoid constraint errors
-            await deviceService.update(request.deviceId, {
-              status: 'available',
-              requestedBy: request.userId
-            });
-          } catch (error) {
-            console.error('Error updating device status:', error);
-          }
-          
-          return mockRequest;
-        }
-      }
-      
-      // For all other request types, use the normal flow
+      // Now directly use the return type without special handling
       return await deviceService.requestDevice(
         request.deviceId,
         request.type as 'assign' | 'release' | 'report' | 'return',

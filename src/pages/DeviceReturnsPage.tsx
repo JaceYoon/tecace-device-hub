@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -104,21 +103,17 @@ const DeviceReturnsPage = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
-          // Use the dataService.devices.requestDevice method with release type
-          // and a special flag to indicate it's a return. This approach avoids database constraints
           await dataService.devices.requestDevice(
             deviceId,
-            'release', // Use 'release' type which is accepted by the database
+            'return',
             {
-              reason: 'Device returned to warehouse [RETURN]'  // Mark as return in the reason
+              reason: 'Device returned to warehouse'
             }
           );
           
-          // Update the device status directly using mock implementation
-          // to avoid constraint issues
           try {
             await dataService.devices.update(deviceId, {
-              status: 'available', // Set to 'available' instead of 'pending' to avoid constraint error
+              status: 'pending',
               requestedBy: user?.id
             });
           } catch (error) {
