@@ -23,10 +23,7 @@ export const useDeviceManagement = (
     try {
       setIsDeleting(true);
       const success = await dataService.deleteDevice(device.id);
-      setIsDeleting(false);
-      setDeleteConfirmOpen(false);
-      setDeleteConfirmText('');
-
+      
       if (success) {
         toast.success('Device deleted');
         if (onAction) onAction();
@@ -35,8 +32,11 @@ export const useDeviceManagement = (
       }
     } catch (error) {
       console.error('Error deleting device:', error);
-      setIsDeleting(false);
       toast.error('Failed to delete device');
+    } finally {
+      setIsDeleting(false);
+      setDeleteConfirmOpen(false);
+      setDeleteConfirmText('');
     }
   };
 

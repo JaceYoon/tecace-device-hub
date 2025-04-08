@@ -30,15 +30,17 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
   onReject,
   onCancel
 }) => {
+  const isProcessing = processing === request.id;
+  
   return (
-    <TableRow key={request.id}>
+    <TableRow>
       <TableCell>{getDeviceName(request)}</TableCell>
       <TableCell>{getUserName(request.userId)}</TableCell>
       <TableCell>
         <RequestStatusBadge status={request.status} />
       </TableCell>
       <TableCell>
-        {formatDistanceToNow(new Date(request.requestedAt), {
+        {request.requestedAt && formatDistanceToNow(new Date(request.requestedAt), {
           addSuffix: true,
         })}
       </TableCell>
@@ -50,9 +52,9 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => onApprove(request.id)}
-                disabled={processing === request.id}
+                disabled={isProcessing}
               >
-                {processing === request.id ? (
+                {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Approving...
@@ -68,9 +70,9 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
                 variant="destructive"
                 size="sm"
                 onClick={() => onReject(request.id)}
-                disabled={processing === request.id}
+                disabled={isProcessing}
               >
-                {processing === request.id ? (
+                {isProcessing ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Rejecting...
@@ -89,9 +91,9 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
               variant="destructive"
               size="sm"
               onClick={() => onCancel(request.id)}
-              disabled={processing === request.id}
+              disabled={isProcessing}
             >
-              {processing === request.id ? (
+              {isProcessing ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Cancelling...

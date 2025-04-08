@@ -292,11 +292,6 @@ const DeviceReturnsPage = () => {
                         <span className="text-muted-foreground">IMEI:</span>
                         <span className="font-mono">{device.imei || 'N/A'}</span>
                       </div>
-                      {device.assignedTo && (
-                        <div className="text-amber-600 font-semibold">
-                          Note: This device must be released first before returning
-                        </div>
-                      )}
                     </div>
                   </CardContent>
                 </Card>
