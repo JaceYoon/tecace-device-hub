@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -14,7 +13,7 @@ import DeviceExpandButton from './DeviceExpandButton';
 import DeviceHeader from './DeviceHeader';
 import DeviceBasicInfo from './DeviceBasicInfo';
 import DeviceAssignmentInfo from './DeviceAssignmentInfo';
-import { useDeviceActions } from './useDeviceActions';
+import { useDeviceActions } from './hooks/useDeviceActions';
 
 interface DeviceCardProps {
   device: Device;
