@@ -80,6 +80,19 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       console.error(`API error response: ${response.status}`, errorData);
+      
+      // Check for data truncation errors with more specific error message
+      if (errorData.message && errorData.message.includes('Data truncated for column')) {
+        console.error('Database constraint error:', errorData.message);
+        
+        // For device status updates, we'll handle it differently
+        if (endpoint.includes('/devices/') && options.method === 'PUT') {
+          throw new Error(`Database constraint error: Could not update device status. The server database may have different constraints than expected.`);
+        } else {
+          throw new Error(`Database constraint error. Please check API and database compatibility.`);
+        }
+      }
+      
       throw new Error(errorData.message || `API error: ${response.status}`);
     }
 
@@ -168,15 +181,19 @@ export const deviceService = {
       method: 'DELETE'
     }),
 
-  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> =>
-    apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
+  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
+    console.log(`Sending ${type} request for device ${deviceId} with options:`, options);
+    
+    // Pass the type directly without any conversion
+    return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
       method: 'POST',
       body: JSON.stringify({ 
         type, 
         reportType: options?.reportType,
         reason: options?.reason
       })
-    }),
+    });
+  },
 
   processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
     apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
