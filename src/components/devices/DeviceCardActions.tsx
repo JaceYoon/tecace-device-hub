@@ -36,12 +36,9 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
-  // Fixed conditional logic to properly detect pending status
-  // Only consider a device pending if it's explicitly marked as pending OR has a non-empty requestedBy field
-  const deviceHasPendingRequest = device.requestedBy !== undefined && device.requestedBy !== "";
+  // Simplified logic to check for pending request status
+  const deviceHasPendingRequest = device.requestedBy && device.requestedBy !== "";
   const deviceIsPending = device.status === 'pending';
-  
-  // True pending state is either the device is in pending status OR has an active request
   const isPending = deviceIsPending || deviceHasPendingRequest;
 
   return (
@@ -61,7 +58,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
         </div>
       ) : (
         <>
-          {/* Request Device button - show when available and no pending requests */}
+          {/* Request Device button - only show for available devices without pending requests */}
           {device.status === 'available' && !isRequested && !isPending && (
             <Button
               className="w-full"
@@ -142,7 +139,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
           
-          {/* Report Issue button - only show for available devices without pending requests */}
+          {/* Report Issue button - show for available devices without pending requests */}
           {userId && !isAdmin && device.status === 'available' && !isPending && (
             <ReportDeviceDialog 
               device={device} 
@@ -150,9 +147,6 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
               onReportSubmitted={onAction}
             />
           )}
-          
-          {/* Empty div to create space before the collapse button */}
-          <div className="h-4"></div>
         </>
       )}
     </>
