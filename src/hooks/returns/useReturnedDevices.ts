@@ -24,7 +24,7 @@ export const useReturnedDevices = () => {
       console.error('Error loading returned devices:', error);
       
       // Use mock data as fallback
-      const mockDevices = deviceStore.getAllDevices().filter(
+      const mockDevices = deviceStore.getDevices().filter(
         device => device.status === 'returned'
       );
       setReturnedDevices(mockDevices);

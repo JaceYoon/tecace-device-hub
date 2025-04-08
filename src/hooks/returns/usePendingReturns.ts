@@ -31,7 +31,7 @@ export const usePendingReturns = () => {
       console.error('Error loading pending returns:', error);
       
       // Use mock data as fallback
-      const mockRequests = requestStore.getAllRequests().filter(
+      const mockRequests = requestStore.getRequests().filter(
         req => req.type === 'return' && req.status === 'pending'
       );
       setPendingReturnRequests(mockRequests);

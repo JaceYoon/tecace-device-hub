@@ -30,7 +30,7 @@ export const useReturnableDevices = () => {
       console.error('Error loading returnable devices:', error);
       
       // Use mock data as fallback
-      const mockDevices = deviceStore.getAllDevices().filter(
+      const mockDevices = deviceStore.getDevices().filter(
         device => device.status === 'available' || device.status === 'dead'
       );
       setDevices(mockDevices);

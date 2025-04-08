@@ -180,7 +180,7 @@ async function handleAuthDevRequest<T>(endpoint: string, options: RequestInit = 
 async function handleDeviceDevRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   // Get all devices
   if (endpoint === '/devices' && (!options.method || options.method === 'GET')) {
-    return deviceStore.getAllDevices() as unknown as T;
+    return deviceStore.getDevices() as unknown as T;
   }
   
   // Get device by ID
@@ -191,7 +191,7 @@ async function handleDeviceDevRequest<T>(endpoint: string, options: RequestInit 
   
   // Get all requests
   if (endpoint === '/devices/requests/all' && (!options.method || options.method === 'GET')) {
-    return requestStore.getAllRequests() as unknown as T;
+    return requestStore.getRequests() as unknown as T;
   }
   
   // Handle other device endpoints as needed
@@ -202,7 +202,7 @@ async function handleDeviceDevRequest<T>(endpoint: string, options: RequestInit 
 async function handleUserDevRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
   // Get all users
   if (endpoint === '/users' && (!options.method || options.method === 'GET')) {
-    return userStore.getAllUsers() as unknown as T;
+    return userStore.getUsers() as unknown as T;
   }
   
   // Get user by ID
