@@ -19,6 +19,7 @@ export const useDeviceReturns = () => {
   const initialLoadRef = useRef(false);
   const refreshInProgressRef = useRef(false);
   const isRefreshCallbackRegistered = useRef(false);
+  const refreshDebounceTimerRef = useRef<number | null>(null);
   
   // Initialize hooks
   const returnableDevices = useReturnableDevices();
@@ -46,6 +47,23 @@ export const useDeviceReturns = () => {
     }
     
     return serverAvailable;
+  }, []);
+
+  // Debounced refresh function to prevent multiple refreshes
+  const debouncedRefresh = useCallback(() => {
+    // Clear any existing timer
+    if (refreshDebounceTimerRef.current !== null) {
+      window.clearTimeout(refreshDebounceTimerRef.current);
+    }
+    
+    // Set a new timer
+    refreshDebounceTimerRef.current = window.setTimeout(() => {
+      if (!refreshInProgressRef.current) {
+        console.log('Debounced refresh triggered');
+        setRefreshTrigger(prev => prev + 1);
+        refreshDebounceTimerRef.current = null;
+      }
+    }, 500); // 500ms debounce delay
   }, []);
 
   // Manual refresh function that doesn't cause loops
@@ -115,6 +133,17 @@ export const useDeviceReturns = () => {
     checkServerAvailability
   ]);
 
+  // Custom function to handle the return cancellation
+  const handleReturnCancellation = useCallback(async (requestId: string) => {
+    await pendingReturns.cancelReturnRequest(requestId);
+    
+    // Use a longer timeout before triggering refresh to avoid loops
+    setTimeout(() => {
+      console.log('Refreshing after return cancellation');
+      manualRefresh();
+    }, 800); // Longer timeout to ensure all DB operations complete
+  }, [pendingReturns, manualRefresh]);
+
   // Register for global refresh events - only setup once
   useEffect(() => {
     if (isRefreshCallbackRegistered.current) {
@@ -122,11 +151,8 @@ export const useDeviceReturns = () => {
     }
     
     const unregister = dataService.registerRefreshCallback(() => {
-      // Only trigger a refresh if we're not already refreshing
-      if (!refreshInProgressRef.current) {
-        console.log('Global refresh callback triggered');
-        setRefreshTrigger(prev => prev + 1);
-      }
+      // Use debounced refresh to prevent loop
+      debouncedRefresh();
     });
     
     isRefreshCallbackRegistered.current = true;
@@ -134,8 +160,13 @@ export const useDeviceReturns = () => {
     return () => {
       if (unregister) unregister();
       isRefreshCallbackRegistered.current = false;
+      
+      // Clear any pending debounce timer on unmount
+      if (refreshDebounceTimerRef.current !== null) {
+        window.clearTimeout(refreshDebounceTimerRef.current);
+      }
     };
-  }, []);
+  }, [debouncedRefresh]);
 
   // Handle refreshTrigger changes with debounce
   useEffect(() => {
@@ -149,19 +180,28 @@ export const useDeviceReturns = () => {
       console.log('Refresh triggered, reloading data...');
       refreshInProgressRef.current = true;
       
-      // Use Promise.all to load all data at once
-      Promise.all([
-        returnableDevices.loadReturnableDevices(),
-        pendingReturns.loadPendingReturns(),
-        returnedDevices.loadReturnedDevices()
-      ])
-      .catch(error => {
-        console.error('Error refreshing data:', error);
-      })
-      .finally(() => {
-        // Reset refresh in progress flag
-        refreshInProgressRef.current = false;
-      });
+      // Stagger the reloads to prevent race conditions
+      const loadSequentially = async () => {
+        try {
+          // Load returnable devices first
+          await returnableDevices.loadReturnableDevices();
+          
+          // Then load pending returns
+          await pendingReturns.loadPendingReturns();
+          
+          // Finally load returned devices
+          await returnedDevices.loadReturnedDevices();
+        } catch (error) {
+          console.error('Error refreshing data:', error);
+        } finally {
+          // Reset refresh in progress flag after a short delay to prevent immediate re-trigger
+          setTimeout(() => {
+            refreshInProgressRef.current = false;
+          }, 300);
+        }
+      };
+      
+      loadSequentially();
     }
   }, [refreshTrigger, returnableDevices, pendingReturns, returnedDevices]);
 
@@ -191,7 +231,7 @@ export const useDeviceReturns = () => {
     handlePendingReturnSelect: pendingReturns.handlePendingReturnSelect,
     handleConfirmReturns: pendingReturns.handleConfirmReturns,
     confirmReturns: handleReturnConfirmation, // Use our custom handler instead
-    cancelReturnRequest: pendingReturns.cancelReturnRequest,
+    cancelReturnRequest: handleReturnCancellation, // Use custom handler instead
     
     // From returnedDevices hook
     returnedDevices: returnedDevices.returnedDevices,

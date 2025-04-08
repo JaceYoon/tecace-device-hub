@@ -14,6 +14,7 @@ export const useReturnableDevices = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
   const isLoadingRef = useRef(false); // Use ref to track loading state across renders
+  const processingRef = useRef(false); // Use ref to prevent concurrent processing
 
   const loadReturnableDevices = useCallback(async () => {
     // Don't try again if previous load failed
@@ -69,7 +70,15 @@ export const useReturnableDevices = () => {
   };
 
   const submitReturnRequests = async () => {
+    // Prevent concurrent submissions
+    if (processingRef.current) {
+      console.log('Already processing return requests, please wait...');
+      return;
+    }
+    
+    processingRef.current = true;
     setIsProcessing(true);
+    
     let successCount = 0;
     let errorCount = 0;
     
@@ -108,16 +117,19 @@ export const useReturnableDevices = () => {
         toast.error(`Failed to queue ${errorCount} device(s) for return`);
       }
       
+      // Update local state immediately
+      setDevices(prev => prev.filter(device => !selectedDevices.includes(device.id)));
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
-      
-      // IMPORTANT: Don't trigger global refresh or load data directly here
-      // This will be handled externally by the parent component
     } catch (error) {
       console.error('Error creating return requests:', error);
       toast.error('Failed to create return requests');
     } finally {
-      setIsProcessing(false);
+      // Add a small delay before releasing the processing lock
+      setTimeout(() => {
+        setIsProcessing(false);
+        processingRef.current = false;
+      }, 500);
     }
   };
 

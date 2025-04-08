@@ -10,10 +10,17 @@ export const useReturnedDevices = () => {
   const [isLoading, setIsLoading] = useState(false); // Initialize as false to prevent auto-loading
   const [loadFailed, setLoadFailed] = useState(false);
   const isLoadingRef = useRef(false); // Use ref to track loading state across renders
+  const dataLoadedRef = useRef(false); // Track if data has been loaded at least once
 
-  const loadReturnedDevices = useCallback(async () => {
-    // Don't try again if previous load failed
-    if (loadFailed) return;
+  const loadReturnedDevices = useCallback(async (force = false) => {
+    // Don't try again if previous load failed and we're not forcing
+    if (loadFailed && !force) return;
+    
+    // Don't reload if we already have data and we're not forcing
+    if (dataLoadedRef.current && returnedDevices.length > 0 && !force) {
+      console.log('Returned devices already loaded, skipping...');
+      return;
+    }
     
     // Prevent concurrent loading
     if (isLoadingRef.current) {
@@ -29,6 +36,7 @@ export const useReturnedDevices = () => {
       
       const returnedDevs = allDevices.filter(device => device.status === 'returned');
       setReturnedDevices(returnedDevs);
+      dataLoadedRef.current = true;
     } catch (error) {
       console.error('Error loading returned devices:', error);
       
@@ -43,7 +51,7 @@ export const useReturnedDevices = () => {
       setIsLoading(false);
       isLoadingRef.current = false;
     }
-  }, [loadFailed]);
+  }, [loadFailed, returnedDevices.length]);
 
   // No automatic loading effect - we'll only load when explicitly called
 
