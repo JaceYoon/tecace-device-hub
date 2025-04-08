@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
@@ -34,6 +34,10 @@ export const useReturnedDevices = () => {
       setIsLoading(false);
     }
   }, [loadFailed]);
+
+  // Only run the loadReturnedDevices function when explicitly called
+  // Do not automatically load devices when the hook is initialized
+  // This prevents the infinite loop by ensuring it's not called during every render
 
   return {
     returnedDevices,

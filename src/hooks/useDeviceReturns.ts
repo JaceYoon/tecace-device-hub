@@ -1,5 +1,5 @@
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, useRef } from 'react';
 import { useReturnableDevices } from './returns/useReturnableDevices';
 import { usePendingReturns } from './returns/usePendingReturns';
 import { useReturnedDevices } from './returns/useReturnedDevices';
@@ -16,6 +16,7 @@ export const useDeviceReturns = () => {
   const { isAdmin } = useAuthorization();
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const initialLoadRef = useRef(false);
   
   // Initialize hooks
   const returnableDevices = useReturnableDevices();
@@ -95,13 +96,14 @@ export const useDeviceReturns = () => {
     }
   }, [loadAllData, initialLoadAttempted, refreshTrigger]);
 
-  // Run initial data load using useEffect
+  // Run initial data load using useEffect with a ref to prevent multiple calls
   useEffect(() => {
-    // Only load data once
-    if (!initialLoadAttempted) {
+    // Only load data once using a ref to track if we've already loaded
+    if (!initialLoadRef.current) {
+      initialLoadRef.current = true;
       loadAllData();
     }
-  }, [loadAllData, initialLoadAttempted]);
+  }, [loadAllData]);
 
   // Combine and return all the functionality
   return {
