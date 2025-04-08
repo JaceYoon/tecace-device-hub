@@ -7,9 +7,9 @@ export const useDeviceManagement = (
   device: Device,
   isAdmin: boolean,
   deleteConfirmText: string,
-  setIsDeleting: (value: boolean) => void,
-  setDeleteConfirmOpen: (value: boolean) => void,
-  setDeleteConfirmText: (value: string) => void,
+  setIsDeleting: (deleting: boolean) => void,
+  setDeleteConfirmOpen: (open: boolean) => void,
+  setDeleteConfirmText: (text: string) => void,
   onAction?: () => void
 ) => {
   const handleDeleteDevice = async () => {
@@ -23,7 +23,10 @@ export const useDeviceManagement = (
     try {
       setIsDeleting(true);
       const success = await dataService.deleteDevice(device.id);
-      
+      setIsDeleting(false);
+      setDeleteConfirmOpen(false);
+      setDeleteConfirmText('');
+
       if (success) {
         toast.success('Device deleted');
         if (onAction) onAction();
@@ -32,11 +35,8 @@ export const useDeviceManagement = (
       }
     } catch (error) {
       console.error('Error deleting device:', error);
-      toast.error('Failed to delete device');
-    } finally {
       setIsDeleting(false);
-      setDeleteConfirmOpen(false);
-      setDeleteConfirmText('');
+      toast.error('Failed to delete device');
     }
   };
 

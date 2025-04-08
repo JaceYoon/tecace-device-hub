@@ -25,8 +25,18 @@ export const useConfirmationDialog = () => {
     });
   };
 
+  const closeConfirmation = () => {
+    setConfirmDialog({
+      isOpen: false,
+      title: '',
+      description: '',
+      action: () => {}
+    });
+  };
+
   return {
     confirmDialog,
-    showConfirmation
+    showConfirmation,
+    closeConfirmation
   };
 };

@@ -1,13 +1,14 @@
 
-import { User, Device } from '@/types';
+import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
 export const useDeviceRequests = (
   device: Device,
   user: User | null,
-  setIsProcessing: (value: boolean) => void,
+  setIsProcessing: (processing: boolean) => void,
   showConfirmation: (title: string, description: string, action: () => void) => void,
+  closeConfirmation: () => void,
   onAction?: () => void
 ) => {
   const handleRequestDevice = async () => {
@@ -52,6 +53,7 @@ export const useDeviceRequests = (
             toast.error('Failed to request device');
           } finally {
             setIsProcessing(false);
+            closeConfirmation();
           }
         }
       );

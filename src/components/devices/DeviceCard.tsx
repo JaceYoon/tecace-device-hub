@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -167,7 +168,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         }}
         onConfirm={() => {
           confirmDialog.action();
-          showConfirmation("", "", () => {});
         }}
       />
 

@@ -7,6 +7,7 @@ export const useDeviceStatus = (
   device: Device,
   user: User | null,
   showConfirmation: (title: string, description: string, action: () => void) => void,
+  closeConfirmation: () => void,
   onAction?: () => void
 ) => {
   const handleReleaseDevice = () => {
@@ -44,6 +45,9 @@ export const useDeviceStatus = (
           } catch (error) {
             console.error('Error updating device status:', error);
             toast.error('Failed to return device');
+          } finally {
+            // Ensure dialog is closed after operation completes
+            closeConfirmation();
           }
         } finally {
           // We don't need to set isProcessing here since it's handled in the parent component
@@ -56,14 +60,17 @@ export const useDeviceStatus = (
     showConfirmation(
       `Mark as ${newStatus}`,
       `Are you sure you want to mark this device as ${newStatus}?`,
-      () => {
+      async () => {
         try {
-          dataService.updateDevice(device.id, { status: newStatus });
+          await dataService.updateDevice(device.id, { status: newStatus });
           toast.success(`Device marked as ${newStatus}`);
           if (onAction) onAction();
         } catch (error) {
           console.error('Error updating device status:', error);
           toast.error('Failed to update device status');
+        } finally {
+          // Ensure dialog is closed after operation completes
+          closeConfirmation();
         }
       }
     );

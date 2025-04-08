@@ -40,17 +40,18 @@ export const useDeviceActions = (
   
   const { 
     confirmDialog, 
-    showConfirmation 
+    showConfirmation,
+    closeConfirmation
   } = useConfirmationDialog();
   
   const { 
     handleRequestDevice 
-  } = useDeviceRequests(device, user, setIsProcessing, showConfirmation, onAction);
+  } = useDeviceRequests(device, user, setIsProcessing, showConfirmation, closeConfirmation, onAction);
   
   const { 
     handleReleaseDevice, 
     handleStatusChange 
-  } = useDeviceStatus(device, user, showConfirmation, onAction);
+  } = useDeviceStatus(device, user, showConfirmation, closeConfirmation, onAction);
   
   const { 
     handleDeleteDevice, 
