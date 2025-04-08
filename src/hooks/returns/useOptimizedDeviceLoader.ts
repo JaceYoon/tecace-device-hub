@@ -104,8 +104,10 @@ export const useOptimizedDeviceLoader = (options?: DeviceLoaderOptions) => {
       // Try to load from mock data if API fails
       if (options?.mockDataFilter) {
         try {
-          // Use dataStore from utils/data/index.ts instead of deviceService.getDevices()
-          const mockDevices = dataService.getDevices();
+          // Get mock devices and await the Promise
+          const mockDevices = await dataService.getDevices();
+          
+          // Now that we have the actual array, we can filter it
           const filteredMockDevices = mockDevices.filter(options.mockDataFilter);
           setDevices(filteredMockDevices);
         } catch (mockError) {
