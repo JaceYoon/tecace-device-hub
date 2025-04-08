@@ -1,7 +1,7 @@
 
 import { userStore } from './userStore';
 import { deviceStore } from './deviceStore';
-import { requestStore } from './requestStore';
+import { requestStore } from './requests';
 import { User, UserRole } from '@/types';
 
 // Export the individual stores
