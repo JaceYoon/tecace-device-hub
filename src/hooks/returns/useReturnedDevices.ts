@@ -7,7 +7,7 @@ import { deviceStore } from '@/utils/data'; // Import mock data for fallback
 
 export const useReturnedDevices = () => {
   const [returnedDevices, setReturnedDevices] = useState<Device[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Initialize as false to prevent auto-loading
   const [loadFailed, setLoadFailed] = useState(false);
 
   const loadReturnedDevices = useCallback(async () => {
@@ -35,9 +35,7 @@ export const useReturnedDevices = () => {
     }
   }, [loadFailed]);
 
-  // Only run the loadReturnedDevices function when explicitly called
-  // Do not automatically load devices when the hook is initialized
-  // This prevents the infinite loop by ensuring it's not called during every render
+  // No automatic loading effect - we'll only load when explicitly called
 
   return {
     returnedDevices,

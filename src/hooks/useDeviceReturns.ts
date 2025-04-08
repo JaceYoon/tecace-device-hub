@@ -48,8 +48,9 @@ export const useDeviceReturns = () => {
 
   // Load all data at once function
   const loadAllData = useCallback(async () => {
-    // Don't try to load data if we've already attempted and the server isn't available
-    if (initialLoadAttempted && !serverAvailable) {
+    // Prevent multiple loading attempts
+    if (initialLoadRef.current) {
+      console.log('Initial load already attempted, skipping...');
       return;
     }
     
@@ -69,16 +70,16 @@ export const useDeviceReturns = () => {
       }
     }
     
+    initialLoadRef.current = true;
     setInitialLoadAttempted(true);
   }, [
     returnableDevices, 
     pendingReturns, 
-    returnedDevices, 
-    initialLoadAttempted, 
+    returnedDevices,
     checkServerAvailability
   ]);
 
-  // Register for global refresh events
+  // Register for global refresh events - only setup once
   useEffect(() => {
     const unregister = dataService.registerRefreshCallback(() => {
       setRefreshTrigger(prev => prev + 1);
@@ -89,18 +90,26 @@ export const useDeviceReturns = () => {
     };
   }, []);
 
-  // Refresh data when refreshTrigger changes
+  // Handle refreshTrigger changes (avoid infinite loop by checking initialLoadRef)
   useEffect(() => {
-    if (initialLoadAttempted) {
-      loadAllData();
+    if (refreshTrigger > 0 && initialLoadRef.current) {
+      console.log('Refresh triggered, reloading data...');
+      // Don't reset initialLoadRef here - we're just refreshing
+      Promise.all([
+        returnableDevices.loadReturnableDevices(),
+        pendingReturns.loadPendingReturns(),
+        returnedDevices.loadReturnedDevices()
+      ]).catch(error => {
+        console.error('Error refreshing data:', error);
+      });
     }
-  }, [loadAllData, initialLoadAttempted, refreshTrigger]);
+  }, [refreshTrigger, returnableDevices, pendingReturns, returnedDevices]);
 
-  // Run initial data load using useEffect with a ref to prevent multiple calls
+  // Run initial data load once on component mount
   useEffect(() => {
-    // Only load data once using a ref to track if we've already loaded
+    // Only load data if not already loaded
     if (!initialLoadRef.current) {
-      initialLoadRef.current = true;
+      console.log('Initial load starting...');
       loadAllData();
     }
   }, [loadAllData]);
