@@ -70,7 +70,7 @@ export const useReturnableDevices = () => {
         try {
           const device = devices.find(d => d.id === deviceId);
           
-          // Create return request - send only the allowed properties in the options
+          // Create return request
           const request = await dataService.devices.requestDevice(
             deviceId,
             'return',
@@ -79,24 +79,25 @@ export const useReturnableDevices = () => {
             }
           );
           
-          // Store additional device information in separate action
-          if (request && device) {
-            try {
-              // Update the request with device info after creation if needed
-              await dataService.updateDevice(deviceId, {
-                status: 'pending',
-                requestedBy: 'return'
-              });
-              
-              // Add the device info to our local pending returns array
+          // Immediately update the device status to 'pending'
+          try {
+            await dataService.updateDevice(deviceId, {
+              status: 'pending',
+              requestedBy: 'return'
+            });
+            
+            // Store the request with device info for immediate display
+            if (request && device) {
               pendingReturns.push({
                 ...request,
                 deviceName: device.project || device.projectGroup || 'Unknown Device',
-                type: device.type || 'Unknown Type'
+                type: device.type || 'Unknown Type',
+                serialNumber: device.serialNumber || 'N/A',
+                imei: device.imei || 'N/A'
               });
-            } catch (updateError) {
-              console.error(`Error updating device ${deviceId} status:`, updateError);
             }
+          } catch (updateError) {
+            console.error(`Error updating device ${deviceId} status:`, updateError);
           }
           
           successCount++;
@@ -120,6 +121,7 @@ export const useReturnableDevices = () => {
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       
+      // Don't call refreshCallback here as it's handled by the parent
       loadReturnableDevices(); // Refresh this component's data
     } catch (error) {
       console.error('Error creating return requests:', error);
