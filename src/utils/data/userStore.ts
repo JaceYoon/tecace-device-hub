@@ -15,7 +15,7 @@ class UserStore {
         // Update any existing users with outdated roles
         this.users = this.users.map(user => {
           // Map any legacy 'manager' role to 'TPM'
-          if (user.role === 'manager' || (typeof user.role === 'string' && !['admin', 'user', 'TPM', 'Software Engineer'].includes(user.role))) {
+          if ((user.role as any) === 'manager' || (typeof user.role === 'string' && !['admin', 'user', 'TPM', 'Software Engineer'].includes(user.role))) {
             // Map manager to TPM
             return {...user, role: 'TPM'};
           }
