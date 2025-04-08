@@ -1,3 +1,4 @@
+
 import React, { useEffect } from 'react';
 import { Device } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -67,7 +68,8 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     }
   }, [open, form]);
 
-  const deviceHasPendingRequest = device.requestedBy !== undefined && device.requestedBy !== "";
+  // Simplified pending request logic to match DeviceCardActions
+  const deviceHasPendingRequest = device.requestedBy && device.requestedBy !== "";
   const deviceIsPending = device.status === 'pending';
   const hasPendingRequest = deviceIsPending || deviceHasPendingRequest;
 
@@ -119,8 +121,6 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
     }
   };
 
-  const isReportButtonDisabled = hasPendingRequest;
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -128,10 +128,10 @@ const ReportDeviceDialog: React.FC<ReportDeviceDialogProps> = ({
           variant="outline" 
           size="sm" 
           className="w-full bg-orange-50 text-orange-700 border-orange-200 hover:bg-orange-100"
-          disabled={isReportButtonDisabled}
+          disabled={hasPendingRequest}
         >
           <Flag className="mr-2 h-4 w-4" />
-          {isReportButtonDisabled ? 'Request Pending' : 'Report Issue'}
+          {hasPendingRequest ? 'Request Pending' : 'Report Issue'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">

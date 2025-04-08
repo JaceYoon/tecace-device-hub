@@ -59,7 +59,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
       ) : (
         <>
           {/* Request Device button - only show for available devices without pending requests */}
-          {device.status === 'available' && !isRequested && !isPending && (
+          {device.status === 'available' && !hasRequested && !isPending && (
             <Button
               className="w-full"
               size="sm"
