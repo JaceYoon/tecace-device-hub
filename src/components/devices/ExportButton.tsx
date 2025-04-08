@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import { Device, User } from '@/types';
-import { exportDevicesToExcel } from '@/utils/exportUtils';
+import { exportDevicesToExcel } from '@/utils/exports'; // Updated import path
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface ExportButtonProps {
