@@ -17,6 +17,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        console.log('Checking authentication status...');
         const response = await authService.checkAuth();
         if (response && 'isAuthenticated' in response && response.isAuthenticated) {
           console.log('User authenticated from server:', response.user);
@@ -32,6 +33,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             // Log the user data with avatar URL for debugging
             console.log('Setting user with avatar:', userWithAvatar);
           }
+        } else {
+          console.log('User is not authenticated');
+          setUser(null);
         }
       } catch (error) {
         console.error('Authentication check error:', error);
@@ -65,11 +69,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
   // For backward compatibility, isManager is true if admin or manager
-  const isManager = user?.role === 'admin' || user?.role === 'manager';
+  const isManager = user?.role === 'admin' || user?.role === 'manager' || 
+                    user?.role === 'TPM' || user?.role === 'Software Engineer';
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      console.log('Login attempt for:', email);
       const response = await authService.login(email, password);
       
       if (response && 'success' in response && response.success) {
@@ -87,11 +93,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return true;
       }
       
+      console.error('Login failed - invalid response:', response);
       toast.error('Invalid email or password');
       return false;
     } catch (error) {
       console.error('Login error:', error);
-      toast.error('Invalid email or password');
+      toast.error('Failed to log in. Please check your credentials and connection.');
       return false;
     }
   };
@@ -270,9 +277,69 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     isManager,
     isAdmin,
     login,
-    logout,
-    register,
-    verifyEmail,
+    logout: async () => {
+      try {
+        await authService.logout();
+        setUser(null);
+        toast.info('Logged out successfully');
+        return true;
+      } catch (error) {
+        console.error('Logout error:', error);
+        setUser(null);
+        toast.error('Error logging out');
+        return false;
+      }
+    },
+    register: async (firstName, lastName, email, password) => {
+      try {
+        // Define the expected response type explicitly
+        interface RegisterResponse {
+          success: boolean;
+          user?: User;
+          message?: string;
+        }
+        
+        const response = await api.post<RegisterResponse>('/auth/register', {
+          name: `${firstName} ${lastName}`,
+          email,
+          password
+        });
+        
+        if (response && 'success' in response && response.success && response.user) {
+          // Include avatarUrl in the user object if it exists
+          const userWithAvatar = {
+            ...response.user,
+            avatarUrl: response.user.avatarUrl || undefined
+          };
+          
+          setUser(userWithAvatar);
+          toast.success('Account created successfully!');
+          return { 
+            success: true, 
+            message: 'Registration successful', 
+            verificationRequired: false 
+          };
+        }
+        
+        const message = response?.message || 'Error creating account';
+        toast.error(message);
+        return { 
+          success: false, 
+          message, 
+          verificationRequired: false 
+        };
+      } catch (error: any) {
+        console.error('Registration error:', error);
+        const message = error.response?.data?.message || 'Error creating account';
+        toast.error(message);
+        return { 
+          success: false, 
+          message, 
+          verificationRequired: false 
+        };
+      }
+    },
+    verifyEmail: async () => true,
     updateUserRole,
     updateUserProfile
   };

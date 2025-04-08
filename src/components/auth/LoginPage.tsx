@@ -33,6 +33,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const LoginPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('login');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
   
   const { isAuthenticated, login, register } = useAuth();
   const navigate = useNavigate();
@@ -63,11 +64,18 @@ const LoginPage: React.FC = () => {
 
   const handleLoginSubmit = async (values: LoginFormValues) => {
     setIsSubmitting(true);
+    setLoginError(null);
     try {
+      console.log('Attempting login with:', values.email);
       const success = await login(values.email, values.password);
       if (success) {
         navigate('/dashboard');
+      } else {
+        setLoginError('Invalid email or password. Please try again.');
       }
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('Failed to connect to server. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }

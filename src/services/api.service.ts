@@ -4,8 +4,8 @@ import { toast } from 'sonner';
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to true to always use mock data
-let devMode = true;
+// Development mode flag - set to false to use the actual API
+let devMode = false; // Changed to false to use real MariaDB connection
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -106,8 +106,8 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   } catch (error) {
     console.error(`API error for ${endpoint}:`, error);
     
-    // In case of server connection errors, fall back to dev mode
-    if (error instanceof Error && 
+    // In case of server connection errors, fall back to dev mode only if explicitly enabled
+    if (devMode && error instanceof Error && 
         (error.message.includes('Failed to fetch') || 
          error.message.includes('ECONNREFUSED') ||
          error.message.includes('AbortError') || 
@@ -117,14 +117,14 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
       return handleDevModeRequest<T>(endpoint, options);
     }
     
-    // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
+    // Show a more informative toast for connection errors
     if (error instanceof Error && 
         (error.message.includes('Failed to fetch') || 
          error.message.includes('ECONNREFUSED') ||
          error.message.includes('AbortError') || 
          error.message.includes('NetworkError'))) {
-      // Show a more informative toast
-      toast.error('Unable to connect to the server. Using mock data instead.');
+      // More specific error message for connection issues
+      toast.error('Unable to connect to the server. Please check that the server is running.');
     } else if (
       // Only show toast for non-auth related errors and non-network errors
       // and not for 401 errors after logout
@@ -223,6 +223,10 @@ export const authService = {
   login: (email: string, password: string): Promise<{ success: boolean; user: User; isAuthenticated: boolean }> => {
     // Reset logged out state on login attempt
     resetLoggedOutState();
+    
+    // Log auth attempt for debugging
+    console.log(`Attempting to login with email: ${email}`);
+    
     return apiCall<{ success: boolean; user: User; isAuthenticated: boolean }>('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password })
