@@ -31,9 +31,10 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
     let assignedToName = '';
     if (device.assignedToName) {
       assignedToName = device.assignedToName;
-    } else if (device.assignedTo && typeof device.assignedTo === 'object' && device.assignedTo !== null) {
-      // Check if assignedTo is not null and is an object before accessing name property
-      assignedToName = device.assignedTo.name || '';
+    } else if (device.assignedTo && typeof device.assignedTo === 'object') {
+      // Safely access name property with optional chaining
+      const assignedToObj = device.assignedTo as unknown as { name?: string };
+      assignedToName = assignedToObj?.name || '';
     }
 
     worksheet.addRow({
@@ -59,8 +60,9 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
       applyBorders(cell);
       
       // Center align cells except for notes
-      const columnIndex = cell._column?.number || 0;
-      if (columnIndex !== 10) { // Notes column is 10
+      // Get column index safely without using _column property
+      const columnNumber = (cell as any).col || 0;
+      if (columnNumber !== 10) { // Notes column is 10
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       }
     });

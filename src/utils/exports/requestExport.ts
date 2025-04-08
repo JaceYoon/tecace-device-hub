@@ -52,8 +52,9 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], users: User[], 
       applyBorders(cell);
       
       // Center align cells except for reason
-      const columnIndex = cell._column?.number || 0;
-      if (columnIndex !== 9) { // Reason column is 9
+      // Get column index safely without using _column property
+      const columnNumber = (cell as any).col || 0;
+      if (columnNumber !== 9) { // Reason column is 9
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       }
     });
