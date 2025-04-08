@@ -7,7 +7,7 @@ export const mockUsers: User[] = [
     id: '1',
     name: 'Admin User',
     email: 'admin@tecace.com',
-    role: 'manager',
+    role: 'TPM', // Changed from 'manager' to 'TPM'
     avatarUrl: 'https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff'
   },
   {
