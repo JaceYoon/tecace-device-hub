@@ -1,3 +1,4 @@
+
 import { useState, useCallback, useRef } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -15,7 +16,8 @@ export const useReturnableDevices = () => {
   const { 
     devices, 
     isLoading, 
-    loadDevices: loadReturnableDevices 
+    loadDevices: loadReturnableDevices,
+    setDevices // <-- Add this to fix the error
   } = useDeviceLoader({
     statusFilter: device => device.status === 'available' || device.status === 'dead',
     mockDataFilter: device => device.status === 'available' || device.status === 'dead'
