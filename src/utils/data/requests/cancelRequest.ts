@@ -1,7 +1,7 @@
 
 import { DeviceRequest } from '@/types';
 import { deviceStore } from '../deviceStore';
-import { isProcessing, markAsProcessing, stopProcessing } from './helpers';
+import { isProcessing, markAsProcessing, stopProcessing } from './processing';
 
 /**
  * Cancel a device request

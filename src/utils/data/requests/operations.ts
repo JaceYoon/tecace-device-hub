@@ -1,12 +1,7 @@
 
-// Export all request operations from this file
-
-import { addRequest } from './addRequest';
-import { processRequest } from './processRequest';
-import { cancelRequest } from './cancelRequest';
-
-export {
-  addRequest,
-  processRequest,
-  cancelRequest
-};
+/**
+ * Re-exports all request operation functions for backward compatibility
+ */
+export { addRequest } from './addRequest';
+export { processRequest } from './processRequest';
+export { cancelRequest } from './cancelRequest';
