@@ -47,9 +47,9 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     // Log the request for debugging
     console.log(`API Request: ${options.method || 'GET'} ${API_URL}${endpoint}`);
     
-    // Make the API call with a timeout of 15000ms (15 seconds) - increased timeout
+    // Make the API call with a timeout of 60000ms (60 seconds) - increased timeout for adding devices
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000);
+    const timeoutId = setTimeout(() => controller.abort(), 60000);
     
     // Make the API call
     const response = await fetch(`${API_URL}${endpoint}`, {

@@ -124,7 +124,6 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   // Filter requests based on user and type
   const getFilteredRequests = () => {
     // Show all requests except return requests on the regular RequestList
-    // Return requests are handled separately on the DeviceReturnsPage
     let filteredRequests = requests.filter(request => {
       // Filter out 'return' type requests by default
       if (request.type === 'return') return false;

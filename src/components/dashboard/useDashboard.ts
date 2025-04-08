@@ -109,9 +109,15 @@ export const useDashboard = () => {
     }
   };
 
-  // Filter requests
-  const pendingRequests = requests.filter(request => request.status === 'pending' && request.type !== 'report') || [];
-  const reportRequests = requests.filter(request => request.status === 'pending' && request.type === 'report') || [];
+  // Filter requests - exclude 'return' type requests from dashboard
+  const pendingRequests = requests.filter(request => 
+    request.status === 'pending' && 
+    request.type !== 'report' && 
+    request.type !== 'return') || [];
+    
+  const reportRequests = requests.filter(request => 
+    request.status === 'pending' && 
+    request.type === 'report') || [];
 
   // Set my device filter
   const myDeviceFilter = user ? String(user.id) : '';
