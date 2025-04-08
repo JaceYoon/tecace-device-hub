@@ -75,7 +75,11 @@ export const useReturnableDevices = () => {
             deviceId,
             'return',
             {
-              reason: 'Device returned to warehouse'
+              reason: 'Device returned to warehouse',
+              deviceName: device?.project,
+              type: device?.type,
+              serialNumber: device?.serialNumber,
+              imei: device?.imei
             }
           );
           

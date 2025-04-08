@@ -62,7 +62,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'devi
       applyBorders(cell);
       
       // Center align cells except for notes
-      const columnNumber = (cell as any).col || 0;
+      const columnNumber = (cell as any)._column ? (cell as any)._column.number : 0;
       if (columnNumber !== 10) { // Notes column is 10
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       }

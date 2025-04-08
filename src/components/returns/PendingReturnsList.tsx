@@ -53,9 +53,9 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
           {pendingReturnRequests.map(request => {
             const device = getDeviceData(request.deviceId);
             
-            // Get device details from either the device object or the request itself
-            const deviceName = device?.project || 'Unknown Device';
-            const deviceType = device?.type || 'Unknown Type';
+            // Get device details from either the device object or the request
+            const deviceName = device?.project || request.deviceName || 'Unknown Device';
+            const deviceType = device?.type || request.type || 'Unknown Type';
             
             return (
               <Card key={request.id} className="relative">
@@ -85,8 +85,8 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
                 </CardHeader>
                 <CardContent>
                   <DeviceBasicInfo 
-                    serialNumber={device?.serialNumber} 
-                    imei={device?.imei}
+                    serialNumber={device?.serialNumber || 'N/A'} 
+                    imei={device?.imei || 'N/A'}
                   />
                   <div className="mt-2 text-sm">
                     <span className="text-muted-foreground">Requested On:</span> 
