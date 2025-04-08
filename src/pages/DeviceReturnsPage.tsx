@@ -10,7 +10,7 @@ import ReturnedDevicesList from '@/components/returns/ReturnedDevicesList';
 import ReturnDateDialog from '@/components/returns/ReturnDateDialog';
 import ConfirmReturnsDialog from '@/components/returns/ConfirmReturnsDialog';
 
-// Import hook
+// Import refactored hook
 import { useDeviceReturns } from '@/hooks/useDeviceReturns';
 
 const DeviceReturnsPage = () => {
