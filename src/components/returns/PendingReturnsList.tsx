@@ -7,6 +7,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { format } from 'date-fns';
 import { X } from 'lucide-react';
 import { CheckCircle2 } from 'lucide-react';
+import DeviceBasicInfo from '@/components/devices/DeviceBasicInfo';
 
 interface PendingReturnsListProps {
   pendingReturnRequests: DeviceRequest[];
@@ -53,10 +54,8 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
             const device = getDeviceData(request.deviceId);
             
             // Get device details from either the device object or the request itself
-            const deviceName = device?.project || request.deviceName || 'Unknown Device';
-            const deviceType = device?.type || request.type || 'Unknown Type';
-            const serialNumber = device?.serialNumber || request.serialNumber || 'N/A';
-            const imei = device?.imei || request.imei || 'N/A';
+            const deviceName = device?.project || 'Unknown Device';
+            const deviceType = device?.type || 'Unknown Type';
             
             return (
               <Card key={request.id} className="relative">
@@ -85,19 +84,13 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="text-muted-foreground">Serial Number:</span> 
-                      <span className="font-mono">{serialNumber}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">IMEI:</span>
-                      <span className="font-mono">{imei}</span>
-                    </div>
-                    <div>
-                      <span className="text-muted-foreground">Requested On:</span> 
-                      <span>{request.requestedAt ? format(new Date(request.requestedAt), 'PPP') : 'N/A'}</span>
-                    </div>
+                  <DeviceBasicInfo 
+                    serialNumber={device?.serialNumber} 
+                    imei={device?.imei}
+                  />
+                  <div className="mt-2 text-sm">
+                    <span className="text-muted-foreground">Requested On:</span> 
+                    <span>{request.requestedAt ? format(new Date(request.requestedAt), 'PPP') : 'N/A'}</span>
                   </div>
                 </CardContent>
               </Card>
