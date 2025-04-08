@@ -1,9 +1,6 @@
 
-import { DeviceRequest, RequestStatus, DeviceStatus } from '@/types';
-import { deviceStore } from '../deviceStore';
-import { processRequest } from './operations';
-import { cancelRequest } from './operations';
-import { addRequest } from './operations';
+import { DeviceRequest, RequestStatus } from '@/types';
+import { addRequest, processRequest, cancelRequest } from './operations';
 
 export class RequestStore {
   private requests: DeviceRequest[] = [];
