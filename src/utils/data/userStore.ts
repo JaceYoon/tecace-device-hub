@@ -14,9 +14,17 @@ class UserStore {
         
         // Update any existing users with outdated roles
         this.users = this.users.map(user => {
-          if (!['admin', 'user', 'manager'].includes(user.role)) {
-            // Map TPM and Software Engineer to manager role
-            return {...user, role: 'manager'};
+          if (user.role === 'manager') {
+            // Map manager to TPM
+            return {...user, role: 'TPM'};
+          }
+          if (!['admin', 'user', 'TPM', 'Software Engineer'].includes(user.role)) {
+            // Map any other roles to their proper categories
+            if (user.role === 'TPM' || user.role.includes('PM') || user.role.includes('Manager')) {
+              return {...user, role: 'TPM'};
+            } else {
+              return {...user, role: 'Software Engineer'};
+            }
           }
           return user;
         });

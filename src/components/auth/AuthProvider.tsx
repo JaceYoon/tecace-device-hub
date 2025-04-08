@@ -51,7 +51,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Fetch users when user is authenticated
   useEffect(() => {
     const fetchUsers = async () => {
-      if (user && (user.role === 'admin' || user.role === 'manager')) {
+      if (user && (user.role === 'admin' || user.role === 'TPM' || user.role === 'Software Engineer')) {
         try {
           const response = await userService.getAll();
           if (Array.isArray(response)) {
@@ -68,8 +68,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
-  // For backward compatibility, isManager is true if admin or manager
-  const isManager = user?.role === 'admin' || user?.role === 'manager';
+  // For backward compatibility, isManager is true if admin or TPM or Software Engineer
+  const isManager = user?.role === 'admin' || user?.role === 'TPM' || user?.role === 'Software Engineer';
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -287,55 +287,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
     },
-    register: async (firstName, lastName, email, password) => {
-      try {
-        // Define the expected response type explicitly
-        interface RegisterResponse {
-          success: boolean;
-          user?: User;
-          message?: string;
-        }
-        
-        const response = await api.post<RegisterResponse>('/auth/register', {
-          name: `${firstName} ${lastName}`,
-          email,
-          password
-        });
-        
-        if (response && 'success' in response && response.success && response.user) {
-          // Include avatarUrl in the user object if it exists
-          const userWithAvatar = {
-            ...response.user,
-            avatarUrl: response.user.avatarUrl || undefined
-          };
-          
-          setUser(userWithAvatar);
-          toast.success('Account created successfully!');
-          return { 
-            success: true, 
-            message: 'Registration successful', 
-            verificationRequired: false 
-          };
-        }
-        
-        const message = response?.message || 'Error creating account';
-        toast.error(message);
-        return { 
-          success: false, 
-          message, 
-          verificationRequired: false 
-        };
-      } catch (error: any) {
-        console.error('Registration error:', error);
-        const message = error.response?.data?.message || 'Error creating account';
-        toast.error(message);
-        return { 
-          success: false, 
-          message, 
-          verificationRequired: false 
-        };
-      }
-    },
+    register,
     verifyEmail: async () => true,
     updateUserRole,
     updateUserProfile

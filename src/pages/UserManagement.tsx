@@ -39,7 +39,7 @@ const UserManagement: React.FC = () => {
   
   if (!isAdmin || !user) return null;
   
-  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'manager') => {
+  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'TPM' | 'Software Engineer') => {
     updateUserRole(userId, newRole);
   };
   
@@ -103,7 +103,9 @@ const UserManagement: React.FC = () => {
                         className={`${
                           userData.role === 'admin' 
                             ? 'bg-primary' 
-                            : 'bg-green-500/20 text-green-700'
+                            : userData.role === 'TPM' || userData.role === 'Software Engineer'
+                              ? 'bg-green-500/20 text-green-700'
+                              : 'bg-blue-500/20 text-blue-700'
                         }`}
                       >
                         {userData.role}
@@ -119,7 +121,7 @@ const UserManagement: React.FC = () => {
                           defaultValue={userData.role}
                           onValueChange={(value) => handleRoleChange(
                             userData.id, 
-                            value as 'admin' | 'user' | 'manager'
+                            value as 'admin' | 'user' | 'TPM' | 'Software Engineer'
                           )}
                         >
                           <SelectTrigger className="w-[160px]">
@@ -127,7 +129,8 @@ const UserManagement: React.FC = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="manager">Manager</SelectItem>
+                            <SelectItem value="TPM">TPM</SelectItem>
+                            <SelectItem value="Software Engineer">Software Engineer</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -143,7 +146,8 @@ const UserManagement: React.FC = () => {
           <p>
             Total users: {users.length} • 
             Admins: {users.filter(u => u.role === 'admin').length} • 
-            Managers: {users.filter(u => u.role === 'manager').length} • 
+            TPMs: {users.filter(u => u.role === 'TPM').length} • 
+            Engineers: {users.filter(u => u.role === 'Software Engineer').length} • 
             Users: {users.filter(u => u.role === 'user').length}
           </p>
         </div>
