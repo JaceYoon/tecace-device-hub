@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { DeviceRequest } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
+import { requestStore } from '@/utils/data'; // Import mock data for fallback
 
 export const usePendingReturns = () => {
   const [pendingReturnRequests, setPendingReturnRequests] = useState<DeviceRequest[]>([]);
@@ -12,8 +13,12 @@ export const usePendingReturns = () => {
   const [openConfirmDialog, setOpenConfirmDialog] = useState(false);
   const [confirmText, setConfirmText] = useState('');
   const [returnDate, setReturnDate] = useState<Date>(new Date());
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const loadPendingReturns = useCallback(async () => {
+    // Don't try again if previous load failed
+    if (loadFailed) return;
+    
     setIsLoading(true);
     try {
       const requests = await dataService.devices.getAllRequests();
@@ -24,11 +29,19 @@ export const usePendingReturns = () => {
       setPendingReturnRequests(pendingReturns);
     } catch (error) {
       console.error('Error loading pending returns:', error);
-      toast.error('Failed to load return requests');
+      
+      // Use mock data as fallback
+      const mockRequests = requestStore.getAllRequests().filter(
+        req => req.type === 'return' && req.status === 'pending'
+      );
+      setPendingReturnRequests(mockRequests);
+      
+      setLoadFailed(true);
+      // Don't show toast here as it'll create too many toasts with all hooks
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadFailed]);
 
   const handlePendingReturnSelect = (requestId: string) => {
     setSelectedPendingReturns(prev => 

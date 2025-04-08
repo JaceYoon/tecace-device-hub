@@ -1,12 +1,11 @@
-
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 
-// Development mode flag - set to false to always use real backend API
-let devMode = false;
+// Development mode flag - set to true to always use mock data
+let devMode = true;
 
 // Log the API URL for debugging
 console.log('Using API URL:', API_URL);
@@ -33,6 +32,11 @@ import { deviceStore, userStore, requestStore } from '../utils/data';
 
 // Helper function for API calls with dev mode fallback
 async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  // If in dev mode, use mock data
+  if (devMode) {
+    return handleDevModeRequest<T>(endpoint, options);
+  }
+
   try {
     // Prepare headers
     const headers = {
@@ -102,6 +106,17 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
   } catch (error) {
     console.error(`API error for ${endpoint}:`, error);
     
+    // In case of server connection errors, fall back to dev mode
+    if (error instanceof Error && 
+        (error.message.includes('Failed to fetch') || 
+         error.message.includes('ECONNREFUSED') ||
+         error.message.includes('AbortError') || 
+         error.message.includes('NetworkError'))) {
+         
+      console.log('Falling back to dev mode due to connection error');
+      return handleDevModeRequest<T>(endpoint, options);
+    }
+    
     // Check if it's a connection error (ECONNREFUSED, Failed to fetch, etc.)
     if (error instanceof Error && 
         (error.message.includes('Failed to fetch') || 
@@ -109,7 +124,7 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
          error.message.includes('AbortError') || 
          error.message.includes('NetworkError'))) {
       // Show a more informative toast
-      toast.error('Unable to connect to the server. Please check that the server is running.');
+      toast.error('Unable to connect to the server. Using mock data instead.');
     } else if (
       // Only show toast for non-auth related errors and non-network errors
       // and not for 401 errors after logout
@@ -121,6 +136,83 @@ async function apiCall<T>(endpoint: string, options: RequestInit = {}): Promise<
     
     throw error;
   }
+}
+
+// Handle requests in dev mode with mock data
+async function handleDevModeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  console.log(`DEV MODE: Handling ${options.method || 'GET'} ${endpoint}`);
+  
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  if (endpoint.startsWith('/auth')) {
+    return handleAuthDevRequest<T>(endpoint, options);
+  } else if (endpoint.startsWith('/devices')) {
+    return handleDeviceDevRequest<T>(endpoint, options);
+  } else if (endpoint.startsWith('/users')) {
+    return handleUserDevRequest<T>(endpoint, options);
+  }
+  
+  // Default fallback
+  console.warn(`DEV MODE: No mock handler for ${endpoint}`);
+  return {} as T;
+}
+
+// Handle auth requests in dev mode
+async function handleAuthDevRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  // Simulate authentication
+  if (endpoint === '/auth/check') {
+    const isLoggedIn = localStorage.getItem('dev-user-logged-in') === 'true';
+    const userId = localStorage.getItem('dev-user-id') || '1';
+    const user = isLoggedIn ? userStore.getUserById(userId) : null;
+    
+    return {
+      isAuthenticated: isLoggedIn,
+      user: user
+    } as unknown as T;
+  }
+  
+  // Other auth endpoints can be added as needed
+  return {} as T;
+}
+
+// Handle device requests in dev mode
+async function handleDeviceDevRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  // Get all devices
+  if (endpoint === '/devices' && (!options.method || options.method === 'GET')) {
+    return deviceStore.getAllDevices() as unknown as T;
+  }
+  
+  // Get device by ID
+  if (endpoint.match(/^\/devices\/\d+$/) && (!options.method || options.method === 'GET')) {
+    const id = endpoint.split('/').pop();
+    return deviceStore.getDeviceById(id!) as unknown as T;
+  }
+  
+  // Get all requests
+  if (endpoint === '/devices/requests/all' && (!options.method || options.method === 'GET')) {
+    return requestStore.getAllRequests() as unknown as T;
+  }
+  
+  // Handle other device endpoints as needed
+  return {} as T;
+}
+
+// Handle user requests in dev mode
+async function handleUserDevRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  // Get all users
+  if (endpoint === '/users' && (!options.method || options.method === 'GET')) {
+    return userStore.getAllUsers() as unknown as T;
+  }
+  
+  // Get user by ID
+  if (endpoint.match(/^\/users\/\d+$/) && (!options.method || options.method === 'GET')) {
+    const id = endpoint.split('/').pop();
+    return userStore.getUserById(id!) as unknown as T;
+  }
+  
+  // Handle other user endpoints as needed
+  return {} as T;
 }
 
 // Auth services

@@ -3,6 +3,7 @@ import { useState, useCallback } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
+import { deviceStore } from '@/utils/data'; // Import mock data for fallback
 
 export const useReturnableDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
@@ -11,8 +12,12 @@ export const useReturnableDevices = () => {
   const [returnDate, setReturnDate] = useState<Date>(new Date());
   const [openReturnDateDialog, setOpenReturnDateDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [loadFailed, setLoadFailed] = useState(false);
 
   const loadReturnableDevices = useCallback(async () => {
+    // Don't try again if previous load failed
+    if (loadFailed) return;
+    
     setIsLoading(true);
     try {
       const allDevices = await dataService.devices.getAll();
@@ -23,11 +28,19 @@ export const useReturnableDevices = () => {
       setDevices(returnableDevices);
     } catch (error) {
       console.error('Error loading returnable devices:', error);
-      toast.error('Failed to load devices');
+      
+      // Use mock data as fallback
+      const mockDevices = deviceStore.getAllDevices().filter(
+        device => device.status === 'available' || device.status === 'dead'
+      );
+      setDevices(mockDevices);
+      
+      setLoadFailed(true);
+      toast.error('Failed to load devices from server, using demo data');
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [loadFailed]);
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDevices(prev => 

@@ -1,13 +1,20 @@
 
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useReturnableDevices } from './returns/useReturnableDevices';
 import { usePendingReturns } from './returns/usePendingReturns';
 import { useReturnedDevices } from './returns/useReturnedDevices';
 import { useDeviceInfo } from './returns/useDeviceInfo';
 import { useAuthorization } from './returns/useAuthorization';
+import { dataService } from '@/services/data.service';
+import { toast } from 'sonner';
+
+// Add a flag to check if the server is available
+let serverChecked = false;
+let serverAvailable = false;
 
 export const useDeviceReturns = () => {
   const { isAdmin } = useAuthorization();
+  const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   
   // Initialize hooks
   const returnableDevices = useReturnableDevices();
@@ -18,17 +25,64 @@ export const useDeviceReturns = () => {
     returnedDevices.returnedDevices
   );
 
+  // Check if the server is available
+  const checkServerAvailability = useCallback(async () => {
+    if (serverChecked) return serverAvailable;
+    
+    try {
+      // Try to ping the server
+      await dataService.get('/auth/check');
+      serverAvailable = true;
+    } catch (error) {
+      console.error('Server connection failed:', error);
+      serverAvailable = false;
+      toast.error('Unable to connect to the server. Using mock data.');
+    } finally {
+      serverChecked = true;
+    }
+    
+    return serverAvailable;
+  }, []);
+
   // Load all data at once function
-  const loadAllData = useCallback(() => {
-    returnableDevices.loadReturnableDevices();
-    pendingReturns.loadPendingReturns();
-    returnedDevices.loadReturnedDevices();
-  }, [returnableDevices, pendingReturns, returnedDevices]);
+  const loadAllData = useCallback(async () => {
+    // Don't try to load data if we've already attempted and the server isn't available
+    if (initialLoadAttempted && !serverAvailable) {
+      return;
+    }
+    
+    // Check server first
+    const isServerAvailable = await checkServerAvailability();
+    
+    // Only attempt to load data if server is available
+    if (isServerAvailable) {
+      try {
+        await Promise.all([
+          returnableDevices.loadReturnableDevices(),
+          pendingReturns.loadPendingReturns(),
+          returnedDevices.loadReturnedDevices()
+        ]);
+      } catch (error) {
+        console.error('Error loading device data:', error);
+      }
+    }
+    
+    setInitialLoadAttempted(true);
+  }, [
+    returnableDevices, 
+    pendingReturns, 
+    returnedDevices, 
+    initialLoadAttempted, 
+    checkServerAvailability
+  ]);
 
   // Run initial data load using useEffect
   useEffect(() => {
-    loadAllData();
-  }, [loadAllData]);
+    // Only load data once
+    if (!initialLoadAttempted) {
+      loadAllData();
+    }
+  }, [loadAllData, initialLoadAttempted]);
 
   // Combine and return all the functionality
   return {
