@@ -5,8 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { X } from 'lucide-react';
-import { CheckCircle2 } from 'lucide-react';
+import { X, CheckCircle2, AlertCircle } from 'lucide-react';
 
 interface PendingReturnsListProps {
   pendingReturnRequests: DeviceRequest[];
@@ -51,6 +50,13 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pendingReturnRequests.map(request => {
             const device = getDeviceData(request.deviceId);
+            const deviceName = device?.project || request.deviceName || 'Unknown Device';
+            const deviceType = device?.type || 'Unknown Type';
+            const serialNumber = device?.serialNumber || 'N/A';
+            const imei = device?.imei || 'N/A';
+            
+            const missingInfo = !device || !device.serialNumber || !device.imei;
+            
             return (
               <Card key={request.id} className="relative">
                 <CardHeader className="pb-2">
@@ -62,8 +68,13 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
                         id={`request-${request.id}`}
                       />
                       <div>
-                        <CardTitle className="text-lg">{device?.project || 'Unknown Device'}</CardTitle>
-                        <CardDescription>{device?.type || 'Unknown Type'}</CardDescription>
+                        <CardTitle className="text-lg">{deviceName}</CardTitle>
+                        <CardDescription>{deviceType}</CardDescription>
+                        {missingInfo && (
+                          <span className="text-xs text-amber-500 flex items-center gap-1 mt-1">
+                            <AlertCircle className="h-3 w-3" /> Missing device information
+                          </span>
+                        )}
                       </div>
                     </div>
                     <Button 
@@ -81,11 +92,11 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
                   <div className="space-y-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Serial Number:</span> 
-                      <span className="font-mono">{device?.serialNumber || 'N/A'}</span>
+                      <span className="font-mono">{serialNumber}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">IMEI:</span>
-                      <span className="font-mono">{device?.imei || 'N/A'}</span>
+                      <span className="font-mono">{imei}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Requested On:</span> 

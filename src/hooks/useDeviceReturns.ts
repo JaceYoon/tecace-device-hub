@@ -15,6 +15,7 @@ let serverAvailable = false;
 export const useDeviceReturns = () => {
   const { isAdmin } = useAuthorization();
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   
   // Initialize hooks
   const returnableDevices = useReturnableDevices();
@@ -75,6 +76,24 @@ export const useDeviceReturns = () => {
     initialLoadAttempted, 
     checkServerAvailability
   ]);
+
+  // Register for global refresh events
+  useEffect(() => {
+    const unregister = dataService.registerRefreshCallback(() => {
+      setRefreshTrigger(prev => prev + 1);
+    });
+    
+    return () => {
+      if (unregister) unregister();
+    };
+  }, []);
+
+  // Refresh data when refreshTrigger changes
+  useEffect(() => {
+    if (initialLoadAttempted) {
+      loadAllData();
+    }
+  }, [loadAllData, initialLoadAttempted, refreshTrigger]);
 
   // Run initial data load using useEffect
   useEffect(() => {

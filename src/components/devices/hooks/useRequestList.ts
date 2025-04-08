@@ -1,5 +1,4 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { DeviceRequest, User, Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
@@ -19,7 +18,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   const [processing, setProcessing] = useState<string | null>(null);
   const { isAdmin, user } = useAuth();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const [requestsData, usersData, devicesData] = await Promise.all([
@@ -37,11 +36,15 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  const handleRefresh = useCallback(() => {
+    fetchData();
+  }, [fetchData]);
 
   useEffect(() => {
     fetchData();
-  }, [refreshTrigger]);
+  }, [fetchData, refreshTrigger]);
 
   const handleApprove = async (requestId: string) => {
     setProcessing(requestId);
@@ -104,10 +107,10 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   };
 
   const getDeviceName = (request: DeviceRequest) => {
-    const deviceInfo = getDeviceInfo(request.deviceId);
+    const device = devices.find(d => d.id === request.deviceId);
     
-    if (deviceInfo.name !== 'Unknown Device') {
-      return deviceInfo.name;
+    if (device && device.project) {
+      return device.project;
     }
     
     if (request.device?.project) {
@@ -118,17 +121,12 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
       return request.deviceName;
     }
     
-    return 'N/A';
+    return 'Unknown Device';
   };
 
-  // Filter requests based on user and type
   const getFilteredRequests = () => {
-    // Show all requests except return requests on the regular RequestList
     let filteredRequests = requests.filter(request => {
-      // Filter out 'return' type requests by default
       if (request.type === 'return') return false;
-      
-      // Also filter out report requests for now
       return request.type !== 'report';
     });
     
@@ -145,7 +143,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
 
     return filteredRequests;
   };
-  
+
   return {
     loading,
     processing,
@@ -155,6 +153,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     handleApprove,
     handleReject,
     handleCancel,
+    handleRefresh,
     isAdmin,
     user
   };

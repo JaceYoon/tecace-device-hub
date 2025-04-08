@@ -1,9 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, RefreshCw } from 'lucide-react';
 import RequestTable from './RequestTable';
 import { useRequestList } from './hooks/useRequestList';
+import { Button } from '@/components/ui/button';
+import { dataService } from '@/services/data.service';
+import { exportRequestsToExcel } from '@/utils/exports';
 
 interface RequestListProps {
   title?: string;
@@ -18,7 +21,7 @@ const RequestList: React.FC<RequestListProps> = ({
   onRequestProcessed, 
   refreshTrigger,
   userId,
-  showExportButton
+  showExportButton = false
 }) => {
   const {
     loading,
@@ -30,17 +33,47 @@ const RequestList: React.FC<RequestListProps> = ({
     handleReject,
     handleCancel,
     isAdmin,
-    user
+    user,
+    handleRefresh
   } = useRequestList({
     userId,
     onRequestProcessed,
     refreshTrigger
   });
 
+  // Register for global refresh events
+  useEffect(() => {
+    const unregister = dataService.registerRefreshCallback(handleRefresh);
+    return () => {
+      if (unregister) unregister();
+    };
+  }, [handleRefresh]);
+
+  const handleExport = () => {
+    if (filteredRequests.length > 0) {
+      exportRequestsToExcel(filteredRequests, 'device_requests.xlsx');
+    }
+  };
+
   return (
     <Card className="w-full">
-      <CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
+        <div className="flex gap-2">
+          {showExportButton && filteredRequests.length > 0 && (
+            <Button variant="outline" size="sm" onClick={handleExport}>
+              Export
+            </Button>
+          )}
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={handleRefresh} 
+            title="Refresh"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         {loading ? (

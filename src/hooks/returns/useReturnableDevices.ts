@@ -1,4 +1,3 @@
-
 import { useState, useCallback } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -101,8 +100,11 @@ export const useReturnableDevices = () => {
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       
-      // Don't call refreshCallback here as it's handled by the parent
-      loadReturnableDevices(); // Refresh this component's data
+      // Trigger a global refresh to update all components
+      dataService.triggerRefresh();
+      
+      // Refresh this component's data
+      loadReturnableDevices();
     } catch (error) {
       console.error('Error creating return requests:', error);
       toast.error('Failed to create return requests');

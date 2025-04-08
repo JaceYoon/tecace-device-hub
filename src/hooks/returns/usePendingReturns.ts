@@ -21,11 +21,20 @@ export const usePendingReturns = () => {
     
     setIsLoading(true);
     try {
+      // Load all requests and filter for return requests
       const requests = await dataService.devices.getAllRequests();
       
       const pendingReturns = requests.filter(
         req => req.type === 'return' && req.status === 'pending'
       );
+      
+      // Also fetch all devices to ensure we have the latest data
+      try {
+        await dataService.devices.getAll();
+      } catch (error) {
+        console.error('Error loading devices during pending returns:', error);
+      }
+      
       setPendingReturnRequests(pendingReturns);
     } catch (error) {
       console.error('Error loading pending returns:', error);
@@ -137,8 +146,12 @@ export const usePendingReturns = () => {
       }
       
       toast.success('Return request cancelled');
-      // Don't call refreshCallback here as it's handled by the parent
-      loadPendingReturns(); // Refresh this component's data
+      
+      // Trigger global refresh
+      dataService.triggerRefresh();
+      
+      // Refresh this component's data
+      loadPendingReturns();
     } catch (error) {
       console.error('Error cancelling return request:', error);
       toast.error('Failed to cancel return request');
