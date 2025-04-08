@@ -17,6 +17,7 @@ export const useDeviceReturns = () => {
   const [initialLoadAttempted, setInitialLoadAttempted] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const initialLoadRef = useRef(false);
+  const refreshInProgressRef = useRef(false);
   
   // Initialize hooks
   const returnableDevices = useReturnableDevices();
@@ -82,7 +83,10 @@ export const useDeviceReturns = () => {
   // Register for global refresh events - only setup once
   useEffect(() => {
     const unregister = dataService.registerRefreshCallback(() => {
-      setRefreshTrigger(prev => prev + 1);
+      // Only set the refresh trigger if we're not already refreshing
+      if (!refreshInProgressRef.current) {
+        setRefreshTrigger(prev => prev + 1);
+      }
     });
     
     return () => {
@@ -90,17 +94,30 @@ export const useDeviceReturns = () => {
     };
   }, []);
 
-  // Handle refreshTrigger changes (avoid infinite loop by checking initialLoadRef)
+  // Handle refreshTrigger changes (avoid infinite loop by checking refreshInProgressRef)
   useEffect(() => {
     if (refreshTrigger > 0 && initialLoadRef.current) {
+      // Prevent multiple concurrent refreshes
+      if (refreshInProgressRef.current) {
+        console.log('Refresh already in progress, skipping...');
+        return;
+      }
+      
       console.log('Refresh triggered, reloading data...');
-      // Don't reset initialLoadRef here - we're just refreshing
+      refreshInProgressRef.current = true;
+      
+      // Use Promise.all to load all data at once
       Promise.all([
         returnableDevices.loadReturnableDevices(),
         pendingReturns.loadPendingReturns(),
         returnedDevices.loadReturnedDevices()
-      ]).catch(error => {
+      ])
+      .catch(error => {
         console.error('Error refreshing data:', error);
+      })
+      .finally(() => {
+        // Reset refresh in progress flag
+        refreshInProgressRef.current = false;
       });
     }
   }, [refreshTrigger, returnableDevices, pendingReturns, returnedDevices]);

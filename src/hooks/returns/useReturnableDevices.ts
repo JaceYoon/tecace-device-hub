@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -7,7 +8,7 @@ import { deviceStore } from '@/utils/data'; // Import mock data for fallback
 export const useReturnableDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Initialize as false to prevent auto-loading
   const [returnDate, setReturnDate] = useState<Date>(new Date());
   const [openReturnDateDialog, setOpenReturnDateDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -100,11 +101,13 @@ export const useReturnableDevices = () => {
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       
-      // Trigger a global refresh to update all components
-      dataService.triggerRefresh();
+      // Delay the refresh to avoid race conditions
+      setTimeout(() => {
+        // Trigger a global refresh to update all components
+        dataService.triggerRefresh();
+      }, 500);
       
-      // Refresh this component's data
-      loadReturnableDevices();
+      // No need to call loadReturnableDevices() here as it will happen via the global refresh
     } catch (error) {
       console.error('Error creating return requests:', error);
       toast.error('Failed to create return requests');
