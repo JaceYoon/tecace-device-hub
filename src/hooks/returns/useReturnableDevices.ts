@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
@@ -13,12 +13,21 @@ export const useReturnableDevices = () => {
   const [openReturnDateDialog, setOpenReturnDateDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [loadFailed, setLoadFailed] = useState(false);
+  const isLoadingRef = useRef(false); // Use ref to track loading state across renders
 
   const loadReturnableDevices = useCallback(async () => {
     // Don't try again if previous load failed
     if (loadFailed) return;
     
+    // Prevent concurrent loading
+    if (isLoadingRef.current) {
+      console.log('Already loading returnable devices, skipping...');
+      return;
+    }
+    
+    isLoadingRef.current = true;
     setIsLoading(true);
+    
     try {
       const allDevices = await dataService.devices.getAll();
       
@@ -39,6 +48,7 @@ export const useReturnableDevices = () => {
       toast.error('Failed to load devices from server, using demo data');
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
   }, [loadFailed]);
 
@@ -101,13 +111,8 @@ export const useReturnableDevices = () => {
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       
-      // Delay the refresh to avoid race conditions
-      setTimeout(() => {
-        // Trigger a global refresh to update all components
-        dataService.triggerRefresh();
-      }, 500);
-      
-      // No need to call loadReturnableDevices() here as it will happen via the global refresh
+      // IMPORTANT: Don't trigger global refresh or load data directly here
+      // This will be handled externally by the parent component
     } catch (error) {
       console.error('Error creating return requests:', error);
       toast.error('Failed to create return requests');

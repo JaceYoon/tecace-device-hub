@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
@@ -9,12 +9,21 @@ export const useReturnedDevices = () => {
   const [returnedDevices, setReturnedDevices] = useState<Device[]>([]);
   const [isLoading, setIsLoading] = useState(false); // Initialize as false to prevent auto-loading
   const [loadFailed, setLoadFailed] = useState(false);
+  const isLoadingRef = useRef(false); // Use ref to track loading state across renders
 
   const loadReturnedDevices = useCallback(async () => {
     // Don't try again if previous load failed
     if (loadFailed) return;
     
+    // Prevent concurrent loading
+    if (isLoadingRef.current) {
+      console.log('Already loading returned devices, skipping...');
+      return;
+    }
+    
+    isLoadingRef.current = true;
     setIsLoading(true);
+    
     try {
       const allDevices = await dataService.devices.getAll();
       
@@ -32,6 +41,7 @@ export const useReturnedDevices = () => {
       setLoadFailed(true);
     } finally {
       setIsLoading(false);
+      isLoadingRef.current = false;
     }
   }, [loadFailed]);
 

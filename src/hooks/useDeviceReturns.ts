@@ -18,6 +18,7 @@ export const useDeviceReturns = () => {
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const initialLoadRef = useRef(false);
   const refreshInProgressRef = useRef(false);
+  const isRefreshCallbackRegistered = useRef(false);
   
   // Initialize hooks
   const returnableDevices = useReturnableDevices();
@@ -47,13 +48,45 @@ export const useDeviceReturns = () => {
     return serverAvailable;
   }, []);
 
+  // Manual refresh function that doesn't cause loops
+  const manualRefresh = useCallback(() => {
+    if (!refreshInProgressRef.current) {
+      console.log('Manual refresh triggered');
+      setRefreshTrigger(prev => prev + 1);
+    }
+  }, []);
+
+  // Custom function to handle the return request submission
+  const handleReturnRequest = useCallback(async () => {
+    await returnableDevices.submitReturnRequests();
+    
+    // Wait a bit for the database to update
+    setTimeout(() => {
+      console.log('Refreshing after return request submission');
+      manualRefresh();
+    }, 500);
+  }, [returnableDevices, manualRefresh]);
+
+  // Custom function to handle the return confirmation
+  const handleReturnConfirmation = useCallback(async () => {
+    await pendingReturns.confirmReturns();
+    
+    // Wait a bit for the database to update
+    setTimeout(() => {
+      console.log('Refreshing after return confirmation');
+      manualRefresh();
+    }, 500);
+  }, [pendingReturns, manualRefresh]);
+
   // Load all data at once function
   const loadAllData = useCallback(async () => {
     // Prevent multiple loading attempts
-    if (initialLoadRef.current) {
-      console.log('Initial load already attempted, skipping...');
+    if (initialLoadRef.current || refreshInProgressRef.current) {
+      console.log('Initial load already attempted or refresh in progress, skipping...');
       return;
     }
+    
+    refreshInProgressRef.current = true;
     
     // Check server first
     const isServerAvailable = await checkServerAvailability();
@@ -61,6 +94,7 @@ export const useDeviceReturns = () => {
     // Only attempt to load data if server is available
     if (isServerAvailable) {
       try {
+        console.log('Loading all data...');
         await Promise.all([
           returnableDevices.loadReturnableDevices(),
           pendingReturns.loadPendingReturns(),
@@ -73,6 +107,7 @@ export const useDeviceReturns = () => {
     
     initialLoadRef.current = true;
     setInitialLoadAttempted(true);
+    refreshInProgressRef.current = false;
   }, [
     returnableDevices, 
     pendingReturns, 
@@ -82,19 +117,27 @@ export const useDeviceReturns = () => {
 
   // Register for global refresh events - only setup once
   useEffect(() => {
+    if (isRefreshCallbackRegistered.current) {
+      return; // Skip if already registered
+    }
+    
     const unregister = dataService.registerRefreshCallback(() => {
-      // Only set the refresh trigger if we're not already refreshing
+      // Only trigger a refresh if we're not already refreshing
       if (!refreshInProgressRef.current) {
+        console.log('Global refresh callback triggered');
         setRefreshTrigger(prev => prev + 1);
       }
     });
     
+    isRefreshCallbackRegistered.current = true;
+    
     return () => {
       if (unregister) unregister();
+      isRefreshCallbackRegistered.current = false;
     };
   }, []);
 
-  // Handle refreshTrigger changes (avoid infinite loop by checking refreshInProgressRef)
+  // Handle refreshTrigger changes with debounce
   useEffect(() => {
     if (refreshTrigger > 0 && initialLoadRef.current) {
       // Prevent multiple concurrent refreshes
@@ -125,20 +168,20 @@ export const useDeviceReturns = () => {
   // Run initial data load once on component mount
   useEffect(() => {
     // Only load data if not already loaded
-    if (!initialLoadRef.current) {
+    if (!initialLoadRef.current && !refreshInProgressRef.current) {
       console.log('Initial load starting...');
       loadAllData();
     }
   }, [loadAllData]);
 
-  // Combine and return all the functionality
+  // Combine and return all the functionality with the modified functions
   return {
     // From returnableDevices hook
     devices: returnableDevices.devices,
     selectedDevices: returnableDevices.selectedDevices,
     handleDeviceSelect: returnableDevices.handleDeviceSelect,
     handleCreateReturnRequests: returnableDevices.handleCreateReturnRequests,
-    submitReturnRequests: returnableDevices.submitReturnRequests,
+    submitReturnRequests: handleReturnRequest, // Use our custom handler instead
     
     // From pendingReturns hook
     pendingReturnRequests: pendingReturns.pendingReturnRequests,
@@ -147,7 +190,7 @@ export const useDeviceReturns = () => {
     confirmText: pendingReturns.confirmText,
     handlePendingReturnSelect: pendingReturns.handlePendingReturnSelect,
     handleConfirmReturns: pendingReturns.handleConfirmReturns,
-    confirmReturns: pendingReturns.confirmReturns,
+    confirmReturns: handleReturnConfirmation, // Use our custom handler instead
     cancelReturnRequest: pendingReturns.cancelReturnRequest,
     
     // From returnedDevices hook
@@ -170,6 +213,6 @@ export const useDeviceReturns = () => {
     isAdmin,
     
     // Data refresh
-    loadData: loadAllData
+    loadData: manualRefresh // Use our manual refresh function
   };
 };
