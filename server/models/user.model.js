@@ -20,7 +20,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     role: {
-      type: Sequelize.ENUM('user', 'admin', 'TPM', 'Software Engineer'),
+      type: Sequelize.ENUM('user', 'admin', 'manager'),
       defaultValue: 'user'
     },
     avatarUrl: {

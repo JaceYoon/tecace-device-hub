@@ -39,7 +39,7 @@ const UserManagement: React.FC = () => {
   
   if (!isAdmin || !user) return null;
   
-  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'TPM' | 'Software Engineer') => {
+  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'manager') => {
     updateUserRole(userId, newRole);
   };
   
@@ -119,7 +119,7 @@ const UserManagement: React.FC = () => {
                           defaultValue={userData.role}
                           onValueChange={(value) => handleRoleChange(
                             userData.id, 
-                            value as 'admin' | 'user' | 'TPM' | 'Software Engineer'
+                            value as 'admin' | 'user' | 'manager'
                           )}
                         >
                           <SelectTrigger className="w-[160px]">
@@ -127,8 +127,7 @@ const UserManagement: React.FC = () => {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="user">User</SelectItem>
-                            <SelectItem value="TPM">TPM</SelectItem>
-                            <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                            <SelectItem value="manager">Manager</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -144,9 +143,8 @@ const UserManagement: React.FC = () => {
           <p>
             Total users: {users.length} • 
             Admins: {users.filter(u => u.role === 'admin').length} • 
-            Users: {users.filter(u => u.role === 'user').length} •
-            TPM: {users.filter(u => u.role === 'TPM').length} •
-            Software Engineers: {users.filter(u => u.role === 'Software Engineer').length}
+            Managers: {users.filter(u => u.role === 'manager').length} • 
+            Users: {users.filter(u => u.role === 'user').length}
           </p>
         </div>
       </div>

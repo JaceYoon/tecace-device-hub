@@ -69,8 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Check if user is admin
   const isAdmin = user?.role === 'admin';
   // For backward compatibility, isManager is true if admin or manager
-  const isManager = user?.role === 'admin' || user?.role === 'manager' || 
-                    user?.role === 'TPM' || user?.role === 'Software Engineer';
+  const isManager = user?.role === 'admin' || user?.role === 'manager';
 
   // Login function
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -232,24 +231,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Create an async function inside to handle the API call
     const performRoleUpdate = async () => {
       try {
-        // Use 'admin' or 'user' only, as 'manager' is not supported in the backend
-        const role = newRole === 'manager' ? 'admin' : newRole;
-        
-        const response = await userService.updateRole(userId, role as 'admin' | 'user');
+        // Use the role directly as it matches the backend
+        const response = await userService.updateRole(userId, newRole);
         
         if (response) {
           // Success with API, update users list
           setUsers(prev => prev.map(u => 
-            u.id === userId ? { ...u, role: role as UserRole } : u
+            u.id === userId ? { ...u, role: newRole } : u
           ));
           
           // If current user is being updated, update current user
           if (user && user.id === userId) {
-            const updatedUser = { ...user, role: role as UserRole };
+            const updatedUser = { ...user, role: newRole };
             setUser(updatedUser);
           }
           
-          toast.success(`User role updated to ${role}`);
+          toast.success(`User role updated to ${newRole}`);
           return true;
         } else {
           toast.error('Failed to update user role');

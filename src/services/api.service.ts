@@ -317,7 +317,7 @@ export const userService = {
   getById: (id: string): Promise<User | null> =>
     apiCall<User | null>(`/users/${id}`),
 
-  updateRole: (id: string, role: 'user' | 'admin'): Promise<User | null> =>
+  updateRole: (id: string, role: 'user' | 'admin' | 'manager'): Promise<User | null> =>
     apiCall<User | null>(`/users/${id}/role`, {
       method: 'PUT',
       body: JSON.stringify({ role })

@@ -11,6 +11,17 @@ class UserStore {
       const storedUsers = localStorage.getItem('tecace_users');
       if (storedUsers) {
         this.users = JSON.parse(storedUsers);
+        
+        // Update any existing users with outdated roles
+        this.users = this.users.map(user => {
+          if (!['admin', 'user', 'manager'].includes(user.role)) {
+            // Map TPM and Software Engineer to manager role
+            return {...user, role: 'manager'};
+          }
+          return user;
+        });
+        
+        localStorage.setItem('tecace_users', JSON.stringify(this.users));
       } else {
         // Initialize with mock users if none exist
         this.users = [...mockUsers];
