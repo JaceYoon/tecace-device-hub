@@ -55,11 +55,17 @@ export function addRequest(
   // Add to requests array
   requests.push(newRequest);
   
-  // Update device if request is for release/assign
+  // Update device based on request type
   if (request.type === 'assign' && request.status === 'pending') {
     // Mark device as requested
     deviceStore.updateDevice(request.deviceId, {
       requestedBy: request.userId
+    });
+  } else if (request.type === 'return' || request.type === 'report') {
+    // Mark device as pending for return or report requests
+    deviceStore.updateDevice(request.deviceId, {
+      requestedBy: request.userId,
+      status: 'pending'  // Set status to pending for return and report requests
     });
   }
   
@@ -70,4 +76,4 @@ export function addRequest(
   stopProcessing(processingRequests, deviceKey);
   
   return newRequest;
-}
+};

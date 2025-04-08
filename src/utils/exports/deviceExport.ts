@@ -62,15 +62,25 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
       // Use deviceType (which is C-Type or Lunchbox) or fall back to type if deviceType isn't set
       const displayType = device.deviceType || device.type;
       
+      // Format dates in MM/DD/YYYY format
+      const formatDate = (dateString?: string | Date): string => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        // Check if date is valid
+        if (isNaN(date.getTime())) return '';
+        // Format as MM/DD/YYYY
+        return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
+      };
+      
       const dataRow = worksheet.addRow({
         project: device.project, // Using project name instead of projectGroup
         type: displayType,
         imei: device.imei || '',
         sn: device.serialNumber || '',
         notes: device.notes || '',
-        receivedDate: device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
+        receivedDate: formatDate(device.receivedDate),
         deviceStatus: device.deviceStatus || '',
-        returnedDate: device.status === 'returned' && device.returnDate ? new Date(device.returnDate).toLocaleDateString() : ''
+        returnedDate: device.status === 'returned' && device.returnDate ? formatDate(device.returnDate) : ''
       });
       
       // Style data row cells with borders

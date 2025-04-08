@@ -71,6 +71,15 @@ export const useReportForm = (
         reason: values.reason,
       });
       
+      // Update the device status to pending
+      try {
+        await dataService.updateDevice(device.id, {
+          status: 'pending'
+        });
+      } catch (updateError) {
+        console.error(`Error updating device ${device.id} status to pending:`, updateError);
+      }
+      
       toast.success('Report submitted successfully', {
         description: 'An administrator will review your report'
       });

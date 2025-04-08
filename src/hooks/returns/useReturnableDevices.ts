@@ -74,6 +74,15 @@ export const useReturnableDevices = () => {
             }
           );
           
+          // Update device status to pending immediately after successful request
+          try {
+            await dataService.devices.update(deviceId, {
+              status: 'pending'
+            });
+          } catch (updateError) {
+            console.error(`Error updating device ${deviceId} status to pending:`, updateError);
+          }
+          
           successCount++;
         } catch (error) {
           errorCount++;

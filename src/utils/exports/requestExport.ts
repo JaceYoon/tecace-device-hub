@@ -25,6 +25,16 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
   // Style the header row with darker gray and white text
   styleHeaderRow(worksheet.getRow(1), 'FF555555');
   
+  // Format date to MM/DD/YYYY
+  const formatDate = (dateString?: string | Date): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    // Check if date is valid
+    if (isNaN(date.getTime())) return '';
+    // Format as MM/DD/YYYY
+    return `${(date.getMonth() + 1).toString().padStart(2, '0')}/${date.getDate().toString().padStart(2, '0')}/${date.getFullYear()}`;
+  };
+  
   // Add request data
   requests.forEach(request => {
     worksheet.addRow({
@@ -33,8 +43,8 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], filename: strin
       userId: request.userId,
       status: request.status,
       type: request.type,
-      requestedAt: new Date(request.requestedAt).toLocaleDateString(),
-      processedAt: request.processedAt ? new Date(request.processedAt).toLocaleDateString() : '',
+      requestedAt: formatDate(request.requestedAt),
+      processedAt: request.processedAt ? formatDate(request.processedAt) : '',
       processedBy: request.processedBy || ''
     });
   });
