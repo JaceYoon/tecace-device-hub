@@ -1,57 +1,25 @@
-
 import { useState, useCallback, useRef } from 'react';
 import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
-import { deviceStore } from '@/utils/data'; // Import mock data for fallback
+import { useDeviceLoader } from './useDeviceLoader';
 
 export const useReturnableDevices = () => {
-  const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false); // Initialize as false to prevent auto-loading
   const [returnDate, setReturnDate] = useState<Date>(new Date());
   const [openReturnDateDialog, setOpenReturnDateDialog] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [loadFailed, setLoadFailed] = useState(false);
-  const isLoadingRef = useRef(false); // Use ref to track loading state across renders
   const processingRef = useRef(false); // Use ref to prevent concurrent processing
 
-  const loadReturnableDevices = useCallback(async () => {
-    // Don't try again if previous load failed
-    if (loadFailed) return;
-    
-    // Prevent concurrent loading
-    if (isLoadingRef.current) {
-      console.log('Already loading returnable devices, skipping...');
-      return;
-    }
-    
-    isLoadingRef.current = true;
-    setIsLoading(true);
-    
-    try {
-      const allDevices = await dataService.devices.getAll();
-      
-      const returnableDevices = allDevices.filter(
-        device => device.status === 'available' || device.status === 'dead'
-      );
-      setDevices(returnableDevices);
-    } catch (error) {
-      console.error('Error loading returnable devices:', error);
-      
-      // Use mock data as fallback
-      const mockDevices = deviceStore.getDevices().filter(
-        device => device.status === 'available' || device.status === 'dead'
-      );
-      setDevices(mockDevices);
-      
-      setLoadFailed(true);
-      toast.error('Failed to load devices from server, using demo data');
-    } finally {
-      setIsLoading(false);
-      isLoadingRef.current = false;
-    }
-  }, [loadFailed]);
+  // Use the shared device loader with returnable devices filter
+  const { 
+    devices, 
+    isLoading, 
+    loadDevices: loadReturnableDevices 
+  } = useDeviceLoader({
+    statusFilter: device => device.status === 'available' || device.status === 'dead',
+    mockDataFilter: device => device.status === 'available' || device.status === 'dead'
+  });
 
   const handleDeviceSelect = (deviceId: string) => {
     setSelectedDevices(prev => 

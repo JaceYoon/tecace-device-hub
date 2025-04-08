@@ -1,59 +1,17 @@
 
-import { useState, useCallback, useRef } from 'react';
-import { Device } from '@/types';
-import { dataService } from '@/services/data.service';
-import { toast } from 'sonner';
-import { deviceStore } from '@/utils/data'; // Import mock data for fallback
+import { useCallback } from 'react';
+import { useDeviceLoader } from './useDeviceLoader';
 
 export const useReturnedDevices = () => {
-  const [returnedDevices, setReturnedDevices] = useState<Device[]>([]);
-  const [isLoading, setIsLoading] = useState(false); // Initialize as false to prevent auto-loading
-  const [loadFailed, setLoadFailed] = useState(false);
-  const isLoadingRef = useRef(false); // Use ref to track loading state across renders
-  const dataLoadedRef = useRef(false); // Track if data has been loaded at least once
-
-  const loadReturnedDevices = useCallback(async (force = false) => {
-    // Don't try again if previous load failed and we're not forcing
-    if (loadFailed && !force) return;
-    
-    // Don't reload if we already have data and we're not forcing
-    if (dataLoadedRef.current && returnedDevices.length > 0 && !force) {
-      console.log('Returned devices already loaded, skipping...');
-      return;
-    }
-    
-    // Prevent concurrent loading
-    if (isLoadingRef.current) {
-      console.log('Already loading returned devices, skipping...');
-      return;
-    }
-    
-    isLoadingRef.current = true;
-    setIsLoading(true);
-    
-    try {
-      const allDevices = await dataService.devices.getAll();
-      
-      const returnedDevs = allDevices.filter(device => device.status === 'returned');
-      setReturnedDevices(returnedDevs);
-      dataLoadedRef.current = true;
-    } catch (error) {
-      console.error('Error loading returned devices:', error);
-      
-      // Use mock data as fallback
-      const mockDevices = deviceStore.getDevices().filter(
-        device => device.status === 'returned'
-      );
-      setReturnedDevices(mockDevices);
-      
-      setLoadFailed(true);
-    } finally {
-      setIsLoading(false);
-      isLoadingRef.current = false;
-    }
-  }, [loadFailed, returnedDevices.length]);
-
-  // No automatic loading effect - we'll only load when explicitly called
+  // Use the shared device loader with returned devices filter
+  const { 
+    devices: returnedDevices, 
+    isLoading, 
+    loadDevices: loadReturnedDevices 
+  } = useDeviceLoader({
+    statusFilter: device => device.status === 'returned',
+    mockDataFilter: device => device.status === 'returned'
+  });
 
   return {
     returnedDevices,
