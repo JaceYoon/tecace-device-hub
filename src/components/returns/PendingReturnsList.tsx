@@ -51,6 +51,13 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {pendingReturnRequests.map(request => {
             const device = getDeviceData(request.deviceId);
+            
+            // Get device details from either the device object or the request itself
+            const deviceName = device?.project || request.deviceName || 'Unknown Device';
+            const deviceType = device?.type || request.type || 'Unknown Type';
+            const serialNumber = device?.serialNumber || request.serialNumber || 'N/A';
+            const imei = device?.imei || request.imei || 'N/A';
+            
             return (
               <Card key={request.id} className="relative">
                 <CardHeader className="pb-2">
@@ -62,8 +69,8 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
                         id={`request-${request.id}`}
                       />
                       <div>
-                        <CardTitle className="text-lg">{device?.project || 'Unknown Device'}</CardTitle>
-                        <CardDescription>{device?.type || 'Unknown Type'}</CardDescription>
+                        <CardTitle className="text-lg">{deviceName}</CardTitle>
+                        <CardDescription>{deviceType}</CardDescription>
                       </div>
                     </div>
                     <Button 
@@ -81,11 +88,11 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
                   <div className="space-y-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Serial Number:</span> 
-                      <span className="font-mono">{device?.serialNumber || 'N/A'}</span>
+                      <span className="font-mono">{serialNumber}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">IMEI:</span>
-                      <span className="font-mono">{device?.imei || 'N/A'}</span>
+                      <span className="font-mono">{imei}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground">Requested On:</span> 

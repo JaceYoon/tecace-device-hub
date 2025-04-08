@@ -64,10 +64,14 @@ export const useReturnableDevices = () => {
     let errorCount = 0;
     
     try {
+      const pendingReturns = [];
+      
       for (const deviceId of selectedDevices) {
         try {
+          const device = devices.find(d => d.id === deviceId);
+          
           // Create return request
-          await dataService.devices.requestDevice(
+          const request = await dataService.devices.requestDevice(
             deviceId,
             'return',
             {
@@ -81,6 +85,17 @@ export const useReturnableDevices = () => {
               status: 'pending',
               requestedBy: 'return'
             });
+            
+            // Store the request with device info for immediate display
+            if (request && device) {
+              pendingReturns.push({
+                ...request,
+                deviceName: device.project || device.projectGroup || 'Unknown Device',
+                type: device.type || 'Unknown Type',
+                serialNumber: device.serialNumber || 'N/A',
+                imei: device.imei || 'N/A'
+              });
+            }
           } catch (updateError) {
             console.error(`Error updating device ${deviceId} status:`, updateError);
           }
@@ -94,6 +109,9 @@ export const useReturnableDevices = () => {
       
       if (successCount > 0) {
         toast.success(`${successCount} device(s) added to return queue`);
+        
+        // Trigger a global data refresh to update all components
+        dataService.triggerRefresh();
       }
       
       if (errorCount > 0) {
