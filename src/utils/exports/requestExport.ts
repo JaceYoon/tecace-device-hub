@@ -24,7 +24,7 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], users: User[], 
   requests.forEach(request => {
     // Get user names
     const user = users.find(u => u.id === request.userId);
-    const processedByUser = users.find(u => u.id === request.processedById);
+    const processedByUser = users.find(u => u.id === request.processedBy);
     
     // Format the dates using our new function
     const requestedAt = formatDateForExcel(request.requestedAt);
@@ -52,7 +52,8 @@ export const exportRequestsToExcel = (requests: DeviceRequest[], users: User[], 
       applyBorders(cell);
       
       // Center align cells except for reason
-      if (cell.column !== 9) { // Reason column is 9
+      const columnIndex = cell._column?.number || 0;
+      if (columnIndex !== 9) { // Reason column is 9
         cell.alignment = { horizontal: 'center', vertical: 'middle' };
       }
     });
