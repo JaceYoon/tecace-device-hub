@@ -84,7 +84,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
         notes: device.notes || '',
         receivedDate: device.receivedDate ? new Date(device.receivedDate).toLocaleDateString() : '',
         deviceStatus: device.deviceStatus || '',
-        returnedDate: '' // Placeholder for returned date
+        returnedDate: device.status === 'returned' && device.returnDate ? new Date(device.returnDate).toLocaleDateString() : ''
       });
       
       // Style data row cells with borders
@@ -178,9 +178,6 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     worksheet.mergeCells(rowIndex, 7, rowIndex, 8);
     
     rowIndex++;
-    
-    // Remove the empty row after the project group row as requested
-    // Instead, go directly to the next project group
   });
   
   // Generate and download the Excel file
