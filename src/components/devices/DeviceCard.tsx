@@ -50,7 +50,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     handleReleaseDevice,
     handleStatusChange,
     handleDeleteDevice,
-    handleDownloadImage
+    handleDownloadImage,
+    showConfirmation
   } = useDeviceActions(device, onAction);
 
   const isDeviceOwner = device.assignedTo === user?.id;
@@ -163,11 +164,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         title={confirmDialog.title}
         description={confirmDialog.description}
         onCancel={() => {
-          setConfirmDialog(prev => ({...prev, isOpen: false}));
+          showConfirmation("", "", () => {});
         }}
         onConfirm={() => {
           confirmDialog.action();
-          setConfirmDialog(prev => ({...prev, isOpen: false}));
+          showConfirmation("", "", () => {});
         }}
       />
 
