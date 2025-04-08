@@ -54,3 +54,22 @@ export const styleHeaderRow = (headerRow: ExcelJS.Row, bgColor: string = 'FFA8A4
     cell.alignment = { horizontal: 'center', vertical: 'middle' };
   });
 };
+
+/**
+ * Formats a date to MM/DD/YYYY format for Excel
+ */
+export const formatDateForExcel = (date: Date | string | null | undefined): string => {
+  if (!date) return '';
+  
+  const d = typeof date === 'string' ? new Date(date) : date;
+  
+  // Check if date is valid
+  if (isNaN(d.getTime())) return '';
+  
+  // Format as MM/DD/YYYY
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const year = d.getFullYear();
+  
+  return `${month}/${day}/${year}`;
+};

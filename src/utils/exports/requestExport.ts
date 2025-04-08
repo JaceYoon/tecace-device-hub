@@ -1,59 +1,63 @@
 
 import ExcelJS from 'exceljs';
-import { DeviceRequest } from '@/types';
-import { applyBorders, styleHeaderRow, generateExcelFile } from './core';
+import { DeviceRequest, User } from '@/types';
+import { generateExcelFile, styleHeaderRow, applyBorders, formatDateForExcel } from './core';
 
-/**
- * Exports device requests to an Excel file
- */
-export const exportRequestsToExcel = (requests: DeviceRequest[], filename: string = 'requests.xlsx'): void => {
+export const exportRequestsToExcel = (requests: DeviceRequest[], users: User[], filename: string = 'requests_export.xlsx'): void => {
   const workbook = new ExcelJS.Workbook();
-  const worksheet = workbook.addWorksheet('Requests');
-  
-  // Define headers and columns
+  const worksheet = workbook.addWorksheet('Device Requests');
+
+  // Define columns
   worksheet.columns = [
     { header: 'ID', key: 'id', width: 10 },
-    { header: 'Device ID', key: 'deviceId', width: 15 },
-    { header: 'User ID', key: 'userId', width: 15 },
-    { header: 'Status', key: 'status', width: 15 },
+    { header: 'Device', key: 'deviceName', width: 25 },
     { header: 'Type', key: 'type', width: 15 },
-    { header: 'Requested At', key: 'requestedAt', width: 20 },
-    { header: 'Processed At', key: 'processedAt', width: 20 },
-    { header: 'Processed By', key: 'processedBy', width: 20 }
+    { header: 'Status', key: 'status', width: 15 },
+    { header: 'User', key: 'userName', width: 25 },
+    { header: 'Requested At', key: 'requestedAt', width: 18 },
+    { header: 'Processed At', key: 'processedAt', width: 18 },
+    { header: 'Processed By', key: 'processedByName', width: 25 },
+    { header: 'Reason', key: 'reason', width: 30 }
   ];
-  
-  // Style the header row with darker gray and white text
-  styleHeaderRow(worksheet.getRow(1), 'FF555555');
-  
-  // Add request data
+
+  // Add rows
   requests.forEach(request => {
+    // Get user names
+    const user = users.find(u => u.id === request.userId);
+    const processedByUser = users.find(u => u.id === request.processedById);
+    
+    // Format the dates using our new function
+    const requestedAt = formatDateForExcel(request.requestedAt);
+    const processedAt = formatDateForExcel(request.processedAt);
+
     worksheet.addRow({
       id: request.id,
-      deviceId: request.deviceId,
-      userId: request.userId,
-      status: request.status,
+      deviceName: request.deviceName || 'Unknown Device',
       type: request.type,
-      requestedAt: new Date(request.requestedAt).toLocaleDateString(),
-      processedAt: request.processedAt ? new Date(request.processedAt).toLocaleDateString() : '',
-      processedBy: request.processedBy || ''
+      status: request.status,
+      userName: user ? user.name : 'Unknown User',
+      requestedAt: requestedAt,
+      processedAt: processedAt,
+      processedByName: processedByUser ? processedByUser.name : '',
+      reason: request.reason || ''
     });
   });
-  
-  // Add borders to all data cells
+
+  // Style the header row
+  styleHeaderRow(worksheet.getRow(1));
+
+  // Apply borders to all cells
   worksheet.eachRow((row, rowIndex) => {
-    if (rowIndex > 1) { // Skip header row which is already styled
-      row.eachCell(cell => {
-        applyBorders(cell);
-      });
-    }
+    row.eachCell((cell) => {
+      applyBorders(cell);
+      
+      // Center align cells except for reason
+      if (cell.column !== 9) { // Reason column is 9
+        cell.alignment = { horizontal: 'center', vertical: 'middle' };
+      }
+    });
   });
-  
-  // Add autofilter
-  worksheet.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1, column: 8 }
-  };
-  
-  // Generate and download the Excel file
+
+  // Generate and download the file
   generateExcelFile(workbook, filename);
 };

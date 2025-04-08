@@ -66,6 +66,7 @@ export const useReturnableDevices = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
+          // Create return request
           await dataService.devices.requestDevice(
             deviceId,
             'return',
@@ -73,6 +74,16 @@ export const useReturnableDevices = () => {
               reason: 'Device returned to warehouse'
             }
           );
+          
+          // Immediately update the device status to 'pending'
+          try {
+            await dataService.updateDevice(deviceId, {
+              status: 'pending',
+              requestedBy: 'return'
+            });
+          } catch (updateError) {
+            console.error(`Error updating device ${deviceId} status:`, updateError);
+          }
           
           successCount++;
         } catch (error) {
