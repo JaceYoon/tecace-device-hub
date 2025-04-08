@@ -1,7 +1,7 @@
 
 const express = require('express');
 const router = express.Router();
-const deviceController = require('../controllers/device.controller');
+const deviceController = require('../controllers/device');
 const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
 // Configure JSON body parser with increased limit for all device routes
