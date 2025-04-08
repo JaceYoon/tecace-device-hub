@@ -4,7 +4,7 @@ import { Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
-export const useReturnableDevices = (refreshCallback: () => void) => {
+export const useReturnableDevices = () => {
   const [devices, setDevices] = useState<Device[]>([]);
   const [selectedDevices, setSelectedDevices] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -79,7 +79,8 @@ export const useReturnableDevices = (refreshCallback: () => void) => {
       setSelectedDevices([]);
       setOpenReturnDateDialog(false);
       
-      refreshCallback();
+      // Don't call refreshCallback here as it's handled by the parent
+      loadReturnableDevices(); // Refresh this component's data
     } catch (error) {
       console.error('Error creating return requests:', error);
       toast.error('Failed to create return requests');

@@ -39,7 +39,7 @@ const UserManagement: React.FC = () => {
   
   if (!isAdmin || !user) return null;
   
-  const handleRoleChange = (userId: string, newRole: 'admin' | 'user') => {
+  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'TPM' | 'Software Engineer') => {
     updateUserRole(userId, newRole);
   };
   
@@ -110,21 +110,28 @@ const UserManagement: React.FC = () => {
                       </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Select
-                        defaultValue={userData.role}
-                        onValueChange={(value) => handleRoleChange(
-                          userData.id, 
-                          value as 'admin' | 'user'
-                        )}
-                      >
-                        <SelectTrigger className="w-[110px]">
-                          <SelectValue placeholder="Select role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="user">User</SelectItem>
-                          <SelectItem value="admin">Admin</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      {userData.role === 'admin' ? (
+                        <Badge variant="outline" className="bg-gray-100">
+                          Protected
+                        </Badge>
+                      ) : (
+                        <Select
+                          defaultValue={userData.role}
+                          onValueChange={(value) => handleRoleChange(
+                            userData.id, 
+                            value as 'admin' | 'user' | 'TPM' | 'Software Engineer'
+                          )}
+                        >
+                          <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Select role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="TPM">TPM</SelectItem>
+                            <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -137,7 +144,9 @@ const UserManagement: React.FC = () => {
           <p>
             Total users: {users.length} • 
             Admins: {users.filter(u => u.role === 'admin').length} • 
-            Users: {users.filter(u => u.role === 'user').length}
+            Users: {users.filter(u => u.role === 'user').length} •
+            TPM: {users.filter(u => u.role === 'TPM').length} •
+            Software Engineers: {users.filter(u => u.role === 'Software Engineer').length}
           </p>
         </div>
       </div>

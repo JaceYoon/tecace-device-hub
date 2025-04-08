@@ -4,7 +4,7 @@ import { DeviceRequest } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
-export const usePendingReturns = (refreshCallback: () => void) => {
+export const usePendingReturns = () => {
   const [pendingReturnRequests, setPendingReturnRequests] = useState<DeviceRequest[]>([]);
   const [selectedPendingReturns, setSelectedPendingReturns] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,7 +94,9 @@ export const usePendingReturns = (refreshCallback: () => void) => {
       setSelectedPendingReturns([]);
       setConfirmText('');
       setOpenConfirmDialog(false);
-      refreshCallback();
+      
+      // Don't call refreshCallback here as it's handled by the parent
+      loadPendingReturns(); // Refresh this component's data
     } catch (error) {
       console.error('Error confirming returns:', error);
       toast.error('Failed to process returns');
@@ -122,7 +124,8 @@ export const usePendingReturns = (refreshCallback: () => void) => {
       }
       
       toast.success('Return request cancelled');
-      refreshCallback();
+      // Don't call refreshCallback here as it's handled by the parent
+      loadPendingReturns(); // Refresh this component's data
     } catch (error) {
       console.error('Error cancelling return request:', error);
       toast.error('Failed to cancel return request');

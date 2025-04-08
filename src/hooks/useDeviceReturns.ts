@@ -1,5 +1,5 @@
 
-import { useCallback } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useReturnableDevices } from './returns/useReturnableDevices';
 import { usePendingReturns } from './returns/usePendingReturns';
 import { useReturnedDevices } from './returns/useReturnedDevices';
@@ -8,27 +8,27 @@ import { useAuthorization } from './returns/useAuthorization';
 
 export const useDeviceReturns = () => {
   const { isAdmin } = useAuthorization();
-
-  // Load all data at once function
-  const loadAllData = useCallback(() => {
-    returnableDevices.loadReturnableDevices();
-    pendingReturns.loadPendingReturns();
-    returnedDevices.loadReturnedDevices();
-  }, []);
-
-  // Initialize hooks with the refresh callback
-  const returnableDevices = useReturnableDevices(loadAllData);
-  const pendingReturns = usePendingReturns(loadAllData);
+  
+  // Initialize hooks
+  const returnableDevices = useReturnableDevices();
+  const pendingReturns = usePendingReturns();
   const returnedDevices = useReturnedDevices();
   const { getDeviceData } = useDeviceInfo(
     returnableDevices.devices, 
     returnedDevices.returnedDevices
   );
 
-  // Initial data load
-  useCallback(() => {
+  // Load all data at once function
+  const loadAllData = useCallback(() => {
+    returnableDevices.loadReturnableDevices();
+    pendingReturns.loadPendingReturns();
+    returnedDevices.loadReturnedDevices();
+  }, [returnableDevices, pendingReturns, returnedDevices]);
+
+  // Run initial data load using useEffect
+  useEffect(() => {
     loadAllData();
-  }, [loadAllData])();
+  }, [loadAllData]);
 
   // Combine and return all the functionality
   return {

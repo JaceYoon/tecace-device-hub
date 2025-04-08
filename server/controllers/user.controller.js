@@ -104,7 +104,8 @@ exports.updateRole = async (req, res) => {
   try {
     const { role } = req.body;
     
-    if (!role || !['user', 'admin'].includes(role)) {
+    // Verify that role is one of the allowed values
+    if (!role || !['user', 'admin', 'TPM', 'Software Engineer'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
     
@@ -112,6 +113,13 @@ exports.updateRole = async (req, res) => {
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Prevent changing admin roles
+    if (user.role === 'admin') {
+      return res.status(403).json({ 
+        message: 'Cannot change role for admin accounts' 
+      });
     }
     
     await user.update({ role });

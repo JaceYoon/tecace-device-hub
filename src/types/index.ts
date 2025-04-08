@@ -1,5 +1,5 @@
 
-export type UserRole = 'admin' | 'manager' | 'user';
+export type UserRole = 'admin' | 'manager' | 'user' | 'TPM' | 'Software Engineer';
 
 export interface User {
   id: string;
@@ -71,6 +71,6 @@ export interface AuthContextType {
     => Promise<{ success: boolean, message: string, verificationRequired: boolean }>;
   verifyEmail: (email: string, code: string, userData: { firstName: string, lastName: string, password: string }) 
     => Promise<boolean>;
-  updateUserRole: (userId: string, role: 'admin' | 'user' | 'manager') => boolean;
+  updateUserRole: (userId: string, role: 'admin' | 'user' | 'manager' | 'TPM' | 'Software Engineer') => boolean;
   updateUserProfile: (updates: Partial<User>) => Promise<boolean>;
 }
