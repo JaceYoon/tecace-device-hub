@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import LoginPage from '@/components/auth/LoginPage';
@@ -7,13 +7,13 @@ import LoginPage from '@/components/auth/LoginPage';
 const Index: React.FC = () => {
   const navigate = useNavigate();
   const [authChecked, setAuthChecked] = React.useState(false);
+  const auth = useAuth();
   
-  // Use try/catch but in a useEffect to properly handle the hook
-  React.useEffect(() => {
+  // Use useEffect to check authentication status after component mounts
+  useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { isAuthenticated } = useAuth();
-        if (isAuthenticated) {
+        if (auth.isAuthenticated) {
           navigate('/dashboard');
         }
         setAuthChecked(true);
@@ -25,7 +25,7 @@ const Index: React.FC = () => {
     };
     
     checkAuth();
-  }, [navigate]);
+  }, [navigate, auth.isAuthenticated]);
   
   // While checking auth, render nothing to prevent flicker
   if (!authChecked) {

@@ -12,7 +12,6 @@ import ProfilePage from './pages/ProfilePage';
 import DeviceReturnsPage from './pages/DeviceReturnsPage';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { ThemeProvider } from 'next-themes';
-import LoginPage from './components/auth/LoginPage';
 
 // Create a client
 const queryClient = new QueryClient({
@@ -33,13 +32,13 @@ function App() {
             <div className="min-h-screen flex flex-col">
               <div className="flex-1">
                 <Routes>
-                  <Route path="/" element={<LoginPage />} />
+                  <Route path="/" element={<Index />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/device-management" element={<DeviceManagement />} />
                   <Route path="/device-returns" element={<DeviceReturnsPage />} />
                   <Route path="/user-management" element={<UserManagement />} />
                   <Route path="/profile" element={<ProfilePage />} />
-                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/login" element={<Index />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </div>
