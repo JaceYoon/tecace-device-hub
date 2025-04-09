@@ -127,7 +127,7 @@ const UserManagement: React.FC = () => {
                           <SelectTrigger className="w-[160px]">
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
-                          <SelectContent>
+                          <SelectContent align="start" className="min-w-[160px]">
                             <SelectItem value="user">User</SelectItem>
                             <SelectItem value="TPM">TPM</SelectItem>
                             <SelectItem value="Software Engineer">Software Engineer</SelectItem>

@@ -47,7 +47,7 @@ export const useDeviceRequests = (
               type: 'assign',
             });
             
-            // Also update the device status to "pending" locally
+            // Always update the device status to "pending" locally
             try {
               await dataService.updateDevice(device.id, {
                 requestedBy: user.id,

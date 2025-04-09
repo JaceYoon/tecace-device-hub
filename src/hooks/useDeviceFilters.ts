@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { Device, User, DeviceTypeValue } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -123,16 +124,36 @@ export const useDeviceFilters = ({
     return Array.from(types);
   }, [devices]);
 
+  // Create a map of user IDs to user names for quick lookup
+  const userIdToNameMap = useMemo(() => {
+    const map = new Map<string, string>();
+    users.forEach(user => {
+      if (user.id) {
+        map.set(user.id, user.name || '');
+      }
+    });
+    return map;
+  }, [users]);
+
   const filteredDevices = useMemo(() => {
     return devices.filter(device => {
       const searchLower = searchQuery.toLowerCase();
+      
+      // Get the owner name for this device if it exists
+      let ownerName = '';
+      if (device.assignedTo || device.assignedToId) {
+        const ownerId = String(device.assignedTo || device.assignedToId || '');
+        ownerName = userIdToNameMap.get(ownerId) || '';
+      }
+      
       const matchesSearch = searchQuery === '' || 
         (device.project && device.project.toLowerCase().includes(searchLower)) ||
         (device.projectGroup && device.projectGroup.toLowerCase().includes(searchLower)) ||
         (device.type && device.type.toLowerCase().includes(searchLower)) ||
         (device.serialNumber && device.serialNumber.toLowerCase().includes(searchLower)) ||
         (device.imei && device.imei.toLowerCase().includes(searchLower)) ||
-        (device.notes && device.notes.toLowerCase().includes(searchLower));
+        (device.notes && device.notes.toLowerCase().includes(searchLower)) ||
+        (ownerName && ownerName.toLowerCase().includes(searchLower)); // Search by owner name
       
       if (!matchesSearch) return false;
       
@@ -165,7 +186,7 @@ export const useDeviceFilters = ({
       
       return true;
     });
-  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable]);
+  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap]);
 
   return {
     devices,
