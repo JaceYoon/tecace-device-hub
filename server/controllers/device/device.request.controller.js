@@ -1,4 +1,3 @@
-
 const db = require('../../models');
 const Device = db.device;
 const User = db.user;
@@ -214,20 +213,11 @@ exports.cancelRequest = async (req, res) => {
     // Update device
     const device = await Device.findByPk(request.deviceId);
     if (device) {
-      // Clear requestedBy and update status from 'pending' to 'available' if needed
-      const updates = { 
+      // Always update the device status to 'available' when a request is canceled
+      await device.update({ 
+        status: 'available',
         requestedBy: null
-      };
-      
-      // If device is in pending status and this is a return/report request, reset to available
-      if (device.status === 'pending') {
-        const isReturnRequest = request.reason && request.reason.includes('[RETURN]');
-        if (isReturnRequest || request.type === 'report') {
-          updates.status = 'available';
-        }
-      }
-      
-      await device.update(updates);
+      });
     }
 
     res.json(request);

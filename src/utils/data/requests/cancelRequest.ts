@@ -44,17 +44,12 @@ export function cancelRequest(
     processedBy: userId // In this case, the requester is processing their own request
   };
   
-  // Check if device status is pending and update to available
+  // Always update device to available state when request is cancelled
   const device = deviceStore.getDeviceById(request.deviceId);
-  if (device && device.status === 'pending') {
-    // Reset device to available state
+  if (device) {
+    // Always set status to available regardless of current status
     deviceStore.updateDevice(request.deviceId, {
-      requestedBy: undefined,
-      status: 'available'
-    });
-  } else {
-    // Just clear the requestedBy field
-    deviceStore.updateDevice(request.deviceId, {
+      status: 'available',
       requestedBy: undefined
     });
   }
