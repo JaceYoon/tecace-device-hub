@@ -21,6 +21,7 @@ export const useDeviceFilters = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>(filterByAvailable ? 'available' : 'all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [ownerFilter, setOwnerFilter] = useState<string>('all');
   
   const [effectiveStatusFilters, setEffectiveStatusFilters] = useState<string[] | undefined>(filterByStatus);
   
@@ -164,7 +165,8 @@ export const useDeviceFilters = ({
         const ownerId = String(device.assignedTo || device.assignedToId || '');
         ownerName = userIdToNameMap.get(ownerId) || '';
       }
-      
+
+      // Check if device matches search query in any field including owner's name
       const matchesSearch = searchQuery === '' || 
         (device.project && device.project.toLowerCase().includes(searchLower)) ||
         (device.projectGroup && device.projectGroup.toLowerCase().includes(searchLower)) ||
@@ -172,10 +174,11 @@ export const useDeviceFilters = ({
         (device.serialNumber && device.serialNumber.toLowerCase().includes(searchLower)) ||
         (device.imei && device.imei.toLowerCase().includes(searchLower)) ||
         (device.notes && device.notes.toLowerCase().includes(searchLower)) ||
-        (ownerName && ownerName.toLowerCase().includes(searchLower)); // Search by owner name
+        (ownerName && ownerName.toLowerCase().includes(searchLower));
       
       if (!matchesSearch) return false;
       
+      // Filter by assigned user if specified
       if (filterByAssignedToUser) {
         const deviceAssignedTo = String(device.assignedTo || device.assignedToId || '');
         const userIdToMatch = String(filterByAssignedToUser);
@@ -185,12 +188,14 @@ export const useDeviceFilters = ({
         }
       }
       
+      // Filter by specific status if provided
       if (effectiveStatusFilters && effectiveStatusFilters.length > 0) {
         if (!device.status || !effectiveStatusFilters.includes(device.status)) {
           return false;
         }
       }
       
+      // Additional filters
       if (filterByAvailable && (device.status === 'returned' || device.status === 'dead')) {
         return false;
       }
@@ -203,9 +208,17 @@ export const useDeviceFilters = ({
         return false;
       }
       
+      // Filter by owner if not "all"
+      if (ownerFilter !== 'all') {
+        const deviceAssignedTo = String(device.assignedTo || device.assignedToId || '');
+        if (deviceAssignedTo !== ownerFilter) {
+          return false;
+        }
+      }
+      
       return true;
     });
-  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap]);
+  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter]);
 
   return {
     devices,
@@ -218,6 +231,8 @@ export const useDeviceFilters = ({
     setStatusFilter,
     typeFilter,
     setTypeFilter,
+    ownerFilter,
+    setOwnerFilter,
     fetchData,
     deviceOwners
   };

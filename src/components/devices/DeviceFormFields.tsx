@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DeviceTypeValue } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -17,13 +18,6 @@ import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { dataService } from '@/services/data.service';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-} from "@/components/ui/command";
 
 interface DeviceData {
   project: string;
@@ -136,52 +130,19 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor="projectGroup">Project Group *</Label>
-          <Popover open={projectGroupOpen} onOpenChange={setProjectGroupOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={projectGroupOpen}
-                className="w-full justify-between"
-              >
-                {deviceData.projectGroup || "Select project group..."}
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0">
-              <Command>
-                <CommandInput 
-                  placeholder="Search project groups..."
-                  value={deviceData.projectGroup}
-                  onValueChange={(value) => {
-                    const changeEvent = {
-                      target: {
-                        name: 'projectGroup',
-                        value: value
-                      }
-                    } as React.ChangeEvent<HTMLInputElement>;
-                    handleChange(changeEvent);
-                  }}
-                />
-                <CommandEmpty>
-                  {deviceData.projectGroup ? 
-                    `Using new project group: ${deviceData.projectGroup}` : 
-                    "No project group found."}
-                </CommandEmpty>
-                <CommandGroup>
-                  {projectGroups.map((group) => (
-                    <CommandItem
-                      key={group}
-                      value={group}
-                      onSelect={() => handleProjectGroupSelect(group)}
-                    >
-                      {group}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <Select
+            value={deviceData.projectGroup}
+            onValueChange={(value) => handleSelectChange(value, 'projectGroup')}
+          >
+            <SelectTrigger id="projectGroup" name="projectGroup">
+              <SelectValue placeholder="Select Project Group" />
+            </SelectTrigger>
+            <SelectContent>
+              {projectGroups.map(group => (
+                <SelectItem key={group} value={group}>{group}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

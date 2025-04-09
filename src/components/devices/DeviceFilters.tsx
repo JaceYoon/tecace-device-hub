@@ -32,7 +32,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   typeFilter,
   onTypeChange,
   deviceTypes,
-  ownerFilter,
+  ownerFilter = 'all',
   onOwnerChange,
   owners = [],
 }) => {
