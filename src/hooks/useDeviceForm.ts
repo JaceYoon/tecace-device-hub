@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
 import { DeviceTypeValue } from '@/types';
@@ -63,8 +63,19 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
     
-    if (!project || !type) {
-      toast.error('Please fill all required fields');
+    // Validate required fields
+    if (!project) {
+      toast.error('Please enter a project name');
+      return;
+    }
+    
+    if (!type) {
+      toast.error('Please select a device type');
+      return;
+    }
+
+    if (!projectGroup) {
+      toast.error('Please select or enter a project group');
       return;
     }
     

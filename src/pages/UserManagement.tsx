@@ -48,6 +48,7 @@ const UserManagement: React.FC = () => {
       case 'admin':
         return 'bg-primary';
       case 'TPM':
+        return 'bg-green-500/20 text-green-700';
       case 'Software Engineer':
         return 'bg-green-500/20 text-green-700';
       default:

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { DeviceTypeValue } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -10,7 +11,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Image, ChevronDown, Check, Plus } from 'lucide-react';
+import { Calendar as CalendarIcon, Image, ChevronDown, Check, Plus, AlertCircle } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
@@ -61,11 +62,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   isEditMode = false
 }) => {
   const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
+  const [selectedProjectGroup, setSelectedProjectGroup] = useState('');
+  const [newProjectGroup, setNewProjectGroup] = useState('');
   const [openProjectGroup, setOpenProjectGroup] = useState(false);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [groupInputValue, setGroupInputValue] = useState('');
-  const [inputMode, setInputMode] = useState(false);
-  const [groupError, setGroupError] = useState('');
+  const [projectGroupError, setProjectGroupError] = useState('');
 
   // Fetch existing project groups from devices
   useEffect(() => {
@@ -94,64 +94,69 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     
     fetchProjectGroups();
   }, []);
+  
+  // Set initial values from deviceData if present
+  useEffect(() => {
+    if (deviceData.projectGroup) {
+      setSelectedProjectGroup(deviceData.projectGroup);
+    }
+  }, [deviceData.projectGroup]);
 
-  // Handle selecting a project group from the dropdown
-  const handleProjectGroupSelect = (value: string) => {
-    setGroupError('');
-    handleSelectChange(value, 'projectGroup');
-    setOpenProjectGroup(false);
-  };
-
-  // Check if group already exists (case insensitive, ignoring spaces)
+  // Normalize group name (convert to lowercase and remove spaces) for comparison
   const normalizeGroupName = (name: string) => {
     return name.toLowerCase().replace(/\s+/g, '');
   };
 
-  // Handle adding a new project group
-  const handleAddNewGroup = () => {
-    if (!newGroupName.trim()) {
-      return;
-    }
-
-    const normalizedNewName = normalizeGroupName(newGroupName);
-    const groupExists = projectGroups.some(group => 
-      normalizeGroupName(group) === normalizedNewName
-    );
-
-    if (groupExists) {
-      setGroupError(`Project group "${newGroupName}" already exists. Please select it from the list.`);
-      toast.error('This project group already exists', {
-        description: 'Please select it from the list instead of creating a new one'
-      });
-      return;
-    }
-
-    setGroupError('');
-    const updatedGroups = [...projectGroups, newGroupName.trim()];
-    setProjectGroups(updatedGroups);
-    handleSelectChange(newGroupName.trim(), 'projectGroup');
-    setNewGroupName('');
-    setInputMode(false);
-    setOpenProjectGroup(false);
+  // Check if a group name already exists (case-insensitive, ignoring spaces)
+  const groupExists = (name: string) => {
+    const normalizedName = normalizeGroupName(name);
+    return projectGroups.some(group => normalizeGroupName(group) === normalizedName);
   };
 
-  // Handle input change for the project group command input
-  const handleCommandInputChange = (value: string) => {
-    setGroupInputValue(value);
+  // Handle changing the selected project group from dropdown
+  const handleProjectGroupSelect = (value: string) => {
+    setSelectedProjectGroup(value);
+    setProjectGroupError('');
     
-    if (inputMode) {
-      setNewGroupName(value);
-    } else if (value.trim() !== '') {
-      const exactMatch = projectGroups.find(
-        group => normalizeGroupName(group) === normalizeGroupName(value)
-      );
-      
-      if (!exactMatch) {
-        setInputMode(true);
-        setNewGroupName(value);
+    // If new project group is empty, update deviceData
+    if (!newProjectGroup.trim()) {
+      handleSelectChange(value, 'projectGroup');
+    }
+  };
+
+  // Handle typing in the new project group field
+  const handleNewProjectGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setNewProjectGroup(value);
+    
+    // Reset error message when field is cleared
+    if (!value.trim()) {
+      setProjectGroupError('');
+    }
+    
+    // Update deviceData with new value, overriding any dropdown selection
+    if (value.trim()) {
+      // Check if the group already exists
+      if (groupExists(value)) {
+        setProjectGroupError(`Project group "${value}" already exists. Please select it from the dropdown instead.`);
+      } else {
+        setProjectGroupError('');
+        handleSelectChange(value, 'projectGroup');
       }
     }
   };
+
+  // Validate form on submit - called by parent component
+  useEffect(() => {
+    // Validate that a project group is selected
+    if (!deviceData.projectGroup) {
+      if (newProjectGroup.trim()) {
+        handleSelectChange(newProjectGroup, 'projectGroup');
+      } else if (selectedProjectGroup) {
+        handleSelectChange(selectedProjectGroup, 'projectGroup');
+      }
+    }
+  }, [deviceData.projectGroup, newProjectGroup, selectedProjectGroup]);
 
   // Handle device picture file upload
   const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -191,89 +196,46 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor="projectGroup">Project Group *</Label>
-          <Popover open={openProjectGroup} onOpenChange={setOpenProjectGroup}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={openProjectGroup}
-                className="w-full justify-between"
-              >
-                {deviceData.projectGroup || "Select project group..."}
-                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-full p-0" align="start">
-              <Command>
-                <CommandInput 
-                  placeholder="Search or create project group..." 
-                  className="h-9"
-                  value={inputMode ? newGroupName : groupInputValue}
-                  onValueChange={handleCommandInputChange}
-                />
-                <CommandList>
-                  <CommandEmpty>
-                    {inputMode && newGroupName.trim() !== '' ? (
-                      <div className="flex flex-col p-2">
-                        <div className="flex items-center justify-between">
-                          <span>Create "{newGroupName}"</span>
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={handleAddNewGroup}
-                            className="ml-2"
-                          >
-                            <Plus className="h-4 w-4 mr-1" />
-                            Add
-                          </Button>
-                        </div>
-                        {groupError && (
-                          <p className="text-sm text-red-500 mt-1">{groupError}</p>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="p-2">
-                        <Button 
-                          variant="outline" 
-                          className="w-full justify-start" 
-                          onClick={() => setInputMode(true)}
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          Create new group
-                        </Button>
-                      </div>
-                    )}
-                  </CommandEmpty>
-                  {!inputMode && (
-                    <CommandGroup>
-                      {projectGroups.map((group) => (
-                        <CommandItem
-                          key={group}
-                          onSelect={() => handleProjectGroupSelect(group)}
-                          className="flex items-center"
-                        >
-                          {group}
-                          {deviceData.projectGroup === group && (
-                            <Check className="ml-auto h-4 w-4" />
-                          )}
-                        </CommandItem>
-                      ))}
-                      <CommandItem
-                        onSelect={() => setInputMode(true)}
-                        className="flex items-center text-primary"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Create new group
-                      </CommandItem>
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
-          {groupError && (
-            <p className="text-sm text-red-500 mt-1">{groupError}</p>
-          )}
+          <div className="space-y-2">
+            <Select
+              value={selectedProjectGroup}
+              onValueChange={handleProjectGroupSelect}
+            >
+              <SelectTrigger id="existingProjectGroup" name="existingProjectGroup">
+                <SelectValue placeholder="Select existing project group" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="">Select project group</SelectItem>
+                {projectGroups.map(group => (
+                  <SelectItem key={group} value={group}>{group}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            
+            <div className="relative">
+              <Input
+                id="newProjectGroup"
+                name="newProjectGroup"
+                placeholder="Or type a new project group"
+                value={newProjectGroup}
+                onChange={handleNewProjectGroupChange}
+                autoComplete="off"
+                className={cn(
+                  projectGroupError && "border-red-500 focus-visible:ring-red-500"
+                )}
+              />
+              {projectGroupError && (
+                <div className="text-red-500 text-sm mt-1 flex items-start gap-1">
+                  <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>{projectGroupError}</span>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <p className="text-xs text-muted-foreground mt-1">
+            Either select an existing group or create a new one. Project group cannot be empty.
+          </p>
         </div>
       </div>
 
