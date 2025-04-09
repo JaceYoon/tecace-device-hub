@@ -27,7 +27,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
         dataService.users.getAll(),
         dataService.devices.getAll()
       ]);
-      console.log("Fetched requests:", requestsData.length);
+      console.log("useRequestList - Fetched requests:", requestsData.length);
       setRequests(requestsData);
       setUsers(usersData);
       setDevices(devicesData);
@@ -116,32 +116,52 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   };
 
   const getFilteredRequests = () => {
-    // Filter out return requests first
-    let filteredRequests = requests.filter(request => {
-      if (request.type === 'return') return false;
-      return request.type !== 'report';
+    // First, filter out report requests as these are shown separately
+    let filteredRequests = requests.filter(request => request.type !== 'report');
+    
+    // Debug the filter parameters
+    console.log("useRequestList - Filter params:", { 
+      providedUserId: userId, 
+      currentUserId: user?.id,
+      isAdmin,
+      totalRequests: requests.length
     });
     
+    // For the "My Requests" tab, we always want to show the user's requests
+    // regardless of their status (not just pending ones)
     if (userId) {
-      // Always filter by userId when a specific user ID is provided
-      filteredRequests = filteredRequests.filter(request => request.userId === userId);
+      filteredRequests = filteredRequests.filter(request => {
+        const matches = String(request.userId) === String(userId);
+        console.log(`Request ID ${request.id} - User ${request.userId} matches ${userId}? ${matches}`);
+        return matches;
+      });
       console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
-    } else if (isAdmin) {
-      // For admins, show all pending requests when no userId is specified
+    } else if (!isAdmin && user) {
+      // For non-admin users without a specific userId filter, show their own requests
+      filteredRequests = filteredRequests.filter(request => String(request.userId) === String(user.id));
+      console.log(`User ${user.id} has ${filteredRequests.length} requests`);
+    } else if (isAdmin && !userId) {
+      // For admins without a specific userId filter, show all pending requests
       filteredRequests = filteredRequests.filter(request => request.status === 'pending');
-    } else if (user) {
-      // For regular users, show their own requests regardless of status
-      filteredRequests = filteredRequests.filter(request => request.userId === user.id);
-      console.log(`User ${user.id} (${user.name}) has ${filteredRequests.length} requests`);
     }
+    
+    // Debug the filtered results
+    console.log("useRequestList - Filtered requests:", filteredRequests.map(r => ({
+      id: r.id,
+      userId: r.userId,
+      status: r.status,
+      type: r.type
+    })));
     
     return filteredRequests;
   };
 
+  const filteredRequests = getFilteredRequests();
+
   return {
     loading,
     processing,
-    filteredRequests: getFilteredRequests(),
+    filteredRequests,
     getUserName,
     getDeviceName,
     handleApprove,

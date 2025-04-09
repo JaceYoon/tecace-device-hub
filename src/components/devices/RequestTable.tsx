@@ -28,6 +28,13 @@ const RequestTable: React.FC<RequestTableProps> = ({
   onCancel
 }) => {
   console.log("RequestTable: rendering table with", requests.length, "requests for userId:", userId);
+  console.log("RequestTable: request details:", requests.map(req => ({
+    id: req.id,
+    type: req.type,
+    status: req.status,
+    userId: req.userId,
+    deviceId: req.deviceId
+  })));
   
   return (
     <div className="overflow-x-auto">

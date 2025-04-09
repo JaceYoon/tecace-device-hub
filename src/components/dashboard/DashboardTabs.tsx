@@ -22,6 +22,8 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({
   refreshTrigger,
   handleRefresh
 }) => {
+  console.log("DashboardTabs - userId being passed to RequestList:", userId);
+  
   return (
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
       <TabsList className="grid grid-cols-4 w-full max-w-md mb-8">

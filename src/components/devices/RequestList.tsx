@@ -59,6 +59,7 @@ const RequestList: React.FC<RequestListProps> = ({
   console.log("RequestList: filtered requests count:", filteredRequests.length);
   console.log("RequestList: isAdmin:", isAdmin);
   console.log("RequestList: current user:", user?.id, user?.name);
+  console.log("RequestList: all requests data:", filteredRequests);
 
   return (
     <Card className="w-full">
