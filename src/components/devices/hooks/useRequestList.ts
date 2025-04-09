@@ -80,6 +80,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   const handleCancel = async (requestId: string) => {
     setProcessing(requestId);
     try {
+      console.log(`Attempting to cancel request ${requestId}`);
       await dataService.devices.cancelRequest(requestId);
       toast.success('Request cancelled successfully');
       fetchData();

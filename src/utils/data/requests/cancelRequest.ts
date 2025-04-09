@@ -30,7 +30,7 @@ export function cancelRequest(
   // Verify the user is the one who created the request
   if (request.userId !== userId) {
     console.error("User cannot cancel a request they didn't create");
-    processingRequests.delete(deviceKey);
+    stopProcessing(processingRequests, deviceKey);
     return null;
   }
   

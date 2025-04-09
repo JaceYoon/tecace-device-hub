@@ -33,6 +33,16 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
   const isProcessing = processing === request.id;
   const isOwnRequest = userId && request.userId === userId;
   
+  console.log(`RequestListItem - Rendering request ${request.id}:`, {
+    isAdmin,
+    userId,
+    requestUserId: request.userId,
+    isOwnRequest,
+    status: request.status,
+    type: request.type,
+    showCancelButton: !isAdmin && isOwnRequest && request.status === 'pending'
+  });
+  
   return (
     <TableRow>
       <TableCell>{getDeviceName(request)}</TableCell>
