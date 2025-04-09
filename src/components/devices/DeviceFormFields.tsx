@@ -58,7 +58,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleFileChange,
   isEditMode = false
 }) => {
-  const [projectGroups, setProjectGroups] = useState<string[]>([]);
+  const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
   const [projectGroupOpen, setProjectGroupOpen] = useState(false);
 
   // Fetch existing project groups from devices
@@ -75,11 +75,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         });
         
         const groups = Array.from(uniqueGroups);
-        if (groups.length > 0) {
-          setProjectGroups(groups);
-        } else {
-          setProjectGroups(['Eureka']);
-        }
+        setProjectGroups(groups.length > 0 ? groups : ['Eureka']);
       } catch (error) {
         console.error('Error fetching project groups:', error);
         setProjectGroups(['Eureka']);
@@ -153,43 +149,37 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
-              {projectGroups && projectGroups.length > 0 ? (
-                <Command>
-                  <CommandInput 
-                    placeholder="Search project groups..."
-                    value={deviceData.projectGroup}
-                    onValueChange={(value) => {
-                      const changeEvent = {
-                        target: {
-                          name: 'projectGroup',
-                          value: value
-                        }
-                      } as React.ChangeEvent<HTMLInputElement>;
-                      handleChange(changeEvent);
-                    }}
-                  />
-                  <CommandEmpty>
-                    {deviceData.projectGroup ? 
-                      `Using new project group: ${deviceData.projectGroup}` : 
-                      "No project group found."}
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {projectGroups.map((group) => (
-                      <CommandItem
-                        key={group}
-                        value={group}
-                        onSelect={() => handleProjectGroupSelect(group)}
-                      >
-                        {group}
-                      </CommandItem>
-                    ))}
-                  </CommandGroup>
-                </Command>
-              ) : (
-                <div className="py-2 px-4 text-sm">
-                  No existing groups found. Type to create a new one.
-                </div>
-              )}
+              <Command>
+                <CommandInput 
+                  placeholder="Search project groups..."
+                  value={deviceData.projectGroup}
+                  onValueChange={(value) => {
+                    const changeEvent = {
+                      target: {
+                        name: 'projectGroup',
+                        value: value
+                      }
+                    } as React.ChangeEvent<HTMLInputElement>;
+                    handleChange(changeEvent);
+                  }}
+                />
+                <CommandEmpty>
+                  {deviceData.projectGroup ? 
+                    `Using new project group: ${deviceData.projectGroup}` : 
+                    "No project group found."}
+                </CommandEmpty>
+                <CommandGroup>
+                  {projectGroups.map((group) => (
+                    <CommandItem
+                      key={group}
+                      value={group}
+                      onSelect={() => handleProjectGroupSelect(group)}
+                    >
+                      {group}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              </Command>
             </PopoverContent>
           </Popover>
         </div>
