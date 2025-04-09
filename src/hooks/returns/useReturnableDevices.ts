@@ -66,16 +66,14 @@ export const useReturnableDevices = () => {
           
           console.log(`Creating return request for device:`, device);
           
-          // Include device information in the request
+          // Include device information in the request but only use properties
+          // that are accepted by the API
           await dataService.devices.requestDevice(
             deviceId,
             'return',
             {
-              reason: 'Device returned to warehouse',
-              deviceName: device.project,
-              deviceType: device.type,
-              deviceSerialNumber: device.serialNumber,
-              deviceImei: device.imei
+              reason: `Device returned to warehouse: ${device.project} (${device.type || 'Unknown'})`,
+              // We need to exclude the custom properties that aren't accepted by the API
             }
           );
           

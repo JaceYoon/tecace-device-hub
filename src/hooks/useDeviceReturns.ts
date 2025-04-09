@@ -32,10 +32,11 @@ export const useDeviceReturns = () => {
   const pendingReturns = usePendingReturns();
   const returnedDevices = useReturnedDevices();
   
-  // Initialize device info hook
+  // Initialize device info hook with correct types
+  // Since pendingReturns.pendingReturnRequests is DeviceRequest[], this matches the expected type
   const { getDeviceData } = useDeviceInfo(
-    returnableDevices.devices, 
-    returnedDevices.returnedDevices
+    returnableDevices.devices,
+    pendingReturns.pendingReturnRequests
   );
 
   // Custom handlers

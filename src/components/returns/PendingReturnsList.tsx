@@ -9,7 +9,7 @@ interface PendingReturnsListProps {
   selectedPendingReturns: string[];
   isLoading: boolean;
   isProcessing: boolean;
-  getDeviceData: (deviceId: string) => any;
+  getDeviceData: (requestOrId: DeviceRequest | string) => any;
   onPendingReturnSelect: (requestId: string) => void;
   onCancelReturnRequest: (requestId: string) => void;
   onConfirmReturns: () => void;
@@ -44,7 +44,7 @@ const PendingReturnsList: React.FC<PendingReturnsListProps> = ({
               request={request}
               selected={selectedPendingReturns.includes(request.id)}
               isProcessing={isProcessing}
-              device={getDeviceData(request.deviceId)}
+              device={getDeviceData(request)}
               onSelect={onPendingReturnSelect}
               onCancel={onCancelReturnRequest}
             />
