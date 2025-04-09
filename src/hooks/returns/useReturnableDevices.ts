@@ -55,11 +55,27 @@ export const useReturnableDevices = () => {
     try {
       for (const deviceId of selectedDevices) {
         try {
+          // Find the device in our state to include its details
+          const device = devices.find(d => d.id === deviceId);
+          
+          if (!device) {
+            console.warn(`Device ${deviceId} not found in state, cannot create return request`);
+            errorCount++;
+            continue;
+          }
+          
+          console.log(`Creating return request for device:`, device);
+          
+          // Include device information in the request
           await dataService.devices.requestDevice(
             deviceId,
             'return',
             {
-              reason: 'Device returned to warehouse'
+              reason: 'Device returned to warehouse',
+              deviceName: device.project,
+              deviceType: device.type,
+              deviceSerialNumber: device.serialNumber,
+              deviceImei: device.imei
             }
           );
           

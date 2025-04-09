@@ -28,6 +28,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
         dataService.devices.getAll()
       ]);
       console.log("useRequestList - Fetched requests:", requestsData.length);
+      console.log("useRequestList - Fetched users:", usersData.length);
       setRequests(requestsData);
       setUsers(usersData);
       setDevices(devicesData);

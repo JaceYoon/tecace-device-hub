@@ -24,6 +24,9 @@ const PendingReturnItem: React.FC<PendingReturnItemProps> = ({
   onSelect,
   onCancel
 }) => {
+  // Log device information for debugging
+  console.log(`PendingReturnItem - Device info for request ${request.id}:`, device);
+  
   const deviceName = device?.project || request.deviceName || 'Unknown Device';
   const deviceType = device?.type || 'Unknown Type';
   const serialNumber = device?.serialNumber || 'N/A';

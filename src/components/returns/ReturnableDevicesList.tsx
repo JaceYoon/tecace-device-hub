@@ -21,6 +21,9 @@ const ReturnableDevicesList: React.FC<ReturnableDevicesListProps> = ({
   onDeviceSelect,
   onCreateReturnRequests
 }) => {
+  // Log devices for debugging
+  console.log("ReturnableDevicesList - Devices:", devices);
+  
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
@@ -51,7 +54,7 @@ const ReturnableDevicesList: React.FC<ReturnableDevicesListProps> = ({
                     />
                     <div>
                       <CardTitle className="text-lg">{device.project}</CardTitle>
-                      <CardDescription>{device.type}</CardDescription>
+                      <CardDescription>{device.type || 'Unknown Type'}</CardDescription>
                     </div>
                   </div>
                   <StatusBadge status={device.status} />
