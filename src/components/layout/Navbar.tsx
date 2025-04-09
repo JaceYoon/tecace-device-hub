@@ -10,7 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
 
 const Navbar = () => {
   const location = useLocation();
-  const { logout, isAdmin, isManager, user } = useAuth();
+  const { logout, isAdmin, user } = useAuth();
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -36,15 +36,17 @@ const Navbar = () => {
               </Button>
             </NavLink>
             
-            <NavLink to="/device-management">
-              <Button 
-                variant={isActive('/device-management') ? 'default' : 'ghost'} 
-                className="flex items-center"
-              >
-                <Package className="h-4 w-4 mr-2" />
-                Devices
-              </Button>
-            </NavLink>
+            {isAdmin && (
+              <NavLink to="/device-management">
+                <Button 
+                  variant={isActive('/device-management') ? 'default' : 'ghost'} 
+                  className="flex items-center"
+                >
+                  <Package className="h-4 w-4 mr-2" />
+                  Devices
+                </Button>
+              </NavLink>
+            )}
             
             {isAdmin && (
               <NavLink to="/device-returns">

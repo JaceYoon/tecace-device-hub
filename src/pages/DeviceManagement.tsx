@@ -14,7 +14,7 @@ import StatusSummary from '@/components/devices/StatusSummary';
 import { exportDevicesToExcel } from '@/utils/exportUtils';
 
 const DeviceManagement: React.FC = () => {
-  const { user, isAuthenticated, isAdmin, isManager } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('all-devices');
   const [showAddForm, setShowAddForm] = useState(false);
@@ -27,13 +27,15 @@ const DeviceManagement: React.FC = () => {
       return;
     }
     
-    // Only redirect if the user is not a manager or admin - but don't show toast
-    if (!isManager && !isAdmin) {
+    // Only admin can access this page
+    if (!isAdmin) {
       navigate('/dashboard');
+      toast.error('Only administrators can access this page');
+      return;
     }
 
     setIsLoading(false);
-  }, [isAuthenticated, isManager, isAdmin, navigate]);
+  }, [isAuthenticated, isAdmin, navigate]);
 
   const handleDeviceAdded = () => {
     setShowAddForm(false);
@@ -72,7 +74,7 @@ const DeviceManagement: React.FC = () => {
   }
 
   // If user is not authorized, return null (redirection happens in useEffect)
-  if (!isManager && !isAdmin) return null;
+  if (!isAdmin) return null;
 
   return (
     <PageContainer>

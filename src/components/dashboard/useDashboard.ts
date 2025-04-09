@@ -7,7 +7,7 @@ import { DeviceRequest, Device, User } from '@/types';
 import { toast } from 'sonner';
 
 export const useDashboard = () => {
-  const { user, isAuthenticated, isManager, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('available');
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
@@ -93,7 +93,7 @@ export const useDashboard = () => {
   };
 
   const handleProcessRequest = async (requestId: string, approve: boolean) => {
-    if (!isManager && !isAdmin || !user) return;
+    if (!isAdmin || !user) return;
 
     try {
       await dataService.processRequest(
@@ -127,7 +127,6 @@ export const useDashboard = () => {
     isLoading,
     user,
     isAuthenticated,
-    isManager,
     isAdmin,
     activeTab,
     setActiveTab,

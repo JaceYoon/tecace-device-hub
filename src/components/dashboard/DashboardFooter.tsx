@@ -5,13 +5,13 @@ import { ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface DashboardFooterProps {
-  isManager: boolean;
+  isAdmin: boolean;
 }
 
-const DashboardFooter: React.FC<DashboardFooterProps> = ({ isManager }) => {
+const DashboardFooter: React.FC<DashboardFooterProps> = ({ isAdmin }) => {
   const navigate = useNavigate();
 
-  if (!isManager) {
+  if (!isAdmin) {
     return null;
   }
 

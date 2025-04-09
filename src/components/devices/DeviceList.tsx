@@ -115,7 +115,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
     <div className={className}>
       <DeviceListHeader
         title={title}
-        showExportButton={showExportButton}
+        showExportButton={showExportButton && isAdmin}
         devices={filteredDevices}
         users={users}
       />

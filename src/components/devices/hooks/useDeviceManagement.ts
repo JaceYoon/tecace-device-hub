@@ -13,7 +13,10 @@ export const useDeviceManagement = (
   onAction?: () => void
 ) => {
   const handleDeleteDevice = async () => {
-    if (!isAdmin) return;
+    if (!isAdmin) {
+      toast.error('Only administrators can delete devices');
+      return;
+    }
     
     if (deleteConfirmText !== 'confirm') {
       toast.error('Please type "confirm" to delete this device');

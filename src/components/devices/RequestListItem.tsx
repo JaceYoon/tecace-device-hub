@@ -12,7 +12,6 @@ interface RequestListItemProps {
   getDeviceName: (request: DeviceRequest) => string;
   getUserName: (userId: string) => string;
   isAdmin: boolean;
-  isManager?: boolean;
   userId?: string;
   processing: string | null;
   onApprove: (requestId: string) => void;
@@ -25,7 +24,6 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
   getDeviceName,
   getUserName,
   isAdmin,
-  isManager = false,
   userId,
   processing,
   onApprove,
@@ -33,7 +31,6 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
   onCancel
 }) => {
   const isProcessing = processing === request.id;
-  const canApproveOrReject = isAdmin || isManager;
   
   return (
     <TableRow>
@@ -49,7 +46,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
       </TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-2">
-          {canApproveOrReject && request.status === 'pending' && (
+          {isAdmin && request.status === 'pending' && (
             <>
               <Button
                 variant="outline"
@@ -89,7 +86,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
               </Button>
             </>
           )}
-          {!canApproveOrReject && userId && request.userId === userId && request.status === 'pending' && (
+          {!isAdmin && userId && request.userId === userId && request.status === 'pending' && (
             <Button
               variant="destructive"
               size="sm"

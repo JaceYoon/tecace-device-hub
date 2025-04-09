@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,7 @@ interface PendingReportRequestsProps {
   devices: {[key: string]: Device};
   users: {[key: string]: User};
   handleProcessRequest: (requestId: string, approve: boolean) => Promise<void>;
-  isManager: boolean;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
@@ -19,11 +17,10 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
   devices,
   users,
   handleProcessRequest,
-  isManager,
-  isAdmin = false
+  isAdmin
 }) => {
-  // Show to both managers and admins
-  if ((!isManager && !isAdmin) || reportRequests.length === 0) {
+  // Only show to admin users
+  if (!isAdmin || reportRequests.length === 0) {
     return null;
   }
 

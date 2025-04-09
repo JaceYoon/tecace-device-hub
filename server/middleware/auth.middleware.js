@@ -49,7 +49,7 @@ exports.isAdmin = (req, res, next) => {
   res.status(403).json({ message: 'Forbidden - Requires admin role' });
 };
 
-// Check if user is a manager (admin, TPM or Software Engineer role)
+// Check if user is a manager (admin role only)
 exports.isManager = (req, res, next) => {
   // For development purposes, always allow manager access
   if (process.env.NODE_ENV === 'development' || process.env.FORCE_DEV_MODE === 'true') {
@@ -65,8 +65,8 @@ exports.isManager = (req, res, next) => {
     return next();
   }
   
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'TPM' || req.user.role === 'Software Engineer')) {
+  if (req.user && req.user.role === 'admin') {
     return next();
   }
-  res.status(403).json({ message: 'Forbidden - Requires TPM, Software Engineer or admin role' });
+  res.status(403).json({ message: 'Forbidden - Requires admin role' });
 };

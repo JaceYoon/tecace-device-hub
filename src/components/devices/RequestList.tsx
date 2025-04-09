@@ -33,7 +33,6 @@ const RequestList: React.FC<RequestListProps> = ({
     handleReject,
     handleCancel,
     isAdmin,
-    isManager,
     user,
     handleRefresh
   } = useRequestList({
@@ -61,7 +60,7 @@ const RequestList: React.FC<RequestListProps> = ({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
         <div className="flex gap-2">
-          {showExportButton && filteredRequests.length > 0 && (
+          {showExportButton && isAdmin && filteredRequests.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleExport}>
               Export
             </Button>
@@ -89,7 +88,6 @@ const RequestList: React.FC<RequestListProps> = ({
             getDeviceName={getDeviceName}
             getUserName={getUserName}
             isAdmin={isAdmin}
-            isManager={isManager}
             userId={user?.id}
             processing={processing}
             onApprove={handleApprove}

@@ -17,7 +17,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
-  const { isAdmin, isManager, user } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -97,16 +97,6 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     return user ? user.name : 'Unknown User';
   };
 
-  const getDeviceInfo = (deviceId: string) => {
-    const device = devices.find(d => d.id === deviceId);
-    return {
-      name: device ? device.project : 'Unknown Device',
-      type: device ? device.type : 'Unknown Type',
-      serialNumber: device ? device.serialNumber : 'N/A',
-      imei: device ? device.imei : 'N/A'
-    };
-  };
-
   const getDeviceName = (request: DeviceRequest) => {
     const device = devices.find(d => d.id === request.deviceId);
     
@@ -132,13 +122,14 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     });
     
     if (userId) {
+      // Always filter by userId when a specific user ID is provided
       filteredRequests = filteredRequests.filter(request => request.userId === userId);
       console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
-    } else if (isAdmin || isManager) {
-      // For admins and managers, show all pending requests when no userId is specified
+    } else if (isAdmin) {
+      // For admins, show all pending requests when no userId is specified
       filteredRequests = filteredRequests.filter(request => request.status === 'pending');
     } else if (user) {
-      // For regular users, only show their own pending requests
+      // For regular users, only show their own requests
       filteredRequests = filteredRequests.filter(request => request.userId === user.id);
     }
     
@@ -156,7 +147,6 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     handleCancel,
     handleRefresh,
     isAdmin,
-    isManager,
     user
   };
 };

@@ -10,8 +10,7 @@ interface PendingDeviceRequestsProps {
   devices: {[key: string]: Device};
   users: {[key: string]: User};
   handleProcessRequest: (requestId: string, approve: boolean) => Promise<void>;
-  isManager: boolean;
-  isAdmin?: boolean;
+  isAdmin: boolean;
 }
 
 const PendingDeviceRequests: React.FC<PendingDeviceRequestsProps> = ({
@@ -19,11 +18,10 @@ const PendingDeviceRequests: React.FC<PendingDeviceRequestsProps> = ({
   devices,
   users,
   handleProcessRequest,
-  isManager,
-  isAdmin = false
+  isAdmin
 }) => {
-  // Show to both managers and admins
-  if ((!isManager && !isAdmin) || pendingRequests.length === 0) {
+  // Only show to admin users
+  if (!isAdmin || pendingRequests.length === 0) {
     return null;
   }
   

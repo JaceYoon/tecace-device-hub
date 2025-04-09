@@ -15,7 +15,7 @@ const Dashboard: React.FC = () => {
     isLoading,
     user,
     isAuthenticated,
-    isManager,
+    isAdmin,
     activeTab,
     setActiveTab,
     devices,
@@ -57,7 +57,7 @@ const Dashboard: React.FC = () => {
           devices={devices}
           users={users}
           handleProcessRequest={handleProcessRequest}
-          isManager={isManager}
+          isAdmin={isAdmin}
         />
         
         <PendingDeviceRequests
@@ -65,7 +65,7 @@ const Dashboard: React.FC = () => {
           devices={devices}
           users={users}
           handleProcessRequest={handleProcessRequest}
-          isManager={isManager}
+          isAdmin={isAdmin}
         />
         
         <DashboardTabs
@@ -77,7 +77,7 @@ const Dashboard: React.FC = () => {
           handleRefresh={handleRefresh}
         />
         
-        <DashboardFooter isManager={isManager} />
+        <DashboardFooter isAdmin={isAdmin} />
       </div>
     </PageContainer>
   );

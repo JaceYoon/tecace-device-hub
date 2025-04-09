@@ -9,11 +9,12 @@ export const useAuthorization = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAdmin && !isManager) {
+    // Only admins can access pages with this hook
+    if (!isAdmin) {
       navigate('/dashboard');
-      toast.error('Only administrators or managers can access this page');
+      toast.error('Only administrators can access this page');
     }
-  }, [isAdmin, isManager, navigate]);
+  }, [isAdmin, navigate]);
 
   return {
     isAdmin,
