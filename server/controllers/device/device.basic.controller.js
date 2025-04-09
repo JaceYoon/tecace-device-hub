@@ -1,3 +1,4 @@
+
 const db = require('../../models');
 const Device = db.device;
 const User = db.user;
@@ -197,6 +198,11 @@ exports.findOne = async (req, res) => {
 exports.update = async (req, res) => {
   try {
     const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, returnDate, notes, assignedToId, devicePicture } = req.body;
+    
+    console.log('Update device request body:', JSON.stringify({
+      ...req.body,
+      devicePicture: devicePicture ? '[BASE64_IMAGE_DATA]' : null
+    }, null, 2));
 
     const device = await Device.findByPk(req.params.id);
 
@@ -237,6 +243,12 @@ exports.update = async (req, res) => {
     const updatedStatus = (device.status === 'assigned' && !isBeingReleased) ? 
                           'assigned' : (status || device.status);
     
+    // IMPORTANT: Only update devicePicture if it's explicitly provided and not undefined/null
+    // This prevents clearing the image when it wasn't changed
+    const updatedDevicePicture = devicePicture !== undefined ? devicePicture : device.devicePicture;
+    
+    console.log(`Updating device ${device.id}, keeping image: ${!!updatedDevicePicture}`);
+    
     // Update device
     await device.update({
       project: project || device.project,
@@ -249,7 +261,7 @@ exports.update = async (req, res) => {
       receivedDate: formattedReceivedDate !== undefined ? formattedReceivedDate : device.receivedDate,
       returnDate: formattedReturnDate !== undefined ? formattedReturnDate : device.returnDate,
       notes: notes !== undefined ? notes : device.notes,
-      devicePicture: devicePicture !== undefined ? devicePicture : device.devicePicture,
+      devicePicture: updatedDevicePicture, // Use the properly preserved device picture
       assignedToId: updatedAssignedToId
     });
 

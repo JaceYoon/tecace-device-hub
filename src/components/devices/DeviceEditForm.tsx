@@ -96,7 +96,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     // Handle device picture image upload
     if (fieldName === 'devicePicture') {
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.onload = () => {
         const base64String = reader.result as string;
         setDeviceData(prev => ({
           ...prev,
@@ -160,6 +160,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
     
     try {
       // Prepare update data, ensuring assignedToId is properly handled
+      // IMPORTANT: Only include devicePicture if it has changed
+      // This prevents the image from being cleared when not modified
       const updateData = {
         project,
         projectGroup,
@@ -171,7 +173,8 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         deviceStatus: deviceStatus || null,
         receivedDate,
         notes: notes || null,
-        devicePicture: devicePicture || null,
+        // Only include devicePicture if it has a value
+        ...(devicePicture ? { devicePicture } : {}),
         // Properly handle null values for assignedToId
         // Use null directly instead of 'null' string when assignedToId is null/undefined/empty
         assignedToId: assignedToId ? String(assignedToId) : null
@@ -182,7 +185,10 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({ device, onDeviceUpdated
         updateData.status = 'assigned';
       }
       
-      console.log('Sending update with data:', updateData);
+      console.log('Sending update with data:', {
+        ...updateData,
+        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed'
+      });
       
       // Update the device
       const updatedDevice = await dataService.updateDevice(device.id, updateData);
