@@ -9,6 +9,7 @@ interface RequestTableProps {
   getDeviceName: (request: DeviceRequest) => string;
   getUserName: (userId: string) => string;
   isAdmin: boolean;
+  isManager?: boolean;
   userId?: string;
   processing: string | null;
   onApprove: (requestId: string) => void;
@@ -21,6 +22,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
   getDeviceName,
   getUserName,
   isAdmin,
+  isManager = false,
   userId,
   processing,
   onApprove,
@@ -47,6 +49,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
               getDeviceName={getDeviceName}
               getUserName={getUserName}
               isAdmin={isAdmin}
+              isManager={isManager}
               userId={userId}
               processing={processing}
               onApprove={onApprove}

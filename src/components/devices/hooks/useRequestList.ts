@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { DeviceRequest, User, Device } from '@/types';
 import { dataService } from '@/services/data.service';
@@ -16,7 +17,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, isManager, user } = useAuth();
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -133,14 +134,14 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     if (userId) {
       filteredRequests = filteredRequests.filter(request => request.userId === userId);
       console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
-    } else {
+    } else if (isAdmin || isManager) {
+      // For admins and managers, show all pending requests when no userId is specified
       filteredRequests = filteredRequests.filter(request => request.status === 'pending');
+    } else if (user) {
+      // For regular users, only show their own pending requests
+      filteredRequests = filteredRequests.filter(request => request.userId === user.id);
     }
-
-    if (!isAdmin && !userId && user) {
-      filteredRequests = filteredRequests.filter(request => request.userId === user.id && request.status === 'pending');
-    }
-
+    
     return filteredRequests;
   };
 
@@ -155,6 +156,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     handleCancel,
     handleRefresh,
     isAdmin,
+    isManager,
     user
   };
 };

@@ -93,7 +93,7 @@ export const useDashboard = () => {
   };
 
   const handleProcessRequest = async (requestId: string, approve: boolean) => {
-    if (!isManager || !user) return;
+    if (!isManager && !isAdmin || !user) return;
 
     try {
       await dataService.processRequest(

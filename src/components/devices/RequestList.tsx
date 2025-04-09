@@ -33,6 +33,7 @@ const RequestList: React.FC<RequestListProps> = ({
     handleReject,
     handleCancel,
     isAdmin,
+    isManager,
     user,
     handleRefresh
   } = useRequestList({
@@ -88,6 +89,7 @@ const RequestList: React.FC<RequestListProps> = ({
             getDeviceName={getDeviceName}
             getUserName={getUserName}
             isAdmin={isAdmin}
+            isManager={isManager}
             userId={user?.id}
             processing={processing}
             onApprove={handleApprove}

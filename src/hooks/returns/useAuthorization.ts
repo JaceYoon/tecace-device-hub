@@ -5,18 +5,19 @@ import { useAuth } from '@/components/auth/AuthProvider';
 import { toast } from 'sonner';
 
 export const useAuthorization = () => {
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, isManager, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!isAdmin) {
+    if (!isAdmin && !isManager) {
       navigate('/dashboard');
-      toast.error('Only administrators can access this page');
+      toast.error('Only administrators or managers can access this page');
     }
-  }, [isAdmin, navigate]);
+  }, [isAdmin, isManager, navigate]);
 
   return {
     isAdmin,
+    isManager,
     user
   };
 };

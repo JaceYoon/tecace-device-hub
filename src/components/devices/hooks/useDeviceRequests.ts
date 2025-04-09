@@ -48,12 +48,14 @@ export const useDeviceRequests = (
 
             toast.success('Device requested successfully');
             if (onAction) onAction();
+            // Make sure dialog is closed
+            closeConfirmation();
           } catch (error) {
             console.error('Error requesting device:', error);
             toast.error('Failed to request device');
+            closeConfirmation();
           } finally {
             setIsProcessing(false);
-            closeConfirmation();
           }
         }
       );

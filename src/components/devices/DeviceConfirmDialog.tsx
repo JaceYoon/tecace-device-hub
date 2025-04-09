@@ -26,10 +26,20 @@ const DeviceConfirmDialog: React.FC<DeviceConfirmDialogProps> = ({
   onCancel,
   onConfirm
 }) => {
+  const handleConfirm = () => {
+    // Call the onConfirm callback
+    onConfirm();
+  };
+
+  const handleCancel = () => {
+    // Call the onCancel callback
+    onCancel();
+  };
+
   return (
-    <AlertDialog open={open} onOpenChange={(open) => {
-      if (!open) {
-        onCancel();
+    <AlertDialog open={open} onOpenChange={(isOpen) => {
+      if (!isOpen) {
+        handleCancel();
       }
     }}>
       <AlertDialogContent>
@@ -40,10 +50,10 @@ const DeviceConfirmDialog: React.FC<DeviceConfirmDialogProps> = ({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel onClick={onCancel}>
+          <AlertDialogCancel onClick={handleCancel}>
             Cancel
           </AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm}>
+          <AlertDialogAction onClick={handleConfirm}>
             Continue
           </AlertDialogAction>
         </AlertDialogFooter>

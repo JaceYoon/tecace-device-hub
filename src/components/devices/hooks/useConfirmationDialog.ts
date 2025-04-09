@@ -26,12 +26,24 @@ export const useConfirmationDialog = () => {
   };
 
   const closeConfirmation = () => {
+    // Copy the current dialog before closing
+    const currentDialog = { ...confirmDialog };
+    
+    // First update the isOpen state (this makes it disappear)
     setConfirmDialog({
-      isOpen: false,
-      title: '',
-      description: '',
-      action: () => {}
+      ...currentDialog,
+      isOpen: false
     });
+    
+    // Then schedule a delayed clearing of other properties to avoid UI glitches
+    setTimeout(() => {
+      setConfirmDialog({
+        isOpen: false,
+        title: '',
+        description: '',
+        action: () => {}
+      });
+    }, 300);
   };
 
   return {
