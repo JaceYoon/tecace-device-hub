@@ -29,6 +29,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
       ]);
       console.log("useRequestList - Fetched requests:", requestsData.length);
       console.log("useRequestList - Fetched users:", usersData.length);
+      console.log("useRequestList - User IDs in system:", usersData.map(u => u.id));
       setRequests(requestsData);
       setUsers(usersData);
       setDevices(devicesData);
@@ -95,8 +96,18 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   };
 
   const getUserName = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    return user ? user.name : 'Unknown User';
+    if (!userId) return 'Unknown User';
+    
+    const user = users.find(u => String(u.id) === String(userId));
+    if (user) {
+      return user.name || 'Unnamed User';
+    }
+    
+    // Debug log when user not found
+    console.log(`User not found for ID: ${userId}. Available users:`, 
+      users.map(u => ({ id: u.id, name: u.name })));
+    
+    return 'Unknown User';
   };
 
   const getDeviceName = (request: DeviceRequest) => {
@@ -118,8 +129,9 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   };
 
   const getFilteredRequests = () => {
-    // First, filter out report requests as these are shown separately
-    let filteredRequests = requests.filter(request => request.type !== 'report');
+    // First, filter out report requests and return requests as these are shown separately
+    let filteredRequests = requests.filter(request => 
+      request.type !== 'report' && request.type !== 'return');
     
     // Debug the filter parameters
     console.log("useRequestList - Filter params:", { 

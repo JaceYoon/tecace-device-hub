@@ -57,9 +57,10 @@ export function addRequest(
   
   // Update device based on request type
   if (request.type === 'assign' && request.status === 'pending') {
-    // Mark device as requested
+    // Mark device as requested and set status to pending
     deviceStore.updateDevice(request.deviceId, {
-      requestedBy: request.userId
+      requestedBy: request.userId,
+      status: 'pending'  // Set status to pending for all request types
     });
   } else if (request.type === 'return' || request.type === 'report') {
     // Mark device as pending for return or report requests

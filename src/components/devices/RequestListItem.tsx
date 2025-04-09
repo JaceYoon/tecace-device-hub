@@ -31,7 +31,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
   onCancel
 }) => {
   const isProcessing = processing === request.id;
-  const isOwnRequest = userId && request.userId === userId;
+  const isOwnRequest = userId && String(request.userId) === String(userId);
   
   console.log(`RequestListItem - Rendering request ${request.id}:`, {
     isAdmin,
@@ -97,7 +97,8 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
               </Button>
             </>
           )}
-          {!isAdmin && isOwnRequest && request.status === 'pending' && (
+          {/* Show cancel button for the user's own pending requests */}
+          {request.status === 'pending' && isOwnRequest && (
             <Button
               variant="destructive"
               size="sm"

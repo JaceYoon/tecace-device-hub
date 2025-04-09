@@ -19,6 +19,9 @@ interface DeviceFiltersProps {
   typeFilter: string;
   onTypeChange: (value: string) => void;
   deviceTypes: string[];
+  ownerFilter?: string;
+  onOwnerChange?: (value: string) => void;
+  owners?: { id: string; name: string }[];
 }
 
 const DeviceFilters: React.FC<DeviceFiltersProps> = ({
@@ -29,6 +32,9 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   typeFilter,
   onTypeChange,
   deviceTypes,
+  ownerFilter,
+  onOwnerChange,
+  owners = [],
 }) => {
   const { isAdmin, isManager } = useAuth();
 
@@ -82,6 +88,24 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           })}
         </SelectContent>
       </Select>
+      
+      {/* Owner filter dropdown */}
+      {onOwnerChange && owners.length > 0 && (
+        <Select
+          value={ownerFilter}
+          onValueChange={onOwnerChange}
+        >
+          <SelectTrigger className="w-full sm:w-[180px]">
+            <SelectValue placeholder="Filter by owner" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Owners</SelectItem>
+            {owners.map(owner => (
+              <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
     </div>
   );
 };
