@@ -234,6 +234,7 @@ export const useDeviceFilters = ({
     ownerFilter,
     setOwnerFilter,
     fetchData,
-    deviceOwners
+    deviceOwners,
+    userIdToNameMap
   };
 };

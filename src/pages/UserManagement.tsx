@@ -137,6 +137,7 @@ const UserManagement: React.FC = () => {
                             <SelectItem value="user">User</SelectItem>
                             <SelectItem value="TPM">TPM</SelectItem>
                             <SelectItem value="Software Engineer">Software Engineer</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
                       )}

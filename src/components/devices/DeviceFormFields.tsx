@@ -63,7 +63,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
   const [openProjectGroup, setOpenProjectGroup] = useState(false);
   const [newGroupName, setNewGroupName] = useState('');
+  const [groupInputValue, setGroupInputValue] = useState('');
   const [inputMode, setInputMode] = useState(false);
+  const [groupError, setGroupError] = useState('');
 
   // Fetch existing project groups from devices
   useEffect(() => {
@@ -95,8 +97,14 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
   // Handle selecting a project group from the dropdown
   const handleProjectGroupSelect = (value: string) => {
+    setGroupError('');
     handleSelectChange(value, 'projectGroup');
     setOpenProjectGroup(false);
+  };
+
+  // Check if group already exists (case insensitive, ignoring spaces)
+  const normalizeGroupName = (name: string) => {
+    return name.toLowerCase().replace(/\s+/g, '');
   };
 
   // Handle adding a new project group
@@ -105,19 +113,44 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       return;
     }
 
-    if (projectGroups.includes(newGroupName.trim())) {
+    const normalizedNewName = normalizeGroupName(newGroupName);
+    const groupExists = projectGroups.some(group => 
+      normalizeGroupName(group) === normalizedNewName
+    );
+
+    if (groupExists) {
+      setGroupError(`Project group "${newGroupName}" already exists. Please select it from the list.`);
       toast.error('This project group already exists', {
         description: 'Please select it from the list instead of creating a new one'
       });
       return;
     }
 
+    setGroupError('');
     const updatedGroups = [...projectGroups, newGroupName.trim()];
     setProjectGroups(updatedGroups);
     handleSelectChange(newGroupName.trim(), 'projectGroup');
     setNewGroupName('');
     setInputMode(false);
     setOpenProjectGroup(false);
+  };
+
+  // Handle input change for the project group command input
+  const handleCommandInputChange = (value: string) => {
+    setGroupInputValue(value);
+    
+    if (inputMode) {
+      setNewGroupName(value);
+    } else if (value.trim() !== '') {
+      const exactMatch = projectGroups.find(
+        group => normalizeGroupName(group) === normalizeGroupName(value)
+      );
+      
+      if (!exactMatch) {
+        setInputMode(true);
+        setNewGroupName(value);
+      }
+    }
   };
 
   // Handle device picture file upload
@@ -173,25 +206,30 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
             <PopoverContent className="w-full p-0" align="start">
               <Command>
                 <CommandInput 
-                  placeholder="Search project group..." 
+                  placeholder="Search or create project group..." 
                   className="h-9"
-                  value={inputMode ? newGroupName : undefined}
-                  onValueChange={inputMode ? setNewGroupName : undefined}
+                  value={inputMode ? newGroupName : groupInputValue}
+                  onValueChange={handleCommandInputChange}
                 />
                 <CommandList>
                   <CommandEmpty>
-                    {inputMode ? (
-                      <div className="flex items-center justify-between p-2">
-                        <span>Create "{newGroupName}"</span>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleAddNewGroup}
-                          className="ml-2"
-                        >
-                          <Plus className="h-4 w-4 mr-1" />
-                          Add
-                        </Button>
+                    {inputMode && newGroupName.trim() !== '' ? (
+                      <div className="flex flex-col p-2">
+                        <div className="flex items-center justify-between">
+                          <span>Create "{newGroupName}"</span>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={handleAddNewGroup}
+                            className="ml-2"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Add
+                          </Button>
+                        </div>
+                        {groupError && (
+                          <p className="text-sm text-red-500 mt-1">{groupError}</p>
+                        )}
                       </div>
                     ) : (
                       <div className="p-2">
@@ -233,6 +271,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               </Command>
             </PopoverContent>
           </Popover>
+          {groupError && (
+            <p className="text-sm text-red-500 mt-1">{groupError}</p>
+          )}
         </div>
       </div>
 
