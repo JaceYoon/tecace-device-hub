@@ -135,6 +135,25 @@ export const useDeviceFilters = ({
     return map;
   }, [users]);
 
+  // Get owners for dropdown list
+  const deviceOwners = useMemo(() => {
+    const ownerIds = new Set<string>();
+    const owners: { id: string; name: string }[] = [];
+    
+    devices.forEach(device => {
+      if (device.assignedTo || device.assignedToId) {
+        const ownerId = String(device.assignedTo || device.assignedToId || '');
+        if (ownerId && !ownerIds.has(ownerId)) {
+          const ownerName = userIdToNameMap.get(ownerId) || 'Unknown User';
+          owners.push({ id: ownerId, name: ownerName });
+          ownerIds.add(ownerId);
+        }
+      }
+    });
+    
+    return owners;
+  }, [devices, userIdToNameMap]);
+
   const filteredDevices = useMemo(() => {
     return devices.filter(device => {
       const searchLower = searchQuery.toLowerCase();
@@ -199,6 +218,7 @@ export const useDeviceFilters = ({
     setStatusFilter,
     typeFilter,
     setTypeFilter,
-    fetchData
+    fetchData,
+    deviceOwners
   };
 };

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DeviceTypeValue } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -75,9 +74,15 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
           }
         });
         
-        setProjectGroups(Array.from(uniqueGroups));
+        const groups = Array.from(uniqueGroups);
+        if (groups.length > 0) {
+          setProjectGroups(groups);
+        } else {
+          setProjectGroups(['Eureka']);
+        }
       } catch (error) {
         console.error('Error fetching project groups:', error);
+        setProjectGroups(['Eureka']);
       }
     };
     
@@ -101,12 +106,10 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     if (file && handleFileChange) {
-      // Read the file as a base64 string
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result as string;
         handleFileChange(file, 'devicePicture');
-        // Also update the form with the base64 string
         const changeEvent = {
           target: {
             name: 'devicePicture',
@@ -150,37 +153,43 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-full p-0">
-              <Command>
-                <CommandInput 
-                  placeholder="Search project groups..."
-                  value={deviceData.projectGroup}
-                  onValueChange={(value) => {
-                    const changeEvent = {
-                      target: {
-                        name: 'projectGroup',
-                        value: value
-                      }
-                    } as React.ChangeEvent<HTMLInputElement>;
-                    handleChange(changeEvent);
-                  }}
-                />
-                <CommandEmpty>
-                  {deviceData.projectGroup ? 
-                    `Using new project group: ${deviceData.projectGroup}` : 
-                    "No project group found."}
-                </CommandEmpty>
-                <CommandGroup>
-                  {projectGroups.map((group) => (
-                    <CommandItem
-                      key={group}
-                      value={group}
-                      onSelect={() => handleProjectGroupSelect(group)}
-                    >
-                      {group}
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
-              </Command>
+              {projectGroups && projectGroups.length > 0 ? (
+                <Command>
+                  <CommandInput 
+                    placeholder="Search project groups..."
+                    value={deviceData.projectGroup}
+                    onValueChange={(value) => {
+                      const changeEvent = {
+                        target: {
+                          name: 'projectGroup',
+                          value: value
+                        }
+                      } as React.ChangeEvent<HTMLInputElement>;
+                      handleChange(changeEvent);
+                    }}
+                  />
+                  <CommandEmpty>
+                    {deviceData.projectGroup ? 
+                      `Using new project group: ${deviceData.projectGroup}` : 
+                      "No project group found."}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {projectGroups.map((group) => (
+                      <CommandItem
+                        key={group}
+                        value={group}
+                        onSelect={() => handleProjectGroupSelect(group)}
+                      >
+                        {group}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </Command>
+              ) : (
+                <div className="py-2 px-4 text-sm">
+                  No existing groups found. Type to create a new one.
+                </div>
+              )}
             </PopoverContent>
           </Popover>
         </div>
