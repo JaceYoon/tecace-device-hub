@@ -55,6 +55,11 @@ const RequestList: React.FC<RequestListProps> = ({
     }
   };
 
+  console.log("RequestList received userId:", userId);
+  console.log("RequestList: filtered requests count:", filteredRequests.length);
+  console.log("RequestList: isAdmin:", isAdmin);
+  console.log("RequestList: current user:", user?.id, user?.name);
+
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">

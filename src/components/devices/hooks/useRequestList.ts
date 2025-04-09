@@ -116,6 +116,7 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   };
 
   const getFilteredRequests = () => {
+    // Filter out return requests first
     let filteredRequests = requests.filter(request => {
       if (request.type === 'return') return false;
       return request.type !== 'report';
@@ -129,8 +130,9 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
       // For admins, show all pending requests when no userId is specified
       filteredRequests = filteredRequests.filter(request => request.status === 'pending');
     } else if (user) {
-      // For regular users, only show their own requests
+      // For regular users, show their own requests regardless of status
       filteredRequests = filteredRequests.filter(request => request.userId === user.id);
+      console.log(`User ${user.id} (${user.name}) has ${filteredRequests.length} requests`);
     }
     
     return filteredRequests;

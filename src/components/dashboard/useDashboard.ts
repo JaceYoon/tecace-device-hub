@@ -119,9 +119,11 @@ export const useDashboard = () => {
     request.status === 'pending' && 
     request.type === 'report') || [];
 
-  // Set my device filter
+  // Set my device filter - stringify to ensure consistent comparison
   const myDeviceFilter = user ? String(user.id) : '';
   console.log("Dashboard: Setting my device filter to:", myDeviceFilter);
+  console.log("Dashboard: User requests (all statuses):", 
+    requests.filter(r => r.userId === user?.id).length);
 
   return {
     isLoading,

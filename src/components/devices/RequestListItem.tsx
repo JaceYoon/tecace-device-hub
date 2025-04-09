@@ -31,6 +31,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
   onCancel
 }) => {
   const isProcessing = processing === request.id;
+  const isOwnRequest = userId && request.userId === userId;
   
   return (
     <TableRow>
@@ -86,7 +87,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
               </Button>
             </>
           )}
-          {!isAdmin && userId && request.userId === userId && request.status === 'pending' && (
+          {!isAdmin && isOwnRequest && request.status === 'pending' && (
             <Button
               variant="destructive"
               size="sm"

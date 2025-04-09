@@ -27,6 +27,8 @@ const RequestTable: React.FC<RequestTableProps> = ({
   onReject,
   onCancel
 }) => {
+  console.log("RequestTable: rendering table with", requests.length, "requests for userId:", userId);
+  
   return (
     <div className="overflow-x-auto">
       <Table>
