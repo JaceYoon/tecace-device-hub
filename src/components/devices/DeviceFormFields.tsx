@@ -205,7 +205,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
                 <SelectValue placeholder="Select existing project group" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Select project group</SelectItem>
                 {projectGroups.map(group => (
                   <SelectItem key={group} value={group}>{group}</SelectItem>
                 ))}

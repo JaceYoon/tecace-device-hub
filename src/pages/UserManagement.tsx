@@ -125,7 +125,8 @@ const UserManagement: React.FC = () => {
                         </Badge>
                       ) : (
                         <Select
-                          defaultValue={userData.role}
+                          defaultValue="user"
+                          value={userData.role}
                           onValueChange={(value) => handleRoleChange(
                             userData.id, 
                             value as 'admin' | 'user' | 'TPM' | 'Software Engineer'
