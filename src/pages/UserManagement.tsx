@@ -43,6 +43,18 @@ const UserManagement: React.FC = () => {
     updateUserRole(userId, newRole);
   };
   
+  const getRoleBadgeClass = (role: string) => {
+    switch(role) {
+      case 'admin':
+        return 'bg-primary';
+      case 'TPM':
+      case 'Software Engineer':
+        return 'bg-green-500/20 text-green-700';
+      default:
+        return 'bg-blue-500/20 text-blue-700';
+    }
+  };
+  
   return (
     <PageContainer>
       <div className="flex flex-col space-y-6 pt-6">
@@ -100,13 +112,7 @@ const UserManagement: React.FC = () => {
                     <TableCell>
                       <Badge
                         variant={userData.role === 'admin' ? 'default' : 'outline'}
-                        className={`${
-                          userData.role === 'admin' 
-                            ? 'bg-primary' 
-                            : userData.role === 'TPM' || userData.role === 'Software Engineer'
-                              ? 'bg-green-500/20 text-green-700'
-                              : 'bg-blue-500/20 text-blue-700'
-                        }`}
+                        className={getRoleBadgeClass(userData.role)}
                       >
                         {userData.role}
                       </Badge>

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { DeviceTypeValue } from '@/types';
 import { Input } from '@/components/ui/input';
@@ -11,13 +10,22 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Calendar as CalendarIcon, Image, ChevronDown } from 'lucide-react';
+import { Calendar as CalendarIcon, Image, ChevronDown, Check, Plus } from 'lucide-react';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { dataService } from '@/services/data.service';
+import { toast } from 'sonner';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 
 interface DeviceData {
   project: string;
@@ -53,7 +61,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   isEditMode = false
 }) => {
   const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
-  const [projectGroupOpen, setProjectGroupOpen] = useState(false);
+  const [openProjectGroup, setOpenProjectGroup] = useState(false);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [inputMode, setInputMode] = useState(false);
 
   // Fetch existing project groups from devices
   useEffect(() => {
@@ -69,7 +79,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         });
         
         const groups = Array.from(uniqueGroups);
-        setProjectGroups(groups.length > 0 ? groups : ['Eureka']);
+        if (groups.length > 0) {
+          setProjectGroups(groups);
+        } else {
+          setProjectGroups(['Eureka']);
+        }
       } catch (error) {
         console.error('Error fetching project groups:', error);
         setProjectGroups(['Eureka']);
@@ -81,15 +95,29 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
   // Handle selecting a project group from the dropdown
   const handleProjectGroupSelect = (value: string) => {
-    const changeEvent = {
-      target: {
-        name: 'projectGroup',
-        value: value
-      }
-    } as React.ChangeEvent<HTMLInputElement>;
-    
-    handleChange(changeEvent);
-    setProjectGroupOpen(false);
+    handleSelectChange(value, 'projectGroup');
+    setOpenProjectGroup(false);
+  };
+
+  // Handle adding a new project group
+  const handleAddNewGroup = () => {
+    if (!newGroupName.trim()) {
+      return;
+    }
+
+    if (projectGroups.includes(newGroupName.trim())) {
+      toast.error('This project group already exists', {
+        description: 'Please select it from the list instead of creating a new one'
+      });
+      return;
+    }
+
+    const updatedGroups = [...projectGroups, newGroupName.trim()];
+    setProjectGroups(updatedGroups);
+    handleSelectChange(newGroupName.trim(), 'projectGroup');
+    setNewGroupName('');
+    setInputMode(false);
+    setOpenProjectGroup(false);
   };
 
   // Handle device picture file upload
@@ -130,19 +158,81 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
 
         <div className="space-y-2">
           <Label htmlFor="projectGroup">Project Group *</Label>
-          <Select
-            value={deviceData.projectGroup}
-            onValueChange={(value) => handleSelectChange(value, 'projectGroup')}
-          >
-            <SelectTrigger id="projectGroup" name="projectGroup">
-              <SelectValue placeholder="Select Project Group" />
-            </SelectTrigger>
-            <SelectContent>
-              {projectGroups.map(group => (
-                <SelectItem key={group} value={group}>{group}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <Popover open={openProjectGroup} onOpenChange={setOpenProjectGroup}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={openProjectGroup}
+                className="w-full justify-between"
+              >
+                {deviceData.projectGroup || "Select project group..."}
+                <ChevronDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full p-0" align="start">
+              <Command>
+                <CommandInput 
+                  placeholder="Search project group..." 
+                  className="h-9"
+                  value={inputMode ? newGroupName : undefined}
+                  onValueChange={inputMode ? setNewGroupName : undefined}
+                />
+                <CommandList>
+                  <CommandEmpty>
+                    {inputMode ? (
+                      <div className="flex items-center justify-between p-2">
+                        <span>Create "{newGroupName}"</span>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleAddNewGroup}
+                          className="ml-2"
+                        >
+                          <Plus className="h-4 w-4 mr-1" />
+                          Add
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="p-2">
+                        <Button 
+                          variant="outline" 
+                          className="w-full justify-start" 
+                          onClick={() => setInputMode(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Create new group
+                        </Button>
+                      </div>
+                    )}
+                  </CommandEmpty>
+                  {!inputMode && (
+                    <CommandGroup>
+                      {projectGroups.map((group) => (
+                        <CommandItem
+                          key={group}
+                          onSelect={() => handleProjectGroupSelect(group)}
+                          className="flex items-center"
+                        >
+                          {group}
+                          {deviceData.projectGroup === group && (
+                            <Check className="ml-auto h-4 w-4" />
+                          )}
+                        </CommandItem>
+                      ))}
+                      <CommandItem
+                        onSelect={() => setInputMode(true)}
+                        className="flex items-center text-primary"
+                      >
+                        <Plus className="mr-2 h-4 w-4" />
+                        Create new group
+                      </CommandItem>
+                    </CommandGroup>
+                  )}
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
