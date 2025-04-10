@@ -1,7 +1,7 @@
 
 import React from 'react';
-import DeviceImageUploader from './DeviceImageUploader';
-import NotesField from './NotesField';
+import DeviceImageUploader from './form-fields/DeviceImageUploader';
+import NotesField from './form-fields/NotesField';
 
 interface DeviceFormMediaProps {
   devicePicture?: string;
