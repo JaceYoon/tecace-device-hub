@@ -16,6 +16,9 @@ router.get('/:id', isAuthenticated, userController.findOne);
 // Update user profile - anyone authenticated can access, but controller will check permissions
 router.put('/:id/profile', isAuthenticated, userController.updateProfile);
 
+// Update user password - user can only update their own password
+router.put('/:id/password', isAuthenticated, userController.updatePassword);
+
 // Update user role (admin only)
 router.put('/:id/role', isAuthenticated, isAdmin, userController.updateRole);
 

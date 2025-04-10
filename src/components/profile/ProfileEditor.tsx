@@ -6,18 +6,34 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Loader2, User, Check } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Loader2, User, Check, KeyRound, EyeIcon, EyeOffIcon } from 'lucide-react';
 import { toast } from 'sonner';
 import api from '@/services/api.service';
 
 const ProfileEditor: React.FC = () => {
   const { user, updateUserProfile } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profileData, setProfileData] = useState({
     name: user?.name || '',
     avatarUrl: user?.avatarUrl || '',
+  });
+  
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  
+  const [passwordErrors, setPasswordErrors] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -26,6 +42,42 @@ const ProfileEditor: React.FC = () => {
       ...prev,
       [name]: value
     }));
+  };
+  
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPasswordData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    
+    // Clear error when typing
+    if (passwordErrors[name as keyof typeof passwordErrors]) {
+      setPasswordErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+    
+    // Check if confirm password matches
+    if (name === 'confirmPassword' || (name === 'newPassword' && passwordData.confirmPassword)) {
+      if (name === 'newPassword' && value !== passwordData.confirmPassword) {
+        setPasswordErrors(prev => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match'
+        }));
+      } else if (name === 'confirmPassword' && value !== passwordData.newPassword) {
+        setPasswordErrors(prev => ({
+          ...prev,
+          confirmPassword: 'Passwords do not match'
+        }));
+      } else {
+        setPasswordErrors(prev => ({
+          ...prev,
+          confirmPassword: ''
+        }));
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -64,6 +116,85 @@ const ProfileEditor: React.FC = () => {
     } finally {
       setIsLoading(false);
       setIsEditing(false);
+    }
+  };
+  
+  const handlePasswordSave = async () => {
+    if (!user) return;
+    
+    // Validate passwords
+    let hasErrors = false;
+    const errors = {
+      currentPassword: '',
+      newPassword: '',
+      confirmPassword: ''
+    };
+    
+    if (!passwordData.currentPassword) {
+      errors.currentPassword = 'Current password is required';
+      hasErrors = true;
+    }
+    
+    if (!passwordData.newPassword) {
+      errors.newPassword = 'New password is required';
+      hasErrors = true;
+    } else if (passwordData.newPassword.length < 6) {
+      errors.newPassword = 'Password must be at least 6 characters';
+      hasErrors = true;
+    }
+    
+    if (!passwordData.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+      hasErrors = true;
+    } else if (passwordData.newPassword !== passwordData.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+      hasErrors = true;
+    }
+    
+    if (hasErrors) {
+      setPasswordErrors(errors);
+      return;
+    }
+    
+    setIsLoading(true);
+    
+    try {
+      // Call API to update password
+      const response = await api.put(`/users/${user.id}/password`, {
+        currentPassword: passwordData.currentPassword,
+        newPassword: passwordData.newPassword
+      });
+      
+      if (response) {
+        toast.success('Password updated successfully', {
+          description: 'Your password has been changed'
+        });
+        
+        // Reset password form
+        setPasswordData({
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        });
+        
+        setIsChangingPassword(false);
+      }
+    } catch (error: any) {
+      console.error('Error updating password:', error);
+      
+      // Handle specific error for incorrect current password
+      if (error.response && error.response.status === 401) {
+        setPasswordErrors(prev => ({
+          ...prev,
+          currentPassword: 'Current password is incorrect'
+        }));
+      } else {
+        toast.error('Failed to update password', {
+          description: 'Please try again later'
+        });
+      }
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -123,10 +254,7 @@ const ProfileEditor: React.FC = () => {
             />
           ) : (
             <div className="flex items-center justify-between border rounded-md p-2">
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-muted-foreground" />
-                <span>{profileData.name}</span>
-              </div>
+              <span>{profileData.name}</span>
             </div>
           )}
         </div>
@@ -138,10 +266,104 @@ const ProfileEditor: React.FC = () => {
           </div>
           <p className="text-xs text-muted-foreground">Email cannot be changed</p>
         </div>
+        
+        {!isEditing && !isChangingPassword && (
+          <div className="flex justify-between pt-4">
+            <Button variant="outline" onClick={() => setIsChangingPassword(true)}>
+              <KeyRound className="mr-2 h-4 w-4" />
+              Change Password
+            </Button>
+            <Button onClick={() => setIsEditing(true)}>
+              Edit Profile
+            </Button>
+          </div>
+        )}
+        
+        {isChangingPassword && (
+          <>
+            <Separator className="my-4" />
+            <div className="space-y-4">
+              <h3 className="font-medium">Change Password</h3>
+              
+              <div className="space-y-2">
+                <Label htmlFor="currentPassword">Current Password</Label>
+                <div className="relative">
+                  <Input
+                    id="currentPassword"
+                    name="currentPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    className={passwordErrors.currentPassword ? "border-red-500" : ""}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                  >
+                    {showPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordErrors.currentPassword && (
+                  <p className="text-sm text-red-500 mt-1">{passwordErrors.currentPassword}</p>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="newPassword"
+                    name="newPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    className={passwordErrors.newPassword ? "border-red-500" : ""}
+                  />
+                  {passwordErrors.newPassword && (
+                    <p className="text-sm text-red-500 mt-1">{passwordErrors.newPassword}</p>
+                  )}
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className={passwordErrors.confirmPassword ? "border-red-500" : ""}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500"
+                  >
+                    {showConfirmPassword ? (
+                      <EyeOffIcon className="h-4 w-4" />
+                    ) : (
+                      <EyeIcon className="h-4 w-4" />
+                    )}
+                  </button>
+                </div>
+                {passwordErrors.confirmPassword && (
+                  <p className="text-sm text-red-500 mt-1">{passwordErrors.confirmPassword}</p>
+                )}
+              </div>
+            </div>
+          </>
+        )}
       </CardContent>
       
       <CardFooter className="flex justify-end gap-2">
-        {isEditing ? (
+        {isEditing && (
           <>
             <Button variant="outline" onClick={() => setIsEditing(false)}>
               Cancel
@@ -160,10 +382,39 @@ const ProfileEditor: React.FC = () => {
               )}
             </Button>
           </>
-        ) : (
-          <Button onClick={() => setIsEditing(true)}>
-            Edit Profile
-          </Button>
+        )}
+        
+        {isChangingPassword && (
+          <>
+            <Button variant="outline" onClick={() => {
+              setIsChangingPassword(false);
+              setPasswordData({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+              });
+              setPasswordErrors({
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: ''
+              });
+            }}>
+              Cancel
+            </Button>
+            <Button onClick={handlePasswordSave} disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Check className="mr-2 h-4 w-4" />
+                  Update Password
+                </>
+              )}
+            </Button>
+          </>
         )}
       </CardFooter>
     </Card>

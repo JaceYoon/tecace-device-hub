@@ -94,19 +94,74 @@ exports.updateProfile = async (req, res) => {
       active: updatedUser.active
     });
   } catch (err) {
-    console.error('Error updating user profile:', err);
+    console.error('Error updating profile:', err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// Update user role
+// Update user password
+exports.updatePassword = async (req, res) => {
+  try {
+    console.log('Password update request for user ID:', req.params.id);
+    
+    // Check if user is updating their own password
+    const requestedUserId = String(req.params.id);
+    const currentUserId = String(req.user.id);
+    
+    if (currentUserId !== requestedUserId) {
+      console.log('Authorization failed: User can only update their own password');
+      return res.status(403).json({ message: 'You can only update your own password' });
+    }
+    
+    const { currentPassword, newPassword } = req.body;
+    
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ 
+        message: 'Current password and new password are required' 
+      });
+    }
+    
+    // Find the user
+    const user = await User.findByPk(req.params.id);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Verify current password
+    const isPasswordValid = await bcrypt.compare(currentPassword, user.password);
+    
+    if (!isPasswordValid) {
+      return res.status(401).json({ message: 'Current password is incorrect' });
+    }
+    
+    // Hash the new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    
+    // Update the user's password
+    await user.update({
+      password: hashedPassword
+    });
+    
+    console.log('Password updated successfully for user ID:', req.params.id);
+    
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    console.error('Error updating password:', err);
+    res.status(500).json({ message: err.message });
+  }
+};
+
+// Update user role (admin only)
 exports.updateRole = async (req, res) => {
   try {
     const { role } = req.body;
     
-    // Verify that role is one of the allowed values
-    if (!role || !['user', 'admin', 'TPM', 'Software Engineer'].includes(role)) {
-      return res.status(400).json({ message: 'Invalid role' });
+    if (!role || !['user', 'TPM', 'Software Engineer'].includes(role)) {
+      return res.status(400).json({ 
+        message: 'Invalid role' 
+      });
     }
     
     const user = await User.findByPk(req.params.id);

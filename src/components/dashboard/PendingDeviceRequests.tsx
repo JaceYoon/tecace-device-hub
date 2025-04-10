@@ -1,88 +1,126 @@
 
 import React from 'react';
-import { Badge } from '@/components/ui/badge';
+import { useNavigate } from 'react-router-dom';
+import { useDeviceRequests } from '@/components/devices/hooks/useDeviceRequests';
 import { Button } from '@/components/ui/button';
-import { DeviceRequest, Device, User } from '@/types';
-import { Clock } from 'lucide-react';
+import { 
+  Card, 
+  CardContent, 
+  CardDescription, 
+  CardFooter, 
+  CardHeader, 
+  CardTitle 
+} from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { RequestStatusBadge } from '@/components/ui/RequestStatusBadge';
+import { Loader2, FolderInput, SmartphoneIcon } from 'lucide-react';
+import { DeviceRequest } from '@/types';
+import { format } from 'date-fns';
 
-interface PendingDeviceRequestsProps {
-  pendingRequests: DeviceRequest[];
-  devices: {[key: string]: Device};
-  users: {[key: string]: User};
-  handleProcessRequest: (requestId: string, approve: boolean) => Promise<void>;
-  isAdmin: boolean;
-}
-
-const PendingDeviceRequests: React.FC<PendingDeviceRequestsProps> = ({
-  pendingRequests,
-  devices,
-  users,
-  handleProcessRequest,
-  isAdmin
-}) => {
-  // Only show to admin users
-  if (!isAdmin || pendingRequests.length === 0) {
-    return null;
-  }
+const PendingDeviceRequests: React.FC = () => {
+  const navigate = useNavigate();
+  const { requests, isLoading } = useDeviceRequests({ type: 'assign' });
   
+  const pendingAssignRequests = requests.filter(req => 
+    req.type === 'assign' && req.status === 'pending'
+  );
+  
+  const viewAllRequests = () => {
+    navigate('/device-management?tab=requests');
+  };
+  
+  // Format the date for display
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), 'MMM d, yyyy');
+    } catch {
+      return 'Invalid date';
+    }
+  };
+
   return (
-    <div className="rounded-lg border p-4 animate-slide-up">
-      <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-        <Clock className="h-5 w-5" />
-        Pending Requests
-        <Badge variant="outline" className="ml-2 bg-accent/20">
-          {pendingRequests.length}
-        </Badge>
-      </h2>
-
-      <div className="space-y-4">
-        {pendingRequests.map(request => {
-          const device = devices[request.deviceId];
-          const requestUser = users[request.userId];
-          
-          const deviceName = device ? (device.project || device.projectGroup || 'Unknown Device') : 'Unknown Device';
-          const userName = requestUser ? requestUser.name || 'Unknown User' : 'Unknown User';
-          const serialNumber = device ? device.serialNumber : 'N/A';
-          const imeiNumber = device ? device.imei : 'N/A';
-          
-          return (
-            <div
-              key={request.id}
-              className="flex items-center justify-between border-b pb-4 last:border-b-0 last:pb-0"
-            >
-              <div>
-                <p className="font-medium">{deviceName}</p>
-                <p className="text-sm text-muted-foreground">
-                  {request.type === 'assign' ? 'Assignment' : 'Release'} request from {userName}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Serial Number: {serialNumber}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  IMEI: {imeiNumber}
-                </p>
-              </div>
-
-              <div className="flex gap-2">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => handleProcessRequest(request.id, false)}
-                >
-                  Reject
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={() => handleProcessRequest(request.id, true)}
-                >
-                  Approve
-                </Button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </div>
+    <Card>
+      <CardHeader className="pb-2">
+        <CardTitle className="text-lg font-medium flex items-center">
+          <FolderInput className="h-5 w-5 mr-2 text-blue-500" />
+          Pending Device Requests
+        </CardTitle>
+        <CardDescription>
+          Review and approve device assignment requests
+        </CardDescription>
+      </CardHeader>
+      
+      <CardContent>
+        {isLoading ? (
+          <div className="flex justify-center py-6">
+            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+          </div>
+        ) : pendingAssignRequests.length === 0 ? (
+          <div className="text-center py-6 text-muted-foreground">
+            <SmartphoneIcon className="h-10 w-10 mx-auto mb-2 opacity-20" />
+            <p>No pending device requests</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Requester</TableHead>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Serial</TableHead>
+                  <TableHead>IMEI</TableHead>
+                  <TableHead>Date</TableHead>
+                  <TableHead>Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {pendingAssignRequests.slice(0, 5).map((request: DeviceRequest) => (
+                  <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/device-management?tab=requests&id=${request.id}`)}>
+                    <TableCell className="font-medium">
+                      {request.requesterName || 'Unknown'}
+                    </TableCell>
+                    <TableCell>
+                      {request.deviceName || request.deviceId || 'Unknown device'}
+                    </TableCell>
+                    <TableCell>
+                      {request.deviceSerialNumber || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {request.deviceImei || 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {formatDate(request.requestedAt)}
+                    </TableCell>
+                    <TableCell>
+                      <RequestStatusBadge status={request.status} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+      
+      {pendingAssignRequests.length > 0 && (
+        <CardFooter>
+          <Button 
+            variant="outline" 
+            className="w-full" 
+            onClick={viewAllRequests}
+          >
+            View all requests
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
   );
 };
 

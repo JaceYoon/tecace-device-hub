@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
@@ -82,35 +82,37 @@ const UserManagement: React.FC = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[50px]">User</TableHead>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead className="w-[50px] text-center">User</TableHead>
+                  <TableHead className="text-center">Name</TableHead>
+                  <TableHead className="text-center">Email</TableHead>
+                  <TableHead className="text-center">Role</TableHead>
+                  <TableHead className="text-center">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {users.map((userData) => (
                   <TableRow key={userData.id}>
-                    <TableCell>
-                      <Avatar className="h-9 w-9">
-                        {userData.avatarUrl ? (
-                          <AvatarImage src={userData.avatarUrl} alt={userData.name} />
-                        ) : (
-                          <AvatarFallback>
-                            {userData.name.split(' ').map(n => n[0]).join('')}
-                          </AvatarFallback>
-                        )}
-                      </Avatar>
+                    <TableCell className="text-center">
+                      <div className="flex justify-center">
+                        <Avatar className="h-9 w-9">
+                          {userData.avatarUrl ? (
+                            <AvatarImage src={userData.avatarUrl} alt={userData.name} />
+                          ) : (
+                            <AvatarFallback>
+                              {userData.name.split(' ').map(n => n[0]).join('')}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                      </div>
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium text-center">
                       {userData.name}
                       {userData.id === user.id && (
                         <Badge variant="outline" className="ml-2 text-xs">You</Badge>
                       )}
                     </TableCell>
-                    <TableCell>{userData.email}</TableCell>
-                    <TableCell>
+                    <TableCell className="text-center">{userData.email}</TableCell>
+                    <TableCell className="text-center">
                       <Badge
                         variant={userData.role === 'admin' ? 'default' : 'outline'}
                         className={getRoleBadgeClass(userData.role)}
@@ -118,16 +120,16 @@ const UserManagement: React.FC = () => {
                         {userData.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-center">
                       {userData.role === 'admin' ? (
-                        <div className="w-[160px] flex justify-end">
+                        <div className="w-[160px] flex justify-center">
                           <Badge variant="default" className="bg-primary">
                             Protected
                           </Badge>
                         </div>
                       ) : (
                         <Select
-                          defaultValue="user"
+                          defaultValue={userData.role}
                           value={userData.role}
                           onValueChange={(value) => handleRoleChange(
                             userData.id, 

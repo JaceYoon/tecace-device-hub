@@ -47,6 +47,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           className="pl-9"
+          aria-label="Search devices"
         />
       </div>
       

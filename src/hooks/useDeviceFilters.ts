@@ -130,7 +130,7 @@ export const useDeviceFilters = ({
     const map = new Map<string, string>();
     users.forEach(user => {
       if (user.id) {
-        map.set(user.id, user.name || '');
+        map.set(String(user.id), user.name || '');
       }
     });
     return map;
@@ -152,7 +152,7 @@ export const useDeviceFilters = ({
       }
     });
     
-    return owners;
+    return owners.sort((a, b) => a.name.localeCompare(b.name));
   }, [devices, userIdToNameMap]);
 
   const filteredDevices = useMemo(() => {
