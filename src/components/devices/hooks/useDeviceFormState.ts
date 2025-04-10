@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Device, DeviceTypeValue, DeviceTypeCategory } from '@/types';
+import { Device, DeviceTypeValue, DeviceTypeCategory, DeviceStatus } from '@/types';
 
 export const useDeviceFormState = (device: Device) => {
   // Make sure we have a valid deviceType value from the allowed options
@@ -24,6 +24,23 @@ export const useDeviceFormState = (device: Device) => {
       : 'Other';
   };
 
+  // Ensure we have a valid DeviceStatus
+  const ensureValidStatus = (status: string): DeviceStatus => {
+    const validStatuses: DeviceStatus[] = [
+      'available',
+      'assigned',
+      'missing',
+      'stolen',
+      'returned',
+      'dead',
+      'pending'
+    ];
+    
+    return validStatuses.includes(status as DeviceStatus)
+      ? (status as DeviceStatus)
+      : 'available';
+  };
+
   const [deviceData, setDeviceData] = useState({
     project: device.project,
     projectGroup: device.projectGroup || 'Eureka',
@@ -31,7 +48,7 @@ export const useDeviceFormState = (device: Device) => {
     deviceType: deviceTypeValue as DeviceTypeCategory,
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
-    status: device.status,
+    status: ensureValidStatus(device.status),
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
     notes: device.notes || '',

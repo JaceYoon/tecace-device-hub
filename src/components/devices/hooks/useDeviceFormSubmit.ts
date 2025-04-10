@@ -1,6 +1,6 @@
 
 import { toast } from 'sonner';
-import { Device } from '@/types';
+import { Device, DeviceStatus } from '@/types';
 import { dataService } from '@/services/data.service';
 import { validateDeviceFields } from './useDeviceFormValidation';
 import { DeviceFormData } from './useDeviceFormHandlers';
@@ -51,7 +51,7 @@ export const useDeviceFormSubmit = ({
         deviceType,
         imei: imei || null,
         serialNumber: serialNumber || null,
-        status,
+        status: status as DeviceStatus, // Cast to specific DeviceStatus type
         deviceStatus: deviceStatus || null,
         receivedDate,
         notes: notes || null,

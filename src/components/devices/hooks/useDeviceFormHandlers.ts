@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { DeviceTypeValue } from '@/types';
+import { DeviceTypeValue, DeviceStatus } from '@/types';
 
 export interface DeviceFormData {
   project: string;
@@ -9,7 +9,7 @@ export interface DeviceFormData {
   deviceType: 'C-Type' | 'Lunchbox';
   imei: string;
   serialNumber: string;
-  status: string;
+  status: DeviceStatus;
   deviceStatus: string;
   receivedDate?: Date;
   notes: string;
