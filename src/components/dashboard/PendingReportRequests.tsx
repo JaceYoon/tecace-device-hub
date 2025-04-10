@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -61,11 +62,9 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
                     <span className="font-semibold">From:</span> {userName}
                   </p>
                   <p className="text-red-700">
-                    <span className="font-semibold">Serial:</span> {serialNumber}
+                    <span className="font-semibold">Serial Number:</span> {serialNumber}
                   </p>
-                  <p className="text-red-700">
-                    <span className="font-semibold">IMEI:</span> {imei}
-                  </p>
+                  {/* Remove IMEI from the display as requested */}
                   <p className="text-red-700">
                     <span className="font-semibold">Description:</span> {reason}
                   </p>

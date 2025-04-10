@@ -14,7 +14,7 @@ interface DeviceFormProps {
 }
 
 const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
-  const { deviceData, setDeviceData, handleSubmit, handleChange, handleSelectChange, handleDateChange, isSubmitting } = useDeviceForm(onDeviceAdded);
+  const { deviceData, setDeviceData, handleSubmit, handleChange, handleSelectChange, handleDateChange, handleFileChange, isSubmitting } = useDeviceForm(onDeviceAdded);
   
   // Strictly typed list of device types matching the database schema
   const deviceTypes: DeviceTypeValue[] = [
@@ -25,24 +25,6 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
     'Accessory',
     'Other',
   ];
-
-  // Function to handle barcode file upload
-  const handleFileChange = (file: File | null, fieldName: string) => {
-    if (!file) return;
-    
-    // Handle barcode image upload
-    if (fieldName === 'barcode') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
-        setDeviceData(prev => ({
-          ...prev,
-          barcode: base64String
-        }));
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   // Validate IMEI and Serial Number
   const validateFields = () => {

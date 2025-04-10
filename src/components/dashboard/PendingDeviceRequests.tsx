@@ -55,7 +55,7 @@ const PendingDeviceRequests: React.FC<PendingDeviceRequestsProps> = ({
                   {request.type === 'assign' ? 'Assignment' : 'Release'} request from {userName}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Serial: {serialNumber}
+                  Serial Number: {serialNumber}
                 </p>
               </div>
 

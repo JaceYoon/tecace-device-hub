@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Device, DeviceTypeValue, DeviceTypeCategory, DeviceStatus } from '@/types';
 
 export const useDeviceFormState = (device: Device) => {

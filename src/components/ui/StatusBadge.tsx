@@ -22,56 +22,56 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({
         return {
           label: 'Available',
           variant: 'outline' as const,
-          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100 dark:text-black',
           icon: Check
         };
       case 'assigned':
         return {
           label: 'Assigned',
           variant: 'outline' as const,
-          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
+          className: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:text-black',
           icon: Check
         };
       case 'missing':
         return {
           label: 'Missing',
           variant: 'outline' as const,
-          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100',
+          className: 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:text-black',
           icon: HelpCircle
         };
       case 'stolen':
         return {
           label: 'Stolen',
           variant: 'outline' as const,
-          className: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100',
+          className: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100 dark:text-black',
           icon: ShieldAlert
         };
       case 'returned':
         return {
           label: 'Returned',
           variant: 'outline' as const,
-          className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100',
+          className: 'bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:text-black',
           icon: ArrowLeft
         };
       case 'dead':
         return {
           label: 'Dead',
           variant: 'outline' as const,
-          className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100',
+          className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:text-black',
           icon: Zap
         };
       case 'pending':
         return {
           label: 'Pending',
           variant: 'outline' as const,
-          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100 dark:text-black',
           icon: Clock
         };
       default:
         return {
           label: 'Unknown',
           variant: 'outline' as const,
-          className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100',
+          className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100 dark:text-black',
           icon: AlertCircle
         };
     }

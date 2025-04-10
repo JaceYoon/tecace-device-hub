@@ -58,6 +58,22 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     });
   };
 
+  const handleFileChange = (file: File | null, field: string) => {
+    if (!file) return;
+    
+    if (field === 'devicePicture') {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        setDeviceData(prev => ({
+          ...prev,
+          devicePicture: base64String
+        }));
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -91,7 +107,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
         serialNumber: serialNumber || undefined,
         deviceStatus: deviceStatus || undefined,
         notes: notes || undefined,
-        receivedDate: receivedDate,
+        receivedDate,
         addedById: user?.id,
         status: 'available',
         devicePicture: devicePicture || undefined,
@@ -120,6 +136,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     handleChange,
     handleSelectChange,
     handleDateChange,
+    handleFileChange,
     handleSubmit,
     isSubmitting,
     resetForm,
