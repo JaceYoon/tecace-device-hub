@@ -40,7 +40,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
   
   return (
     <Card className="animate-slide-up shadow-soft border-none">
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} id="device-edit-form" aria-label="Edit device form">
         <CardContent>
           <DeviceFormFields
             deviceData={deviceData}

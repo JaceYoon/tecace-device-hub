@@ -15,15 +15,16 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="devicePicture">Device Picture</Label>
+      <Label htmlFor="devicePicture-upload">Device Picture</Label>
       <div className="flex items-center gap-2">
         <Input
-          id="devicePicture"
+          id="devicePicture-upload"
           name="devicePicture-upload"
           type="file"
           accept="image/*"
           onChange={onFileChange}
           className="flex-1"
+          aria-label="Upload device picture"
         />
         <Image className="h-5 w-5 text-muted-foreground" />
       </div>

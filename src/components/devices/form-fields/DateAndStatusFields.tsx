@@ -22,20 +22,23 @@ const DateAndStatusFields: React.FC<DateAndStatusFieldsProps> = ({
   handleChange,
   handleDateChange
 }) => {
+  const calendarButtonId = "receivedDate-button";
+  
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor="receivedDate">Received Date</Label>
+        <Label htmlFor={calendarButtonId}>Received Date</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              id="receivedDate"
+              id={calendarButtonId}
               name="receivedDate"
               variant="outline"
               className={cn(
                 "w-full justify-start text-left font-normal",
                 !receivedDate && "text-muted-foreground"
               )}
+              aria-label="Select received date"
             >
               <CalendarIcon className="mr-2 h-4 w-4" />
               {receivedDate ? format(receivedDate, "PPP") : <span>Pick a date</span>}
@@ -47,6 +50,7 @@ const DateAndStatusFields: React.FC<DateAndStatusFieldsProps> = ({
               selected={receivedDate}
               onSelect={(date) => handleDateChange(date, 'receivedDate')}
               initialFocus
+              aria-label="Date calendar"
             />
           </PopoverContent>
         </Popover>
@@ -61,6 +65,7 @@ const DateAndStatusFields: React.FC<DateAndStatusFieldsProps> = ({
           value={deviceStatus}
           onChange={handleChange}
           autoComplete="off"
+          aria-label="Device status"
         />
       </div>
     </div>

@@ -20,6 +20,7 @@ const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
         onChange={handleChange}
         rows={3}
         autoComplete="off"
+        aria-label="Device notes"
       />
     </div>
   );

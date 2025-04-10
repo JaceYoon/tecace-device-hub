@@ -60,13 +60,17 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
 
   return (
     <div className="space-y-2">
-      <Label htmlFor="projectGroup">Project Group *</Label>
+      <Label htmlFor="existing-project-group">Project Group *</Label>
       <div className="space-y-2">
         <Select
           value={selectedGroup || ''}
           onValueChange={(value) => handleSelectChange(value, 'projectGroup')}
         >
-          <SelectTrigger id="existingProjectGroup" name="existingProjectGroup">
+          <SelectTrigger 
+            id="existing-project-group" 
+            name="existingProjectGroup"
+            aria-label="Select existing project group"
+          >
             <SelectValue placeholder="Select existing project group" />
           </SelectTrigger>
           <SelectContent>
@@ -87,9 +91,11 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             className={cn(
               error && "border-red-500 focus-visible:ring-red-500"
             )}
+            aria-label="New project group"
+            aria-invalid={!!error}
           />
           {error && (
-            <div className="text-red-500 text-sm mt-1 flex items-start gap-1">
+            <div className="text-red-500 text-sm mt-1 flex items-start gap-1" role="alert">
               <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span>{error}</span>
             </div>

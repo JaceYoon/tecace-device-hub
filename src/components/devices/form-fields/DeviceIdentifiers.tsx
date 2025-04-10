@@ -27,6 +27,7 @@ const DeviceIdentifiers: React.FC<DeviceIdentifiersProps> = ({
           pattern="[a-zA-Z0-9]*"
           title="Only letters and numbers are allowed"
           autoComplete="off"
+          aria-label="Device serial number"
         />
       </div>
 
@@ -42,6 +43,7 @@ const DeviceIdentifiers: React.FC<DeviceIdentifiersProps> = ({
           title="IMEI must be exactly 15 digits"
           maxLength={15}
           autoComplete="off"
+          aria-label="Device IMEI number"
         />
       </div>
     </div>

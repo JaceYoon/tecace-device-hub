@@ -23,6 +23,7 @@ const ProjectNameField: React.FC<ProjectNameFieldProps> = ({
         onChange={handleChange}
         required
         autoComplete="off"
+        aria-required="true"
       />
     </div>
   );

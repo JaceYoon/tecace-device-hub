@@ -56,17 +56,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     }
   }, [deviceData.projectGroup]);
 
-  // Normalize group name (convert to lowercase and remove spaces) for comparison
-  const normalizeGroupName = (name: string) => {
-    return name.toLowerCase().replace(/\s+/g, '');
-  };
-
-  // Check if a group name already exists (case-insensitive, ignoring spaces)
-  const groupExists = (name: string, groups: string[]) => {
-    const normalizedName = normalizeGroupName(name);
-    return groups.some(group => normalizeGroupName(group) === normalizedName);
-  };
-
   // Handle changing the selected project group from dropdown
   const handleProjectGroupSelect = (value: string) => {
     setSelectedProjectGroup(value);
@@ -90,7 +79,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
     
     // Update deviceData with new value, overriding any dropdown selection
     if (value.trim()) {
-      // We'll check if the group exists in the ProjectGroupSelector component
       handleSelectChange(value, 'projectGroup');
     }
   };
@@ -104,7 +92,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" role="group" aria-label="Device information form">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ProjectNameField 
           project={deviceData.project} 

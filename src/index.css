@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -79,7 +78,7 @@
 
 /* Custom select trigger for user management page */
 .custom-select-trigger {
-  padding-left: 0.5rem;
+  padding-left: 0.75rem;
   padding-right: 0.75rem;
 }
 

@@ -26,12 +26,12 @@ const DeviceTypeSelector: React.FC<DeviceTypeSelectorProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor="type">Device Type *</Label>
+        <Label htmlFor="type-select">Device Type *</Label>
         <Select
           value={deviceType}
           onValueChange={(value) => handleSelectChange(value, 'type')}
         >
-          <SelectTrigger id="type" name="type">
+          <SelectTrigger id="type-select" name="type" aria-label="Select device type">
             <SelectValue placeholder="Select Type" />
           </SelectTrigger>
           <SelectContent>
@@ -43,12 +43,12 @@ const DeviceTypeSelector: React.FC<DeviceTypeSelectorProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="deviceType">Type</Label>
+        <Label htmlFor="deviceType-select">Type</Label>
         <Select
           value={deviceTypeCategory}
           onValueChange={(value) => handleSelectChange(value, 'deviceType')}
         >
-          <SelectTrigger id="deviceType" name="deviceType">
+          <SelectTrigger id="deviceType-select" name="deviceType" aria-label="Select device type category">
             <SelectValue placeholder="Select Type" />
           </SelectTrigger>
           <SelectContent>
