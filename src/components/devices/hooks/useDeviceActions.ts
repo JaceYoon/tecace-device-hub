@@ -1,7 +1,9 @@
 
 import { useState } from 'react';
-import { Device } from '@/types';
+import { Device, User } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { dataService } from '@/services/data.service';
+import { toast } from 'sonner';
 import { useDeviceRequests } from './useDeviceRequests';
 import { useDeviceStatus } from './useDeviceStatus';
 import { useDeviceManagement } from './useDeviceManagement';
@@ -44,9 +46,11 @@ export const useDeviceActions = (
     closeConfirmation
   } = useConfirmationDialog();
   
-  const { 
-    handleRequestDevice 
-  } = useDeviceRequests(device, user, setIsProcessing, showConfirmation, closeConfirmation, onAction);
+  // Fix: Pass only the required arguments to useDeviceRequests
+  const { handleRequestDevice: requestDevice } = useDeviceRequests({
+    type: 'assign',
+    status: 'pending'
+  });
   
   const { 
     handleReleaseDevice, 
@@ -57,6 +61,70 @@ export const useDeviceActions = (
     handleDeleteDevice, 
     handleDownloadImage 
   } = useDeviceManagement(device, isAdmin, deleteConfirmText, setIsDeleting, setDeleteConfirmOpen, setDeleteConfirmText, onAction);
+
+  // Create a wrapper function for requestDevice that applies it to the current device
+  const handleRequestDevice = async () => {
+    if (!user) return;
+    
+    if (device.requestedBy && device.requestedBy !== "") {
+      toast.error('This device is already requested');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const requests = await dataService.devices.getAllRequests();
+      const userPendingRequests = requests.filter(
+        req => req.userId === user.id && 
+               req.status === 'pending' && 
+               req.type === 'assign'
+      );
+      
+      if (userPendingRequests.some(req => req.deviceId === device.id)) {
+        toast.error('You have already requested this device');
+        setIsProcessing(false);
+        return;
+      }
+      
+      showConfirmation(
+        "Request Device",
+        `Are you sure you want to request ${device.project}?`,
+        async () => {
+          try {
+            await dataService.addRequest({
+              deviceId: device.id,
+              userId: user.id,
+              status: 'pending',
+              type: 'assign',
+            });
+
+            try {
+              await dataService.updateDevice(device.id, {
+                requestedBy: user.id,
+                status: 'pending'
+              });
+            } catch (updateError) {
+              console.error('Error updating device status to pending:', updateError);
+            }
+
+            toast.success('Device requested successfully');
+            if (onAction) onAction();
+            closeConfirmation();
+          } catch (error) {
+            console.error('Error requesting device:', error);
+            toast.error('Failed to request device');
+            closeConfirmation();
+          } finally {
+            setIsProcessing(false);
+          }
+        }
+      );
+    } catch (error) {
+      console.error('Error checking existing requests:', error);
+      setIsProcessing(false);
+      toast.error('Failed to process your request');
+    }
+  };
 
   return {
     isDeleting,

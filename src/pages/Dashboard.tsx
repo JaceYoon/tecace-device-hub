@@ -52,7 +52,14 @@ const Dashboard: React.FC = () => {
         
         <StatusSummary onRefresh={handleRefresh} />
         
-        <PendingReportRequests/>
+        {/* Pass the required props to PendingReportRequests */}
+        <PendingReportRequests
+          reportRequests={reportRequests}
+          devices={devices}
+          users={users}
+          handleProcessRequest={handleProcessRequest}
+          isAdmin={isAdmin}
+        />
         
         <PendingDeviceRequests/>
         
