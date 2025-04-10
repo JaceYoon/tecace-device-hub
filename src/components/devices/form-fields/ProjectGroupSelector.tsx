@@ -28,11 +28,13 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
   handleNewGroupChange,
   error
 }) => {
-  const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
+  const [projectGroups, setProjectGroups] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
 
   // Fetch existing project groups from devices
   useEffect(() => {
     const fetchProjectGroups = async () => {
+      setLoading(true);
       try {
         const devices = await dataService.devices.getAll();
         const uniqueGroups = new Set<string>();
@@ -44,19 +46,25 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
         });
         
         const groups = Array.from(uniqueGroups);
-        if (groups.length > 0) {
-          setProjectGroups(groups);
-        } else {
-          setProjectGroups(['Eureka']);
+        setProjectGroups(groups);
+        
+        // If selectedGroup is set but not in our list, add it
+        if (selectedGroup && !groups.includes(selectedGroup)) {
+          setProjectGroups(prev => [...prev, selectedGroup]);
         }
       } catch (error) {
         console.error('Error fetching project groups:', error);
-        setProjectGroups(['Eureka']);
+        // If we have a selectedGroup, include it even if fetch failed
+        if (selectedGroup) {
+          setProjectGroups([selectedGroup]);
+        }
+      } finally {
+        setLoading(false);
       }
     };
     
     fetchProjectGroups();
-  }, []);
+  }, [selectedGroup]);
 
   return (
     <div className="space-y-2">
@@ -71,14 +79,26 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             name="existingProjectGroup"
             aria-label="Select existing project group"
           >
-            <SelectValue placeholder={selectedGroup || "Select existing project group"}>
+            <SelectValue placeholder={
+              loading 
+                ? "Loading project groups..." 
+                : projectGroups.length > 0 
+                  ? "Select existing project group" 
+                  : "No project groups found"
+            }>
               {selectedGroup}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {projectGroups.map(group => (
-              <SelectItem key={group} value={group}>{group}</SelectItem>
-            ))}
+            {projectGroups.length > 0 ? (
+              projectGroups.map(group => (
+                <SelectItem key={group} value={group}>{group}</SelectItem>
+              ))
+            ) : (
+              <SelectItem value="" disabled>
+                There is no project Group found, please add the new project group
+              </SelectItem>
+            )}
           </SelectContent>
         </Select>
         
