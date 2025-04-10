@@ -1,0 +1,64 @@
+
+import React from 'react';
+import { Label } from '@/components/ui/label';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { DeviceTypeValue } from '@/types';
+
+interface DeviceTypeSelectorProps {
+  deviceType: DeviceTypeValue;
+  deviceTypeCategory: 'C-Type' | 'Lunchbox';
+  deviceTypes: DeviceTypeValue[];
+  handleSelectChange: (value: string, field: string) => void;
+}
+
+const DeviceTypeSelector: React.FC<DeviceTypeSelectorProps> = ({
+  deviceType,
+  deviceTypeCategory,
+  deviceTypes,
+  handleSelectChange
+}) => {
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="space-y-2">
+        <Label htmlFor="type">Device Type *</Label>
+        <Select
+          value={deviceType}
+          onValueChange={(value) => handleSelectChange(value, 'type')}
+        >
+          <SelectTrigger id="type" name="type">
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            {deviceTypes.map(type => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="deviceType">Type</Label>
+        <Select
+          value={deviceTypeCategory}
+          onValueChange={(value) => handleSelectChange(value, 'deviceType')}
+        >
+          <SelectTrigger id="deviceType" name="deviceType">
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="C-Type">C-Type</SelectItem>
+            <SelectItem value="Lunchbox">Lunchbox</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
+};
+
+export default DeviceTypeSelector;
