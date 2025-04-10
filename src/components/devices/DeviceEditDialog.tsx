@@ -52,17 +52,19 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit Device</DialogTitle>
           <DeviceDialogDescription />
         </DialogHeader>
         
-        <DeviceEditForm 
-          device={device} 
-          onDeviceUpdated={handleDeviceUpdated} 
-          onCancel={() => setOpen(false)}
-        />
+        <div className="dialog-content-scroll">
+          <DeviceEditForm 
+            device={device} 
+            onDeviceUpdated={handleDeviceUpdated} 
+            onCancel={() => setOpen(false)}
+          />
+        </div>
         
         <DialogFooter className="mt-4">
           {/* Footer content if needed */}

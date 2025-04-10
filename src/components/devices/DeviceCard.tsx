@@ -114,14 +114,16 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               />
 
               {displayExpanded && (
-                <DeviceCardDetails 
-                  device={device} 
-                  requestedByUser={requestedByUser}
-                  isManager={isManager}
-                  isAdmin={isAdmin}
-                  users={users}
-                  onDownloadImage={handleDownloadImage}
-                />
+                <div className="animate-fade-in">
+                  <DeviceCardDetails 
+                    device={device} 
+                    requestedByUser={requestedByUser}
+                    isManager={isManager}
+                    isAdmin={isAdmin}
+                    users={users}
+                    onDownloadImage={handleDownloadImage}
+                  />
+                </div>
               )}
             </CardContent>
 

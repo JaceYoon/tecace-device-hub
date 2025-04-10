@@ -1,13 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { DeviceTypeValue } from '@/types';
-import ProjectNameField from './form-fields/ProjectNameField';
-import ProjectGroupSelector from './form-fields/ProjectGroupSelector';
-import DeviceTypeSelector from './form-fields/DeviceTypeSelector';
-import DeviceIdentifiers from './form-fields/DeviceIdentifiers';
-import DateAndStatusFields from './form-fields/DateAndStatusFields';
-import DeviceImageUploader from './form-fields/DeviceImageUploader';
-import NotesField from './form-fields/NotesField';
+import DeviceFormBasicInfo from './form-fields/DeviceFormBasicInfo';
+import DeviceFormIdentifiers from './form-fields/DeviceFormIdentifiers';
+import DeviceFormStatus from './form-fields/DeviceFormStatus';
+import DeviceFormMedia from './form-fields/DeviceFormMedia';
 
 interface DeviceData {
   project: string;
@@ -45,44 +42,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleFileChange,
   isEditMode = false
 }) => {
-  const [selectedProjectGroup, setSelectedProjectGroup] = useState('');
-  const [newProjectGroup, setNewProjectGroup] = useState('');
-  const [projectGroupError, setProjectGroupError] = useState('');
-
-  // Set initial values from deviceData if present
-  useEffect(() => {
-    if (deviceData.projectGroup) {
-      setSelectedProjectGroup(deviceData.projectGroup);
-    }
-  }, [deviceData.projectGroup]);
-
-  // Handle changing the selected project group from dropdown
-  const handleProjectGroupSelect = (value: string) => {
-    setSelectedProjectGroup(value);
-    setProjectGroupError('');
-    
-    // If new project group is empty, update deviceData
-    if (!newProjectGroup.trim()) {
-      handleSelectChange(value, 'projectGroup');
-    }
-  };
-
-  // Handle typing in the new project group field
-  const handleNewProjectGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setNewProjectGroup(value);
-    
-    // Reset error message when field is cleared
-    if (!value.trim()) {
-      setProjectGroupError('');
-    }
-    
-    // Update deviceData with new value, overriding any dropdown selection
-    if (value.trim()) {
-      handleSelectChange(value, 'projectGroup');
-    }
-  };
-
   // Handle device picture file upload
   const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
@@ -92,49 +51,38 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   };
 
   return (
-    <div className="space-y-4" role="group" aria-label="Device information form">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ProjectNameField 
-          project={deviceData.project} 
-          handleChange={handleChange} 
-        />
-
-        <ProjectGroupSelector
-          selectedGroup={selectedProjectGroup}
-          newGroupValue={newProjectGroup}
-          handleSelectChange={handleProjectGroupSelect}
-          handleNewGroupChange={handleNewProjectGroupChange}
-          error={projectGroupError}
-        />
-      </div>
-
-      <DeviceTypeSelector
-        deviceType={deviceData.type}
-        deviceTypeCategory={deviceData.deviceType}
+    <div className="space-y-6" role="group" aria-label="Device information form">
+      {/* Basic Info Section */}
+      <DeviceFormBasicInfo 
+        project={deviceData.project}
+        projectGroup={deviceData.projectGroup}
+        type={deviceData.type}
+        deviceType={deviceData.deviceType}
         deviceTypes={deviceTypes}
+        handleChange={handleChange}
         handleSelectChange={handleSelectChange}
       />
 
-      <DeviceIdentifiers
+      {/* Identifiers Section */}
+      <DeviceFormIdentifiers 
         serialNumber={deviceData.serialNumber || ''}
         imei={deviceData.imei || ''}
         handleChange={handleChange}
       />
 
-      <DateAndStatusFields
+      {/* Status Section */}
+      <DeviceFormStatus 
         receivedDate={deviceData.receivedDate}
         deviceStatus={deviceData.deviceStatus || ''}
         handleChange={handleChange}
         handleDateChange={handleDateChange}
       />
 
-      <DeviceImageUploader
+      {/* Media and Notes Section */}
+      <DeviceFormMedia 
         devicePicture={deviceData.devicePicture}
-        onFileChange={handleDevicePictureUpload}
-      />
-
-      <NotesField
         notes={deviceData.notes || ''}
+        onFileChange={handleDevicePictureUpload}
         handleChange={handleChange}
       />
     </div>

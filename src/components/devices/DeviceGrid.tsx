@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import DeviceCard from './DeviceCard';
 import { Clock } from 'lucide-react';
@@ -17,6 +17,12 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
   onAction,
   showReturnControls = false
 }) => {
+  const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
+
+  const handleToggleExpand = (deviceId: string) => {
+    setExpandedDeviceId(prevId => prevId === deviceId ? null : deviceId);
+  };
+
   if (devices.length === 0) {
     return (
       <div className="py-12 text-center border rounded-lg bg-muted/10">
@@ -37,6 +43,8 @@ const DeviceGrid: React.FC<DeviceGridProps> = ({
             onAction={onAction}
             className="w-full"
             showReturnControls={showReturnControls}
+            isExpanded={expandedDeviceId === device.id}
+            onToggleExpand={handleToggleExpand}
           />
         </div>
       ))}

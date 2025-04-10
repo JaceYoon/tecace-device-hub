@@ -17,7 +17,7 @@ const DeviceIdentifiers: React.FC<DeviceIdentifiersProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor="serialNumber">Serial Number (Alphanumeric only)</Label>
+        <Label htmlFor="serialNumber">Serial Number</Label>
         <Input
           id="serialNumber"
           name="serialNumber"
@@ -28,11 +28,12 @@ const DeviceIdentifiers: React.FC<DeviceIdentifiersProps> = ({
           title="Only letters and numbers are allowed"
           autoComplete="off"
           aria-label="Device serial number"
+          className="text-ellipsis"
         />
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="imei">IMEI (15 digits only)</Label>
+        <Label htmlFor="imei">IMEI (15 digits)</Label>
         <Input
           id="imei"
           name="imei"
@@ -44,6 +45,7 @@ const DeviceIdentifiers: React.FC<DeviceIdentifiersProps> = ({
           maxLength={15}
           autoComplete="off"
           aria-label="Device IMEI number"
+          className="text-ellipsis"
         />
       </div>
     </div>
