@@ -77,6 +77,12 @@
   }
 }
 
+/* Custom select trigger for user management page */
+.custom-select-trigger {
+  padding-left: 0.5rem;
+  padding-right: 0.75rem;
+}
+
 /* Add smooth transitions for dark mode */
 .dark-mode-transition {
   transition: all 0.3s ease;
