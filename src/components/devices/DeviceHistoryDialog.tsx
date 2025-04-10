@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
@@ -286,7 +285,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         </DialogHeader>
         
         <div className="py-4 overflow-y-auto">
-          <h3 className="font-semibold mb-2">{device.project}</h3>
+          <h3 className="font-semibold mb-2">{device.project} - {device.serialNumber || 'No S/N'}</h3>
           
           <div className="text-xs text-muted-foreground mb-3">
             <div className="flex gap-2 mt-1">

@@ -76,9 +76,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   };
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
-  
-  // Determine if we should hide the "Mark as available" button
-  const hideMarkAsAvailable = device.status === 'missing' || device.status === 'stolen';
 
   return (
     <>
@@ -120,6 +117,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 <div className="animate-fade-in">
                   <DeviceCardDetails 
                     device={device} 
+                    requestedByUser={requestedByUser}
                     isManager={isManager}
                     isAdmin={isAdmin}
                     users={users}
@@ -142,7 +140,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 userId={user?.id}
                 onRequestDevice={handleRequestDevice}
                 onReleaseDevice={handleReleaseDevice}
-                onStatusChange={hideMarkAsAvailable ? undefined : handleStatusChange}
+                onStatusChange={handleStatusChange}
                 onAction={onAction}
               />
             </CardFooter>

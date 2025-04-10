@@ -16,6 +16,7 @@ import {
 
 interface DeviceCardDetailsProps {
   device: Device;
+  requestedByUser?: User | undefined;
   isManager: boolean;
   isAdmin: boolean;
   users: User[];
@@ -24,6 +25,7 @@ interface DeviceCardDetailsProps {
 
 const DeviceCardDetails: React.FC<DeviceCardDetailsProps> = ({
   device,
+  requestedByUser,
   isManager,
   isAdmin,
   users,
@@ -33,9 +35,6 @@ const DeviceCardDetails: React.FC<DeviceCardDetailsProps> = ({
   const formatDate = (date: Date) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
-
-  // Find the user who requested the device
-  const requestedByUser = users.find(u => u.id === device.requestedBy);
 
   return (
     <div className="space-y-2 text-sm">

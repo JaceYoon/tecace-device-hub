@@ -65,7 +65,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     
     // Validate required fields
     if (!project) {
-      toast.error('Please enter a device name');
+      toast.error('Please enter a project name');
       return;
     }
     
@@ -74,7 +74,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       return;
     }
 
-    if (!projectGroup || projectGroup.trim() === '') {
+    if (!projectGroup) {
       toast.error('Please select or enter a project group');
       return;
     }
@@ -84,7 +84,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     try {
       const addedDevice = await dataService.addDevice({
         project,
-        projectGroup,
+        projectGroup: projectGroup || 'Eureka',
         type,
         deviceType,
         imei: imei || undefined,

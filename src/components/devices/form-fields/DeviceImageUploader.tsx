@@ -19,7 +19,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       <div className="flex items-center gap-2">
         <Input
           id="devicePicture-upload"
-          name="devicePicture"
+          name="devicePicture-upload"
           type="file"
           accept="image/*"
           onChange={onFileChange}
