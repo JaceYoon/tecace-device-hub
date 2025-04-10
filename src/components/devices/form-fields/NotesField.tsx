@@ -15,7 +15,7 @@ const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
       <Textarea
         id="notes"
         name="notes"
-        placeholder="Additional Notes"
+        placeholder="Enter additional notes about this device"
         value={notes}
         onChange={handleChange}
         rows={3}

@@ -18,12 +18,13 @@ const ProjectNameField: React.FC<ProjectNameFieldProps> = ({
       <Input
         id="project"
         name="project"
-        placeholder="Project Name"
+        placeholder="Enter project name"
         value={project}
         onChange={handleChange}
         required
         autoComplete="off"
         aria-required="true"
+        aria-label="Project name"
       />
     </div>
   );

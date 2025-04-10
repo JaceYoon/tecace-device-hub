@@ -71,7 +71,7 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             name="existingProjectGroup"
             aria-label="Select existing project group"
           >
-            <SelectValue placeholder="Select existing project group" />
+            <SelectValue placeholder={selectedGroup || "Select existing project group"} />
           </SelectTrigger>
           <SelectContent>
             {projectGroups.map(group => (
@@ -85,7 +85,7 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             id="newProjectGroup"
             name="newProjectGroup"
             placeholder="Or type a new project group"
-            value={newGroupValue}
+            value={newProjectGroup}
             onChange={handleNewGroupChange}
             autoComplete="off"
             className={cn(
