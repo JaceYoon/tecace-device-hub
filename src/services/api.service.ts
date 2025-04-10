@@ -1,8 +1,9 @@
+
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
 // You can override this with an environment variable if needed
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = import.meta.env.VITE_API_URL || 'https://localhost:5000/api';
 
 // Development mode flag - set to false to use the actual API
 let devMode = false; // Changed to false to use real MariaDB connection

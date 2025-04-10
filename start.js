@@ -5,6 +5,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import fs from 'fs';
 import http from 'http';
+import https from 'https';
 
 // Get the current directory
 const __filename = fileURLToPath(import.meta.url);
@@ -131,15 +132,15 @@ const frontend = await startProcess(npmCmd, ['run', 'dev'], {
 if (server || frontend) {
   console.log('✅ Started services successfully!');
   console.log('⚠️ Press Ctrl+C to stop all services');
-  console.log('📝 Access the application at: http://localhost:8080');
-  console.log('📝 Backend API running at: http://localhost:5000');
+  console.log('📝 Access the application at: https://localhost:8080');
+  console.log('📝 Backend API running at: https://localhost:5000');
   console.log('🔍 If the app shows connection errors, don\'t worry - it will switch to development mode automatically');
   
   // Add troubleshooting instructions
   console.log('\n📌 Troubleshooting connection issues:');
   console.log('   1. Make sure no other application is using port 8080');
   console.log('   2. If using a new terminal, make sure you\'re in the project root directory');
-  console.log('   3. Try accessing http://localhost:8080 directly in your browser');
+  console.log('   3. Try accessing https://localhost:8080 directly in your browser');
   console.log('   4. If you still see connection refused errors, try starting the services manually:');
   console.log('      - Terminal 1: cd server && node server.js');
   console.log('      - Terminal 2: npm run dev');

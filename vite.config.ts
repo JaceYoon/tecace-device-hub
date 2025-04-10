@@ -3,6 +3,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+import fs from "fs";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -10,6 +11,10 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     strictPort: false, // Allow fallback to another port if 8080 is in use
+    https: fs.existsSync('key.pem') && fs.existsSync('cert.pem') ? {
+      key: fs.readFileSync('key.pem'),
+      cert: fs.readFileSync('cert.pem')
+    } : undefined,
     hmr: {
       // Improve HMR error handling
       clientPort: 8080,
