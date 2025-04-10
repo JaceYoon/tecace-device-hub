@@ -61,7 +61,8 @@ const Dashboard: React.FC = () => {
           isAdmin={isAdmin}
         />
         
-        <PendingDeviceRequests />
+        {/* Only show PendingDeviceRequests for admin users */}
+        {isAdmin && <PendingDeviceRequests />}
         
         <DashboardTabs
           activeTab={activeTab}

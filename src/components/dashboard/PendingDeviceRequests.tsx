@@ -24,13 +24,19 @@ import { DeviceRequest } from '@/types';
 import { format } from 'date-fns';
 import { dataService } from '@/services/data.service';
 import { useState, useEffect } from 'react';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 const PendingDeviceRequests: React.FC = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [pendingRequests, setPendingRequests] = useState<DeviceRequest[]>([]);
+  const { isAdmin } = useAuth();
   
   useEffect(() => {
+    if (!isAdmin) {
+      return;
+    }
+    
     const fetchRequests = async () => {
       try {
         setIsLoading(true);
@@ -47,10 +53,11 @@ const PendingDeviceRequests: React.FC = () => {
     };
     
     fetchRequests();
-  }, []);
+  }, [isAdmin]);
   
   const viewAllRequests = () => {
-    navigate('/device-management?tab=requests');
+    // Change this to navigate to the pending tab instead of all devices
+    navigate('/device-management?tab=pending');
   };
   
   // Format the date for display
@@ -61,6 +68,11 @@ const PendingDeviceRequests: React.FC = () => {
       return 'Invalid date';
     }
   };
+
+  // If not admin, don't render this component
+  if (!isAdmin) {
+    return null;
+  }
 
   return (
     <Card>
@@ -99,7 +111,7 @@ const PendingDeviceRequests: React.FC = () => {
               </TableHeader>
               <TableBody>
                 {pendingRequests.slice(0, 5).map((request: DeviceRequest) => (
-                  <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/device-management?tab=requests&id=${request.id}`)}>
+                  <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/device-management?tab=pending&id=${request.id}`)}>
                     <TableCell className="font-medium">
                       {request.user?.name || 'Unknown'}
                     </TableCell>

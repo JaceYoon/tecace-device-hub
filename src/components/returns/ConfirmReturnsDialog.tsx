@@ -39,7 +39,7 @@ const ConfirmReturnsDialog: React.FC<ConfirmReturnsDialogProps> = ({
           <DialogDescription>
             <div className="flex items-center gap-2 mt-2 text-amber-600">
               <AlertCircle className="h-5 w-5" />
-              Please check the IMEI and S/N again before confirming
+              <span>Please check the IMEI and S/N again before confirming</span>
             </div>
           </DialogDescription>
         </DialogHeader>
@@ -66,9 +66,9 @@ const ConfirmReturnsDialog: React.FC<ConfirmReturnsDialogProps> = ({
           </div>
           
           <div>
-            <p className="mb-2 text-sm text-muted-foreground">
+            <div className="mb-2 text-sm text-muted-foreground">
               Type "confirm" to proceed with returning {selectedCount} device(s)
-            </p>
+            </div>
             <Input
               value={confirmText}
               onChange={(e) => onConfirmTextChange(e.target.value)}

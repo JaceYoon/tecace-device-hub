@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
@@ -16,7 +17,9 @@ import { exportDevicesToExcel } from '@/utils/exportUtils';
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('all-devices');
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'all-devices');
   const [showAddForm, setShowAddForm] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -34,8 +37,13 @@ const DeviceManagement: React.FC = () => {
       return;
     }
 
+    // Set active tab based on URL parameter
+    if (tabParam && ['all-devices', 'assigned', 'pending', 'special'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
     setIsLoading(false);
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, isAdmin, navigate, tabParam]);
 
   const handleDeviceAdded = () => {
     setShowAddForm(false);
@@ -49,6 +57,12 @@ const DeviceManagement: React.FC = () => {
 
   const handleRefresh = () => {
     setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleTabChange = (value: string) => {
+    setActiveTab(value);
+    // Update URL with the tab parameter
+    navigate(`/device-management?tab=${value}`);
   };
 
   const handleExportAll = async () => {
@@ -125,8 +139,8 @@ const DeviceManagement: React.FC = () => {
         )}
 
         <Tabs
-          defaultValue={activeTab}
-          onValueChange={setActiveTab}
+          value={activeTab}
+          onValueChange={handleTabChange}
           className="w-full"
         >
           <TabsList className="grid grid-cols-4 w-full max-w-md mb-8">
