@@ -28,11 +28,14 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
   handleNewGroupChange,
   error
 }) => {
-  const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
+  const [projectGroups, setProjectGroups] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [noGroupsFound, setNoGroupsFound] = useState(false);
 
   // Fetch existing project groups from devices
   useEffect(() => {
     const fetchProjectGroups = async () => {
+      setIsLoading(true);
       try {
         const devices = await dataService.devices.getAll();
         const uniqueGroups = new Set<string>();
@@ -44,14 +47,14 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
         });
         
         const groups = Array.from(uniqueGroups);
-        if (groups.length > 0) {
-          setProjectGroups(groups);
-        } else {
-          setProjectGroups(['Eureka']);
-        }
+        setProjectGroups(groups);
+        setNoGroupsFound(groups.length === 0);
       } catch (error) {
         console.error('Error fetching project groups:', error);
-        setProjectGroups(['Eureka']);
+        setProjectGroups([]);
+        setNoGroupsFound(true);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -63,7 +66,7 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
       <Label htmlFor="existing-project-group">Project Group *</Label>
       <div className="space-y-2">
         <Select
-          value={selectedGroup || ''}
+          value={selectedGroup}
           onValueChange={(value) => handleSelectChange(value, 'projectGroup')}
         >
           <SelectTrigger 
@@ -71,11 +74,14 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             name="existingProjectGroup"
             aria-label="Select existing project group"
           >
-            <SelectValue placeholder={selectedGroup || "Select existing project group"}>
+            <SelectValue placeholder={noGroupsFound ? "No project groups found" : "Select project group"}>
               {selectedGroup}
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
+            {projectGroups.length === 0 && (
+              <SelectItem disabled value="no-groups">No project groups found</SelectItem>
+            )}
             {projectGroups.map(group => (
               <SelectItem key={group} value={group}>{group}</SelectItem>
             ))}
@@ -86,7 +92,7 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
           <Input
             id="newProjectGroup"
             name="newProjectGroup"
-            placeholder="Or type a new project group"
+            placeholder={noGroupsFound ? "Please add a new project group" : "Or type a new project group"}
             value={newGroupValue}
             onChange={handleNewGroupChange}
             autoComplete="off"
@@ -106,7 +112,9 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
       </div>
       
       <p className="text-xs text-muted-foreground mt-1">
-        Either select an existing group or create a new one. Project group cannot be empty.
+        {noGroupsFound 
+          ? "No project groups found. Please add a new one." 
+          : "Either select an existing group or create a new one. Project group cannot be empty."}
       </p>
     </div>
   );

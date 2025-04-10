@@ -1,9 +1,9 @@
-
 import React from 'react';
 import { Device } from '@/types';
-import { Button } from "@/components/ui/button";
-import { Check, Clock, ChevronRight } from 'lucide-react';
-import ReportDeviceDialog from './ReportDeviceDialog';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { MoreHorizontal, RotateCcw, ShieldAlert, UserPlus, UserX } from 'lucide-react';
+import { DropdownMenu, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 interface DeviceCardActionsProps {
   device: Device;
@@ -17,7 +17,7 @@ interface DeviceCardActionsProps {
   userId: string | undefined;
   onRequestDevice: () => void;
   onReleaseDevice: () => void;
-  onStatusChange: (status: 'missing' | 'stolen' | 'available' | 'dead') => void;
+  onStatusChange?: (status: string) => void;
   onAction?: () => void;
 }
 
@@ -36,118 +36,131 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
-  // Simplified logic to check for pending request status
-  const deviceHasPendingRequest = device.requestedBy && device.requestedBy !== "";
-  const deviceIsPending = device.status === 'pending';
-  const isPending = deviceIsPending || deviceHasPendingRequest;
+  const handleReturnDevice = async () => {
+    if (device.id && userId) {
+      try {
+        await onRequestDevice();
+        toast.success('Device return requested');
+      } catch (error) {
+        console.error('Error requesting device:', error);
+        toast.error('Failed to request device return');
+      }
+    } else {
+      toast.error('Device or user ID is missing');
+    }
+  };
+
+  const handleRequestDevice = async () => {
+    if (device.id && userId) {
+      try {
+        await onRequestDevice();
+        toast.success('Device request submitted');
+      } catch (error) {
+        console.error('Error requesting device:', error);
+        toast.error('Failed to request device');
+      }
+    } else {
+      toast.error('Device or user ID is missing');
+    }
+  };
+
+  const handleReleaseDevice = async () => {
+    if (device.id && userId) {
+      try {
+        await onReleaseDevice();
+        toast.success('Device release requested');
+      } catch (error) {
+        console.error('Error releasing device:', error);
+        toast.error('Failed to release device');
+      }
+    } else {
+      toast.error('Device or user ID is missing');
+    }
+  };
+
+  const handleMarkAsAvailable = async () => {
+    if (device.id && onStatusChange) {
+      try {
+        await onStatusChange('available');
+        toast.success('Device marked as available');
+        if (onAction) {
+          onAction();
+        }
+      } catch (error) {
+        console.error('Error marking device as available:', error);
+        toast.error('Failed to mark device as available');
+      }
+    }
+  };
 
   return (
     <>
-      {isAdmin ? (
-        <div className="grid grid-cols-1 gap-2 w-full">
-          {(device.status === 'missing' || device.status === 'stolen') && (
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => onStatusChange('available')}
-              className="text-xs col-span-1"
-            >
-              Mark as Available
-            </Button>
-          )}
+      {showReturnControls && isDeviceOwner && device.status === 'assigned' && (
+        <Button
+          variant="secondary"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleReturnDevice}
+          disabled={isProcessing}
+        >
+          <RotateCcw className="h-4 w-4" />
+          Return Device
+        </Button>
+      )}
+
+      {isAdmin && device.status === 'pending' && (
+        <div className="flex space-x-2">
+          <Button
+            variant="outline"
+            className="w-1/2"
+            onClick={() => onStatusChange && onStatusChange('available')}
+            disabled={isProcessing}
+          >
+            Approve
+          </Button>
+          <Button
+            variant="destructive"
+            className="w-1/2"
+            onClick={() => onStatusChange && onStatusChange('rejected')}
+            disabled={isProcessing}
+          >
+            Reject
+          </Button>
         </div>
-      ) : (
-        <>
-          {/* Request Device button - only show for available devices without pending requests */}
-          {device.status === 'available' && !hasRequested && !isPending && (
-            <Button
-              className="w-full"
-              size="sm"
-              onClick={onRequestDevice}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Clock className="h-4 w-4 mr-1 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  Request Device
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </>
-              )}
-            </Button>
-          )}
+      )}
 
-          {/* Pending Request button */}
-          {hasRequested && (
-            <Button
-              variant="secondary"
-              className="w-full"
-              size="sm"
-              disabled
-            >
-              <Clock className="h-4 w-4 mr-1" />
-              Request Pending
-            </Button>
-          )}
+      {device.status === 'available' && !isDeviceOwner && !hasRequested && !isRequested && (
+        <Button
+          variant="secondary"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleRequestDevice}
+          disabled={isProcessing}
+        >
+          <UserPlus className="h-4 w-4" />
+          Request Device
+        </Button>
+      )}
 
-          {/* Already Requested button */}
-          {isRequestedByOthers && (
-            <Button
-              variant="outline"
-              className="w-full"
-              size="sm"
-              disabled
-            >
-              <Clock className="h-4 w-4 mr-1" />
-              Already Requested
-            </Button>
-          )}
+      {device.status === 'assigned' && isDeviceOwner && (
+        <Button
+          variant="destructive"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleReleaseDevice}
+          disabled={isProcessing}
+        >
+          <UserX className="h-4 w-4" />
+          Release Device
+        </Button>
+      )}
 
-          {/* Device Pending status button */}
-          {deviceIsPending && !hasRequested && !isRequestedByOthers && (
-            <Button
-              variant="outline"
-              className="w-full"
-              size="sm"
-              disabled
-            >
-              <Clock className="h-4 w-4 mr-1" />
-              Device Pending
-            </Button>
-          )}
-
-          {/* Return Device button */}
-          {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
-            <Button
-              variant="outline"
-              className="w-full"
-              size="sm"
-              onClick={onReleaseDevice}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Clock className="h-4 w-4 mr-1 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>Return Device</>
-              )}
-            </Button>
-          )}
-          
-          {/* Report Issue button - show for available devices without pending requests */}
-          {userId && !isAdmin && device.status === 'available' && !isPending && (
-            <ReportDeviceDialog 
-              device={device} 
-              userId={userId} 
-              onReportSubmitted={onAction}
-            />
-          )}
-        </>
+      {isAdmin && device.status === 'available' && (
+        <Button
+          variant="ghost"
+          className="w-full flex items-center justify-center gap-2"
+          onClick={handleMarkAsAvailable}
+          disabled={isProcessing}
+        >
+          Mark as Available
+        </Button>
       )}
     </>
   );
