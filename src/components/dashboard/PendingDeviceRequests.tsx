@@ -1,7 +1,6 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useDeviceRequests } from '@/components/devices/hooks/useDeviceRequests';
 import { Button } from '@/components/ui/button';
 import { 
   Card, 
@@ -19,18 +18,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { RequestStatusBadge } from '@/components/ui/RequestStatusBadge';
+import RequestStatusBadge from '@/components/ui/RequestStatusBadge';
 import { Loader2, FolderInput, SmartphoneIcon } from 'lucide-react';
 import { DeviceRequest } from '@/types';
 import { format } from 'date-fns';
+import { dataService } from '@/services/data.service';
+import { useState, useEffect } from 'react';
 
 const PendingDeviceRequests: React.FC = () => {
   const navigate = useNavigate();
-  const { requests, isLoading } = useDeviceRequests({ type: 'assign' });
+  const [isLoading, setIsLoading] = useState(true);
+  const [pendingRequests, setPendingRequests] = useState<DeviceRequest[]>([]);
   
-  const pendingAssignRequests = requests.filter(req => 
-    req.type === 'assign' && req.status === 'pending'
-  );
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setIsLoading(true);
+        const allRequests = await dataService.devices.getAllRequests();
+        const filteredRequests = allRequests.filter(req => 
+          req.type === 'assign' && req.status === 'pending'
+        );
+        setPendingRequests(filteredRequests);
+      } catch (error) {
+        console.error('Error fetching requests:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchRequests();
+  }, []);
   
   const viewAllRequests = () => {
     navigate('/device-management?tab=requests');
@@ -62,7 +79,7 @@ const PendingDeviceRequests: React.FC = () => {
           <div className="flex justify-center py-6">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
-        ) : pendingAssignRequests.length === 0 ? (
+        ) : pendingRequests.length === 0 ? (
           <div className="text-center py-6 text-muted-foreground">
             <SmartphoneIcon className="h-10 w-10 mx-auto mb-2 opacity-20" />
             <p>No pending device requests</p>
@@ -81,22 +98,22 @@ const PendingDeviceRequests: React.FC = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {pendingAssignRequests.slice(0, 5).map((request: DeviceRequest) => (
+                {pendingRequests.slice(0, 5).map((request: DeviceRequest) => (
                   <TableRow key={request.id} className="cursor-pointer hover:bg-muted/50" onClick={() => navigate(`/device-management?tab=requests&id=${request.id}`)}>
                     <TableCell className="font-medium">
-                      {request.requesterName || 'Unknown'}
+                      {request.user?.name || 'Unknown'}
                     </TableCell>
                     <TableCell>
-                      {request.deviceName || request.deviceId || 'Unknown device'}
+                      {request.device?.project || request.deviceName || request.deviceId || 'Unknown device'}
                     </TableCell>
                     <TableCell>
-                      {request.deviceSerialNumber || 'N/A'}
+                      {request.device?.serialNumber || 'N/A'}
                     </TableCell>
                     <TableCell>
-                      {request.deviceImei || 'N/A'}
+                      {request.device?.imei || 'N/A'}
                     </TableCell>
                     <TableCell>
-                      {formatDate(request.requestedAt)}
+                      {formatDate(request.requestedAt.toString())}
                     </TableCell>
                     <TableCell>
                       <RequestStatusBadge status={request.status} />
@@ -109,7 +126,7 @@ const PendingDeviceRequests: React.FC = () => {
         )}
       </CardContent>
       
-      {pendingAssignRequests.length > 0 && (
+      {pendingRequests.length > 0 && (
         <CardFooter>
           <Button 
             variant="outline" 

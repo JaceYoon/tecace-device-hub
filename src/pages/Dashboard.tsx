@@ -52,21 +52,9 @@ const Dashboard: React.FC = () => {
         
         <StatusSummary onRefresh={handleRefresh} />
         
-        <PendingReportRequests
-          reportRequests={reportRequests}
-          devices={devices}
-          users={users}
-          handleProcessRequest={handleProcessRequest}
-          isAdmin={isAdmin}
-        />
+        <PendingReportRequests/>
         
-        <PendingDeviceRequests
-          pendingRequests={pendingRequests}
-          devices={devices}
-          users={users}
-          handleProcessRequest={handleProcessRequest}
-          isAdmin={isAdmin}
-        />
+        <PendingDeviceRequests/>
         
         <DashboardTabs
           activeTab={activeTab}
