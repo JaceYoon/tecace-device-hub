@@ -14,17 +14,17 @@ const ProjectNameField: React.FC<ProjectNameFieldProps> = ({
 }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="project">Device Name *</Label>
+      <Label htmlFor="project">Project Name *</Label>
       <Input
         id="project"
         name="project"
-        placeholder="Enter device name"
+        placeholder="Enter project name"
         value={project}
         onChange={handleChange}
         required
         autoComplete="off"
         aria-required="true"
-        aria-label="Device name"
+        aria-label="Project name"
       />
     </div>
   );
