@@ -45,7 +45,16 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
     <>
       {isAdmin ? (
         <div className="grid grid-cols-1 gap-2 w-full">
-          {/* Removed the Mark as Available button - we'll use the dropdown menu instead */}
+          {(device.status === 'missing' || device.status === 'stolen') && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onStatusChange('available')}
+              className="text-xs col-span-1"
+            >
+              Mark as Available
+            </Button>
+          )}
         </div>
       ) : (
         <>

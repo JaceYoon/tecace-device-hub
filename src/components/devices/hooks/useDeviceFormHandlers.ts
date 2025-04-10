@@ -64,7 +64,7 @@ export const useDeviceFormHandlers = (
     // Handle device picture image upload
     if (fieldName === 'devicePicture') {
       const reader = new FileReader();
-      reader.onloadend = () => {
+      reader.onload = () => {
         const base64String = reader.result as string;
         setDeviceData(prev => ({
           ...prev,

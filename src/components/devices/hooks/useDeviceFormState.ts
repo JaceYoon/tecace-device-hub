@@ -43,7 +43,7 @@ export const useDeviceFormState = (device: Device) => {
 
   const [deviceData, setDeviceData] = useState({
     project: device.project,
-    projectGroup: device.projectGroup || '',
+    projectGroup: device.projectGroup || 'Eureka',
     type: ensureValidType(device.type),
     deviceType: deviceTypeValue as DeviceTypeCategory,
     imei: device.imei || '',
