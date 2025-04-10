@@ -39,7 +39,7 @@ const UserManagement: React.FC = () => {
   
   if (!isAdmin || !user) return null;
   
-  const handleRoleChange = (userId: string, newRole: 'admin' | 'user' | 'TPM' | 'Software Engineer') => {
+  const handleRoleChange = (userId: string, newRole: 'user' | 'TPM' | 'Software Engineer') => {
     updateUserRole(userId, newRole);
   };
   
@@ -120,7 +120,7 @@ const UserManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       {userData.role === 'admin' ? (
-                        <Badge variant="outline" className="bg-gray-100">
+                        <Badge variant="default" className="bg-primary">
                           Protected
                         </Badge>
                       ) : (
@@ -129,7 +129,7 @@ const UserManagement: React.FC = () => {
                           value={userData.role}
                           onValueChange={(value) => handleRoleChange(
                             userData.id, 
-                            value as 'admin' | 'user' | 'TPM' | 'Software Engineer'
+                            value as 'user' | 'TPM' | 'Software Engineer'
                           )}
                         >
                           <SelectTrigger className="w-[160px] px-3 custom-select-trigger">
@@ -139,7 +139,6 @@ const UserManagement: React.FC = () => {
                             <SelectItem value="user">User</SelectItem>
                             <SelectItem value="TPM">TPM</SelectItem>
                             <SelectItem value="Software Engineer">Software Engineer</SelectItem>
-                            <SelectItem value="admin">Admin</SelectItem>
                           </SelectContent>
                         </Select>
                       )}

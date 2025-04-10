@@ -43,6 +43,7 @@ const PendingDeviceRequests: React.FC<PendingDeviceRequestsProps> = ({
           const deviceName = device ? (device.project || device.projectGroup || 'Unknown Device') : 'Unknown Device';
           const userName = requestUser ? requestUser.name || 'Unknown User' : 'Unknown User';
           const serialNumber = device ? device.serialNumber : 'N/A';
+          const imeiNumber = device ? device.imei : 'N/A';
           
           return (
             <div
@@ -56,6 +57,9 @@ const PendingDeviceRequests: React.FC<PendingDeviceRequestsProps> = ({
                 </p>
                 <p className="text-xs text-muted-foreground">
                   Serial Number: {serialNumber}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  IMEI: {imeiNumber}
                 </p>
               </div>
 

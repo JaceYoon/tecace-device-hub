@@ -41,9 +41,14 @@ export const useDeviceFormState = (device: Device) => {
       : 'available';
   };
 
+  // Make sure to set the initial project group from the device
+  const initialProjectGroup = device.projectGroup && device.projectGroup.trim() !== '' 
+    ? device.projectGroup 
+    : '';
+
   const [deviceData, setDeviceData] = useState({
     project: device.project,
-    projectGroup: device.projectGroup || '',
+    projectGroup: initialProjectGroup,
     type: ensureValidType(device.type),
     deviceType: deviceTypeValue as DeviceTypeCategory,
     imei: device.imei || '',
