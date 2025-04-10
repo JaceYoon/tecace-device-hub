@@ -71,7 +71,7 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             name="existingProjectGroup"
             aria-label="Select existing project group"
           >
-            <SelectValue placeholder={selectedGroup || "Select existing project group"}>
+            <SelectValue placeholder="Select existing project group">
               {selectedGroup}
             </SelectValue>
           </SelectTrigger>
