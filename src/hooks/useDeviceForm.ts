@@ -82,7 +82,6 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     setIsSubmitting(true);
     
     try {
-      // Ensure devicePicture is properly passed to the addDevice method
       const addedDevice = await dataService.addDevice({
         project,
         projectGroup: projectGroup || 'Eureka',
@@ -95,7 +94,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
         receivedDate: receivedDate,
         addedById: user?.id,
         status: 'available',
-        devicePicture: devicePicture || undefined, // Make sure devicePicture is included
+        devicePicture: devicePicture || undefined,
       });
       
       toast.success('Device added successfully', {
