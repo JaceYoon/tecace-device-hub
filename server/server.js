@@ -10,9 +10,6 @@ const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
-const https = require('https');
-const fs = require('fs');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -27,7 +24,7 @@ console.log('Server will run on port:', PORT);
 
 // Enhanced CORS configuration
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'https://localhost:8080',
+  origin: process.env.CLIENT_URL || 'http://localhost:8080',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -144,47 +141,11 @@ db.sequelize.sync({ force: shouldForceSync })
       console.log('ERROR DETAILS:', error.message);
     }
     
-    // Generate self-signed certificate for development
-    let httpsOptions = {};
-    let useHttps = false;
-    
-    try {
-      // Check if certificates exist, if not, use HTTP
-      const keyPath = path.join(__dirname, 'key.pem');
-      const certPath = path.join(__dirname, 'cert.pem');
-      
-      if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
-        httpsOptions = {
-          key: fs.readFileSync(keyPath),
-          cert: fs.readFileSync(certPath)
-        };
-        useHttps = true;
-        console.log('Found SSL certificates, using HTTPS');
-      } else {
-        console.log('SSL certificates not found, using HTTP instead');
-        console.log('For HTTPS, place key.pem and cert.pem in the server directory');
-      }
-    } catch (error) {
-      console.error('Error setting up HTTPS:', error);
-      console.log('Falling back to HTTP');
-    }
-    
-    if (useHttps) {
-      // Start HTTPS server
-      https.createServer(httpsOptions, app).listen(PORT, () => {
-        console.log(`✅ HTTPS Server running on port ${PORT}`);
-        console.log(`✅ API is available at https://localhost:${PORT}/api`);
-        console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
-      });
-    } else {
-      // Fallback to HTTP server
-      app.listen(PORT, () => {
-        console.log(`✅ HTTP Server running on port ${PORT}`);
-        console.log(`✅ API is available at http://localhost:${PORT}/api`);
-        console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
-        console.log('⚠️ For HTTPS, place key.pem and cert.pem in the server directory');
-      });
-    }
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`✅ API is available at http://localhost:${PORT}/api`);
+      console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
+    });
   })
   .catch(err => {
     console.error('❌ Failed to sync database:', err);
