@@ -76,6 +76,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   };
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
+  const isSpecialStatus = device.status === 'missing' || device.status === 'stolen';
 
   return (
     <>
@@ -142,6 +143,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onReleaseDevice={handleReleaseDevice}
                 onStatusChange={handleStatusChange}
                 onAction={onAction}
+                hideMarkAsAvailable={isSpecialStatus}
               />
             </CardFooter>
             
