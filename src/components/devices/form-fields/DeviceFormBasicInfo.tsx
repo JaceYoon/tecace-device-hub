@@ -39,17 +39,17 @@ const DeviceFormBasicInfo: React.FC<DeviceFormBasicInfoProps> = ({
   const handleProjectGroupSelect = (value: string) => {
     setSelectedProjectGroup(value);
     setProjectGroupError('');
+    setNewProjectGroup('');
     
-    // If new project group is empty, update deviceData
-    if (!newProjectGroup.trim()) {
-      handleSelectChange(value, 'projectGroup');
-    }
+    // Update deviceData with the selected value
+    handleSelectChange(value, 'projectGroup');
   };
 
   // Handle typing in the new project group field
   const handleNewProjectGroupChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setNewProjectGroup(value);
+    setSelectedProjectGroup('');
     
     // Reset error message when field is cleared
     if (!value.trim()) {
@@ -57,9 +57,7 @@ const DeviceFormBasicInfo: React.FC<DeviceFormBasicInfoProps> = ({
     }
     
     // Update deviceData with new value, overriding any dropdown selection
-    if (value.trim()) {
-      handleSelectChange(value, 'projectGroup');
-    }
+    handleSelectChange(value, 'projectGroup');
   };
 
   return (

@@ -26,18 +26,18 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
     'Other',
   ];
 
-  // Function to handle barcode file upload
+  // Function to handle file upload
   const handleFileChange = (file: File | null, fieldName: string) => {
     if (!file) return;
     
-    // Handle barcode image upload
-    if (fieldName === 'barcode') {
+    // Handle image upload
+    if (fieldName === 'devicePicture') {
       const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
         setDeviceData(prev => ({
           ...prev,
-          barcode: base64String
+          devicePicture: base64String
         }));
       };
       reader.readAsDataURL(file);

@@ -33,8 +33,18 @@ export const useDeviceFormSubmit = ({
       assignedTo, assignedToId 
     } = deviceData;
     
-    if (!project || !type || !projectGroup) {
-      toast.error('Please fill all required fields');
+    if (!project) {
+      toast.error('Please enter a device name');
+      return;
+    }
+    
+    if (!type) {
+      toast.error('Please select a device type');
+      return;
+    }
+
+    if (!projectGroup) {
+      toast.error('Please select or enter a project group');
       return;
     }
     
