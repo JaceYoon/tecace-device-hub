@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { dataService } from '@/services/data.service';
@@ -15,6 +15,15 @@ export const useDashboard = () => {
   const [users, setUsers] = useState<{[key: string]: User}>({});
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+  const isInitialMount = useRef(true);
+  const isMounted = useRef(true);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -22,61 +31,64 @@ export const useDashboard = () => {
     }
   }, [isAuthenticated, navigate]);
 
-  useEffect(() => {
-    if (!isAuthenticated || !user) {
-      setIsLoading(false);
-      setRequests([]);
+  const fetchData = useCallback(async () => {
+    if (!isAuthenticated || !user || !isMounted.current) {
       return;
     }
 
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const allRequests = await dataService.devices.getAllRequests();
-        console.log("Dashboard: Fetched requests:", allRequests);
-        setRequests(allRequests);
-        
-        const allDevices = await dataService.getDevices();
-        const allUsers = await dataService.getUsers();
-        
-        console.log("Dashboard: User id:", user.id, "Name:", user.name);
-        console.log("Dashboard: Fetched devices:", allDevices.length);
-        
-        // Improved filtering to ensure released devices don't show up
-        const myDevices = allDevices.filter(d => {
-          const assignedToId = String(d.assignedTo) || String(d.assignedToId);
-          const userId = String(user.id);
-          return assignedToId === userId && d.status === 'assigned';
-        });
-        
-        console.log("Dashboard: My devices found:", myDevices.length);
-        console.log("Dashboard: My devices details:", myDevices);
-        
-        const deviceMap: {[key: string]: Device} = {};
-        const userMap: {[key: string]: User} = {};
-        
-        allDevices.forEach(device => {
-          deviceMap[device.id] = device;
-        });
-        
-        allUsers.forEach(user => {
-          userMap[user.id] = user;
-        });
-        
-        setDevices(deviceMap);
-        setUsers(userMap);
-      } catch (error) {
-        console.error('Error fetching requests:', error);
+    try {
+      setIsLoading(true);
+      
+      const [allRequests, allDevices, allUsers] = await Promise.all([
+        dataService.devices.getAllRequests(),
+        dataService.getDevices(),
+        dataService.getUsers()
+      ]);
+      
+      if (!isMounted.current) return;
+      
+      console.log("Dashboard: Fetched requests:", allRequests.length);
+      
+      const deviceMap: {[key: string]: Device} = {};
+      const userMap: {[key: string]: User} = {};
+      
+      allDevices.forEach(device => {
+        deviceMap[device.id] = device;
+      });
+      
+      allUsers.forEach(user => {
+        userMap[user.id] = user;
+      });
+      
+      setRequests(allRequests);
+      setDevices(deviceMap);
+      setUsers(userMap);
+    } catch (error) {
+      if (isMounted.current) {
+        console.error('Error fetching data:', error);
         if (!(error instanceof Error && error.message.includes('Unauthorized'))) {
-          toast.error('Failed to load requests');
+          toast.error('Failed to load dashboard data');
         }
-      } finally {
+      }
+    } finally {
+      if (isMounted.current) {
         setIsLoading(false);
       }
-    };
-    
-    fetchData();
-  }, [user, refreshTrigger, isAuthenticated]);
+    }
+  }, [isAuthenticated, user]);
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      fetchData();
+    }
+  }, [fetchData]);
+
+  useEffect(() => {
+    if (!isInitialMount.current) {
+      fetchData();
+    }
+  }, [refreshTrigger, fetchData]);
 
   useEffect(() => {
     const unregister = dataService.registerRefreshCallback(() => {
@@ -121,9 +133,6 @@ export const useDashboard = () => {
 
   // Set my device filter - stringify to ensure consistent comparison
   const myDeviceFilter = user ? String(user.id) : '';
-  console.log("Dashboard: Setting my device filter to:", myDeviceFilter);
-  console.log("Dashboard: User requests (all statuses):", 
-    requests.filter(r => r.userId === user?.id).length);
 
   return {
     isLoading,

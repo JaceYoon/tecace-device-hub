@@ -4,7 +4,6 @@ import { Device, User } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
-import { useDeviceRequests } from './useDeviceRequests';
 import { useDeviceStatus } from './useDeviceStatus';
 import { useDeviceManagement } from './useDeviceManagement';
 import { useConfirmationDialog } from './useConfirmationDialog';
@@ -46,12 +45,6 @@ export const useDeviceActions = (
     closeConfirmation
   } = useConfirmationDialog();
   
-  // Fix: Pass only the required arguments to useDeviceRequests
-  const { handleRequestDevice: requestDevice } = useDeviceRequests({
-    type: 'assign',
-    status: 'pending'
-  });
-  
   const { 
     handleReleaseDevice, 
     handleStatusChange 
@@ -62,7 +55,7 @@ export const useDeviceActions = (
     handleDownloadImage 
   } = useDeviceManagement(device, isAdmin, deleteConfirmText, setIsDeleting, setDeleteConfirmOpen, setDeleteConfirmText, onAction);
 
-  // Create a wrapper function for requestDevice that applies it to the current device
+  // Create a request device handler that works directly with the current device
   const handleRequestDevice = async () => {
     if (!user) return;
     

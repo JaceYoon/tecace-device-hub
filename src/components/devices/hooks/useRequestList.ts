@@ -1,5 +1,4 @@
-
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { DeviceRequest, User, Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
@@ -18,8 +17,11 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState<string | null>(null);
   const { isAdmin, user } = useAuth();
+  const isMountedRef = useRef(true);
 
   const fetchData = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    
     setLoading(true);
     try {
       const [requestsData, usersData, devicesData] = await Promise.all([
@@ -27,17 +29,22 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
         dataService.users.getAll(),
         dataService.devices.getAll()
       ]);
+      
+      if (!isMountedRef.current) return;
+      
       console.log("useRequestList - Fetched requests:", requestsData.length);
-      console.log("useRequestList - Fetched users:", usersData.length);
-      console.log("useRequestList - User IDs in system:", usersData.map(u => u.id));
       setRequests(requestsData);
       setUsers(usersData);
       setDevices(devicesData);
     } catch (error) {
-      console.error('Error fetching requests:', error);
-      toast.error('Failed to load device requests');
+      if (isMountedRef.current) {
+        console.error('Error fetching requests:', error);
+        toast.error('Failed to load device requests');
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -46,7 +53,15 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
   }, [fetchData]);
 
   useEffect(() => {
+    // Set up the ref
+    isMountedRef.current = true;
+    
     fetchData();
+    
+    // Clean up
+    return () => {
+      isMountedRef.current = false;
+    };
   }, [fetchData, refreshTrigger]);
 
   const handleApprove = async (requestId: string) => {
@@ -103,10 +118,6 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
       return user.name || 'Unnamed User';
     }
     
-    // Debug log when user not found
-    console.log(`User not found for ID: ${userId}. Available users:`, 
-      users.map(u => ({ id: u.id, name: u.name })));
-    
     return 'Unknown User';
   };
 
@@ -133,39 +144,19 @@ export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: U
     let filteredRequests = requests.filter(request => 
       request.type !== 'report' && request.type !== 'return');
     
-    // Debug the filter parameters
-    console.log("useRequestList - Filter params:", { 
-      providedUserId: userId, 
-      currentUserId: user?.id,
-      isAdmin,
-      totalRequests: requests.length
-    });
-    
     // For the "My Requests" tab, we always want to show the user's requests
     // regardless of their status (not just pending ones)
     if (userId) {
       filteredRequests = filteredRequests.filter(request => {
-        const matches = String(request.userId) === String(userId);
-        console.log(`Request ID ${request.id} - User ${request.userId} matches ${userId}? ${matches}`);
-        return matches;
+        return String(request.userId) === String(userId);
       });
-      console.log(`Filtered ${filteredRequests.length} requests for user ${userId}`);
     } else if (!isAdmin && user) {
       // For non-admin users without a specific userId filter, show their own requests
       filteredRequests = filteredRequests.filter(request => String(request.userId) === String(user.id));
-      console.log(`User ${user.id} has ${filteredRequests.length} requests`);
     } else if (isAdmin && !userId) {
       // For admins without a specific userId filter, show all pending requests
       filteredRequests = filteredRequests.filter(request => request.status === 'pending');
     }
-    
-    // Debug the filtered results
-    console.log("useRequestList - Filtered requests:", filteredRequests.map(r => ({
-      id: r.id,
-      userId: r.userId,
-      status: r.status,
-      type: r.type
-    })));
     
     return filteredRequests;
   };

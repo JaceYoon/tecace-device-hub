@@ -16,10 +16,15 @@ export const useDeviceRequests = (options?: DeviceRequestsFilterOptions) => {
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
 
   useEffect(() => {
+    // Create an AbortController to cancel the fetch request if the component unmounts
+    const abortController = new AbortController();
+    
     const fetchRequests = async () => {
       try {
         setIsLoading(true);
         const allRequests = await dataService.devices.getAllRequests();
+        
+        if (abortController.signal.aborted) return;
         
         let filteredRequests = [...allRequests];
         
@@ -44,14 +49,28 @@ export const useDeviceRequests = (options?: DeviceRequestsFilterOptions) => {
         
         setRequests(filteredRequests);
       } catch (error) {
-        console.error('Error fetching requests:', error);
+        if (!abortController.signal.aborted) {
+          console.error('Error fetching requests:', error);
+        }
       } finally {
-        setIsLoading(false);
+        if (!abortController.signal.aborted) {
+          setIsLoading(false);
+        }
       }
     };
     
     fetchRequests();
-  }, [options]);
+    
+    // Cleanup function to abort fetch when component unmounts
+    return () => {
+      abortController.abort();
+    };
+  }, [
+    options?.type, 
+    options?.status, 
+    options?.userId, 
+    options?.deviceId
+  ]);
 
   const handleRequestDevice = async (
     device: Device,

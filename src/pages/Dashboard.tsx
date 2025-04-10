@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
 import PageContainer from '@/components/layout/PageContainer';
 import StatusSummary from '@/components/devices/StatusSummary';
@@ -61,7 +61,7 @@ const Dashboard: React.FC = () => {
           isAdmin={isAdmin}
         />
         
-        <PendingDeviceRequests/>
+        <PendingDeviceRequests />
         
         <DashboardTabs
           activeTab={activeTab}

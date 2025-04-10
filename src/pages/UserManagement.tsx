@@ -120,7 +120,7 @@ const UserManagement: React.FC = () => {
                         {userData.role}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-center">
+                    <TableCell className="text-center p-0">
                       {userData.role === 'admin' ? (
                         <div className="w-[160px] flex justify-center">
                           <Badge variant="default" className="bg-primary">
