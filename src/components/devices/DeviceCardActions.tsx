@@ -1,10 +1,9 @@
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2 } from 'lucide-react';
 import { Device } from '@/types';
-import DeviceEditDialog from './DeviceEditDialog';
-import { useDeviceManagement } from './hooks/useDeviceManagement';
+import { Button } from "@/components/ui/button";
+import { Check, Clock, ChevronRight } from 'lucide-react';
+import ReportDeviceDialog from './ReportDeviceDialog';
 
 interface DeviceCardActionsProps {
   device: Device;
@@ -14,11 +13,11 @@ interface DeviceCardActionsProps {
   isRequested: boolean;
   isRequestedByOthers: boolean;
   isProcessing: boolean;
-  showReturnControls?: boolean;
-  userId?: string;
+  showReturnControls: boolean;
+  userId: string | undefined;
   onRequestDevice: () => void;
   onReleaseDevice: () => void;
-  onStatusChange: (status: 'available' | 'missing' | 'stolen' | 'dead') => void;
+  onStatusChange: (status: 'missing' | 'stolen' | 'available' | 'dead') => void;
   onAction?: () => void;
 }
 
@@ -30,86 +29,127 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   isRequested,
   isRequestedByOthers,
   isProcessing,
-  showReturnControls = false,
+  showReturnControls,
   userId,
   onRequestDevice,
   onReleaseDevice,
   onStatusChange,
   onAction
 }) => {
-  // Only show buttons if operations are valid
-  const isAvailable = device.status === 'available';
-  const isAssigned = device.status === 'assigned';
-  const isStolen = device.status === 'stolen';
-  const isMissing = device.status === 'missing';
-  
-  const showRequestButton = isAvailable && !hasRequested && !isRequested;
-  const showReturnButton = isAssigned && isDeviceOwner && !hasRequested;
-  const showCancelButton = hasRequested && userId;
-  
+  // Simplified logic to check for pending request status
+  const deviceHasPendingRequest = device.requestedBy && device.requestedBy !== "";
+  const deviceIsPending = device.status === 'pending';
+  const isPending = deviceIsPending || deviceHasPendingRequest;
+
   return (
-    <div className="flex flex-wrap gap-2 w-full">
-      {isProcessing && (
-        <Button disabled className="w-full">
-          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-          Processing...
-        </Button>
-      )}
-      
-      {!isProcessing && (
-        <>
-          {showRequestButton && (
-            <Button 
-              variant="default" 
-              size="sm" 
-              className="flex-1"
-              onClick={onRequestDevice}
-              disabled={isProcessing}
-            >
-              Request
-            </Button>
-          )}
-          
-          {showReturnButton && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="flex-1"
-              onClick={onReleaseDevice}
-              disabled={isProcessing}
-            >
-              Return
-            </Button>
-          )}
-          
-          {(isDeviceOwner || isAdmin) && (
-            <DeviceEditDialog 
-              device={device} 
-              onDeviceUpdated={onAction}
-              triggerElement={
-                <Button variant="outline" size="sm" className="flex-1">
-                  Edit
-                </Button>
-              }
-            />
-          )}
-          
-          {/* Only show "Mark as Available" for admin users and for devices
-              that are not currently missing or stolen */}
-          {isAdmin && !isMissing && !isStolen && !isAvailable && (
+    <>
+      {isAdmin ? (
+        <div className="grid grid-cols-1 gap-2 w-full">
+          {(device.status === 'missing' || device.status === 'stolen') && (
             <Button
               variant="outline"
               size="sm"
-              className="flex-1"
               onClick={() => onStatusChange('available')}
+              className="text-xs col-span-1"
+            >
+              Mark as Available
+            </Button>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* Request Device button - only show for available devices without pending requests */}
+          {device.status === 'available' && !hasRequested && !isPending && (
+            <Button
+              className="w-full"
+              size="sm"
+              onClick={onRequestDevice}
               disabled={isProcessing}
             >
-              Mark Available
+              {isProcessing ? (
+                <>
+                  <Clock className="h-4 w-4 mr-1 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>
+                  Request Device
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </>
+              )}
             </Button>
+          )}
+
+          {/* Pending Request button */}
+          {hasRequested && (
+            <Button
+              variant="secondary"
+              className="w-full"
+              size="sm"
+              disabled
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Request Pending
+            </Button>
+          )}
+
+          {/* Already Requested button */}
+          {isRequestedByOthers && (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="sm"
+              disabled
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Already Requested
+            </Button>
+          )}
+
+          {/* Device Pending status button */}
+          {deviceIsPending && !hasRequested && !isRequestedByOthers && (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="sm"
+              disabled
+            >
+              <Clock className="h-4 w-4 mr-1" />
+              Device Pending
+            </Button>
+          )}
+
+          {/* Return Device button */}
+          {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
+            <Button
+              variant="outline"
+              className="w-full"
+              size="sm"
+              onClick={onReleaseDevice}
+              disabled={isProcessing}
+            >
+              {isProcessing ? (
+                <>
+                  <Clock className="h-4 w-4 mr-1 animate-spin" />
+                  Processing...
+                </>
+              ) : (
+                <>Return Device</>
+              )}
+            </Button>
+          )}
+          
+          {/* Report Issue button - show for available devices without pending requests */}
+          {userId && !isAdmin && device.status === 'available' && !isPending && (
+            <ReportDeviceDialog 
+              device={device} 
+              userId={userId} 
+              onReportSubmitted={onAction}
+            />
           )}
         </>
       )}
-    </div>
+    </>
   );
 };
 
