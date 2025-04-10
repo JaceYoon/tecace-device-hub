@@ -31,13 +31,13 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
     if (!file) return;
     
     // Handle barcode image upload
-    if (fieldName === 'barcode') {
+    if (fieldName === 'devicePicture') {
       const reader = new FileReader();
       reader.onload = (e) => {
         const base64String = e.target?.result as string;
         setDeviceData(prev => ({
           ...prev,
-          barcode: base64String
+          devicePicture: base64String
         }));
       };
       reader.readAsDataURL(file);

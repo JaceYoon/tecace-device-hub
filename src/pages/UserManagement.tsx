@@ -120,7 +120,7 @@ const UserManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       {userData.role === 'admin' ? (
-                        <Badge variant="outline" className="bg-gray-100">
+                        <Badge variant="outline" className="bg-gray-100 text-black dark:text-black">
                           Protected
                         </Badge>
                       ) : (
@@ -132,7 +132,7 @@ const UserManagement: React.FC = () => {
                             value as 'admin' | 'user' | 'TPM' | 'Software Engineer'
                           )}
                         >
-                          <SelectTrigger className="w-[160px] px-3 custom-select-trigger">
+                          <SelectTrigger className="w-[180px] px-3 custom-select-trigger">
                             <SelectValue placeholder="Select role" />
                           </SelectTrigger>
                           <SelectContent side="bottom" align="center" sideOffset={4} className="min-w-[200px]">

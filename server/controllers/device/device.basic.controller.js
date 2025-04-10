@@ -10,7 +10,10 @@ exports.create = async (req, res) => {
   try {
     const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes, devicePicture } = req.body;
 
-    console.log('Creating device with data:', JSON.stringify(req.body, null, 2));
+    console.log('Creating device with data:', JSON.stringify({
+      ...req.body,
+      devicePicture: devicePicture ? '[BASE64_IMAGE_DATA]' : null
+    }, null, 2));
 
     // Validate request
     if (!project || !type || !projectGroup) {
@@ -41,7 +44,10 @@ exports.create = async (req, res) => {
       status: 'available'
     };
 
-    console.log('Final device data being sent to database:', JSON.stringify(deviceData, null, 2));
+    console.log('Final device data being sent to database:', JSON.stringify({
+      ...deviceData,
+      devicePicture: deviceData.devicePicture ? '[BASE64_IMAGE_DATA]' : null
+    }, null, 2));
     
     // Create device with explicit transaction for better error handling
     const device = await db.sequelize.transaction(async (t) => {
