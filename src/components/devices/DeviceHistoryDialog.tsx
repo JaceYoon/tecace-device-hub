@@ -24,7 +24,6 @@ interface HistoryEntry {
   releaseReason: string | null;
 }
 
-// Interface for consolidated history entries
 interface ConsolidatedHistoryEntry {
   id: string;
   deviceId: string;
@@ -40,7 +39,6 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
   const [history, setHistory] = useState<ConsolidatedHistoryEntry[]>([]);
   const [loading, setLoading] = useState(false);
   
-  // Fetch history when dialog opens
   useEffect(() => {
     if (isOpen) {
       fetchHistory();
@@ -51,19 +49,16 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     setLoading(true);
     try {
       console.log(`Fetching history for device: ${device.id}`);
-      // Use the correct method from dataService
       const data = await dataService.getDeviceHistory(device.id);
       
       if (data) {
         if (Array.isArray(data) && data.length > 0) {
           console.log(`Retrieved ${data.length} history entries`);
           
-          // Process and consolidate history entries
           const processedHistory = processHistoryEntries(data);
           setHistory(processedHistory);
         } else {
           console.log('No history data returned, creating fallback history');
-          // Only create fallback history when there's truly no data
           const fallbackHistory = createFallbackHistory();
           
           if (fallbackHistory.length > 0) {
@@ -94,19 +89,15 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     }
   };
   
-  // Process history entries to consolidate related assignment and release records
   const processHistoryEntries = (entries: HistoryEntry[]): ConsolidatedHistoryEntry[] => {
-    // Group entries by userId to pair assign and release events
     const entriesByUser = new Map<string, HistoryEntry[]>();
     
-    // First sort all entries chronologically by assignedAt or releasedAt
     const sortedEntries = [...entries].sort((a, b) => {
       const dateA = new Date(a.assignedAt || a.releasedAt || 0).getTime();
       const dateB = new Date(b.assignedAt || b.releasedAt || 0).getTime();
-      return dateA - dateB; // Oldest first
+      return dateA - dateB;
     });
     
-    // Group entries by user
     sortedEntries.forEach(entry => {
       if (!entriesByUser.has(entry.userId)) {
         entriesByUser.set(entry.userId, []);
@@ -114,24 +105,17 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       entriesByUser.get(entry.userId)!.push(entry);
     });
     
-    // Create consolidated entries from grouped entries
     const consolidatedEntries: ConsolidatedHistoryEntry[] = [];
     
-    // Process each user's entries
     entriesByUser.forEach((userEntries, userId) => {
-      // Find assignment entries (may have assignedAt set)
       const assignEntries = userEntries.filter(e => e.assignedAt);
-      // Find release entries (may have releasedAt set)
       const releaseEntries = userEntries.filter(e => e.releasedAt);
       
-      // Pair assign entries with release entries to create complete rental periods
       for (const assignEntry of assignEntries) {
-        // Find matching release entry that occurred after this assignment
         const matchingRelease = releaseEntries.find(release => 
           new Date(release.releasedAt!).getTime() > new Date(assignEntry.assignedAt).getTime()
         );
         
-        // Check if this user is the current owner of the device
         const isCurrentOwner = device.assignedToId === userId && !matchingRelease;
         
         consolidatedEntries.push({
@@ -145,9 +129,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         });
       }
       
-      // Handle unpaired release entries (rare, but possible)
       for (const releaseEntry of releaseEntries) {
-        // Check if this release entry is already paired with an assign entry
         const isAlreadyPaired = consolidatedEntries.some(entry => 
           entry.userId === userId && entry.releasedAt === releaseEntry.releasedAt
         );
@@ -158,7 +140,6 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
             deviceId: device.id,
             userId: userId,
             userName: releaseEntry.userName,
-            // If we don't have an assignedAt, use a date before the release
             assignedAt: releaseEntry.assignedAt || new Date(0).toISOString(),
             releasedAt: releaseEntry.releasedAt,
             isCurrentOwner: false
@@ -167,7 +148,6 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       }
     });
     
-    // Add the current owner if they are not in the history
     if (device.assignedToId && !consolidatedEntries.some(entry => entry.isCurrentOwner)) {
       const currentUser = users.find(u => u.id === device.assignedToId);
       
@@ -186,36 +166,29 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
       }
     }
     
-    // Sort entries - current owner first, then by most recent assignment date
-    const processedEntries = consolidatedEntries.sort((a, b) => {
-      // Current owner always comes first
+    return consolidatedEntries.sort((a, b) => {
       if (a.isCurrentOwner) return -1;
       if (b.isCurrentOwner) return 1;
       
-      // Otherwise sort by most recent assignment date
       const dateA = new Date(a.assignedAt).getTime();
       const dateB = new Date(b.assignedAt).getTime();
-      return dateB - dateA; // Newest first
-    });
-    
-    // Filter out entries with invalid dates (dates from 1970 or earlier)
-    return processedEntries.filter(entry => {
+      return dateB - dateA;
+    }).filter(entry => {
       const assignedDate = new Date(entry.assignedAt);
-      // Filter out entries from before 1980 (these are likely invalid)
-      return assignedDate.getFullYear() > 1980;
+      if (assignedDate.getFullYear() < 1980) {
+        return false;
+      }
+      return true;
     });
   };
   
-  // Create fallback history from device information if API fails
   const createFallbackHistory = (): ConsolidatedHistoryEntry[] => {
     console.log('Creating fallback history from device data');
     const fallbackEntries: ConsolidatedHistoryEntry[] = [];
     
-    // Add current assignment if device is assigned
     if (device.assignedTo) {
       const assignedUser = users.find(u => u.id === device.assignedTo);
       if (assignedUser) {
-        // Handle date conversion properly - updatedAt could be a string or a Date
         let assignedDate: string;
         if (typeof device.updatedAt === 'string') {
           assignedDate = device.updatedAt;
@@ -236,7 +209,6 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         });
       }
     } else if (device.status === 'available') {
-      // Add Available entry if device is available
       fallbackEntries.push({
         id: `available-${device.id}`,
         deviceId: device.id,
@@ -251,12 +223,10 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
     return fallbackEntries;
   };
   
-  // Format date to show only the date part (no time)
   const formatDateOnly = (dateString: string | null) => {
     if (!dateString) return 'N/A';
     try {
       const date = new Date(dateString);
-      // Check if this is a valid date (not from 1970)
       if (date.getFullYear() < 1980) {
         return 'N/A';
       }
@@ -285,7 +255,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
         </DialogHeader>
         
         <div className="py-4 overflow-y-auto">
-          <h3 className="font-semibold mb-2">{device.project} - {device.serialNumber || 'No S/N'}</h3>
+          <h3 className="font-semibold mb-2">{device.project}</h3>
           
           <div className="text-xs text-muted-foreground mb-3">
             <div className="flex gap-2 mt-1">
@@ -323,10 +293,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                   <p>No ownership history available</p>
                 </div>
               ) : (
-                history.filter(entry => 
-                  // Skip showing the Available entry as a card if we already have the banner
-                  !(entry.userName === 'Available' && device.status === 'available')
-                ).map((entry) => (
+                history.filter(entry => !(entry.userName === 'Available' && device.status === 'available')).map((entry) => (
                   <div key={entry.id} className="border rounded-md p-3">
                     <div className="font-semibold">
                       {entry.userName}

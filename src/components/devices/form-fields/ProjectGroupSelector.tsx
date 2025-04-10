@@ -28,7 +28,8 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
   handleNewGroupChange,
   error
 }) => {
-  const [projectGroups, setProjectGroups] = useState<string[]>(['Eureka']);
+  const [projectGroups, setProjectGroups] = useState<string[]>([]);
+  const [noGroupsFound, setNoGroupsFound] = useState(false);
 
   // Fetch existing project groups from devices
   useEffect(() => {
@@ -46,12 +47,15 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
         const groups = Array.from(uniqueGroups);
         if (groups.length > 0) {
           setProjectGroups(groups);
+          setNoGroupsFound(false);
         } else {
-          setProjectGroups(['Eureka']);
+          setProjectGroups([]);
+          setNoGroupsFound(true);
         }
       } catch (error) {
         console.error('Error fetching project groups:', error);
-        setProjectGroups(['Eureka']);
+        setProjectGroups([]);
+        setNoGroupsFound(true);
       }
     };
     
@@ -76,9 +80,15 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
             </SelectValue>
           </SelectTrigger>
           <SelectContent>
-            {projectGroups.map(group => (
-              <SelectItem key={group} value={group}>{group}</SelectItem>
-            ))}
+            {noGroupsFound ? (
+              <div className="px-2 py-2 text-sm text-muted-foreground">
+                There is no project Group found, please add the new project group
+              </div>
+            ) : (
+              projectGroups.map(group => (
+                <SelectItem key={group} value={group}>{group}</SelectItem>
+              ))
+            )}
           </SelectContent>
         </Select>
         
