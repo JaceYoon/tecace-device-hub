@@ -24,11 +24,11 @@ const DeviceFormBasicInfo: React.FC<DeviceFormBasicInfoProps> = ({
   handleChange,
   handleSelectChange
 }) => {
-  const [selectedProjectGroup, setSelectedProjectGroup] = useState('');
+  const [selectedProjectGroup, setSelectedProjectGroup] = useState(projectGroup);
   const [newProjectGroup, setNewProjectGroup] = useState('');
   const [projectGroupError, setProjectGroupError] = useState('');
 
-  // Set initial values from props if present
+  // Update selectedProjectGroup when projectGroup prop changes
   useEffect(() => {
     if (projectGroup) {
       setSelectedProjectGroup(projectGroup);

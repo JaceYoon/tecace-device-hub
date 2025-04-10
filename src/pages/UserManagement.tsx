@@ -120,9 +120,11 @@ const UserManagement: React.FC = () => {
                     </TableCell>
                     <TableCell className="text-right">
                       {userData.role === 'admin' ? (
-                        <Badge variant="default" className="bg-primary">
-                          Protected
-                        </Badge>
+                        <div className="w-[160px] flex justify-end">
+                          <Badge variant="default" className="bg-primary">
+                            Protected
+                          </Badge>
+                        </div>
                       ) : (
                         <Select
                           defaultValue="user"

@@ -69,6 +69,7 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
         <Select
           value={selectedGroup || ''}
           onValueChange={(value) => handleSelectChange(value, 'projectGroup')}
+          defaultValue={selectedGroup}
         >
           <SelectTrigger 
             id="existing-project-group" 
