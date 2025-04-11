@@ -73,9 +73,11 @@ cd ..
 
 ### Step 4: Start the application
 
+#### Development Mode
+
 **Single command startup (recommended):**
 
-The easiest way to start both the backend and frontend is with the convenience script:
+To start both the backend and frontend in development mode:
 
 ```bash
 node start.js
@@ -83,18 +85,46 @@ node start.js
 
 This script will start both the backend server and the frontend development server in a single terminal window.
 
-**If you encounter issues with the single command:**
+**Manual development startup:**
 
 You can start each service in separate terminals:
 
 ```bash
 # Terminal 1: Start the backend
 cd server
+# Make sure NODE_ENV is set to development (default)
 node server.js
 
 # Terminal 2: Start the frontend
 npm run dev
 ```
+
+#### Production Mode
+
+To run the application in production mode:
+
+1. Build the frontend:
+```bash
+npm run build
+```
+
+2. Start the backend with production settings:
+```bash
+cd server
+# Set NODE_ENV to production
+NODE_ENV=production node server.js
+```
+
+On Windows, set the environment variable differently:
+```
+set NODE_ENV=production
+node server.js
+```
+
+The production environment will:
+- Use the production database settings (as configured in your .env file)
+- Apply production-specific optimizations
+- Serve the built frontend from the backend server
 
 ## Default Admin Account
 
@@ -107,8 +137,27 @@ After starting the server for the first time, a default admin account is created
 
 ## Ports
 
-- Frontend: http://localhost:8080
+- Frontend (Development): http://localhost:8080
 - Backend API: http://localhost:5000
+- Production: http://dm.tecace.com (or configured PROD_CLIENT_URL)
+
+## Environment Configuration
+
+The application supports different environments:
+
+### Development (.env)
+```
+NODE_ENV=development
+DEV_DB_HOST=localhost
+DEV_CLIENT_URL=http://localhost:8080
+```
+
+### Production (.env)
+```
+NODE_ENV=production
+PROD_DB_HOST=172.20.0.130
+PROD_CLIENT_URL=http://dm.tecace.com
+```
 
 ## Available API Endpoints
 
@@ -149,6 +198,7 @@ After starting the server for the first time, a default admin account is created
 - The application uses React Query for efficient data fetching and caching
 - Authentication is handled using session-based authentication with Passport.js
 - Database schema is managed using Sequelize models
+- Current version: v0.1
 
 ## Troubleshooting
 
@@ -173,14 +223,15 @@ No specific environment variables are required for the frontend.
 Required environment variables in `server/.env`:
 
 - `PORT`: Server port (default: 5000)
-- `CLIENT_URL`: Frontend URL (default: http://localhost:8080)
+- `NODE_ENV`: Environment ('development' or 'production')
+- `CLIENT_URL`: Frontend URL (defaults based on environment)
 - `SESSION_SECRET`: Secret for session encryption
 - Database configuration:
-  - `DB_HOST`: Database host
-  - `DB_USER`: Database username
-  - `DB_PASS`: Database password
-  - `DB_NAME`: Database name
-  - `DB_PORT`: Database port
+  - `DEV_DB_HOST`/`PROD_DB_HOST`: Database host based on environment
+  - `DEV_DB_USER`/`PROD_DB_USER`: Database username
+  - `DEV_DB_PASSWORD`/`PROD_DB_PASSWORD`: Database password
+  - `DEV_DB_NAME`/`PROD_DB_NAME`: Database name
+  - `DEV_DB_PORT`/`PROD_DB_PORT`: Database port
 - Optional:
   - `RESET_DATABASE`: Set to "true" to reset the database on startup
-  - `NODE_ENV`: Set to "production" for production environment
+  - `FORCE_DEV_MODE`: Override environment detection
