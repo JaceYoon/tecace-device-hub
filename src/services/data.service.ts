@@ -1,8 +1,7 @@
 
 import { Device, DeviceRequest, User } from '@/types';
 import { toast } from 'sonner';
-import { 
-  api,
+import api, { 
   deviceService, 
   authService, 
   userService,
