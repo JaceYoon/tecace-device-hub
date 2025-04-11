@@ -2,12 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import api, { authService, userService } from '@/services/api.service';
+import { useNavigate } from 'react-router-dom';
 
 // Create the Auth Context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // Ensure the component is properly defined as a React function component
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Add navigation
+  const navigate = useNavigate();
+  
   // Move all hooks to the top level of the component
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -102,16 +106,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Logout function
+  // Logout function - modified to include navigation
   const logout = async () => {
     try {
       await authService.logout();
       setUser(null);
       toast.info('Logged out successfully');
+      // Navigate to main page after logout
+      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
       setUser(null);
       toast.error('Error logging out');
+      // Still navigate to main page even if there's an error
+      navigate('/');
     }
   };
 
@@ -279,11 +287,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await authService.logout();
         setUser(null);
         toast.info('Logged out successfully');
+        // Navigate to main page after logout
+        navigate('/');
         return true;
       } catch (error) {
         console.error('Logout error:', error);
         setUser(null);
         toast.error('Error logging out');
+        // Still navigate to main page even if there's an error
+        navigate('/');
         return false;
       }
     },
