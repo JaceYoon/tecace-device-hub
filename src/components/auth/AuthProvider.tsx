@@ -1,9 +1,7 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { AuthContextType, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 import api, { authService, userService } from '@/services/api.service';
-import { useNavigate } from 'react-router-dom';
 
 // Create the Auth Context with a default undefined value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,7 +12,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const navigate = useNavigate();
 
   // Load user session on startup
   useEffect(() => {
@@ -111,16 +108,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       await authService.logout();
       setUser(null);
       toast.info('Logged out successfully');
-      
-      // Add navigation to the main page after logout
-      navigate('/');
     } catch (error) {
       console.error('Logout error:', error);
       setUser(null);
       toast.error('Error logging out');
-      
-      // Even if there's an error, redirect to main page
-      navigate('/');
     }
   };
 
@@ -288,17 +279,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await authService.logout();
         setUser(null);
         toast.info('Logged out successfully');
-        
-        // Add navigation to the main page after logout
-        navigate('/');
         return true;
       } catch (error) {
         console.error('Logout error:', error);
         setUser(null);
         toast.error('Error logging out');
-        
-        // Even if there's an error, redirect to main page
-        navigate('/');
         return false;
       }
     },
