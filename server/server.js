@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -14,8 +13,12 @@ const userRoutes = require('./routes/user.routes');
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isProduction = process.env.NODE_ENV === 'production';
+const VERSION = 'v0.1'; // Add version tracking
 
 // Print environment for debugging
+console.log('--------------------------------');
+console.log(`Tecace Device Management API ${VERSION}`);
+console.log('--------------------------------');
 console.log('Environment settings:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('Environment:', isProduction ? 'Production' : 'Development');
@@ -24,6 +27,7 @@ console.log('DB_HOST:', isProduction ? process.env.PROD_DB_HOST : process.env.DE
 console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
 console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
 console.log('Server will run on port:', PORT);
+console.log('--------------------------------');
 
 // Enhanced CORS configuration
 const corsOptions = {
