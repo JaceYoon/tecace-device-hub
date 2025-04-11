@@ -27,8 +27,8 @@ function App() {
   return (
     <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
       <QueryClientProvider client={queryClient}>
-        <AuthProvider>
-          <Router>
+        <Router>
+          <AuthProvider>
             <div className="min-h-screen flex flex-col">
               <div className="flex-1">
                 <Routes>
@@ -44,8 +44,8 @@ function App() {
               </div>
               <Toaster position="bottom-right" />
             </div>
-          </Router>
-        </AuthProvider>
+          </AuthProvider>
+        </Router>
       </QueryClientProvider>
     </ThemeProvider>
   );
