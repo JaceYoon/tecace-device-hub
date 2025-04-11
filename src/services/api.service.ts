@@ -1,15 +1,20 @@
 import { Device, DeviceRequest, User, UserRole } from '@/types';
 import { toast } from 'sonner';
 
-// You can override this with an environment variable if needed
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Use an environment variable for the API URL, with different defaults based on environment
+const isProduction = import.meta.env.PROD;
+const API_URL = import.meta.env.VITE_API_URL || 
+  (isProduction ? '/api' : 'http://localhost:5000/api');
 
 // Development mode flag - set to false to use the actual API
-let devMode = false; // Changed to false to use real MariaDB connection
+// Force to false in production
+let devMode = isProduction ? false : false;
 
-// Log the API URL for debugging
-console.log('Using API URL:', API_URL);
-console.log('Development mode with mock data:', devMode ? 'enabled' : 'disabled');
+// Log the API URL for debugging (only in development)
+if (!isProduction) {
+  console.log('Using API URL:', API_URL);
+  console.log('Development mode with mock data:', devMode ? 'enabled' : 'disabled');
+}
 
 // Track if user is logged out
 let userLoggedOut = false;
