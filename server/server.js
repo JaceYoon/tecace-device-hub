@@ -13,18 +13,23 @@ const userRoutes = require('./routes/user.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Print environment for debugging
 console.log('Environment settings:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('CLIENT_URL:', process.env.CLIENT_URL);
+console.log('Environment:', isProduction ? 'Production' : 'Development');
+console.log('CLIENT_URL:', isProduction ? process.env.PROD_CLIENT_URL : process.env.DEV_CLIENT_URL);
+console.log('DB_HOST:', isProduction ? process.env.PROD_DB_HOST : process.env.DEV_DB_HOST);
 console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
 console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
 console.log('Server will run on port:', PORT);
 
 // Enhanced CORS configuration
 const corsOptions = {
-  origin: process.env.CLIENT_URL || 'http://localhost:8080',
+  origin: isProduction 
+    ? process.env.PROD_CLIENT_URL || 'http://dm.tecace.com'
+    : process.env.DEV_CLIENT_URL || 'http://localhost:8080',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
