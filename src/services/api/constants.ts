@@ -2,7 +2,7 @@
 // API service constants and environment configuration
 
 // Determine if we're in production or development
-export const isProduction = import.meta.env.MODE === 'production';
+export const isProduction = import.meta.env.MODE === 'production' || import.meta.env.PROD;
 
 // Set API URL based on environment
 export const API_URL = isProduction 

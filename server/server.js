@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -9,6 +10,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -97,15 +99,35 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP', timestamp: new Date() });
 });
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/users', userRoutes);
 
-// Root route
-app.get('/', (req, res) => {
+// Root API route
+app.get('/api', (req, res) => {
   res.json({ message: 'Welcome to Tecace Device Management API' });
 });
+
+// Serve static files from the React app in production mode
+if (isProduction) {
+  console.log('Production mode: Serving static files from ../dist');
+  app.use(express.static(path.join(__dirname, '../dist')));
+  
+  // Handle any requests that don't match the ones above
+  app.get('*', (req, res) => {
+    // Don't handle API routes here
+    if (req.url.startsWith('/api/')) {
+      return res.status(404).json({ message: 'API endpoint not found' });
+    }
+    res.sendFile(path.join(__dirname, '../dist/index.html'));
+  });
+} else {
+  // Non-production root route
+  app.get('/', (req, res) => {
+    res.json({ message: 'Welcome to Tecace Device Management API (Development)' });
+  });
+}
 
 // Add error handler middleware
 app.use((err, req, res, next) => {
@@ -153,6 +175,11 @@ db.sequelize.sync({ force: shouldForceSync })
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
       console.log(`✅ API is available at http://localhost:${PORT}/api`);
+      if (isProduction) {
+        console.log(`✅ Frontend is available at http://localhost:${PORT}`);
+      } else {
+        console.log(`✅ Frontend development server should be running at http://localhost:8080`);
+      }
       console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
     });
   })

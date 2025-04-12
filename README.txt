@@ -125,6 +125,7 @@ The production environment will:
 - Use the production database settings (as configured in your .env file)
 - Apply production-specific optimizations
 - Serve the built frontend from the backend server
+- Set the API URL to 'http://dm.tecace.com/api' (this is hardcoded for production)
 
 ## Default Admin Account
 
@@ -158,6 +159,14 @@ NODE_ENV=production
 PROD_DB_HOST=172.20.0.130
 PROD_CLIENT_URL=http://dm.tecace.com
 ```
+
+### API URL Configuration
+
+The API URL is automatically set based on the environment:
+- In development: `http://localhost:5000/api` (default) or VITE_API_URL from .env
+- In production: `http://dm.tecace.com/api` (hardcoded in src/services/api/constants.ts)
+
+To verify the API URL is set correctly, check the browser console when the app starts.
 
 ## Available API Endpoints
 
