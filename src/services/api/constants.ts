@@ -2,6 +2,8 @@
 // API service constants and environment configuration
 
 // Determine if we're in production or development
+// import.meta.env.MODE is provided by Vite and will be 'production' when built for production
+// import.meta.env.PROD is a boolean flag that's true in production mode
 export const isProduction = import.meta.env.MODE === 'production' || import.meta.env.PROD;
 
 // Set API URL based on environment

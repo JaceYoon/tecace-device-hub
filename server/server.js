@@ -17,6 +17,15 @@ const PORT = process.env.PORT || 5000;
 const isProduction = process.env.NODE_ENV === 'production';
 const VERSION = 'v0.1'; // Add version tracking
 
+// Define client and API URLs based on environment
+const CLIENT_URL = isProduction 
+  ? process.env.PROD_CLIENT_URL || 'http://dm.tecace.com'
+  : process.env.DEV_CLIENT_URL || 'http://localhost:8080';
+  
+const API_URL = isProduction
+  ? `${CLIENT_URL}/api` 
+  : `http://localhost:${PORT}/api`;
+
 // Print environment for debugging
 console.log('--------------------------------');
 console.log(`Tecace Device Management API ${VERSION}`);
@@ -24,7 +33,8 @@ console.log('--------------------------------');
 console.log('Environment settings:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('Environment:', isProduction ? 'Production' : 'Development');
-console.log('CLIENT_URL:', isProduction ? process.env.PROD_CLIENT_URL : process.env.DEV_CLIENT_URL);
+console.log('CLIENT_URL:', CLIENT_URL);
+console.log('API_URL:', API_URL);
 console.log('DB_HOST:', isProduction ? process.env.PROD_DB_HOST : process.env.DEV_DB_HOST);
 console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
 console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
@@ -33,9 +43,7 @@ console.log('--------------------------------');
 
 // Enhanced CORS configuration
 const corsOptions = {
-  origin: isProduction 
-    ? process.env.PROD_CLIENT_URL || 'http://dm.tecace.com'
-    : process.env.DEV_CLIENT_URL || 'http://localhost:8080',
+  origin: CLIENT_URL,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -174,11 +182,11 @@ db.sequelize.sync({ force: shouldForceSync })
     
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
-      console.log(`✅ API is available at http://localhost:${PORT}/api`);
+      console.log(`✅ API is available at ${API_URL}`);
       if (isProduction) {
-        console.log(`✅ Frontend is available at http://localhost:${PORT}`);
+        console.log(`✅ Frontend is available at ${CLIENT_URL}`);
       } else {
-        console.log(`✅ Frontend development server should be running at http://localhost:8080`);
+        console.log(`✅ Frontend development server should be running at ${CLIENT_URL}`);
       }
       console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
     });
@@ -190,7 +198,7 @@ db.sequelize.sync({ force: shouldForceSync })
     // Start server anyway to allow health check endpoint
     app.listen(PORT, () => {
       console.log(`⚠️ Server running on port ${PORT} but database sync failed!`);
-      console.log(`⚠️ Limited functionality may be available at http://localhost:${PORT}/api`);
+      console.log(`⚠️ Limited functionality may be available at ${API_URL}`);
       console.log('Please fix database connection issues and restart the server.');
     });
   });
