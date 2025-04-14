@@ -112,8 +112,12 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
       // In a real implementation, you would call an API endpoint to update the user profile
       console.log('Updating user profile with:', updates);
       
-      // Mock successful update
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      // Mock successful update - fixed the TypeScript error by correctly handling the user state update
+      setUser((prev: User | null) => {
+        if (!prev) return null;
+        return { ...prev, ...updates } as User;
+      });
+      
       return true;
     } catch (error) {
       console.error('Error updating profile:', error);
