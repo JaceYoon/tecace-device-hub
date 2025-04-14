@@ -1,4 +1,3 @@
-
 // Custom starter script for Tecace Device Management System
 import { spawn } from 'child_process';
 import path from 'path';
@@ -75,6 +74,17 @@ const handleProcess = (process, name) => {
   });
 };
 
+// Function to determine environment URLs
+const getEnvironmentURLs = (isDev) => {
+  const port = process.env.PORT || 5000;
+  const clientPort = 8080;
+  
+  return {
+    apiUrl: isDev ? `http://localhost:${port}/api` : 'https://dm.tecace.com/api',
+    clientUrl: isDev ? `http://localhost:${clientPort}` : 'https://dm.tecace.com'
+  };
+};
+
 // Start processes with error handling
 const startProcess = async (command, args, options, name) => {
   try {
@@ -129,10 +139,11 @@ const frontend = await startProcess(npmCmd, ['run', 'dev'], {
 }, 'FRONTEND');
 
 if (server || frontend) {
+  const { apiUrl, clientUrl } = getEnvironmentURLs(process.env.NODE_ENV !== 'production');
   console.log('✅ Started services successfully!');
   console.log('⚠️ Press Ctrl+C to stop all services');
-  console.log('📝 Access the application at: http://localhost:8080');
-  console.log('📝 Backend API running at: http://localhost:5000');
+  console.log(`📝 Access the application at: ${clientUrl}`);
+  console.log(`📝 Backend API running at: ${apiUrl}`);
   console.log('🔍 If the app shows connection errors, don\'t worry - it will switch to development mode automatically');
   
   // Add troubleshooting instructions
@@ -145,9 +156,10 @@ if (server || frontend) {
   console.log('      - Terminal 2: npm run dev');
 } else {
   console.log('⚠️ Failed to start some services. See errors above.');
+  const { apiUrl, clientUrl } = getEnvironmentURLs(true);
   console.log('📝 Manual startup instructions:');
-  console.log('   1. Start backend: cd server && node server.js');
-  console.log('   2. Start frontend: npm run dev');
+  console.log(`   1. Start backend: cd server && node server.js (API will be at ${apiUrl})`);
+  console.log(`   2. Start frontend: npm run dev (Client will be at ${clientUrl})`);
 }
 
 // Handle script termination
