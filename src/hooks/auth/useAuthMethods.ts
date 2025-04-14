@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -112,11 +111,13 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
       // In a real implementation, you would call an API endpoint to update the user profile
       console.log('Updating user profile with:', updates);
       
-      // Mock successful update - fixed the TypeScript error by correctly handling the user state update
-      setUser((prev: User | null) => {
-        if (!prev) return null;
-        return { ...prev, ...updates } as User;
-      });
+      // Fix for TypeScript error - directly update with the new user object
+      // First get the current user state through a temp variable
+      const tempUser = await authService.checkAuth();
+      if (tempUser && tempUser.user) {
+        const updatedUser = { ...tempUser.user, ...updates };
+        setUser(updatedUser as User);
+      }
       
       return true;
     } catch (error) {
