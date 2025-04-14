@@ -10,40 +10,26 @@ const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
-const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 const isProduction = process.env.NODE_ENV === 'production';
-const VERSION = 'v0.1'; // Add version tracking
-
-// Define client and API URLs based on environment
-const CLIENT_URL = isProduction 
-  ? process.env.PROD_CLIENT_URL || 'http://dm.tecace.com'
-  : process.env.DEV_CLIENT_URL || 'http://localhost:8080';
-  
-const API_URL = isProduction
-  ? `${CLIENT_URL}/api` 
-  : `http://localhost:${PORT}/api`;
 
 // Print environment for debugging
-console.log('--------------------------------');
-console.log(`Tecace Device Management API ${VERSION}`);
-console.log('--------------------------------');
 console.log('Environment settings:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('Environment:', isProduction ? 'Production' : 'Development');
-console.log('CLIENT_URL:', CLIENT_URL);
-console.log('API_URL:', API_URL);
+console.log('CLIENT_URL:', isProduction ? process.env.PROD_CLIENT_URL : process.env.DEV_CLIENT_URL);
 console.log('DB_HOST:', isProduction ? process.env.PROD_DB_HOST : process.env.DEV_DB_HOST);
 console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
 console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
 console.log('Server will run on port:', PORT);
-console.log('--------------------------------');
 
 // Enhanced CORS configuration
 const corsOptions = {
-  origin: CLIENT_URL,
+  origin: isProduction 
+    ? process.env.PROD_CLIENT_URL || 'http://dm.tecace.com'
+    : process.env.DEV_CLIENT_URL || 'http://localhost:8080',
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -107,35 +93,15 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'UP', timestamp: new Date() });
 });
 
-// API Routes
+// Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/users', userRoutes);
 
-// Root API route
-app.get('/api', (req, res) => {
+// Root route
+app.get('/', (req, res) => {
   res.json({ message: 'Welcome to Tecace Device Management API' });
 });
-
-// Serve static files from the React app in production mode
-if (isProduction) {
-  console.log('Production mode: Serving static files from ../dist');
-  app.use(express.static(path.join(__dirname, '../dist')));
-  
-  // Handle any requests that don't match the ones above
-  app.get('*', (req, res) => {
-    // Don't handle API routes here
-    if (req.url.startsWith('/api/')) {
-      return res.status(404).json({ message: 'API endpoint not found' });
-    }
-    res.sendFile(path.join(__dirname, '../dist/index.html'));
-  });
-} else {
-  // Non-production root route
-  app.get('/', (req, res) => {
-    res.json({ message: 'Welcome to Tecace Device Management API (Development)' });
-  });
-}
 
 // Add error handler middleware
 app.use((err, req, res, next) => {
@@ -182,12 +148,7 @@ db.sequelize.sync({ force: shouldForceSync })
     
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
-      console.log(`✅ API is available at ${API_URL}`);
-      if (isProduction) {
-        console.log(`✅ Frontend is available at ${CLIENT_URL}`);
-      } else {
-        console.log(`✅ Frontend development server should be running at ${CLIENT_URL}`);
-      }
+      console.log(`✅ API is available at http://localhost:${PORT}/api`);
       console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
     });
   })
@@ -198,7 +159,7 @@ db.sequelize.sync({ force: shouldForceSync })
     // Start server anyway to allow health check endpoint
     app.listen(PORT, () => {
       console.log(`⚠️ Server running on port ${PORT} but database sync failed!`);
-      console.log(`⚠️ Limited functionality may be available at ${API_URL}`);
+      console.log(`⚠️ Limited functionality may be available at http://localhost:${PORT}/api`);
       console.log('Please fix database connection issues and restart the server.');
     });
   });
