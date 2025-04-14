@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { User } from '@/types';
-import { authService } from '@/services/api';
+import { authService, userService } from '@/services/api';
 import { toast } from 'sonner';
 
 export function useAuthState() {
@@ -43,7 +43,7 @@ export function useAuthState() {
     const fetchUsers = async () => {
       if (user && (user.role === 'admin' || user.role === 'TPM' || user.role === 'Software Engineer')) {
         try {
-          const response = await authService.users.getAll();
+          const response = await userService.getAll();
           if (Array.isArray(response)) {
             setUsers(response);
           }

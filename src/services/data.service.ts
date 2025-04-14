@@ -2,13 +2,13 @@
 import { Device, DeviceRequest, User } from '@/types';
 import { toast } from 'sonner';
 import { 
-  api,
   deviceService, 
   authService, 
   userService,
   resetLoggedOutState, 
   setUserLoggedOut 
 } from './api.service';
+import api from './api/index';
 
 // Create a global refresh callback mechanism
 let refreshCallbacks: (() => void)[] = [];

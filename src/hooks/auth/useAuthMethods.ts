@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
-import { authService } from '@/services/api';
+import { authService, userService } from '@/services/api';
 import { toast } from 'sonner';
 
 export function useAuthMethods(setUser: (user: User | null) => void) {
@@ -88,7 +88,7 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
   const updateUserRole = (userId: string, newRole: UserRole): boolean => {
     const performRoleUpdate = async () => {
       try {
-        const response = await authService.users.updateRole(userId, newRole);
+        const response = await userService.updateRole(userId, newRole);
         if (response) {
           toast.success(`User role updated to ${newRole}`);
           return true;
@@ -106,11 +106,27 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
     return true;
   };
 
+  const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
+    try {
+      // This is a placeholder - the actual API call would be made here
+      // In a real implementation, you would call an API endpoint to update the user profile
+      console.log('Updating user profile with:', updates);
+      
+      // Mock successful update
+      setUser(prev => prev ? { ...prev, ...updates } : null);
+      return true;
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      return false;
+    }
+  };
+
   return {
     login,
     logout,
     register,
     updateUserRole,
+    updateUserProfile,
     verifyEmail: async () => true // No-op since verification is not used
   };
 }
