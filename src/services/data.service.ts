@@ -9,6 +9,14 @@ import {
   setUserLoggedOut 
 } from './api.service';
 import api from './api/index';
+import { VERSION } from '@/constants/version';
+
+// Log version information in dev mode
+if (process.env.NODE_ENV === 'development') {
+  console.log(`%c Tecace Device Management System v${VERSION} (Development Mode) `, 'background: #2563eb; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold;');
+} else {
+  console.log(`%c Tecace Device Management System v${VERSION} `, 'background: #059669; color: white; padding: 2px 6px; border-radius: 4px; font-weight: bold;');
+}
 
 // Create a global refresh callback mechanism
 let refreshCallbacks: (() => void)[] = [];
@@ -27,6 +35,9 @@ export const dataService = {
   // Re-export utility functions for auth status management
   resetLoggedOutState,
   setUserLoggedOut,
+  
+  // Version information
+  version: VERSION,
   
   // Add direct methods to maintain compatibility with existing code
   getDeviceHistory: deviceService.getDeviceHistory,

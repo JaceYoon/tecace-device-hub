@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -9,6 +10,11 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
   
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
+      // Log credentials in development mode only
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode login attempt:', { email, password });
+      }
+      
       const response = await authService.login(email, password);
       
       if (response && 'success' in response && response.success) {
@@ -52,6 +58,11 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
     password: string
   ): Promise<{ success: boolean, message: string, verificationRequired: boolean }> => {
     try {
+      // Log registration info in development mode only
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode registration:', { firstName, lastName, email, password });
+      }
+      
       const response = await authService.register(
         `${firstName} ${lastName}`,
         email,
@@ -107,9 +118,10 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
 
   const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {
     try {
-      // This is a placeholder - the actual API call would be made here
-      // In a real implementation, you would call an API endpoint to update the user profile
-      console.log('Updating user profile with:', updates);
+      // Log profile updates in development mode only
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode profile update:', updates);
+      }
       
       // Fix for TypeScript error - directly update with the new user object
       // First get the current user state through a temp variable

@@ -3,14 +3,22 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw } from 'lucide-react';
+import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw, Info } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
+import { VERSION } from '@/constants/version';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 const Navbar = () => {
   const location = useLocation();
   const { logout, isAdmin, user } = useAuth();
+  const isDevMode = process.env.NODE_ENV === 'development';
 
   const isActive = (path: string) => {
     return location.pathname === path;
@@ -23,6 +31,23 @@ const Navbar = () => {
           <NavLink to="/dashboard" className="flex items-center mr-6">
             <Cpu className="h-6 w-6 mr-2 text-primary" />
             <span className="text-xl font-semibold">TecAce</span>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className={cn(
+                    "ml-2 text-xs px-1.5 py-0.5 rounded",
+                    isDevMode ? "bg-blue-100 text-blue-800 dark:bg-blue-800 dark:text-blue-100" : 
+                              "bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100"
+                  )}>
+                    v{VERSION}{isDevMode ? " (Dev)" : ""}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Tecace Device Management System v{VERSION}</p>
+                  <p>{isDevMode ? "Development Mode" : "Production Mode"}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           </NavLink>
           
           <div className="hidden md:flex space-x-1">
