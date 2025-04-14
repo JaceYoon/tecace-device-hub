@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -13,11 +12,18 @@ const userRoutes = require('./routes/user.routes');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? 'https://dm.tecace.com/api'
+  : `http://localhost:${PORT}/api`;
+const CLIENT_URL = process.env.NODE_ENV === 'production'
+  ? 'https://dm.tecace.com'
+  : 'http://localhost:8080';
 
 // Print environment for debugging
 console.log('Environment settings:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
-console.log('CLIENT_URL:', process.env.CLIENT_URL);
+console.log('CLIENT_URL:', CLIENT_URL);
+console.log('API_BASE_URL:', API_BASE_URL);
 console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
 console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
 console.log('Server will run on port:', PORT);
@@ -143,7 +149,8 @@ db.sequelize.sync({ force: shouldForceSync })
     
     app.listen(PORT, () => {
       console.log(`✅ Server running on port ${PORT}`);
-      console.log(`✅ API is available at http://localhost:${PORT}/api`);
+      console.log(`✅ API is available at ${API_BASE_URL}`);
+      console.log(`✅ Client URL: ${CLIENT_URL}`);
       console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
     });
   })
