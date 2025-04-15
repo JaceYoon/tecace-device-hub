@@ -42,7 +42,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   const isPending = deviceIsPending || deviceHasPendingRequest;
 
   return (
-    <div className="w-full flex flex-col gap-3 px-1 py-1">
+    <div className="w-full flex flex-col gap-3 px-1 py-2">
       {isAdmin ? (
         <div className="grid grid-cols-1 gap-3 w-full">
           {/* Admin controls were removed as per the original */}
