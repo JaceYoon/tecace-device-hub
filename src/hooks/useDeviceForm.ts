@@ -4,6 +4,7 @@ import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
 import { DeviceTypeValue } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { validateDeviceFields } from '@/components/devices/hooks/useDeviceFormValidation';
 
 export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const { user } = useAuth();
@@ -78,6 +79,11 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     e.preventDefault();
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
+    
+    // Validate fields before submitting
+    if (!validateDeviceFields(imei, serialNumber, receivedDate, deviceStatus, notes)) {
+      return;
+    }
     
     // Validate required fields
     if (!project) {

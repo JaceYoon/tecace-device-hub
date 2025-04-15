@@ -23,7 +23,13 @@ export const useDeviceFormSubmit = ({
     e.preventDefault();
     
     // Validate fields before submitting
-    if (!validateDeviceFields(deviceData.imei, deviceData.serialNumber)) {
+    if (!validateDeviceFields(
+      deviceData.imei, 
+      deviceData.serialNumber, 
+      deviceData.receivedDate,
+      deviceData.deviceStatus,
+      deviceData.notes
+    )) {
       return;
     }
     
