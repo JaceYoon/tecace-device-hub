@@ -47,10 +47,9 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
         </div>
       ) : (
         <>
-          {/* Request Device button - only show for available devices without pending requests */}
           {device.status === 'available' && !hasRequested && !isPending && (
             <Button
-              className="w-full h-10 font-medium"
+              className="w-full h-10 font-medium bg-green-500 hover:bg-green-600 text-white"
               size="sm"
               onClick={onRequestDevice}
               disabled={isProcessing}
@@ -111,8 +110,8 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {/* Return Device button */}
           {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
             <Button
-              variant="outline"
-              className="w-full h-10 font-medium"
+              variant="destructive"
+              className="w-full h-10 font-medium bg-red-500 hover:bg-red-600 text-white"
               size="sm"
               onClick={onReleaseDevice}
               disabled={isProcessing}
@@ -128,7 +127,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
           
-          {/* Report Issue button - show for available devices without pending requests */}
+          {/* Report Issue button */}
           {userId && !isAdmin && device.status === 'available' && !isPending && (
             <div className="w-full">
               <ReportDeviceDialog 

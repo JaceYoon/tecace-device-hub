@@ -14,7 +14,7 @@ const DeviceAssignmentInfo: React.FC<DeviceAssignmentInfoProps> = ({
   if (!isAssigned) return null;
   
   return (
-    <div className="flex items-center gap-1.5 bg-blue-50 text-blue-800 p-2 rounded-md">
+    <div className="flex items-center gap-1.5 bg-blue-500 dark:bg-blue-600 text-white p-2 rounded-md">
       <UserIcon className="h-4 w-4" />
       <div>
         <span className="text-xs font-medium">Current Owner</span>

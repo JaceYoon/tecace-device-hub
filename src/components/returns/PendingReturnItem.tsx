@@ -55,9 +55,9 @@ const PendingReturnItem: React.FC<PendingReturnItemProps> = ({
             </div>
           </div>
           <Button 
-            variant="ghost" 
+            variant="destructive"
             size="icon" 
-            className="h-8 w-8 text-destructive"
+            className="h-8 w-8 bg-red-500 hover:bg-red-600 text-white"
             onClick={() => onCancel(request.id)}
             disabled={isProcessing}
           >

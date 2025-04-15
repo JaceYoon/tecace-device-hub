@@ -22,35 +22,35 @@ const RequestStatusBadge: React.FC<RequestStatusBadgeProps> = ({
         return {
           label: 'Pending',
           variant: 'outline' as const,
-          className: 'bg-yellow-50 text-yellow-700 border-yellow-200 hover:bg-yellow-100',
+          className: 'bg-yellow-500 dark:bg-yellow-600 text-white border-yellow-400',
           icon: Clock
         };
       case 'approved':
         return {
           label: 'Approved',
           variant: 'outline' as const,
-          className: 'bg-green-50 text-green-700 border-green-200 hover:bg-green-100',
+          className: 'bg-green-500 dark:bg-green-600 text-white border-green-400',
           icon: Check
         };
       case 'rejected':
         return {
           label: 'Rejected',
           variant: 'outline' as const,
-          className: 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100',
+          className: 'bg-red-500 dark:bg-red-600 text-white border-red-400',
           icon: X
         };
       case 'cancelled':
         return {
           label: 'Cancelled',
           variant: 'outline' as const,
-          className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100',
+          className: 'bg-gray-500 dark:bg-gray-600 text-white border-gray-400',
           icon: BanIcon
         };
       default:
         return {
           label: 'Unknown',
           variant: 'outline' as const,
-          className: 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100',
+          className: 'bg-gray-500 dark:bg-gray-600 text-white border-gray-400',
           icon: Clock
         };
     }
