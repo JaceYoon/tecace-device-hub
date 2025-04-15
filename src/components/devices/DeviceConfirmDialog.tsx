@@ -68,7 +68,7 @@ const DeviceConfirmDialog: React.FC<DeviceConfirmDialogProps> = ({
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm}>
-            Continue
+            Confirm
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
