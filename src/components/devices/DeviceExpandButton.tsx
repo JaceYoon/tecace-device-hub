@@ -9,9 +9,9 @@ interface DeviceExpandButtonProps {
 
 const DeviceExpandButton: React.FC<DeviceExpandButtonProps> = ({ expanded, onClick }) => {
   return (
-    <div className="absolute bottom-[-0.1rem] left-0 right-0 flex justify-center">
+    <div className="absolute bottom-0 left-0 right-0 flex justify-center mb-1">
       <button 
-        className="rounded-full p-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors" 
+        className="rounded-full p-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 transition-colors shadow-sm" 
         onClick={onClick}
         aria-label={expanded ? "Collapse details" : "Expand details"}
       >

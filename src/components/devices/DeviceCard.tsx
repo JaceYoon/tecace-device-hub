@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -77,7 +76,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
       <ContextMenu>
         <ContextMenuTrigger>
           <Card className={cn(
-            "h-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
+            "overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
             {
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
