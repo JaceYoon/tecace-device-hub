@@ -1,4 +1,3 @@
-
 import { type Config } from "tailwindcss";
 import { fontFamily } from "tailwindcss/defaultTheme";
 
@@ -78,6 +77,9 @@ const config: Config = {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "slide-up": "slideUp 0.3s ease-out forwards",
+      },
+      spacing: {
+        '-0.1': '-0.1rem',
       },
     },
   },
