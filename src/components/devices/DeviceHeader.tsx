@@ -24,7 +24,7 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
   onAction
 }) => {
   const deviceTitle = device.projectGroup ? 
-    `${device.projectGroup} (${device.project})` : 
+    `${device.project} (${device.projectGroup})` :
     device.project;
 
   return (
