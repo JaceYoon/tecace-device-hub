@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Device } from '@/types';
 import { Button } from "@/components/ui/button";
@@ -36,7 +35,6 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   onStatusChange,
   onAction
 }) => {
-  // Simplified logic to check for pending request status
   const deviceHasPendingRequest = device.requestedBy && device.requestedBy !== "";
   const deviceIsPending = device.status === 'pending';
   const isPending = deviceIsPending || deviceHasPendingRequest;
@@ -142,7 +140,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           )}
           
           {/* Add empty div for spacing */}
-          <div className="h-6"></div>
+          <div className="h-0"></div>
         </>
       )}
     </div>
