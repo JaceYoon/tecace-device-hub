@@ -76,7 +76,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
       <ContextMenu>
         <ContextMenuTrigger>
           <Card className={cn(
-            "overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
+            "w-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative",
             {
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
@@ -96,7 +96,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               />
             </CardHeader>
 
-            <CardContent className="pb-3 space-y-3 flex-grow">
+            <CardContent className={cn(
+              "pb-3 space-y-3 flex-grow",
+              {
+                "min-h-[140px]": isExpanded
+              }
+            )}>
               <DeviceAssignmentInfo 
                 isAssigned={device.status === 'assigned'} 
                 assignedUserName={assignedUserName} 
