@@ -80,7 +80,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             {
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
-              "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
+              // "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
+              "border-blue-300 bg-blue-50/40": device.status === 'pending',
               "border-green-300 bg-green-50/40": device.status === 'assigned' && isDeviceOwner,
             },
             className

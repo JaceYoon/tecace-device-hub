@@ -24,7 +24,7 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
   }
 
   return (
-    <div className="rounded-lg border border-red-300 p-4 animate-slide-up bg-red-300 dark:bg-red-400">
+    <div className="rounded-lg border border-red-300 p-4 animate-slide-up bg-rose-200 dark:bg-rose-350">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-red-700">
         <FlagTriangleRight className="h-5 w-5 text-red-600" />
         Report device requests
@@ -73,7 +73,7 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => handleProcessRequest(request.id, false)}
-                  className="bg-black hover:bg-white/90 text-white dark:bg-white dark:text-black dark:hover:bg-white/90"
+                  className="bg-black hover:bg-white/90 text-white dark:hover:bg-green-700"
                 >
                   Reject
                 </Button>
