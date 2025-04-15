@@ -23,10 +23,14 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
   onDelete,
   onAction
 }) => {
+  const deviceTitle = device.projectGroup ? 
+    `${device.projectGroup} (${device.project})` : 
+    device.project;
+
   return (
     <div className="flex justify-between items-start">
       <div>
-        <CardTitle className="text-lg font-medium">{device.project}</CardTitle>
+        <CardTitle className="text-lg font-medium">{deviceTitle}</CardTitle>
         <div className="mt-1">
           <CardDescription className="flex items-center gap-1">
             <Smartphone className="h-3.5 w-3.5" />

@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,13 +19,12 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
   handleProcessRequest,
   isAdmin
 }) => {
-  // Only show to admin users
   if (!isAdmin || reportRequests.length === 0) {
     return null;
   }
 
   return (
-    <div className="rounded-lg border border-red-300 p-4 animate-slide-up bg-amber-50/60">
+    <div className="rounded-lg border border-red-300 p-4 animate-slide-up bg-amber-50/60 dark:bg-pink-100/10">
       <h2 className="text-xl font-semibold mb-4 flex items-center gap-2 text-red-700">
         <FlagTriangleRight className="h-5 w-5 text-red-600" />
         Report device requests
@@ -64,7 +62,6 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
                   <p className="text-red-700">
                     <span className="font-semibold">Serial Number:</span> {serialNumber}
                   </p>
-                  {/* Remove IMEI from the display as requested */}
                   <p className="text-red-700">
                     <span className="font-semibold">Description:</span> {reason}
                   </p>
@@ -76,7 +73,7 @@ const PendingReportRequests: React.FC<PendingReportRequestsProps> = ({
                   size="sm"
                   variant="outline"
                   onClick={() => handleProcessRequest(request.id, false)}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  className="border-red-300 bg-red-500 hover:bg-red-600 text-white"
                 >
                   Reject
                 </Button>

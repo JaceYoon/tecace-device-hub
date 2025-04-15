@@ -64,6 +64,7 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
                 size="sm"
                 onClick={() => onApprove(request.id)}
                 disabled={isProcessing}
+                className="bg-green-500 hover:bg-green-600 text-white"
               >
                 {isProcessing ? (
                   <>
