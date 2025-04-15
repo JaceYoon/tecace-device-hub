@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -36,7 +36,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   onToggleExpand
 }) => {
   const { user, isManager, isAdmin } = useAuth();
-  const [expanded, setExpanded] = useState(false);
   
   const {
     isDeleting,
@@ -64,15 +63,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   
   const requestedByUser = users.find(u => u.id === device.requestedBy);
 
-  // Use the prop value if provided, otherwise use internal state
-  const displayExpanded = onToggleExpand ? isExpanded : expanded;
-
-  const toggleExpanded = (e: React.MouseEvent) => {
+  const handleExpandToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (onToggleExpand) {
       onToggleExpand(device.id);
-    } else {
-      setExpanded(prev => !prev);
     }
   };
 
@@ -114,7 +108,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 imei={device.imei}
               />
 
-              {displayExpanded && (
+              {isExpanded && (
                 <div className="animate-fade-in">
                   <DeviceCardDetails 
                     device={device} 
@@ -145,10 +139,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onAction={onAction}
               />
             </CardFooter>
-            <div className="absolute bottom-10 left-0 right-0 h-2"></div>
+
             <DeviceExpandButton 
-              expanded={displayExpanded} 
-              onClick={toggleExpanded} 
+              expanded={isExpanded}
+              onClick={handleExpandToggle}
             />
           </Card>
         </ContextMenuTrigger>
