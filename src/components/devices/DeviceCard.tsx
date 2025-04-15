@@ -143,13 +143,11 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onAction={onAction}
               />
             </CardFooter>
-            
+            <div className="absolute bottom-10 left-0 right-0 h-2"></div>
             <DeviceExpandButton 
               expanded={displayExpanded} 
               onClick={toggleExpanded} 
             />
-            
-            <div className="absolute bottom-10 left-0 right-0 h-2"></div>
           </Card>
         </ContextMenuTrigger>
           
