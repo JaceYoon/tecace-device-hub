@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -149,6 +148,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               expanded={displayExpanded} 
               onClick={toggleExpanded} 
             />
+            
+            <div className="absolute bottom-10 left-0 right-0 h-2"></div>
           </Card>
         </ContextMenuTrigger>
           
