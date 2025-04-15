@@ -49,7 +49,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
         <>
           {device.status === 'available' && !hasRequested && !isPending && (
             <Button
-              className="w-full h-10 font-medium bg-green-500 hover:bg-green-600 text-white"
+              className="w-full h-10 font-medium dark:bg-white dark:text-black dark:hover:bg-white/90 bg-black text-white hover:bg-black/90"
               size="sm"
               onClick={onRequestDevice}
               disabled={isProcessing}

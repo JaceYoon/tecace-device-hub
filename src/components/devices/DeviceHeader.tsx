@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Smartphone, Clock } from 'lucide-react';
 import { Device } from '@/types';
@@ -29,16 +28,16 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
 
   return (
     <div className="flex justify-between items-start">
-      <div>
-        <CardTitle className="text-lg font-medium">{deviceTitle}</CardTitle>
+      <div className="flex-1 min-w-0">
+        <CardTitle className="text-lg font-medium truncate pr-2">{deviceTitle}</CardTitle>
         <div className="mt-1">
-          <CardDescription className="flex items-center gap-1">
-            <Smartphone className="h-3.5 w-3.5" />
+          <CardDescription className="flex items-center gap-1 truncate">
+            <Smartphone className="h-3.5 w-3.5 flex-shrink-0" />
             {device.type}
           </CardDescription>
         </div>
       </div>
-      <div className="flex flex-col items-end gap-1">
+      <div className="flex flex-col items-end gap-1 ml-2">
         {isAdmin && (
           <DeviceAdminMenu 
             device={device}
