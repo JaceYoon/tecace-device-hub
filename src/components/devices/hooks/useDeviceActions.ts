@@ -131,6 +131,15 @@ export const useDeviceActions = (
     }
   };
 
+  // Add an effect to reset processing state when dialog is closed without confirmation
+  const originalCloseConfirmation = closeConfirmation;
+  const enhancedCloseConfirmation = () => {
+    originalCloseConfirmation();
+    // Reset processing states when dialog is closed without taking action
+    setIsProcessing(false);
+    setRequestInProgress(false);
+  };
+
   return {
     isDeleting,
     isProcessing,
@@ -140,7 +149,7 @@ export const useDeviceActions = (
     setDeleteConfirmOpen,
     setDeleteConfirmText,
     showConfirmation,
-    closeConfirmation,
+    closeConfirmation: enhancedCloseConfirmation,
     handleRequestDevice,
     handleReleaseDevice,
     handleStatusChange,
