@@ -15,8 +15,7 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
     error, 
     deviceCounts, 
     isAuthenticated, 
-    isAdmin, 
-    isManager,
+    isAdmin,
     handleRefresh 
   } = useStatusSummary(onRefresh);
   
@@ -63,7 +62,13 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
           label="Pending Requests" 
           color="bg-amber-500" 
         />
-        {(isAdmin || isManager) && (
+        <StatusCard 
+          icon={Zap} 
+          count={deviceCounts.deadCount} 
+          label="Dead" 
+          color="bg-gray-500" 
+        />
+        {isAdmin && (
           <>
             <StatusCard 
               icon={AlertCircle} 
@@ -76,12 +81,6 @@ const StatusSummary: React.FC<StatusSummaryProps> = ({ onRefresh }) => {
               count={deviceCounts.stolenCount} 
               label="Stolen" 
               color="bg-red-500" 
-            />
-            <StatusCard 
-              icon={Zap} 
-              count={deviceCounts.deadCount} 
-              label="Dead" 
-              color="bg-gray-500" 
             />
           </>
         )}

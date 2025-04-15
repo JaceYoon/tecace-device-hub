@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Input } from '@/components/ui/input';
 import {
@@ -45,14 +44,14 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
       { value: 'available', label: 'Available' },
       { value: 'assigned', label: 'Assigned' },
       { value: 'pending', label: 'Request Pending' },
+      { value: 'dead', label: 'Dead' },
     ];
 
     // Only show these status options to admin users
     if (isAdmin) {
       baseOptions.push(
         { value: 'missing', label: 'Missing' },
-        { value: 'stolen', label: 'Stolen' },
-        { value: 'dead', label: 'Dead' }
+        { value: 'stolen', label: 'Stolen' }
       );
     }
 
