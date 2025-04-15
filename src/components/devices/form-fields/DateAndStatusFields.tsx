@@ -27,7 +27,7 @@ const DateAndStatusFields: React.FC<DateAndStatusFieldsProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label htmlFor={calendarButtonId}>Received Date</Label>
+        <Label htmlFor={calendarButtonId}>Received Date *</Label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -57,7 +57,7 @@ const DateAndStatusFields: React.FC<DateAndStatusFieldsProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="deviceStatus">Status</Label>
+        <Label htmlFor="deviceStatus">Status *</Label>
         <Input
           id="deviceStatus"
           name="deviceStatus"

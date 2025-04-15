@@ -11,7 +11,7 @@ interface NotesFieldProps {
 const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="notes">Notes</Label>
+      <Label htmlFor="notes">Notes *</Label>
       <Textarea
         id="notes"
         name="notes"
