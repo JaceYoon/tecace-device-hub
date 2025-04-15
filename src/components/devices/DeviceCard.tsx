@@ -76,7 +76,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
       <ContextMenu>
         <ContextMenuTrigger>
           <Card className={cn(
-            "w-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative min-h-[280px]",
+            "w-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative min-h-[320px]",
             {
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
