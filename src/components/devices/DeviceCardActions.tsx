@@ -42,7 +42,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   const isPending = deviceIsPending || deviceHasPendingRequest;
 
   return (
-    <>
+    <div className="w-full flex flex-col gap-2">
       {isAdmin ? (
         <div className="grid grid-cols-1 gap-2 w-full">
           {/* Removed the Mark as Available button - it's now handled by the dropdown menu */}
@@ -52,7 +52,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {/* Request Device button - only show for available devices without pending requests */}
           {device.status === 'available' && !hasRequested && !isPending && (
             <Button
-              className="w-full"
+              className="w-full h-9"
               size="sm"
               onClick={onRequestDevice}
               disabled={isProcessing}
@@ -75,7 +75,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {hasRequested && (
             <Button
               variant="secondary"
-              className="w-full"
+              className="w-full h-9"
               size="sm"
               disabled
             >
@@ -88,7 +88,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {isRequestedByOthers && (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full h-9"
               size="sm"
               disabled
             >
@@ -101,7 +101,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {deviceIsPending && !hasRequested && !isRequestedByOthers && (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full h-9"
               size="sm"
               disabled
             >
@@ -114,7 +114,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
             <Button
               variant="outline"
-              className="w-full"
+              className="w-full h-9"
               size="sm"
               onClick={onReleaseDevice}
               disabled={isProcessing}
@@ -132,15 +132,20 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           
           {/* Report Issue button - show for available devices without pending requests */}
           {userId && !isAdmin && device.status === 'available' && !isPending && (
-            <ReportDeviceDialog 
-              device={device} 
-              userId={userId} 
-              onReportSubmitted={onAction}
-            />
+            <div className="w-full">
+              <ReportDeviceDialog 
+                device={device} 
+                userId={userId} 
+                onReportSubmitted={onAction}
+              />
+            </div>
           )}
+          
+          {/* Add empty div for spacing */}
+          <div className="h-6"></div>
         </>
       )}
-    </>
+    </div>
   );
 };
 
