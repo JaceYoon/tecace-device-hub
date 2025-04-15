@@ -36,7 +36,28 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   onOwnerChange,
   owners = [],
 }) => {
-  const { isAdmin, isManager } = useAuth();
+  const { isAdmin } = useAuth();
+
+  // Status options based on user role
+  const getStatusOptions = () => {
+    const baseOptions = [
+      { value: 'all', label: 'All Statuses' },
+      { value: 'available', label: 'Available' },
+      { value: 'assigned', label: 'Assigned' },
+      { value: 'pending', label: 'Request Pending' },
+    ];
+
+    // Only show these status options to admin users
+    if (isAdmin) {
+      baseOptions.push(
+        { value: 'missing', label: 'Missing' },
+        { value: 'stolen', label: 'Stolen' },
+        { value: 'dead', label: 'Dead' }
+      );
+    }
+
+    return baseOptions;
+  };
 
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -59,18 +80,11 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           <SelectValue placeholder="Filter by status" />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All Statuses</SelectItem>
-          <SelectItem value="available">Available</SelectItem>
-          <SelectItem value="assigned">Assigned</SelectItem>
-          <SelectItem value="pending">Request Pending</SelectItem>
-          {(isAdmin || isManager) && (
-            <>
-              <SelectItem value="missing">Missing</SelectItem>
-              <SelectItem value="stolen">Stolen</SelectItem>
-              <SelectItem value="dead">Dead</SelectItem>
-              <SelectItem value="returned">Returned</SelectItem>
-            </>
-          )}
+          {getStatusOptions().map(option => (
+            <SelectItem key={option.value} value={option.value}>
+              {option.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
       
@@ -90,7 +104,6 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
         </SelectContent>
       </Select>
       
-      {/* Owner filter dropdown */}
       {onOwnerChange && owners.length > 0 && (
         <Select
           value={ownerFilter}
