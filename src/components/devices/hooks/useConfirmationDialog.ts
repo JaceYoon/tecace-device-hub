@@ -9,11 +9,11 @@ interface ConfirmationDialog {
 }
 
 export const useConfirmationDialog = () => {
-  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog>({ 
-    isOpen: false, 
-    title: '', 
-    description: '', 
-    action: () => {} 
+  const [confirmDialog, setConfirmDialog] = useState<ConfirmationDialog>({
+    isOpen: false,
+    title: '',
+    description: '',
+    action: () => {},
   });
 
   const showConfirmation = (title: string, description: string, action: () => void) => {
@@ -26,24 +26,13 @@ export const useConfirmationDialog = () => {
   };
 
   const closeConfirmation = () => {
-    // Copy the current dialog before closing
-    const currentDialog = { ...confirmDialog };
-    
-    // First update the isOpen state (this makes it disappear)
+    // Important: Reset all values, not just isOpen
     setConfirmDialog({
-      ...currentDialog,
-      isOpen: false
+      isOpen: false,
+      title: '',
+      description: '',
+      action: () => {},
     });
-    
-    // Then schedule a delayed clearing of other properties to avoid UI glitches
-    setTimeout(() => {
-      setConfirmDialog({
-        isOpen: false,
-        title: '',
-        description: '',
-        action: () => {}
-      });
-    }, 300);
   };
 
   return {

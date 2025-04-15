@@ -27,6 +27,10 @@ const DeviceConfirmDialog: React.FC<DeviceConfirmDialogProps> = ({
   onConfirm
 }) => {
   // Handle empty dialog cases - don't render if title and description are empty
+  if (!open) {
+    return null;
+  }
+  
   if (open && !title && !description) {
     // Force close the dialog by calling onCancel if it's open with empty content
     React.useEffect(() => {

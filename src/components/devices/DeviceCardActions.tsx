@@ -42,24 +42,24 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
   const isPending = deviceIsPending || deviceHasPendingRequest;
 
   return (
-    <div className="w-full flex flex-col gap-2">
+    <div className="w-full flex flex-col gap-3 px-1 py-1">
       {isAdmin ? (
-        <div className="grid grid-cols-1 gap-2 w-full">
-          {/* Removed the Mark as Available button - it's now handled by the dropdown menu */}
+        <div className="grid grid-cols-1 gap-3 w-full">
+          {/* Admin controls were removed as per the original */}
         </div>
       ) : (
         <>
           {/* Request Device button - only show for available devices without pending requests */}
           {device.status === 'available' && !hasRequested && !isPending && (
             <Button
-              className="w-full h-9"
+              className="w-full h-10 font-medium"
               size="sm"
               onClick={onRequestDevice}
               disabled={isProcessing}
             >
               {isProcessing ? (
                 <>
-                  <Clock className="h-4 w-4 mr-1 animate-spin" />
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : (
@@ -75,11 +75,11 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {hasRequested && (
             <Button
               variant="secondary"
-              className="w-full h-9"
+              className="w-full h-10 font-medium"
               size="sm"
               disabled
             >
-              <Clock className="h-4 w-4 mr-1" />
+              <Clock className="h-4 w-4 mr-2" />
               Request Pending
             </Button>
           )}
@@ -88,11 +88,11 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {isRequestedByOthers && (
             <Button
               variant="outline"
-              className="w-full h-9"
+              className="w-full h-10 font-medium"
               size="sm"
               disabled
             >
-              <Clock className="h-4 w-4 mr-1" />
+              <Clock className="h-4 w-4 mr-2" />
               Already Requested
             </Button>
           )}
@@ -101,11 +101,11 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {deviceIsPending && !hasRequested && !isRequestedByOthers && (
             <Button
               variant="outline"
-              className="w-full h-9"
+              className="w-full h-10 font-medium"
               size="sm"
               disabled
             >
-              <Clock className="h-4 w-4 mr-1" />
+              <Clock className="h-4 w-4 mr-2" />
               Device Pending
             </Button>
           )}
@@ -114,14 +114,14 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
           {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
             <Button
               variant="outline"
-              className="w-full h-9"
+              className="w-full h-10 font-medium"
               size="sm"
               onClick={onReleaseDevice}
               disabled={isProcessing}
             >
               {isProcessing ? (
                 <>
-                  <Clock className="h-4 w-4 mr-1 animate-spin" />
+                  <Clock className="h-4 w-4 mr-2 animate-spin" />
                   Processing...
                 </>
               ) : (

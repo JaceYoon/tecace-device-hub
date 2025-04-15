@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -50,7 +51,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     handleStatusChange,
     handleDeleteDevice,
     handleDownloadImage,
-    showConfirmation
+    showConfirmation,
+    closeConfirmation
   } = useDeviceActions(device, onAction);
 
   const isDeviceOwner = device.assignedTo === user?.id;
@@ -164,9 +166,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         open={confirmDialog.isOpen}
         title={confirmDialog.title}
         description={confirmDialog.description}
-        onCancel={() => {
-          showConfirmation("", "", () => {});
-        }}
+        onCancel={closeConfirmation}
         onConfirm={() => {
           confirmDialog.action();
         }}

@@ -1,6 +1,6 @@
 
 import { useState } from 'react';
-import { Device, User } from '@/types';
+import { Device } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
@@ -22,6 +22,7 @@ export interface DeviceActionsHookReturn {
   setDeleteConfirmOpen: (open: boolean) => void;
   setDeleteConfirmText: (text: string) => void;
   showConfirmation: (title: string, description: string, action: () => void) => void;
+  closeConfirmation: () => void;
   handleRequestDevice: () => Promise<void>;
   handleReleaseDevice: () => void;
   handleStatusChange: (newStatus: 'missing' | 'stolen' | 'available' | 'dead') => void;
@@ -38,6 +39,7 @@ export const useDeviceActions = (
   const [isProcessing, setIsProcessing] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [requestInProgress, setRequestInProgress] = useState(false);
   
   const { 
     confirmDialog, 
@@ -59,6 +61,11 @@ export const useDeviceActions = (
   const handleRequestDevice = async () => {
     if (!user) return;
     
+    if (requestInProgress) {
+      console.log('Request already in progress, ignoring duplicate request');
+      return;
+    }
+    
     if (device.requestedBy && device.requestedBy !== "") {
       toast.error('This device is already requested');
       return;
@@ -66,6 +73,8 @@ export const useDeviceActions = (
 
     try {
       setIsProcessing(true);
+      setRequestInProgress(true);
+      
       const requests = await dataService.devices.getAllRequests();
       const userPendingRequests = requests.filter(
         req => req.userId === user.id && 
@@ -76,6 +85,7 @@ export const useDeviceActions = (
       if (userPendingRequests.some(req => req.deviceId === device.id)) {
         toast.error('You have already requested this device');
         setIsProcessing(false);
+        setRequestInProgress(false);
         return;
       }
       
@@ -84,6 +94,7 @@ export const useDeviceActions = (
         `Are you sure you want to request ${device.project}?`,
         async () => {
           try {
+            // Create the request
             await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
@@ -91,10 +102,10 @@ export const useDeviceActions = (
               type: 'assign',
             });
 
+            // Only update the device AFTER we've successfully created the request
             try {
               await dataService.updateDevice(device.id, {
-                requestedBy: user.id,
-                status: 'pending'
+                requestedBy: user.id
               });
             } catch (updateError) {
               console.error('Error updating device status to pending:', updateError);
@@ -102,19 +113,20 @@ export const useDeviceActions = (
 
             toast.success('Device requested successfully');
             if (onAction) onAction();
-            closeConfirmation();
           } catch (error) {
             console.error('Error requesting device:', error);
             toast.error('Failed to request device');
-            closeConfirmation();
           } finally {
+            closeConfirmation();
             setIsProcessing(false);
+            setRequestInProgress(false);
           }
         }
       );
     } catch (error) {
       console.error('Error checking existing requests:', error);
       setIsProcessing(false);
+      setRequestInProgress(false);
       toast.error('Failed to process your request');
     }
   };
@@ -128,6 +140,7 @@ export const useDeviceActions = (
     setDeleteConfirmOpen,
     setDeleteConfirmText,
     showConfirmation,
+    closeConfirmation,
     handleRequestDevice,
     handleReleaseDevice,
     handleStatusChange,
