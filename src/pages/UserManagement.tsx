@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
@@ -23,10 +22,12 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { Loader2, User, Shield } from 'lucide-react';
+import { dataService } from '@/services/data.service';
 
 const UserManagement: React.FC = () => {
   const { user, users, isAdmin, updateUserRole } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [refreshCounter, setRefreshCounter] = useState(0);
   const navigate = useNavigate();
   
   // Redirect if not admin
@@ -37,10 +38,30 @@ const UserManagement: React.FC = () => {
     }
   }, [isAdmin, navigate]);
   
+  // Register a refresh callback to update the component when data changes
+  useEffect(() => {
+    const unregisterRefresh = dataService.registerRefreshCallback(() => {
+      setRefreshCounter(prev => prev + 1);
+    });
+    
+    return () => {
+      if (unregisterRefresh) unregisterRefresh();
+    };
+  }, []);
+  
   if (!isAdmin || !user) return null;
   
-  const handleRoleChange = (userId: string, newRole: 'user' | 'TPM' | 'Software Engineer') => {
-    updateUserRole(userId, newRole);
+  const handleRoleChange = async (userId: string, newRole: 'user' | 'TPM' | 'Software Engineer') => {
+    setIsLoading(true);
+    try {
+      const success = await updateUserRole(userId, newRole);
+      if (success) {
+        // Manually trigger a refresh
+        setRefreshCounter(prev => prev + 1);
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   const getRoleBadgeClass = (role: string) => {

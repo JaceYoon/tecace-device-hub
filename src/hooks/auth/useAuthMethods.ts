@@ -100,12 +100,7 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
       if (response) {
         toast.success(`User role updated to ${newRole}`);
         
-        // Trigger a data refresh after role update is successful
-        // This will update the users list in the UI
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
-        
+        // Remove the page reload - we'll let the refresh callbacks handle updating the UI
         return true;
       }
       toast.error('Failed to update user role');
