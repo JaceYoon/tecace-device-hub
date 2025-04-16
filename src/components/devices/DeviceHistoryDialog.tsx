@@ -6,6 +6,7 @@ import { Clock, Info } from 'lucide-react';
 import { dataService } from '@/services/data.service';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { cn } from '@/lib/utils';
 
 interface DeviceHistoryProps {
   device: Device;
