@@ -21,6 +21,8 @@ import {
   resetLoggedOutState, 
   setUserLoggedOut 
 } from './api.service';
+
+// Import user service last to ensure all other imports are complete
 import { userService } from './api/user.service';
 
 // Create a unified dataService object that includes all the services
