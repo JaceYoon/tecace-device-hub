@@ -27,19 +27,21 @@ export const useDeviceReturns = () => {
   // Server availability check
   const { checkServerAvailability } = useServerAvailability();
   
-  // Initialize hooks
+  // Initialize hooks with shared state for optimized updates
+  const returnedDevicesHook = useReturnedDevices();
   const returnableDevices = useReturnableDevices();
-  const pendingReturns = usePendingReturns();
-  const returnedDevices = useReturnedDevices();
+  const pendingReturns = usePendingReturns(
+    returnedDevicesHook.returnedDevices,
+    returnedDevicesHook.setReturnedDevices
+  );
   
   // Initialize device info hook with correct types
-  // Since pendingReturns.pendingReturnRequests is DeviceRequest[], this matches the expected type
   const { getDeviceData } = useDeviceInfo(
     returnableDevices.devices,
     pendingReturns.pendingReturnRequests
   );
 
-  // Custom handlers
+  // Custom handlers with optimized data refresh
   const { handleReturnRequest } = useReturnRequestSubmission(
     returnableDevices.submitReturnRequests,
     manualRefresh
@@ -59,7 +61,7 @@ export const useDeviceReturns = () => {
   const dataLoaders: DataLoader[] = [
     { loadData: returnableDevices.loadReturnableDevices },
     { loadData: pendingReturns.loadPendingReturns },
-    { loadData: returnedDevices.loadReturnedDevices }
+    { loadData: returnedDevicesHook.loadReturnedDevices }
   ];
   
   // Initialize data loading utilities
@@ -110,7 +112,7 @@ export const useDeviceReturns = () => {
     cancelReturnRequest: handleReturnCancellation, // Use custom handler instead
     
     // From returnedDevices hook
-    returnedDevices: returnedDevices.returnedDevices,
+    returnedDevices: returnedDevicesHook.returnedDevices,
     
     // From useDeviceInfo hook
     getDeviceData,
@@ -125,7 +127,7 @@ export const useDeviceReturns = () => {
     
     // Status flags
     isProcessing: returnableDevices.isProcessing || pendingReturns.isProcessing,
-    isLoading: returnableDevices.isLoading || pendingReturns.isLoading || returnedDevices.isLoading,
+    isLoading: returnableDevices.isLoading || pendingReturns.isLoading || returnedDevicesHook.isLoading,
     isAdmin,
     
     // Data refresh

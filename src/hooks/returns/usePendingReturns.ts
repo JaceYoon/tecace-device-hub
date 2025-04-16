@@ -1,8 +1,10 @@
 
 import { usePendingReturnRequests } from './usePendingReturnRequests';
 import { useReturnProcessing } from './useReturnProcessing';
+import { Device } from '@/types';
+import { useState } from 'react';
 
-export const usePendingReturns = () => {
+export const usePendingReturns = (returnedDevices?: Device[], setReturnedDevices?: React.Dispatch<React.SetStateAction<Device[]>>) => {
   const {
     pendingReturnRequests,
     isLoading,
@@ -23,7 +25,7 @@ export const usePendingReturns = () => {
     setOpenConfirmDialog,
     setConfirmText,
     setReturnDate
-  } = useReturnProcessing(pendingReturnRequests, setPendingReturnRequests);
+  } = useReturnProcessing(pendingReturnRequests, setPendingReturnRequests, setReturnedDevices);
 
   return {
     pendingReturnRequests,

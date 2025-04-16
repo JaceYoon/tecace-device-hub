@@ -1,12 +1,13 @@
 
 import { useState, useRef } from 'react';
-import { DeviceRequest } from '@/types';
+import { DeviceRequest, Device } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
 export const useReturnProcessing = (
   pendingReturnRequests: DeviceRequest[],
-  setPendingReturnRequests: React.Dispatch<React.SetStateAction<DeviceRequest[]>>
+  setPendingReturnRequests: React.Dispatch<React.SetStateAction<DeviceRequest[]>>,
+  setReturnedDevices?: React.Dispatch<React.SetStateAction<Device[]>>
 ) => {
   const [selectedPendingReturns, setSelectedPendingReturns] = useState<string[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -42,6 +43,9 @@ export const useReturnProcessing = (
       let successCount = 0;
       let errorCount = 0;
       
+      // Store processed devices to update both states
+      const processedDevices: Device[] = [];
+      
       for (const requestId of selectedPendingReturns) {
         try {
           await dataService.devices.processRequest(requestId, 'approved');
@@ -52,10 +56,16 @@ export const useReturnProcessing = (
             dateOnly.setHours(0, 0, 0, 0);
             
             try {
-              await dataService.devices.update(request.deviceId, {
+              // Update the device status
+              const updatedDevice = await dataService.devices.update(request.deviceId, {
                 status: 'returned',
                 returnDate: dateOnly,
               });
+              
+              // If we have the returned devices state setter and got back a device, add it
+              if (updatedDevice && setReturnedDevices) {
+                processedDevices.push(updatedDevice);
+              }
             } catch (error) {
               console.error(`Error updating status for device ${request.deviceId}:`, error);
             }
@@ -67,6 +77,27 @@ export const useReturnProcessing = (
           console.error(`Error confirming return for request ${requestId}:`, error);
         }
       }
+      
+      // Immediately update UI states for better UX
+      if (processedDevices.length > 0 && setReturnedDevices) {
+        setReturnedDevices(prev => {
+          // Create a map of existing devices by ID for quick lookup
+          const deviceMap = new Map(prev.map(device => [device.id, device]));
+          
+          // Add or update processed devices
+          for (const device of processedDevices) {
+            deviceMap.set(device.id, device);
+          }
+          
+          // Convert map back to array
+          return Array.from(deviceMap.values());
+        });
+      }
+      
+      // Remove processed requests from pending list
+      setPendingReturnRequests(prev => 
+        prev.filter(r => !selectedPendingReturns.includes(r.id))
+      );
       
       if (successCount > 0) {
         toast.success(`${successCount} device(s) returned successfully`);

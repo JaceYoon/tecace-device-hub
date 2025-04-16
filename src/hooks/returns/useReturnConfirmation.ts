@@ -11,11 +11,9 @@ export const useReturnConfirmation = (
     try {
       await confirmReturns();
       
-      // Wait a bit for the database to update
-      setTimeout(() => {
-        console.log('Refreshing after return confirmation');
-        manualRefresh();
-      }, 500);
+      // Immediate refresh after successful confirmation to update UI without delay
+      console.log('Immediately refreshing after return confirmation');
+      manualRefresh();
     } catch (error) {
       console.error('Error confirming returns:', error);
       toast.error('Failed to confirm returns');

@@ -44,16 +44,20 @@ export const deviceService = {
     });
   },
 
-  processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> =>
-    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
+  processRequest: (requestId: string, status: 'approved' | 'rejected'): Promise<DeviceRequest | null> => {
+    console.log(`Processing request ${requestId} with status: ${status}`);
+    return apiCall<DeviceRequest | null>(`/devices/requests/${requestId}`, {
       method: 'PUT',
       body: JSON.stringify({ status })
-    }),
+    });
+  },
 
-  cancelRequest: (requestId: string): Promise<DeviceRequest | null> =>
-    apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
+  cancelRequest: (requestId: string): Promise<DeviceRequest | null> => {
+    console.log(`Cancelling request ${requestId}`);
+    return apiCall<DeviceRequest | null>(`/devices/requests/${requestId}/cancel`, {
       method: 'PUT'
-    }),
+    });
+  },
 
   getAllRequests: (): Promise<DeviceRequest[]> =>
     apiCall<DeviceRequest[]>('/devices/requests/all'),
