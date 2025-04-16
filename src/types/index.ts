@@ -71,6 +71,6 @@ export interface AuthContextType {
     => Promise<{ success: boolean, message: string, verificationRequired: boolean }>;
   verifyEmail: (email: string, code: string, userData: { firstName: string, lastName: string, password: string }) 
     => Promise<boolean>;
-  updateUserRole: (userId: string, role: 'admin' | 'user' | 'TPM' | 'Software Engineer') => boolean;
+  updateUserRole: (userId: string, role: 'admin' | 'user' | 'TPM' | 'Software Engineer') => Promise<boolean>;
   updateUserProfile: (updates: Partial<User>) => Promise<boolean>;
 }
