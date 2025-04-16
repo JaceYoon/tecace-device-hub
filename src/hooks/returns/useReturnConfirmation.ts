@@ -7,20 +7,25 @@ export const useReturnConfirmation = (
   confirmReturns: () => Promise<void>,
   manualRefresh: () => void
 ) => {
-  // Custom function to handle the return confirmation
+  // Enhanced function to handle the return confirmation with better state synchronization
   const handleReturnConfirmation = useCallback(async () => {
     try {
+      // Execute the confirmation logic first
       await confirmReturns();
       
-      // Immediate refresh after successful confirmation to update UI without delay
-      console.log('Immediately refreshing after return confirmation');
+      // Log confirmation was successful
+      console.log('Return confirmation completed successfully');
+      
+      // Perform immediate refresh to update UI without delay
+      console.log('Executing immediate refresh after return confirmation');
       manualRefresh();
       
-      // Double check refresh after a small delay to ensure data is loaded
+      // Schedule a backup refresh after a short delay to ensure data consistency
+      // This helps when the server needs a moment to process the changes
       setTimeout(() => {
-        console.log('Additional refresh to ensure data is loaded');
+        console.log('Executing delayed backup refresh to ensure data consistency');
         manualRefresh();
-      }, 500);
+      }, 300);
     } catch (error) {
       console.error('Error confirming returns:', error);
       toast.error('Failed to confirm returns');

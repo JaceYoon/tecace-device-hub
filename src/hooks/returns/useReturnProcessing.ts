@@ -48,12 +48,13 @@ export const useReturnProcessing = (
       
       for (const requestId of selectedPendingReturns) {
         try {
-          await dataService.devices.processRequest(requestId, 'approved');
-          
           const request = pendingReturnRequests.find(r => r.id === requestId);
           if (request) {
             const dateOnly = new Date(returnDate);
             dateOnly.setHours(0, 0, 0, 0);
+            
+            // Process the return request first
+            await dataService.devices.processRequest(requestId, 'approved');
             
             try {
               // Update the device status
@@ -81,6 +82,8 @@ export const useReturnProcessing = (
       // Immediately update UI states for better UX
       if (processedDevices.length > 0 && setReturnedDevices) {
         setReturnedDevices(prev => {
+          console.log('Updating returned devices with processed ones:', processedDevices.length);
+          
           // Create a map of existing devices by ID for quick lookup
           const deviceMap = new Map(prev.map(device => [device.id, device]));
           
@@ -90,7 +93,9 @@ export const useReturnProcessing = (
           }
           
           // Convert map back to array
-          return Array.from(deviceMap.values());
+          const updatedDevices = Array.from(deviceMap.values());
+          console.log('Updated returned devices count:', updatedDevices.length);
+          return updatedDevices;
         });
       }
       

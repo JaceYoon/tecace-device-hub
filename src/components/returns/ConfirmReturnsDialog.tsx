@@ -31,6 +31,19 @@ const ConfirmReturnsDialog: React.FC<ConfirmReturnsDialogProps> = ({
   onConfirmTextChange,
   onSubmit
 }) => {
+  // Prevent form submission on Enter key
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+    }
+  };
+
+  // Handle input change
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    onConfirmTextChange(e.target.value);
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent>
@@ -71,8 +84,10 @@ const ConfirmReturnsDialog: React.FC<ConfirmReturnsDialogProps> = ({
             </div>
             <Input
               value={confirmText}
-              onChange={(e) => onConfirmTextChange(e.target.value)}
+              onChange={handleInputChange}
+              onKeyDown={handleKeyDown}
               placeholder="confirm"
+              autoComplete="off"
             />
           </div>
         </div>
@@ -85,6 +100,7 @@ const ConfirmReturnsDialog: React.FC<ConfirmReturnsDialogProps> = ({
             onClick={onSubmit} 
             disabled={isProcessing || confirmText !== 'confirm'}
             className="ml-2"
+            type="button"
           >
             {isProcessing ? 'Processing...' : 'Confirm Returns'}
           </Button>

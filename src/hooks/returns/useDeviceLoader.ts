@@ -23,18 +23,21 @@ export function useDeviceLoader({
   const dataLoadedRef = useRef(false);
 
   const loadDevices = useCallback(async (force = false) => {
-    // Don't try again if previous load failed and we're not forcing
-    if (loadFailed && !force) return;
-    
     // When forcing, always reload regardless of existing data
-    if (!force) {
+    if (force) {
+      console.log('Force reloading devices from API...');
+    } else {
       // Don't reload if we already have data and we're not forcing
       if (dataLoadedRef.current && devices.length > 0) {
         console.log(`Devices already loaded with ${devices.length} items, skipping...`);
         return;
       }
-    } else {
-      console.log('Force reloading devices from API...');
+      
+      // Don't try again if previous load failed and we're not forcing
+      if (loadFailed && !force) {
+        console.log('Previous load failed, not retrying without force flag');
+        return;
+      }
     }
     
     // Prevent concurrent loading
@@ -59,6 +62,7 @@ export function useDeviceLoader({
       console.log(`After filtering, ${filteredDevices.length} devices match criteria`);
       setDevices(filteredDevices);
       dataLoadedRef.current = true;
+      setLoadFailed(false); // Reset the failure flag on success
     } catch (error) {
       console.error('Error loading devices:', error);
       
@@ -76,7 +80,7 @@ export function useDeviceLoader({
       setIsLoading(false);
       isLoadingRef.current = false;
     }
-  }, [loadFailed, devices.length, statusFilter, mockDataFilter]);
+  }, [statusFilter, mockDataFilter, devices.length, loadFailed]);
 
   return {
     devices,

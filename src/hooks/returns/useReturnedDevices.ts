@@ -33,9 +33,11 @@ export const useReturnedDevices = () => {
     console.log('Loading returned devices, force:', force);
     await loadReturnedDevicesFromApi(force);
     
+    // Always update local state after loading from API
+    console.log('Setting returned devices from API:', loadedReturnedDevices.length);
+    setLocalReturnedDevices(loadedReturnedDevices);
+    
     if (loadedReturnedDevices.length > 0 || force) {
-      console.log('Setting returned devices from API:', loadedReturnedDevices.length);
-      setLocalReturnedDevices(loadedReturnedDevices);
       setHasInitialData(true);
     }
   }, [loadReturnedDevicesFromApi, loadedReturnedDevices]);
