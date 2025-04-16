@@ -294,7 +294,15 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                 </div>
               ) : (
                 history.filter(entry => !(entry.userName === 'Available' && device.status === 'available')).map((entry) => (
-                  <div key={entry.id} className="border rounded-md p-3">
+                  <div 
+                    key={entry.id} 
+                    className={cn(
+                      "border rounded-md p-3",
+                      {
+                        "bg-green-50/30": entry.isCurrentOwner
+                      }
+                    )}
+                  >
                     <div className="font-semibold">
                       {entry.userName}
                       {entry.isCurrentOwner && entry.userName !== 'Available' && 
