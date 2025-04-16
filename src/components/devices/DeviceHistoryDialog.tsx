@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from '@/components/ui/dialog';
@@ -300,7 +301,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                     className={cn(
                       "border rounded-md p-3",
                       {
-                        "bg-green-50/30": entry.isCurrentOwner
+                        "bg-green-100": entry.isCurrentOwner // Changed from bg-green-50/30 to bg-green-100 for more noticeable color
                       }
                     )}
                   >

@@ -1,4 +1,5 @@
 
+
 # Tecace Device Management System
 
 A comprehensive device management system for tracking, requesting, and managing company devices.
@@ -24,9 +25,15 @@ This project consists of two main components:
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
-- Node.js (v16.x or later)
+- Node.js (v16.x or later, v18.x recommended)
 - npm (v8.x or later)
-- MariaDB or MySQL database
+- MariaDB (v10.5 or later) or MySQL (v8.0 or later)
+
+### Required Software
+- **MariaDB/MySQL**: Used for the application database
+  - For Windows: Download from the [MariaDB](https://mariadb.org/download/) or [MySQL](https://dev.mysql.com/downloads/installer/) website
+  - For macOS: Install via Homebrew with `brew install mariadb` or `brew install mysql`
+  - For Linux: Use your package manager (e.g., `apt install mariadb-server` or `apt install mysql-server`)
 
 ## Setup Instructions
 
@@ -184,3 +191,4 @@ Required environment variables in `server/.env`:
 - Optional:
   - `RESET_DATABASE`: Set to "true" to reset the database on startup
   - `NODE_ENV`: Set to "production" for production environment
+
