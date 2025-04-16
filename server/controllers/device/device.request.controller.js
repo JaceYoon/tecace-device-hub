@@ -61,14 +61,16 @@ const updateDeviceForRequest = async (device, type, userId) => {
       requestedBy: null
     });
   } else if (type === 'assign') {
-    // Update the device to indicate it has a pending request
-    device.requestedBy = userId;
-    await device.save();
+    // For assign requests, ALWAYS update the device status to pending and set requestedBy
+    await device.update({
+      status: 'pending',
+      requestedBy: userId
+    });
   } else if (type === 'report' || type === 'return') {
-    // For report/return requests, mark the device status as "available" but with a requestedBy
+    // For report/return requests, mark the device status as "pending" to indicate a pending request
     try {
       await device.update({
-        status: 'available', // Use "available" instead of "pending" to avoid database constraint errors
+        status: 'pending', // Changed from "available" to "pending" to better reflect the device state
         requestedBy: userId // Keep track of who requested this action
       });
     } catch (error) {

@@ -79,12 +79,23 @@ export const useDeviceActions = (
         `Are you sure you want to request ${device.project}?`,
         async () => {
           try {
+            // Create the device request
             await dataService.addRequest({
               deviceId: device.id,
               userId: user.id,
               status: 'pending',
               type: 'assign',
             });
+            
+            // Explicitly update the device status to pending
+            try {
+              await dataService.updateDevice(device.id, {
+                requestedBy: user.id,
+                status: 'pending'
+              });
+            } catch (updateError) {
+              console.error('Error updating device status to pending:', updateError);
+            }
 
             toast.success('Device requested successfully');
             if (onAction) onAction();

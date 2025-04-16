@@ -142,6 +142,7 @@ export const useDeviceRequests = (options?: DeviceRequestsFilterOptions) => {
           type: 'assign',
         });
         
+        // Always update the device status to "pending" locally
         try {
           await dataService.updateDevice(device.id, {
             requestedBy: user.id,
