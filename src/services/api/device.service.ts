@@ -18,11 +18,13 @@ export const deviceService = {
       body: JSON.stringify(device)
     }),
 
-  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> =>
-    apiCall<Device | null>(`/devices/${id}`, {
+  update: (id: string, updates: Partial<Omit<Device, 'id' | 'createdAt'>>): Promise<Device | null> => {
+    console.log(`Updating device ${id} with:`, updates);
+    return apiCall<Device | null>(`/devices/${id}`, {
       method: 'PUT',
       body: JSON.stringify(updates)
-    }),
+    });
+  },
 
   delete: (id: string): Promise<{ success: boolean }> =>
     apiCall<{ success: boolean }>(`/devices/${id}`, {

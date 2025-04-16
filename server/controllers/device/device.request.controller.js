@@ -53,6 +53,8 @@ const validateDeviceStatusForRequest = (device, type, userId, userRole) => {
 
 // Update device status based on request type
 const updateDeviceForRequest = async (device, type, userId) => {
+  console.log(`Updating device ${device.id} for ${type} request by user ${userId}`);
+  
   // For release requests, update the device immediately
   if (type === 'release') {
     await device.update({
@@ -62,6 +64,7 @@ const updateDeviceForRequest = async (device, type, userId) => {
     });
   } else if (type === 'assign') {
     // For assign requests, ALWAYS update the device status to pending and set requestedBy
+    console.log(`Setting device ${device.id} to pending status for assignment request`);
     await device.update({
       status: 'pending',
       requestedBy: userId
@@ -69,6 +72,7 @@ const updateDeviceForRequest = async (device, type, userId) => {
   } else if (type === 'report' || type === 'return') {
     // For report/return requests, mark the device status as "pending" to indicate a pending request
     try {
+      console.log(`Setting device ${device.id} to pending status for ${type} request`);
       await device.update({
         status: 'pending', // Changed from "available" to "pending" to better reflect the device state
         requestedBy: userId // Keep track of who requested this action
@@ -137,8 +141,14 @@ exports.requestDevice = async (req, res) => {
       reason
     });
 
+    console.log(`Request created with ID ${request.id}, now updating device status`);
+    
     // Update device based on request type
     await updateDeviceForRequest(device, type, userId);
+    
+    // Verify the device status was updated
+    const updatedDevice = await Device.findByPk(deviceId);
+    console.log(`Device ${deviceId} status after update: ${updatedDevice.status}`);
 
     res.status(201).json(request);
   } catch (err) {

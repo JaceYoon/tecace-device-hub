@@ -104,20 +104,26 @@ export const useDeviceRequests = (options?: DeviceRequestsFilterOptions) => {
           `Are you sure you want to request ${device.project}?`,
           async () => {
             try {
+              console.log(`Initiating request for device ${device.id} by user ${user.id}`);
+              
               // Request the device through the API
-              await dataService.addRequest({
+              const request = await dataService.addRequest({
                 deviceId: device.id,
                 userId: user.id,
                 status: 'pending',
                 type: 'assign',
               });
               
-              // Always update the device status to "pending" locally
+              console.log(`Request created successfully with ID: ${request.id}`);
+              
+              // Also explicitly update the device status to ensure consistency
               try {
+                console.log(`Updating device ${device.id} status to pending and setting requestedBy to ${user.id}`);
                 await dataService.updateDevice(device.id, {
                   requestedBy: user.id,
                   status: 'pending'
                 });
+                console.log(`Device status updated successfully`);
               } catch (updateError) {
                 console.error('Error updating device status to pending:', updateError);
               }
@@ -135,19 +141,25 @@ export const useDeviceRequests = (options?: DeviceRequestsFilterOptions) => {
         );
       } else {
         // Direct request without confirmation
-        await dataService.addRequest({
+        console.log(`Direct request for device ${device.id} by user ${user.id}`);
+        
+        const request = await dataService.addRequest({
           deviceId: device.id,
           userId: user.id,
           status: 'pending',
           type: 'assign',
         });
         
-        // Always update the device status to "pending" locally
+        console.log(`Direct request created with ID: ${request.id}`);
+        
+        // Also explicitly update the device status to ensure consistency
         try {
+          console.log(`Directly updating device ${device.id} status to pending`);
           await dataService.updateDevice(device.id, {
             requestedBy: user.id,
             status: 'pending'
           });
+          console.log(`Device status updated successfully`);
         } catch (updateError) {
           console.error('Error updating device status to pending:', updateError);
         }
