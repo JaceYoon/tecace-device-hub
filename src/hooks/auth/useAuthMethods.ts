@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -95,25 +94,27 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
     }
   };
 
-  const updateUserRole = (userId: string, newRole: UserRole): boolean => {
-    const performRoleUpdate = async () => {
-      try {
-        const response = await userService.updateRole(userId, newRole);
-        if (response) {
-          toast.success(`User role updated to ${newRole}`);
-          return true;
-        }
-        toast.error('Failed to update user role');
-        return false;
-      } catch (error) {
-        console.error('Error updating user role:', error);
-        toast.error('Failed to update user role');
-        return false;
+  const updateUserRole = async (userId: string, newRole: UserRole): Promise<boolean> => {
+    try {
+      const response = await userService.updateRole(userId, newRole);
+      if (response) {
+        toast.success(`User role updated to ${newRole}`);
+        
+        // Trigger a data refresh after role update is successful
+        // This will update the users list in the UI
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+        
+        return true;
       }
-    };
-
-    performRoleUpdate();
-    return true;
+      toast.error('Failed to update user role');
+      return false;
+    } catch (error) {
+      console.error('Error updating user role:', error);
+      toast.error('Failed to update user role');
+      return false;
+    }
   };
 
   const updateUserProfile = async (updates: Partial<User>): Promise<boolean> => {

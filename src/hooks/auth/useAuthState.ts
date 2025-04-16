@@ -3,11 +3,13 @@ import { useState, useEffect } from 'react';
 import { User } from '@/types';
 import { authService, userService } from '@/services/api';
 import { toast } from 'sonner';
+import { dataService } from '@/services/data.service';
 
 export function useAuthState() {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -37,7 +39,7 @@ export function useAuthState() {
     };
     
     checkAuth();
-  }, []);
+  }, [refreshTrigger]);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -54,7 +56,18 @@ export function useAuthState() {
     };
     
     fetchUsers();
-  }, [user]);
+  }, [user, refreshTrigger]);
+
+  // Register a refresh callback to update users when changes happen
+  useEffect(() => {
+    const unregister = dataService.registerRefreshCallback(() => {
+      setRefreshTrigger(prev => prev + 1);
+    });
+    
+    return () => {
+      if (unregister) unregister();
+    };
+  }, []);
 
   return { user, setUser, users, setUsers, isLoading };
 }
