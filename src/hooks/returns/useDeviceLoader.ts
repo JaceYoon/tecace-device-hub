@@ -26,10 +26,15 @@ export function useDeviceLoader({
     // Don't try again if previous load failed and we're not forcing
     if (loadFailed && !force) return;
     
-    // Don't reload if we already have data and we're not forcing
-    if (dataLoadedRef.current && devices.length > 0 && !force) {
-      console.log(`Devices already loaded with ${devices.length} items, skipping...`);
-      return;
+    // When forcing, always reload regardless of existing data
+    if (!force) {
+      // Don't reload if we already have data and we're not forcing
+      if (dataLoadedRef.current && devices.length > 0) {
+        console.log(`Devices already loaded with ${devices.length} items, skipping...`);
+        return;
+      }
+    } else {
+      console.log('Force reloading devices from API...');
     }
     
     // Prevent concurrent loading
@@ -42,13 +47,16 @@ export function useDeviceLoader({
     setIsLoading(true);
     
     try {
+      console.log('Fetching devices from API...');
       const allDevices = await dataService.devices.getAll();
+      console.log(`Received ${allDevices.length} devices from API`);
       
       // Apply filter if provided
       const filteredDevices = statusFilter 
         ? allDevices.filter(statusFilter)
         : allDevices;
       
+      console.log(`After filtering, ${filteredDevices.length} devices match criteria`);
       setDevices(filteredDevices);
       dataLoadedRef.current = true;
     } catch (error) {
@@ -60,6 +68,7 @@ export function useDeviceLoader({
         ? mockDevices.filter(mockDataFilter) 
         : mockDevices;
       
+      console.log(`Using ${filteredMockDevices.length} mock devices as fallback`);
       setDevices(filteredMockDevices);
       setLoadFailed(true);
       toast.error('Failed to load devices from server, using demo data');

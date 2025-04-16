@@ -1,5 +1,5 @@
 
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { useDeviceLoader } from './useDeviceLoader';
 import { Device } from '@/types';
 
@@ -12,24 +12,33 @@ export const useReturnedDevices = () => {
   const { 
     devices: loadedReturnedDevices, 
     isLoading, 
-    loadDevices: loadReturnedDevicesFromApi 
+    loadDevices: loadReturnedDevicesFromApi,
+    dataLoadedRef
   } = useDeviceLoader({
     statusFilter: device => device.status === 'returned',
     mockDataFilter: device => device.status === 'returned'
   });
 
+  // Effect to sync local state with loaded data
+  useEffect(() => {
+    if (loadedReturnedDevices.length > 0) {
+      console.log('Syncing returned devices from API to local state:', loadedReturnedDevices.length);
+      setLocalReturnedDevices(loadedReturnedDevices);
+      setHasInitialData(true);
+    }
+  }, [loadedReturnedDevices]);
+
   // Enhanced load function that updates local state
-  const loadReturnedDevices = useCallback(async () => {
-    await loadReturnedDevicesFromApi();
-    setLocalReturnedDevices(prev => {
-      // Only update if we have data and haven't already loaded
-      if (loadedReturnedDevices.length > 0 || !hasInitialData) {
-        setHasInitialData(true);
-        return loadedReturnedDevices;
-      }
-      return prev;
-    });
-  }, [loadReturnedDevicesFromApi, loadedReturnedDevices, hasInitialData]);
+  const loadReturnedDevices = useCallback(async (force = false) => {
+    console.log('Loading returned devices, force:', force);
+    await loadReturnedDevicesFromApi(force);
+    
+    if (loadedReturnedDevices.length > 0 || force) {
+      console.log('Setting returned devices from API:', loadedReturnedDevices.length);
+      setLocalReturnedDevices(loadedReturnedDevices);
+      setHasInitialData(true);
+    }
+  }, [loadReturnedDevicesFromApi, loadedReturnedDevices]);
 
   // Combine API loaded devices with locally managed ones
   const returnedDevices = hasInitialData ? localReturnedDevices : loadedReturnedDevices;
@@ -38,6 +47,7 @@ export const useReturnedDevices = () => {
     returnedDevices,
     setReturnedDevices: setLocalReturnedDevices,
     isLoading,
-    loadReturnedDevices
+    loadReturnedDevices,
+    hasInitialData
   };
 };

@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Device } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -18,13 +18,23 @@ const ReturnedDevicesList: React.FC<ReturnedDevicesListProps> = ({
   isLoading,
   onRefresh
 }) => {
+  // Effect to log devices count when it changes
+  useEffect(() => {
+    console.log(`ReturnedDevicesList rendering with ${returnedDevices.length} devices`);
+  }, [returnedDevices.length]);
+
+  const handleRefresh = () => {
+    console.log('Manual refresh requested');
+    onRefresh();
+  };
+
   return (
     <>
       <div className="mb-4 flex justify-between items-center">
         <h2 className="text-xl font-semibold">Returned Devices</h2>
         <Button 
           variant="outline" 
-          onClick={onRefresh}
+          onClick={handleRefresh}
           size="sm"
         >
           <RefreshCw className="mr-2 h-4 w-4" />
