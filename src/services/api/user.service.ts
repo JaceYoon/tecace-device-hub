@@ -1,7 +1,11 @@
 
 import { User } from '@/types';
 import { apiCall } from './utils';
-import { dataService } from '@/services/data.service';
+
+// Import the dataService function using a function to avoid circular dependency
+const getDataService = () => {
+  return require('@/services/data.service').dataService;
+};
 
 export const userService = {
   getAll: (): Promise<User[]> =>
@@ -21,7 +25,8 @@ export const userService = {
     
     // After successful role update, trigger a refresh in the data service
     if (result) {
-      dataService.triggerRefresh();
+      // Use the getter function to avoid circular dependency
+      getDataService().triggerRefresh();
     }
     
     return result;

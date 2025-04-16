@@ -1,13 +1,6 @@
 
 import { Device, DeviceRequest, User } from '@/types';
 import { toast } from 'sonner';
-import { 
-  deviceService, 
-  authService, 
-  userService,
-  resetLoggedOutState, 
-  setUserLoggedOut 
-} from './api.service';
 import api from './api/index';
 import { VERSION } from '@/constants/version';
 
@@ -20,6 +13,15 @@ if (process.env.NODE_ENV === 'development') {
 
 // Create a global refresh callback mechanism
 let refreshCallbacks: (() => void)[] = [];
+
+// Import services after initializing variables to avoid circular dependencies
+import { 
+  deviceService, 
+  authService, 
+  resetLoggedOutState, 
+  setUserLoggedOut 
+} from './api.service';
+import { userService } from './api/user.service';
 
 // Create a unified dataService object that includes all the services
 export const dataService = {
