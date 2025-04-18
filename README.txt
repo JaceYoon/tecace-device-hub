@@ -1,5 +1,3 @@
-
-
 # Tecace Device Management System
 
 A comprehensive device management system for tracking, requesting, and managing company devices.
@@ -192,3 +190,30 @@ Required environment variables in `server/.env`:
   - `RESET_DATABASE`: Set to "true" to reset the database on startup
   - `NODE_ENV`: Set to "production" for production environment
 
+## Docker Setup
+
+To run the application using Docker:
+
+1. Install Docker and Docker Compose on your system
+   - For Windows/Mac: Install Docker Desktop from [https://www.docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop)
+   - For Linux: Install Docker Engine and Docker Compose using your package manager
+
+2. Build and start the containers:
+```bash
+docker-compose up --build
+```
+
+3. The application will be available at:
+   - Frontend: http://localhost:8080
+   - Backend API: http://localhost:5000
+   - Database: localhost:3306
+
+To stop the containers:
+```bash
+docker-compose down
+```
+
+To remove all containers and volumes:
+```bash
+docker-compose down -v
+```
