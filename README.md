@@ -1,8 +1,8 @@
-# Welcome to your Lovable project
+# Welcome to Device Management Tool
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/882f37b7-86cb-4697-887e-d320014ebdd2
+**URL**: https://dm.tecace.com
 
 ## How can I edit this code?
 

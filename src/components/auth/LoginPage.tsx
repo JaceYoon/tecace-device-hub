@@ -108,7 +108,7 @@ const LoginPage: React.FC = () => {
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/50">
       <div className="w-full max-w-md animate-fade-in">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Tecace Device Manager</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Device Management Tool</h1>
           <p className="text-muted-foreground mt-2 text-sm">Sign in to access your device dashboard</p>
         </div>
         
@@ -195,13 +195,10 @@ const LoginPage: React.FC = () => {
                 
                 <div className="text-center text-sm mt-4">
                   <p className="text-muted-foreground">
-                    Default admin account:
+                    For any login or registration issues,
                   </p>
-                  <p className="text-xs mt-1">
-                    <strong>Email:</strong> admin@tecace.com
-                  </p>
-                  <p className="text-xs">
-                    <strong>Password:</strong> admin123
+                  <p className="text-muted-foreground">
+                    please contact the administrator
                   </p>
                 </div>
               </TabsContent>

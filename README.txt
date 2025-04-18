@@ -1,6 +1,6 @@
 
 
-# Tecace Device Management System
+# Device Management Tool
 
 A comprehensive device management system for tracking, requesting, and managing company devices.
 
@@ -25,7 +25,7 @@ This project consists of two main components:
 ## Prerequisites
 
 Before you begin, ensure you have the following installed:
-- Node.js (v16.x or later, v18.x recommended)
+- Node.js (v16.x or later, v22.x recommended)
 - npm (v8.x or later)
 - MariaDB (v10.5 or later) or MySQL (v8.0 or later)
 

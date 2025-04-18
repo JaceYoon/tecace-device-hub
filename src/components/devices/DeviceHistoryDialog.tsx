@@ -301,7 +301,7 @@ export const DeviceHistoryDialog: React.FC<DeviceHistoryProps> = ({ device, user
                     className={cn(
                       "border rounded-md p-3",
                       {
-                        "bg-green-100": entry.isCurrentOwner // Changed from bg-green-50/30 to bg-green-100 for more noticeable color
+                        "bg-green-100 dark:bg-green-700": entry.isCurrentOwner // Changed from bg-green-50/30 to bg-green-100 for more noticeable color
                       }
                     )}
                   >
