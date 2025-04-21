@@ -86,8 +86,6 @@ const RequestList: React.FC<RequestListProps> = ({
           <div className="flex items-center justify-center p-4">
             <Loader2 className="h-6 w-6 animate-spin" />
           </div>
-        ) : filteredRequests.length === 0 ? (
-          <p>No device requests found.</p>
         ) : (
           <RequestTable
             requests={filteredRequests}

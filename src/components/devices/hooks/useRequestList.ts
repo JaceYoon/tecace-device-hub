@@ -31,6 +31,7 @@ export const useRequestList = ({
       setLoading(true);
       console.log("Fetching requests...");
       
+      // Use the correct API endpoints to get all data
       const [allRequests, devices, users] = await Promise.all([
         dataService.devices.getAllRequests(),
         dataService.getDevices(),
@@ -52,7 +53,7 @@ export const useRequestList = ({
         userMap[user.id] = user.name;
       });
       
-      setRequests(allRequests);
+      setRequests(allRequests || []);
       setDeviceNameMap(deviceMap);
       setUserNameMap(userMap);
     } catch (error) {

@@ -91,78 +91,87 @@ const RequestTable: React.FC<RequestTableProps> = ({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {requests.map((request) => (
-            <TableRow key={request.id}>
-              <TableCell className="font-medium">{getDeviceName(request)}</TableCell>
-              <TableCell>
-                <Badge className={`${getTypeColor(request)} text-white`}>
-                  {getRequestTypeText(request)}
-                </Badge>
-              </TableCell>
-              <TableCell>{getUserName(request)}</TableCell>
-              <TableCell>
-                <Badge className={`${getStatusColor(request.status)} text-white`}>
-                  {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
-                </Badge>
-              </TableCell>
-              <TableCell>
-                {request.requestedAt ? (
-                  formatDistanceToNow(new Date(request.requestedAt), { addSuffix: true })
-                ) : (
-                  'Unknown'
-                )}
-              </TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-1">
-                  {isAdmin && request.status === 'pending' && (
-                    <>
+          {requests.length > 0 ? (
+            requests.map((request) => (
+              <TableRow key={request.id}>
+                <TableCell className="font-medium">{getDeviceName(request)}</TableCell>
+                <TableCell>
+                  <Badge className={`${getTypeColor(request)} text-white`}>
+                    {getRequestTypeText(request)}
+                  </Badge>
+                </TableCell>
+                <TableCell>{getUserName(request)}</TableCell>
+                <TableCell>
+                  <Badge className={`${getStatusColor(request.status)} text-white`}>
+                    {request.status.charAt(0).toUpperCase() + request.status.slice(1)}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  {request.requestedAt ? (
+                    formatDistanceToNow(new Date(request.requestedAt), { addSuffix: true })
+                  ) : (
+                    'Unknown'
+                  )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-1">
+                    {isAdmin && request.status === 'pending' && (
+                      <>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="bg-green-500 hover:bg-green-600 text-white"
+                          onClick={() => onApprove(request.id)}
+                          disabled={processing.has(request.id)}
+                        >
+                          {processing.has(request.id) ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <CheckCircle className="h-4 w-4" />
+                          )}
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => onReject(request.id)}
+                          disabled={processing.has(request.id)}
+                        >
+                          {processing.has(request.id) ? (
+                            <Clock className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <XCircle className="h-4 w-4" />
+                          )}
+                        </Button>
+                      </>
+                    )}
+                    
+                    {/* Allow users to cancel their own requests */}
+                    {canCancel(request) && (
                       <Button
-                        variant="default"
+                        variant="outline"
                         size="sm"
-                        onClick={() => onApprove(request.id)}
+                        onClick={() => onCancel(request.id)}
                         disabled={processing.has(request.id)}
+                        title="Cancel Request"
                       >
                         {processing.has(request.id) ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
-                          <CheckCircle className="h-4 w-4" />
+                          <RefreshCcw className="h-4 w-4" />
                         )}
                       </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => onReject(request.id)}
-                        disabled={processing.has(request.id)}
-                      >
-                        {processing.has(request.id) ? (
-                          <Clock className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <XCircle className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </>
-                  )}
-                  
-                  {/* Allow users to cancel their own requests */}
-                  {canCancel(request) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => onCancel(request.id)}
-                      disabled={processing.has(request.id)}
-                      title="Cancel Request"
-                    >
-                      {processing.has(request.id) ? (
-                        <Clock className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <RefreshCcw className="h-4 w-4" />
-                      )}
-                    </Button>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={6} className="text-center py-4">
+                No requests found
               </TableCell>
             </TableRow>
-          ))}
+          )}
         </TableBody>
       </Table>
     </div>

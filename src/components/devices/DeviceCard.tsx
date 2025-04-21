@@ -103,22 +103,22 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             className
           )}>
             <CardHeader className="pb-2">
-              <div className="flex justify-between items-start">
-                <DeviceHeader 
-                  device={device}
-                  isAdmin={isAdmin}
-                  isRequested={isRequested}
-                  onStatusChange={handleStatusChange}
-                  onDelete={() => setDeleteConfirmOpen(true)}
-                  onAction={onAction}
-                />
-                {isOldDevice() && device.status === 'assigned' && (
-                  <Badge className="bg-amber-500 text-white ml-2">
+              <DeviceHeader 
+                device={device}
+                isAdmin={isAdmin}
+                isRequested={isRequested}
+                onStatusChange={handleStatusChange}
+                onDelete={() => setDeleteConfirmOpen(true)}
+                onAction={onAction}
+              />
+              {isOldDevice() && device.status === 'assigned' && (
+                <div className="mt-2 flex justify-end">
+                  <Badge className="bg-amber-500 text-white">
                     <CalendarClock className="h-3 w-3 mr-1" /> 
                     Old Device
                   </Badge>
-                )}
-              </div>
+                </div>
+              )}
             </CardHeader>
 
             <CardContent className={cn(
@@ -190,9 +190,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         title={confirmDialog.title}
         description={confirmDialog.description}
         onCancel={closeConfirmation}
-        onConfirm={() => {
-          confirmDialog.action();
-        }}
+        onConfirm={confirmDialog.action}
       />
 
       <DeviceDeleteConfirm
