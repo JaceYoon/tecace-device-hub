@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, XCircle, RefreshCcw } from 'lucide-react';
+import { CheckCircle, XCircle, RefreshCcw, Clock } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RequestTableProps {
