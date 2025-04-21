@@ -25,6 +25,7 @@ import { format } from 'date-fns';
 import { dataService } from '@/services/data.service';
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { Badge } from '@/components/ui/badge';
 
 const PendingDeviceRequests: React.FC = () => {
   const navigate = useNavigate();
@@ -41,8 +42,9 @@ const PendingDeviceRequests: React.FC = () => {
       try {
         setIsLoading(true);
         const allRequests = await dataService.devices.getAllRequests();
+        // Include both assign and release requests now
         const filteredRequests = allRequests.filter(req => 
-          req.type === 'assign' && req.status === 'pending'
+          (req.type === 'assign' || req.type === 'release') && req.status === 'pending'
         );
         setPendingRequests(filteredRequests);
       } catch (error) {
@@ -69,6 +71,18 @@ const PendingDeviceRequests: React.FC = () => {
     }
   };
 
+  // Render request type badge
+  const renderRequestTypeBadge = (type: string) => {
+    switch(type) {
+      case 'assign':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">Rental</Badge>;
+      case 'release':
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">Release</Badge>;
+      default:
+        return null;
+    }
+  };
+
   // If not admin, don't render this component
   if (!isAdmin) {
     return null;
@@ -82,7 +96,7 @@ const PendingDeviceRequests: React.FC = () => {
           Pending Device Requests
         </CardTitle>
         <CardDescription>
-          Review and approve device assignment requests
+          Review and approve device assignment and release requests
         </CardDescription>
       </CardHeader>
       
@@ -103,10 +117,9 @@ const PendingDeviceRequests: React.FC = () => {
                 <TableRow>
                   <TableHead>Requester</TableHead>
                   <TableHead>Device</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead>Serial</TableHead>
-                  <TableHead>IMEI</TableHead>
                   <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -119,16 +132,13 @@ const PendingDeviceRequests: React.FC = () => {
                       {request.device?.project || request.deviceName || request.deviceId || 'Unknown device'}
                     </TableCell>
                     <TableCell>
+                      {renderRequestTypeBadge(request.type)}
+                    </TableCell>
+                    <TableCell>
                       {request.device?.serialNumber || 'N/A'}
                     </TableCell>
                     <TableCell>
-                      {request.device?.imei || 'N/A'}
-                    </TableCell>
-                    <TableCell>
                       {formatDate(request.requestedAt.toString())}
-                    </TableCell>
-                    <TableCell>
-                      <RequestStatusBadge status={request.status} />
                     </TableCell>
                   </TableRow>
                 ))}

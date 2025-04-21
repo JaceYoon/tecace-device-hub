@@ -3,6 +3,7 @@ const db = require('../../models');
 const Device = db.device;
 const User = db.user;
 const Request = db.request;
+const sequelize = db.sequelize;
 
 // Validate request type
 const validateRequestType = (type, reportType) => {
@@ -37,8 +38,8 @@ const validateDeviceStatusForRequest = (device, type, userId, userRole) => {
     return { valid: false, message: 'Device is not available' };
   }
 
-  // Validate release request - skip validation for admins
-  if (type === 'release' && device.assignedToId !== userId && userRole !== 'admin') {
+  // Validate release request - never skip validation
+  if (type === 'release' && device.assignedToId !== userId) {
     return { valid: false, message: 'Device is not assigned to you' };
   }
   
@@ -55,12 +56,11 @@ const validateDeviceStatusForRequest = (device, type, userId, userRole) => {
 const updateDeviceForRequest = async (device, type, userId) => {
   console.log(`Updating device ${device.id} for ${type} request by user ${userId}`);
   
-  // For release requests, update the device immediately
+  // For release requests, mark as pending (changed from direct release)
   if (type === 'release') {
     await device.update({
-      status: 'available',
-      assignedToId: null,
-      requestedBy: null
+      status: 'pending',  // Changed from 'available' to 'pending'
+      requestedBy: userId // Set the requestedBy field
     });
   } else if (type === 'assign') {
     // For assign requests, ALWAYS update the device status to pending and set requestedBy
@@ -74,8 +74,8 @@ const updateDeviceForRequest = async (device, type, userId) => {
     try {
       console.log(`Setting device ${device.id} to pending status for ${type} request`);
       await device.update({
-        status: 'pending', // Changed from "available" to "pending" to better reflect the device state
-        requestedBy: userId // Keep track of who requested this action
+        status: 'pending',
+        requestedBy: userId
       });
     } catch (error) {
       console.error('Error updating device status:', error);
@@ -83,8 +83,10 @@ const updateDeviceForRequest = async (device, type, userId) => {
   }
 };
 
-// Request a device
+// Request a device - optimized with transaction
 exports.requestDevice = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { type, reportType, reason } = req.body;
     const deviceId = req.params.id;
@@ -100,14 +102,16 @@ exports.requestDevice = async (req, res) => {
     }
 
     // Find device
-    const device = await Device.findByPk(deviceId);
+    const device = await Device.findByPk(deviceId, { transaction });
     if (!device) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Device not found' });
     }
 
     // Check for existing pending request
     const existingRequest = await checkForExistingRequest(device.id);
     if (existingRequest) {
+      await transaction.rollback();
       console.log(`Rejected duplicate request: Device ${device.id} already has a pending request (${existingRequest.id})`);
       return res.status(400).json({ message: 'There is already a pending request for this device' });
     }
@@ -115,20 +119,13 @@ exports.requestDevice = async (req, res) => {
     // Validate device status for the request type
     const statusValidation = validateDeviceStatusForRequest(device, type, userId, userRole);
     if (!statusValidation.valid) {
+      await transaction.rollback();
       return res.status(400).json({ message: statusValidation.message });
     }
 
-    // Determine request status (auto-approve release requests)
-    let status = 'pending';
-    let processedAt = null;
-    let processedById = null;
+    // Determine request status - no more auto-approve for release requests
+    const status = 'pending';  // All requests are now pending by default
     
-    if (type === 'release') {
-      status = 'approved';
-      processedAt = new Date();
-      processedById = userId;
-    }
-
     // Create request
     const request = await Request.create({
       type,
@@ -136,15 +133,16 @@ exports.requestDevice = async (req, res) => {
       status,
       deviceId: device.id,
       userId,
-      processedAt,
-      processedById,
       reason
-    });
+    }, { transaction });
 
     console.log(`Request created with ID ${request.id}, now updating device status`);
     
     // Update device based on request type
-    await updateDeviceForRequest(device, type, userId);
+    await updateDeviceForRequest(device, type, userId, transaction);
+    
+    // Commit transaction
+    await transaction.commit();
     
     // Verify the device status was updated
     const updatedDevice = await Device.findByPk(deviceId);
@@ -152,13 +150,14 @@ exports.requestDevice = async (req, res) => {
 
     res.status(201).json(request);
   } catch (err) {
+    await transaction.rollback();
     console.error('Error processing request:', err);
     res.status(500).json({ message: err.message });
   }
 };
 
 // Update device based on processed request
-const updateDeviceAfterProcessing = async (device, request, status) => {
+const updateDeviceAfterProcessing = async (device, request, status, transaction) => {
   if (status === 'approved') {
     switch (request.type) {
       case 'assign':
@@ -166,8 +165,9 @@ const updateDeviceAfterProcessing = async (device, request, status) => {
         await device.update({
           status: 'assigned',
           assignedToId: request.userId,
-          requestedBy: null
-        });
+          requestedBy: null,
+          receivedDate: new Date() // Set received date to now for tracking ownership duration
+        }, { transaction });
         break;
         
       case 'release':
@@ -176,7 +176,7 @@ const updateDeviceAfterProcessing = async (device, request, status) => {
           status: 'available',
           assignedToId: null,
           requestedBy: null
-        });
+        }, { transaction });
         break;
         
       case 'report':
@@ -185,7 +185,7 @@ const updateDeviceAfterProcessing = async (device, request, status) => {
           status: request.reportType || 'missing',
           requestedBy: null,
           assignedToId: null
-        });
+        }, { transaction });
         break;
         
       case 'return':
@@ -198,40 +198,47 @@ const updateDeviceAfterProcessing = async (device, request, status) => {
           status: 'returned',
           returnDate: today,
           requestedBy: null
-        });
+        }, { transaction });
         break;
     }
   } else if (status === 'rejected') {
-    // If request rejected, clear the requestedBy field and reset status to available
+    // If request rejected, clear the requestedBy field and reset status
+    const statusToRevert = request.type === 'release' ? 'assigned' : 'available';
     await device.update({
       requestedBy: null,
-      status: 'available' // Always reset to available on reject
-    });
+      status: statusToRevert // Reset to assigned for release requests, available for others
+    }, { transaction });
   }
 };
 
-// Process a device request
+// Process a device request - optimized with transaction
 exports.processRequest = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const { status } = req.body;
     const requestId = req.params.id;
 
     if (!['approved', 'rejected'].includes(status)) {
+      await transaction.rollback();
       return res.status(400).json({ message: 'Invalid status' });
     }
 
     const request = await Request.findByPk(requestId, {
       include: [
         { model: Device, as: 'device' }
-      ]
+      ],
+      transaction
     });
 
     if (!request) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Request not found' });
     }
 
-    const device = await Device.findByPk(request.deviceId);
+    const device = await Device.findByPk(request.deviceId, { transaction });
     if (!device) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Device not found' });
     }
 
@@ -239,30 +246,38 @@ exports.processRequest = async (req, res) => {
     request.status = status;
     request.processedById = req.user.id;
     request.processedAt = new Date();
-    await request.save();
+    await request.save({ transaction });
 
     // Update device based on request type and approval status
-    await updateDeviceAfterProcessing(device, request, status);
+    await updateDeviceAfterProcessing(device, request, status, transaction);
+
+    // Commit transaction
+    await transaction.commit();
 
     res.json(request);
   } catch (err) {
+    await transaction.rollback();
     console.error('Error processing request:', err);
     res.status(500).json({ message: err.message });
   }
 };
 
-// Cancel a device request
+// Cancel a device request - optimized with transaction
 exports.cancelRequest = async (req, res) => {
+  const transaction = await sequelize.transaction();
+  
   try {
     const requestId = req.params.id;
-    const request = await Request.findByPk(requestId);
+    const request = await Request.findByPk(requestId, { transaction });
 
     if (!request) {
+      await transaction.rollback();
       return res.status(404).json({ message: 'Request not found' });
     }
 
     // Only the requester or an admin can cancel the request
     if (request.userId !== req.user.id && req.user.role !== 'admin') {
+      await transaction.rollback();
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
@@ -270,20 +285,25 @@ exports.cancelRequest = async (req, res) => {
     request.status = 'cancelled';
     request.processedById = req.user.id;
     request.processedAt = new Date();
-    await request.save();
+    await request.save({ transaction });
 
     // Update device
-    const device = await Device.findByPk(request.deviceId);
+    const device = await Device.findByPk(request.deviceId, { transaction });
     if (device) {
-      // Always update the device status to 'available' when a request is canceled
+      // For release requests, revert to assigned status
+      const statusToRevert = request.type === 'release' ? 'assigned' : 'available';
       await device.update({ 
-        status: 'available',
+        status: statusToRevert,
         requestedBy: null
-      });
+      }, { transaction });
     }
+
+    // Commit transaction
+    await transaction.commit();
 
     res.json(request);
   } catch (err) {
+    await transaction.rollback();
     console.error('Error cancelling request:', err);
     res.status(500).json({ message: err.message });
   }
@@ -308,7 +328,7 @@ const formatRequestData = (request) => {
   return requestJson;
 };
 
-// Find all device requests
+// Find all device requests - optimized query
 exports.findAllRequests = async (req, res) => {
   try {
     const requests = await Request.findAll({

@@ -37,6 +37,7 @@ export interface Device {
   requestedBy?: string;
   createdAt: Date;
   updatedAt: Date;
+  lastModified?: Date; // Adding this property to fix the TypeScript errors
 }
 
 export type RequestStatus = 'pending' | 'approved' | 'rejected' | 'cancelled' | 'returned';

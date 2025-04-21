@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import RequestStatusBadge from '@/components/ui/RequestStatusBadge';
 import { formatDistanceToNow } from 'date-fns';
 import { Loader2, Check, X } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 interface RequestListItemProps {
   request: DeviceRequest;
@@ -43,12 +44,31 @@ const RequestListItem: React.FC<RequestListItemProps> = ({
     showCancelButton: !isAdmin && isOwnRequest && request.status === 'pending'
   });
   
+  // Determine the request type badge
+  const renderRequestTypeBadge = () => {
+    switch(request.type) {
+      case 'assign':
+        return <Badge variant="outline" className="bg-blue-100 text-blue-800 hover:bg-blue-100 border-blue-200">Rental</Badge>;
+      case 'release':
+        return <Badge variant="outline" className="bg-amber-100 text-amber-800 hover:bg-amber-100 border-amber-200">Release</Badge>;
+      case 'report':
+        return <Badge variant="outline" className="bg-red-100 text-red-800 hover:bg-red-100 border-red-200">Report</Badge>;
+      case 'return':
+        return <Badge variant="outline" className="bg-green-100 text-green-800 hover:bg-green-100 border-green-200">Return</Badge>;
+      default:
+        return null;
+    }
+  };
+  
   return (
     <TableRow>
       <TableCell>{getDeviceName(request)}</TableCell>
       <TableCell>{getUserName(request.userId)}</TableCell>
       <TableCell>
-        <RequestStatusBadge status={request.status} />
+        <div className="flex flex-col gap-1">
+          <RequestStatusBadge status={request.status} />
+          {renderRequestTypeBadge()}
+        </div>
       </TableCell>
       <TableCell>
         {request.requestedAt && formatDistanceToNow(new Date(request.requestedAt), {
