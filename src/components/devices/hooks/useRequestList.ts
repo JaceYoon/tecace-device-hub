@@ -179,7 +179,7 @@ export const useRequestList = ({
     fetchRequests();
   }, [fetchRequests]);
   
-  // Filter requests based on userId if provided
+  // IMPORTANT: Filter requests based on userId or current user
   const filteredRequests = userId
     ? requests.filter(request => request.userId === userId)
     : isAdmin 
@@ -187,11 +187,14 @@ export const useRequestList = ({
       : requests.filter(request => request.userId === user?.id);
   
   console.log('Filtered requests for userId:', userId || user?.id, filteredRequests.length);
+  console.log('Current user ID:', user?.id);
+  console.log('Is admin:', isAdmin);
+  console.log('Total requests before filtering:', requests.length);
   
   return {
     loading,
     processing,
-    requests,
+    requests: filteredRequests, // Return filtered requests as main requests
     filteredRequests,
     getUserName,
     getDeviceName,

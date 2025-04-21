@@ -42,6 +42,10 @@ const DeviceReturnReminder: React.FC<DeviceReturnReminderProps> = ({ devices, us
     });
     
     console.log('Overdue devices found:', overdue.length, overdue);
+    console.log('All devices:', devices.length);
+    console.log('User ID:', userId);
+    console.log('Devices with dates:', devices.filter(d => !!d.receivedDate).length);
+
     setOverdueDevices(overdue);
   }, [devices, userId, dismissed]);
 

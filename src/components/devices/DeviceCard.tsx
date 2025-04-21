@@ -88,7 +88,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     return isAfter(now, oneYearAfterReceived);
   };
 
+  // Make sure to set this value before rendering
   const showOldDeviceBadge = isOldDevice() && device.status === 'assigned';
+  
+  console.log(`Device: ${device.project}, receivedDate: ${device.receivedDate}, isOldDevice: ${isOldDevice()}, showBadge: ${showOldDeviceBadge}`);
 
   return (
     <>
