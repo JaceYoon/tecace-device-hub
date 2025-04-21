@@ -29,32 +29,20 @@ export const useDeviceStatus = (
         try {
           setIsRequestPending(true);
           
+          // Instead of immediately releasing, create a release request
           try {
-            await dataService.updateDevice(device.id, {
-              assignedTo: undefined,
-              assignedToId: undefined,
-              status: 'available',
-            });
+            console.log(`Creating release request for device ${device.id} by user ${user.id}`);
+            const request = await dataService.devices.requestDevice(device.id, 'release');
+            console.log('Release request created:', request);
             
-            try {
-              await dataService.addRequest({
-                deviceId: device.id,
-                userId: user.id,
-                status: 'approved',
-                type: 'release',
-              });
-            } catch (requestError) {
-              console.warn('Failed to create release request record:', requestError);
-            }
-            
-            toast.success('Device returned successfully');
+            toast.success('Release request submitted successfully');
             
             if (onAction) {
               onAction();
             }
           } catch (error) {
-            console.error('Error updating device status:', error);
-            toast.error('Failed to return device');
+            console.error('Failed to create release request:', error);
+            toast.error('Failed to request device release');
           } finally {
             // Ensure dialog is closed after operation completes
             closeConfirmation();

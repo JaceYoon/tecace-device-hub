@@ -43,7 +43,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
           <TableRow>
             <TableHead>Device</TableHead>
             <TableHead>Requested By</TableHead>
-            <TableHead>Status</TableHead>
+            <TableHead>Status & Type</TableHead>
             <TableHead>Requested</TableHead>
             <TableHead className="text-right">Actions</TableHead>
           </TableRow>
