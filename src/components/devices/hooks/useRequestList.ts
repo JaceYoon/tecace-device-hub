@@ -9,12 +9,14 @@ interface UseRequestListProps {
   userId?: string;
   onRequestProcessed?: () => void;
   refreshTrigger?: number;
+  pendingOnly?: boolean;
 }
 
 export const useRequestList = ({ 
   userId, 
   onRequestProcessed,
-  refreshTrigger = 0
+  refreshTrigger = 0,
+  pendingOnly = false
 }: UseRequestListProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
@@ -180,16 +182,23 @@ export const useRequestList = ({
   }, [fetchRequests]);
   
   // IMPORTANT: Filter requests based on userId or current user
-  const filteredRequests = userId
+  let filteredRequests = userId
     ? requests.filter(request => request.userId === userId)
     : isAdmin 
-      ? requests
+      ? requests 
       : requests.filter(request => request.userId === user?.id);
+  
+  // Apply additional pending-only filter if required
+  if (pendingOnly) {
+    filteredRequests = filteredRequests.filter(request => request.status === 'pending');
+  }
   
   console.log('Filtered requests for userId:', userId || user?.id, filteredRequests.length);
   console.log('Current user ID:', user?.id);
   console.log('Is admin:', isAdmin);
+  console.log('Pending only:', pendingOnly);
   console.log('Total requests before filtering:', requests.length);
+  console.log('Filtered requests:', filteredRequests);
   
   return {
     loading,

@@ -33,18 +33,23 @@ const DeviceReturnReminder: React.FC<DeviceReturnReminderProps> = ({ devices, us
         return false;
       }
       
+      // Make sure to properly parse the receivedDate
       const receivedDate = typeof device.receivedDate === 'string' 
         ? parseISO(device.receivedDate) 
         : device.receivedDate;
       
       const returnDueDate = addYears(receivedDate, 1);
-      return isAfter(now, returnDueDate);
+      const isDeviceOverdue = isAfter(now, returnDueDate);
+      
+      console.log(`Device ${device.project} received: ${receivedDate}, due: ${returnDueDate}, overdue: ${isDeviceOverdue}`);
+      return isDeviceOverdue;
     });
     
     console.log('Overdue devices found:', overdue.length, overdue);
     console.log('All devices:', devices.length);
     console.log('User ID:', userId);
     console.log('Devices with dates:', devices.filter(d => !!d.receivedDate).length);
+    console.log('Devices assigned to user:', devices.filter(d => d.assignedTo === userId).length);
 
     setOverdueDevices(overdue);
   }, [devices, userId, dismissed]);
