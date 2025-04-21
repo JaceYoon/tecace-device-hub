@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { DeviceRequest, User, Device } from '@/types';
+
+import { useState, useEffect, useCallback } from 'react';
+import { DeviceRequest } from '@/types';
+import { useAuth } from '@/components/auth/AuthProvider';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
-import { useAuth } from '@/components/auth/AuthProvider';
 
 interface UseRequestListProps {
   userId?: string;
@@ -10,162 +11,179 @@ interface UseRequestListProps {
   refreshTrigger?: number;
 }
 
-export const useRequestList = ({ userId, onRequestProcessed, refreshTrigger }: UseRequestListProps) => {
-  const [requests, setRequests] = useState<DeviceRequest[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [devices, setDevices] = useState<Device[]>([]);
+export const useRequestList = ({ 
+  userId, 
+  onRequestProcessed,
+  refreshTrigger = 0
+}: UseRequestListProps = {}) => {
   const [loading, setLoading] = useState(true);
-  const [processing, setProcessing] = useState<string | null>(null);
-  const { isAdmin, user } = useAuth();
-  const isMountedRef = useRef(true);
-
-  const fetchData = useCallback(async () => {
-    if (!isMountedRef.current) return;
-    
-    setLoading(true);
+  const [requests, setRequests] = useState<DeviceRequest[]>([]);
+  const [processing, setProcessing] = useState(new Set<string>());
+  const { user, isAdmin } = useAuth();
+  
+  // Create device and user name lookup maps
+  const [deviceNameMap, setDeviceNameMap] = useState<Record<string, string>>({});
+  const [userNameMap, setUserNameMap] = useState<Record<string, string>>({});
+  
+  // Function to fetch requests
+  const fetchRequests = useCallback(async () => {
     try {
-      const [requestsData, usersData, devicesData] = await Promise.all([
+      setLoading(true);
+      console.log("Fetching requests...");
+      
+      const [allRequests, devices, users] = await Promise.all([
         dataService.devices.getAllRequests(),
-        dataService.users.getAll(),
-        dataService.devices.getAll()
+        dataService.getDevices(),
+        dataService.getUsers()
       ]);
       
-      if (!isMountedRef.current) return;
+      console.log(`Fetched ${allRequests.length} requests`);
       
-      console.log("useRequestList - Fetched requests:", requestsData.length);
-      setRequests(requestsData);
-      setUsers(usersData);
-      setDevices(devicesData);
+      // Create maps for more efficient lookups
+      const deviceMap: Record<string, string> = {};
+      const userMap: Record<string, string> = {};
+      
+      devices.forEach(device => {
+        deviceMap[device.id] = device.project;
+      });
+      
+      users.forEach(user => {
+        userMap[user.id] = user.name;
+      });
+      
+      setRequests(allRequests);
+      setDeviceNameMap(deviceMap);
+      setUserNameMap(userMap);
     } catch (error) {
-      if (isMountedRef.current) {
-        console.error('Error fetching requests:', error);
-        toast.error('Failed to load device requests');
-      }
+      console.error('Error fetching requests:', error);
+      toast.error('Failed to load requests');
     } finally {
-      if (isMountedRef.current) {
-        setLoading(false);
-      }
+      setLoading(false);
     }
   }, []);
-
-  const handleRefresh = useCallback(() => {
-    fetchData();
-  }, [fetchData]);
-
+  
+  // Initial load and refresh when trigger changes
   useEffect(() => {
-    // Set up the ref
-    isMountedRef.current = true;
+    fetchRequests();
+  }, [fetchRequests, refreshTrigger]);
+  
+  // Function to get device name from request
+  const getDeviceName = useCallback((request: DeviceRequest): string => {
+    if (request.deviceName) return request.deviceName;
+    if (request.device?.project) return request.device.project;
+    return deviceNameMap[request.deviceId] || 'Unknown Device';
+  }, [deviceNameMap]);
+  
+  // Function to get user name from request
+  const getUserName = useCallback((request: DeviceRequest): string => {
+    if (request.userName) return request.userName;
+    if (request.user?.name) return request.user.name;
+    return userNameMap[request.userId] || 'Unknown User';
+  }, [userNameMap]);
+  
+  // Process request (approve/reject)
+  const processRequest = useCallback(async (requestId: string, approve: boolean) => {
+    if (processing.has(requestId)) return;
     
-    fetchData();
+    const newProcessing = new Set(processing);
+    newProcessing.add(requestId);
+    setProcessing(newProcessing);
     
-    // Clean up
-    return () => {
-      isMountedRef.current = false;
-    };
-  }, [fetchData, refreshTrigger]);
-
-  const handleApprove = async (requestId: string) => {
-    setProcessing(requestId);
     try {
-      await dataService.processRequest(requestId, 'approved');
-      toast.success('Request approved successfully');
-      fetchData();
-      if (onRequestProcessed) onRequestProcessed();
+      const updatedRequest = await dataService.devices.processRequest(
+        requestId, 
+        approve ? 'approved' : 'rejected'
+      );
+      
+      if (updatedRequest) {
+        // Update the local state
+        setRequests(prev => prev.map(req => 
+          req.id === requestId ? { ...req, status: approve ? 'approved' : 'rejected' } : req
+        ));
+        
+        toast.success(`Request ${approve ? 'approved' : 'rejected'} successfully`);
+        
+        if (onRequestProcessed) {
+          onRequestProcessed();
+        }
+      }
     } catch (error) {
-      console.error('Error approving request:', error);
-      toast.error('Failed to approve request');
+      console.error(`Error ${approve ? 'approving' : 'rejecting'} request:`, error);
+      toast.error(`Failed to ${approve ? 'approve' : 'reject'} request`);
     } finally {
-      setProcessing(null);
+      const updatedProcessing = new Set(processing);
+      updatedProcessing.delete(requestId);
+      setProcessing(updatedProcessing);
     }
-  };
-
-  const handleReject = async (requestId: string) => {
-    setProcessing(requestId);
+  }, [processing, onRequestProcessed]);
+  
+  // Approve a request
+  const handleApprove = useCallback((requestId: string) => {
+    processRequest(requestId, true);
+  }, [processRequest]);
+  
+  // Reject a request
+  const handleReject = useCallback((requestId: string) => {
+    processRequest(requestId, false);
+  }, [processRequest]);
+  
+  // Cancel a request (can be done by the requester or admin)
+  const handleCancel = useCallback(async (requestId: string) => {
+    if (processing.has(requestId)) return;
+    
+    const newProcessing = new Set(processing);
+    newProcessing.add(requestId);
+    setProcessing(newProcessing);
+    
     try {
-      await dataService.processRequest(requestId, 'rejected');
-      toast.success('Request rejected successfully');
-      fetchData();
-      if (onRequestProcessed) onRequestProcessed();
-    } catch (error) {
-      console.error('Error rejecting request:', error);
-      toast.error('Failed to reject request');
-    } finally {
-      setProcessing(null);
-    }
-  };
-
-  const handleCancel = async (requestId: string) => {
-    setProcessing(requestId);
-    try {
-      console.log(`Attempting to cancel request ${requestId}`);
+      // Find the request
+      const request = requests.find(r => r.id === requestId);
+      
+      if (!request) {
+        throw new Error('Request not found');
+      }
+      
+      // Only the requester or admin can cancel
+      if (request.userId !== user?.id && !isAdmin) {
+        throw new Error('You are not authorized to cancel this request');
+      }
+      
       await dataService.devices.cancelRequest(requestId);
+      
+      // Update the local state
+      setRequests(prev => prev.map(req => 
+        req.id === requestId ? { ...req, status: 'cancelled' } : req
+      ));
+      
       toast.success('Request cancelled successfully');
-      fetchData();
-      if (onRequestProcessed) onRequestProcessed();
+      
+      if (onRequestProcessed) {
+        onRequestProcessed();
+      }
     } catch (error) {
       console.error('Error cancelling request:', error);
       toast.error('Failed to cancel request');
     } finally {
-      setProcessing(null);
+      const updatedProcessing = new Set(processing);
+      updatedProcessing.delete(requestId);
+      setProcessing(updatedProcessing);
     }
-  };
-
-  const getUserName = (userId: string) => {
-    if (!userId) return 'Unknown User';
-    
-    const user = users.find(u => String(u.id) === String(userId));
-    if (user) {
-      return user.name || 'Unnamed User';
-    }
-    
-    return 'Unknown User';
-  };
-
-  const getDeviceName = (request: DeviceRequest) => {
-    const device = devices.find(d => d.id === request.deviceId);
-    
-    if (device && device.project) {
-      return device.project;
-    }
-    
-    if (request.device?.project) {
-      return request.device.project;
-    }
-    
-    if (request.deviceName) {
-      return request.deviceName;
-    }
-    
-    return 'Unknown Device';
-  };
-
-  const getFilteredRequests = () => {
-    // First, filter out report requests and return requests as these are shown separately
-    let filteredRequests = requests.filter(request => 
-      request.type !== 'report' && request.type !== 'return');
-    
-    // For the "My Requests" tab, we always want to show the user's requests
-    // regardless of their status (not just pending ones)
-    if (userId) {
-      filteredRequests = filteredRequests.filter(request => {
-        return String(request.userId) === String(userId);
-      });
-    } else if (!isAdmin && user) {
-      // For non-admin users without a specific userId filter, show their own requests
-      filteredRequests = filteredRequests.filter(request => String(request.userId) === String(user.id));
-    } else if (isAdmin && !userId) {
-      // For admins without a specific userId filter, show all pending requests
-      filteredRequests = filteredRequests.filter(request => request.status === 'pending');
-    }
-    
-    return filteredRequests;
-  };
-
-  const filteredRequests = getFilteredRequests();
-
+  }, [processing, requests, user, isAdmin, onRequestProcessed]);
+  
+  // Refresh the requests
+  const handleRefresh = useCallback(() => {
+    fetchRequests();
+  }, [fetchRequests]);
+  
+  // Filter requests based on userId if provided
+  const filteredRequests = userId
+    ? requests.filter(request => request.userId === userId)
+    : requests;
+  
   return {
     loading,
     processing,
+    requests,
     filteredRequests,
     getUserName,
     getDeviceName,

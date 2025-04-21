@@ -17,11 +17,12 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
     console.log(`API Request: ${options.method || 'GET'} ${API_URL}${endpoint}`);
     
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 120000); // Increase timeout to 2 minutes
+    const timeoutId = setTimeout(() => controller.abort(), 120000); // 2 minute timeout
     
-    // Add retry logic for connection reset errors
+    // Add retry logic for connection reset and database lock errors
     let retries = 3;
     let lastError;
+    let backoffTime = 1000; // Start with 1 second delay
     
     while (retries > 0) {
       try {
@@ -44,6 +45,13 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({}));
           
+          // Check for lock timeout errors
+          if (errorData.message?.includes('Lock wait timeout') || 
+              errorData.message?.includes('Deadlock') ||
+              errorData.message?.includes('try restarting transaction')) {
+            throw new Error(errorData.message || `Database lock error: ${response.status}`);
+          }
+          
           if (errorData.message?.includes('Data truncated for column')) {
             throw new Error('Database constraint error. Please check your input.');
           }
@@ -55,13 +63,26 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
       } catch (error) {
         lastError = error;
         
-        // Only retry on connection reset errors
-        if (error instanceof Error && 
-            (error.message.includes('ECONNRESET') || 
-             error.message.includes('AbortError'))) {
-          console.log(`Connection error, retrying (${retries} attempts left)...`);
+        // Determine if we should retry
+        const isLockError = error instanceof Error && (
+          error.message.includes('Lock wait timeout') ||
+          error.message.includes('Deadlock') ||
+          error.message.includes('try restarting transaction')
+        );
+        
+        const isConnectionError = error instanceof Error && (
+          error.message.includes('ECONNRESET') || 
+          error.message.includes('AbortError') ||
+          error.message.includes('Failed to fetch')
+        );
+        
+        if ((isLockError || isConnectionError) && retries > 0) {
+          console.log(`${isLockError ? 'Database lock' : 'Connection'} error, retrying (${retries} attempts left)...`);
           retries--;
-          await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1 second before retry
+          // Apply exponential backoff
+          await new Promise(resolve => setTimeout(resolve, backoffTime)); 
+          backoffTime *= 2; // Double the wait time for next retry
+          continue;
         } else {
           throw error; // For other errors, don't retry
         }
@@ -80,6 +101,11 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
       toast.error('Unable to connect to the server. Please check your connection.');
     } else if (error instanceof Error && error.message.includes('ECONNRESET')) {
       toast.error('Connection was reset. Please try again.');
+    } else if (error instanceof Error && 
+              (error.message.includes('Lock wait timeout') || 
+               error.message.includes('Deadlock') ||
+               error.message.includes('try restarting transaction'))) {
+      toast.error('Database is busy. Please try again in a moment.');
     } else {
       toast.error(`API error: ${(error as Error).message || 'Unknown error'}`);
     }

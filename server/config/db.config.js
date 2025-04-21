@@ -11,9 +11,8 @@ module.exports = {
     connectTimeout: 120000, // Increased connection timeout to 2 minutes
     supportBigNumbers: true,
     bigNumberStrings: true,
-    trace: false, // Always disable trace
-    // Debug options - but don't log binary data
-    debug: false, // Always disable debug
+    trace: false,
+    debug: false,
     // Try to handle various authentication methods
     authPlugins: {
       mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' })
@@ -25,7 +24,7 @@ module.exports = {
     acquire: 120000, // Increased acquire timeout to 2 minutes
     idle: 30000 // Increased idle timeout
   },
-  logging: false, // Always disable logging
+  logging: false,
   retry: {
     match: [
       /ETIMEDOUT/,
@@ -34,8 +33,14 @@ module.exports = {
       /ESOCKETTIMEDOUT/,
       /PROTOCOL_CONNECTION_LOST/,
       /PROTOCOL_SEQUENCE_TIMEOUT/,
-      /ER_LOCK_DEADLOCK/
+      /ER_LOCK_DEADLOCK/,
+      /ER_LOCK_WAIT_TIMEOUT/ // Added lock wait timeout to retry list
     ],
     max: 5 // Maximum retry attempts
+  },
+  // Additional settings to help with lock timeouts
+  transactionOptions: {
+    isolationLevel: 'READ COMMITTED',
+    timeout: 30000 // 30 second timeout for transactions
   }
 };
