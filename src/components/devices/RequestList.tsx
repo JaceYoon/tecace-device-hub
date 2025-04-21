@@ -32,7 +32,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const {
     loading,
     processing,
-    requests, // Use the filtered requests directly from the hook
+    requests, 
     getUserName,
     getDeviceName,
     handleApprove,

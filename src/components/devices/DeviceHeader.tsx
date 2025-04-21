@@ -43,8 +43,10 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
     return isAfter(now, oneYearAfterReceived);
   };
 
-  // Only show old device tag if assigned and over 1 year old
-  const showOldDeviceTag = device.status === 'assigned' && isOldDevice();
+  // Show old device tag if device is over 1 year old (regardless of status)
+  const showOldDeviceTag = isOldDevice();
+
+  console.log(`DeviceHeader - ${device.project}: receivedDate=${device.receivedDate}, isOldDevice=${isOldDevice()}, showOldDeviceTag=${showOldDeviceTag}`);
 
   return (
     <div className="flex justify-between items-start w-full">
