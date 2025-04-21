@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Smartphone, Clock } from 'lucide-react'; // Add Clock to the import
+import { Smartphone, Clock } from 'lucide-react'; 
 import { Device } from '@/types';
 import { CardTitle, CardDescription } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';

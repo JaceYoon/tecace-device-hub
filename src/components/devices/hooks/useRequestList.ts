@@ -19,7 +19,7 @@ export const useRequestList = ({
 }: UseRequestListProps = {}) => {
   const [loading, setLoading] = useState(true);
   const [requests, setRequests] = useState<DeviceRequest[]>([]);
-  const [processing, setProcessing] = useState(new Set<string>());
+  const [processing, setProcessing] = useState<Set<string>>(new Set());
   const { user, isAdmin } = useAuth();
   
   // Create device and user name lookup maps
@@ -86,8 +86,6 @@ export const useRequestList = ({
   
   // Process request (approve/reject)
   const processRequest = useCallback(async (requestId: string, approve: boolean) => {
-    if (processing.has(requestId)) return;
-    
     const newProcessing = new Set(processing);
     newProcessing.add(requestId);
     setProcessing(newProcessing);
@@ -132,8 +130,6 @@ export const useRequestList = ({
   
   // Cancel a request (can be done by the requester or admin)
   const handleCancel = useCallback(async (requestId: string) => {
-    if (processing.has(requestId)) return;
-    
     const newProcessing = new Set(processing);
     newProcessing.add(requestId);
     setProcessing(newProcessing);
@@ -190,30 +186,23 @@ export const useRequestList = ({
   }
   // Otherwise filter based on admin status
   else if (isAdmin) {
-    // For admins, only show pending requests if pendingOnly is true
     console.log(`Admin user, pendingOnly: ${pendingOnly}`);
     filteredRequests = pendingOnly 
       ? requests.filter(request => request.status === 'pending')
       : requests; // Show all requests if pendingOnly is false
   }
-  // Otherwise, for regular users, show all their own requests (not just pending)
+  // Otherwise, for regular users, show all their own requests
   else if (user) {
     console.log(`Regular user (${user.id}), showing their requests`);
     filteredRequests = requests.filter(request => request.userId === user.id);
   }
   
-  console.log('Filtered requests for userId:', userId || user?.id, filteredRequests.length);
-  console.log('Current user ID:', user?.id);
-  console.log('Is admin:', isAdmin);
-  console.log('Pending only:', pendingOnly);
-  console.log('Total requests before filtering:', requests.length);
-  console.log('Filtered requests:', filteredRequests);
+  console.log('Filtered requests count:', filteredRequests.length);
   
   return {
     loading,
     processing,
-    requests: filteredRequests, // Return filtered requests as main requests
-    filteredRequests,
+    requests: filteredRequests, // Return filtered requests here
     getUserName,
     getDeviceName,
     handleApprove,

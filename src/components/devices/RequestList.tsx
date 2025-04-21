@@ -32,7 +32,7 @@ const RequestList: React.FC<RequestListProps> = ({
   const {
     loading,
     processing,
-    filteredRequests,
+    requests, // Use the filtered requests directly from the hook
     getUserName,
     getDeviceName,
     handleApprove,
@@ -45,7 +45,7 @@ const RequestList: React.FC<RequestListProps> = ({
     userId,
     onRequestProcessed,
     refreshTrigger,
-    pendingOnly: isAdmin ? pendingOnly : false // Only apply pendingOnly filter for admins if specified
+    pendingOnly
   });
 
   // Register for global refresh events
@@ -57,24 +57,24 @@ const RequestList: React.FC<RequestListProps> = ({
   }, [handleRefresh]);
 
   const handleExport = () => {
-    if (filteredRequests.length > 0) {
-      exportRequestsToExcel(filteredRequests, 'device_requests.xlsx');
+    if (requests.length > 0) {
+      exportRequestsToExcel(requests, 'device_requests.xlsx');
     }
   };
 
   console.log("RequestList received userId:", userId);
-  console.log("RequestList: filtered requests count:", filteredRequests.length);
+  console.log("RequestList: requests count:", requests.length);
   console.log("RequestList: isAdmin:", userIsAdmin);
   console.log("RequestList: current user:", user?.id, user?.name);
   console.log("RequestList: pendingOnly:", pendingOnly);
-  console.log("RequestList: all requests data:", filteredRequests);
+  console.log("RequestList: all requests data:", requests);
 
   return (
     <Card className="w-full">
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
         <div className="flex gap-2">
-          {showExportButton && userIsAdmin && filteredRequests.length > 0 && (
+          {showExportButton && userIsAdmin && requests.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleExport}>
               Export
             </Button>
@@ -96,7 +96,7 @@ const RequestList: React.FC<RequestListProps> = ({
           </div>
         ) : (
           <RequestTable
-            requests={filteredRequests}
+            requests={requests}
             getDeviceName={getDeviceName}
             getUserName={getUserName}
             isAdmin={userIsAdmin}

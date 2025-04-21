@@ -192,6 +192,7 @@ const DeviceManagement: React.FC = () => {
                 title="Pending Device Requests"
                 onRequestProcessed={handleRequestProcessed}
                 refreshTrigger={refreshTrigger}
+                pendingOnly={true} // Set to true to show only pending requests
               />
             </div>
           </TabsContent>
