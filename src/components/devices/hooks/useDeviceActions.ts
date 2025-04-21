@@ -78,11 +78,15 @@ export const useDeviceActions = (
       
       // Check if user already has a pending request for this device
       const requests = await dataService.devices.getAllRequests();
+      console.log('Fetched requests:', requests);
+      
       const userPendingRequests = requests.filter(
         req => req.userId === user.id && 
                req.status === 'pending' && 
                req.type === 'assign'
       );
+      
+      console.log('User pending requests:', userPendingRequests);
       
       if (userPendingRequests.some(req => req.deviceId === device.id)) {
         toast.error('You have already requested this device');

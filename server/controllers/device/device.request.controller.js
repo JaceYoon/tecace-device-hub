@@ -91,8 +91,9 @@ exports.requestDevice = async (req, res) => {
   
   while (retryCount < maxRetries) {
     try {
+      // Fix: Use correct transaction isolation level syntax
       transaction = await sequelize.transaction({
-        isolationLevel: sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
+        isolationLevel: sequelize.Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
         timeout: 30000 // 30 second timeout
       });
       
@@ -262,8 +263,9 @@ exports.processRequest = async (req, res) => {
   
   while (retryCount < maxRetries) {
     try {
+      // Fix: Use correct transaction isolation level syntax
       transaction = await sequelize.transaction({
-        isolationLevel: sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
+        isolationLevel: sequelize.Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
         timeout: 30000
       });
       
@@ -357,8 +359,9 @@ exports.cancelRequest = async (req, res) => {
   
   while (retryCount < maxRetries) {
     try {
+      // Fix: Use correct transaction isolation level syntax
       transaction = await sequelize.transaction({
-        isolationLevel: sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
+        isolationLevel: sequelize.Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED,
         timeout: 30000
       });
       
