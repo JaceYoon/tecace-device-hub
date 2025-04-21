@@ -45,7 +45,7 @@ const RequestList: React.FC<RequestListProps> = ({
     userId,
     onRequestProcessed,
     refreshTrigger,
-    pendingOnly: isAdmin ? true : pendingOnly // Always true for admins, otherwise use prop
+    pendingOnly: isAdmin ? pendingOnly : false // Only apply pendingOnly filter for admins if specified
   });
 
   // Register for global refresh events
