@@ -194,9 +194,9 @@ export const useRequestList = ({
     console.log(`Admin user, pendingOnly: ${pendingOnly}`);
     filteredRequests = pendingOnly 
       ? requests.filter(request => request.status === 'pending')
-      : requests;
+      : requests; // Show all requests if pendingOnly is false
   }
-  // Otherwise, for regular users, show their own requests
+  // Otherwise, for regular users, show all their own requests (not just pending)
   else if (user) {
     console.log(`Regular user (${user.id}), showing their requests`);
     filteredRequests = requests.filter(request => request.userId === user.id);
