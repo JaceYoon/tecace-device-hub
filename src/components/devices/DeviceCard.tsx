@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -14,6 +15,9 @@ import DeviceHeader from './DeviceHeader';
 import DeviceBasicInfo from './DeviceBasicInfo';
 import DeviceAssignmentInfo from './DeviceAssignmentInfo';
 import { useDeviceActions } from './hooks/useDeviceActions';
+import { Badge } from '@/components/ui/badge';
+import { CalendarClock } from 'lucide-react';
+import { addYears, isAfter, parseISO } from 'date-fns';
 
 interface DeviceCardProps {
   device: Device;
@@ -71,6 +75,19 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
+  // Check if device is older than 1 year
+  const isOldDevice = () => {
+    if (!device.receivedDate) return false;
+    
+    const now = new Date();
+    const receivedDate = typeof device.receivedDate === 'string' 
+      ? parseISO(device.receivedDate) 
+      : device.receivedDate;
+    
+    const oneYearAfterReceived = addYears(receivedDate, 1);
+    return isAfter(now, oneYearAfterReceived);
+  };
+
   return (
     <>
       <ContextMenu>
@@ -80,21 +97,28 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             {
               "border-red-300 bg-red-50/40": device.status === 'stolen',
               "border-amber-300 bg-amber-50/40": device.status === 'missing',
-              // "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
               "border-blue-300 bg-blue-50/40": device.status === 'pending',
               "border-green-300 bg-green-50/40": device.status === 'assigned' && isDeviceOwner,
             },
             className
           )}>
             <CardHeader className="pb-2">
-              <DeviceHeader 
-                device={device}
-                isAdmin={isAdmin}
-                isRequested={isRequested}
-                onStatusChange={handleStatusChange}
-                onDelete={() => setDeleteConfirmOpen(true)}
-                onAction={onAction}
-              />
+              <div className="flex justify-between items-start">
+                <DeviceHeader 
+                  device={device}
+                  isAdmin={isAdmin}
+                  isRequested={isRequested}
+                  onStatusChange={handleStatusChange}
+                  onDelete={() => setDeleteConfirmOpen(true)}
+                  onAction={onAction}
+                />
+                {isOldDevice() && device.status === 'assigned' && (
+                  <Badge className="bg-amber-500 text-white ml-2">
+                    <CalendarClock className="h-3 w-3 mr-1" /> 
+                    Old Device
+                  </Badge>
+                )}
+              </div>
             </CardHeader>
 
             <CardContent className={cn(
