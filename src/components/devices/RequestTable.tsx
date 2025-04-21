@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, CheckCircle, XCircle, RefreshCcw } from 'lucide-react';
+import { Clock, CheckCircle, XCircle, RefreshCcw, Check, X } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RequestTableProps {
@@ -77,6 +77,10 @@ const RequestTable: React.FC<RequestTableProps> = ({
            !processing.has(request.id);
   };
 
+  console.log("RequestTable received requests:", requests);
+  console.log("Current userId:", userId);
+  console.log("Is admin:", isAdmin);
+
   return (
     <div className="overflow-auto">
       <Table>
@@ -125,9 +129,12 @@ const RequestTable: React.FC<RequestTableProps> = ({
                           disabled={processing.has(request.id)}
                         >
                           {processing.has(request.id) ? (
-                            <Clock className="h-4 w-4 animate-spin" />
+                            <Clock className="mr-2 h-4 w-4 animate-spin" />
                           ) : (
-                            <CheckCircle className="h-4 w-4" />
+                            <>
+                              <Check className="mr-2 h-4 w-4" />
+                              Approve
+                            </>
                           )}
                         </Button>
                         <Button
@@ -137,9 +144,12 @@ const RequestTable: React.FC<RequestTableProps> = ({
                           disabled={processing.has(request.id)}
                         >
                           {processing.has(request.id) ? (
-                            <Clock className="h-4 w-4 animate-spin" />
+                            <Clock className="mr-2 h-4 w-4 animate-spin" />
                           ) : (
-                            <XCircle className="h-4 w-4" />
+                            <>
+                              <X className="mr-2 h-4 w-4" />
+                              Reject
+                            </>
                           )}
                         </Button>
                       </>
