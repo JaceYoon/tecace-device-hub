@@ -1,190 +1,247 @@
+
 import React from 'react';
 import { Device, User } from '@/types';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { MoreVertical, Edit, Download, Trash2, ExternalLink, AlertTriangle } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { cn } from "@/lib/utils";
 import { useAuth } from '@/components/auth/AuthProvider';
-import { cn } from '@/lib/utils';
-import { ContextMenu, ContextMenuTrigger } from "@/components/ui/context-menu";
-import DeviceCardDetails from './DeviceCardDetails';
-import DeviceCardActions from './DeviceCardActions';
-import DeviceContextMenu from './DeviceContextMenu';
-import DeviceDeleteConfirm from './DeviceDeleteConfirm';
 import DeviceConfirmDialog from './DeviceConfirmDialog';
-import DeviceExpandButton from './DeviceExpandButton';
-import DeviceHeader from './DeviceHeader';
-import DeviceBasicInfo from './DeviceBasicInfo';
-import DeviceAssignmentInfo from './DeviceAssignmentInfo';
 import { useDeviceActions } from './hooks/useDeviceActions';
+import StatusBadge from '@/components/ui/StatusBadge';
+// Import the necessary components for the old device badge
+import { Clock, AlertCircle } from 'lucide-react';
+import { addYears, isAfter, parseISO } from 'date-fns';
 
 interface DeviceCardProps {
   device: Device;
+  users: User[];
   onAction?: () => void;
-  users?: User[];
   className?: string;
   showReturnControls?: boolean;
   isExpanded?: boolean;
   onToggleExpand?: (deviceId: string) => void;
 }
 
-const DeviceCard: React.FC<DeviceCardProps> = ({ 
-  device, 
-  onAction, 
-  users = [], 
-  className, 
+const DeviceCard: React.FC<DeviceCardProps> = ({
+  device,
+  users,
+  onAction,
+  className,
   showReturnControls = false,
   isExpanded = false,
-  onToggleExpand
+  onToggleExpand,
 }) => {
-  const { user, isManager, isAdmin } = useAuth();
-  
-  const {
-    isDeleting,
+  const { user, isAdmin } = useAuth();
+  const { 
+    isDeleting, 
     isProcessing,
-    deleteConfirmOpen,
-    deleteConfirmText,
     confirmDialog,
-    setDeleteConfirmOpen,
-    setDeleteConfirmText,
     handleRequestDevice,
     handleReleaseDevice,
     handleStatusChange,
     handleDeleteDevice,
     handleDownloadImage,
-    showConfirmation,
-    closeConfirmation
+    closeConfirmation,
+    showConfirmation
   } = useDeviceActions(device, onAction);
-
-  const isDeviceOwner = device.assignedTo === user?.id;
-  const hasRequested = device.requestedBy === user?.id;
-  const isRequested = !!device.requestedBy;
   
-  const assignedUser = users.find(u => u.id === device.assignedTo);
-  const assignedUserName = assignedUser?.name || device.assignedToName || 'Unknown User';
+  // Add a function to check if device is old (assigned for more than a year)
+  const isOldDevice = () => {
+    if (!device.receivedDate || !device.assignedToId) return false;
+    
+    const now = new Date();
+    const receivedDate = typeof device.receivedDate === 'string' 
+      ? parseISO(device.receivedDate) 
+      : device.receivedDate;
+    
+    const oneYearAfterReceived = addYears(receivedDate, 1);
+    return isAfter(now, oneYearAfterReceived);
+  };
   
-  const requestedByUser = users.find(u => u.id === device.requestedBy);
+  const oldDeviceAssignment = isOldDevice();
 
-  const handleExpandToggle = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (onToggleExpand) {
-      onToggleExpand(device.id);
-    }
+  const assignedUser = users.find(user => user.id === device.assignedToId);
+  const addedUser = users.find(user => user.id === device.addedById);
+
+  const handleToggleStatus = (newStatus: 'missing' | 'stolen' | 'available' | 'dead') => {
+    showConfirmation(
+      "Change Device Status",
+      `Are you sure you want to mark this device as ${newStatus}?`,
+      () => handleStatusChange(newStatus)
+    );
   };
 
-  const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
+  const handleRequest = () => {
+    handleRequestDevice();
+  };
+
+  const handleDelete = () => {
+    showConfirmation(
+      "Delete Device",
+      `Are you sure you want to delete ${device.project}? This action cannot be undone.`,
+      handleDeleteDevice
+    );
+  };
 
   return (
-    <>
-      <ContextMenu>
-        <ContextMenuTrigger>
-          <Card className={cn(
-            "w-full overflow-hidden transition-all duration-300 hover:shadow-soft transform hover:-translate-y-1 flex flex-col relative min-h-[320px]",
-            {
-              "border-red-300 bg-red-50/40": device.status === 'stolen',
-              "border-amber-300 bg-amber-50/40": device.status === 'missing',
-              // "border-blue-300 bg-blue-50/40": isRequested && !hasRequested,
-              "border-blue-300 bg-blue-50/40": device.status === 'pending',
-              "border-green-300 bg-green-50/40": device.status === 'assigned' && isDeviceOwner,
-            },
-            className
-          )}>
-            <CardHeader className="pb-2">
-              <DeviceHeader 
-                device={device}
-                isAdmin={isAdmin}
-                isRequested={isRequested}
-                onStatusChange={handleStatusChange}
-                onDelete={() => setDeleteConfirmOpen(true)}
-                onAction={onAction}
-              />
-            </CardHeader>
-
-            <CardContent className={cn(
-              "pb-3 space-y-3 flex-grow",
-              {
-                "min-h-[140px]": isExpanded
-              }
-            )}>
-              <DeviceAssignmentInfo 
-                isAssigned={device.status === 'assigned'} 
-                assignedUserName={assignedUserName} 
-              />
-
-              <DeviceBasicInfo
-                serialNumber={device.serialNumber}
-                imei={device.imei}
-              />
-
-              {isExpanded && (
-                <div className="animate-fade-in">
-                  <DeviceCardDetails 
-                    device={device} 
-                    requestedByUser={requestedByUser}
-                    isManager={isManager}
-                    isAdmin={isAdmin}
-                    users={users}
-                    onDownloadImage={handleDownloadImage}
-                  />
-                </div>
+    <Card className={cn("overflow-hidden", className, {
+      "border-red-200 bg-red-50": device.status === "missing" || device.status === "stolen",
+      "border-gray-200 bg-gray-50": device.status === "dead",
+      "border-amber-200 bg-amber-50": device.status === "pending",
+    })}>
+      <CardHeader className="pb-2 relative">
+        <div className="flex justify-between items-start">
+          <div>
+            <CardTitle className="text-lg font-medium">
+              {device.project}
+              {oldDeviceAssignment && user?.id === device.assignedToId && (
+                <Badge variant="outline" className="ml-2 bg-amber-100 text-amber-800 border-amber-200">
+                  Old Device
+                </Badge>
               )}
-            </CardContent>
-
-            <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
-              <DeviceCardActions 
-                device={device}
-                isAdmin={isAdmin}
-                isDeviceOwner={isDeviceOwner}
-                hasRequested={hasRequested}
-                isRequested={isRequested}
-                isRequestedByOthers={isRequestedByOthers}
-                isProcessing={isProcessing}
-                showReturnControls={showReturnControls}
-                userId={user?.id}
-                onRequestDevice={handleRequestDevice}
-                onReleaseDevice={handleReleaseDevice}
-                onStatusChange={handleStatusChange}
-                onAction={onAction}
-              />
-            </CardFooter>
-
-            <DeviceExpandButton 
-              expanded={isExpanded}
-              onClick={handleExpandToggle}
-            />
-          </Card>
-        </ContextMenuTrigger>
+            </CardTitle>
+            <CardDescription>
+              {device.type} • {device.projectGroup}
+            </CardDescription>
+          </div>
+          
+          <Button variant="ghost" size="icon" onClick={() => onToggleExpand?.(device.id)}>
+            <MoreVertical className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <StatusBadge status={device.status} />
+        <div className="space-y-1 text-sm">
+          <div>
+            <span className="text-muted-foreground">Serial Number:</span> {device.serialNumber || 'N/A'}
+          </div>
+          <div>
+            <span className="text-muted-foreground">IMEI:</span> {device.imei || 'N/A'}
+          </div>
+          {device.assignedToId && assignedUser && (
+            <div>
+              <span className="text-muted-foreground">Assigned to:</span>
+              <div className="flex items-center mt-1">
+                <Avatar className="mr-2 h-5 w-5">
+                  <AvatarImage src={`https://avatar.vercel.sh/${assignedUser.email}`} alt={assignedUser.name} />
+                  <AvatarFallback>{assignedUser.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                {assignedUser.name}
+              </div>
+            </div>
+          )}
+          {device.addedById && addedUser && (
+            <div>
+              <span className="text-muted-foreground">Added by:</span>
+              <div className="flex items-center mt-1">
+                <Avatar className="mr-2 h-5 w-5">
+                  <AvatarImage src={`https://avatar.vercel.sh/${addedUser.email}`} alt={addedUser.name} />
+                  <AvatarFallback>{addedUser.name?.charAt(0)}</AvatarFallback>
+                </Avatar>
+                {addedUser.name}
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+      
+      <CardContent className={cn("p-0", { "hidden": !isExpanded })}>
+        <div className="p-4 space-y-2">
+          <div className="text-sm">
+            <span className="text-muted-foreground">Device Status:</span> {device.deviceStatus || 'N/A'}
+          </div>
+          {device.notes && (
+            <div className="text-sm">
+              <span className="text-muted-foreground">Notes:</span> {device.notes}
+            </div>
+          )}
+        </div>
         
-        <DeviceContextMenu 
-          device={device} 
-          onAction={onAction} 
-          onStatusChange={handleStatusChange} 
-          onDelete={() => setDeleteConfirmOpen(true)} 
-          isAdmin={isAdmin} 
-        />
-      </ContextMenu>
-
+        {oldDeviceAssignment && user?.id === device.assignedToId && (
+          <div className="p-3 bg-amber-50 border-t border-amber-200 text-amber-800 text-sm flex items-center">
+            <Clock className="h-4 w-4 mr-2 text-amber-500" />
+            This device has been assigned to you for over a year
+          </div>
+        )}
+      </CardContent>
+      
+      <CardFooter className="flex justify-between items-center">
+        {device.status === 'available' && !showReturnControls && (
+          <Button onClick={handleRequest} disabled={isProcessing}>
+            {isProcessing ? 'Requesting...' : 'Request Device'}
+          </Button>
+        )}
+        {device.status !== 'available' && !showReturnControls && (
+          <Button variant="destructive" onClick={handleReleaseDevice} disabled={isProcessing}>
+            {isProcessing ? 'Releasing...' : 'Release Device'}
+          </Button>
+        )}
+        {isAdmin && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="ml-auto">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" forceMount>
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuItem onClick={() => handleToggleStatus('available')}>
+                Mark as Available
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToggleStatus('missing')}>
+                Mark as Missing
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToggleStatus('stolen')}>
+                Mark as Stolen
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleToggleStatus('dead')}>
+                Mark as Dead
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={handleDownloadImage}>
+                <Download className="mr-2 h-4 w-4" />
+                Download Image
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleDelete} disabled={isDeleting}>
+                {isDeleting ? (
+                  <>
+                    <AlertTriangle className="mr-2 h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete Device
+                  </>
+                )}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
+      </CardFooter>
+      
+      {/* Return confirmation dialog */}
       <DeviceConfirmDialog
         open={confirmDialog.isOpen}
         title={confirmDialog.title}
         description={confirmDialog.description}
+        onConfirm={confirmDialog.action}
         onCancel={closeConfirmation}
-        onConfirm={() => {
-          confirmDialog.action();
-        }}
       />
-
-      <DeviceDeleteConfirm
-        open={deleteConfirmOpen}
-        onOpenChange={setDeleteConfirmOpen}
-        deviceName={device.project}
-        confirmText={deleteConfirmText}
-        onConfirmTextChange={setDeleteConfirmText}
-        onCancel={() => {
-          setDeleteConfirmOpen(false);
-          setDeleteConfirmText('');
-        }}
-        onDelete={handleDeleteDevice}
-        isDeleting={isDeleting}
-      />
-    </>
+    </Card>
   );
 };
 
