@@ -38,6 +38,7 @@ export const useRequestList = ({
       ]);
       
       console.log(`Fetched ${allRequests.length} requests`);
+      console.log('Request data:', allRequests);
       
       // Create maps for more efficient lookups
       const deviceMap: Record<string, string> = {};
@@ -148,6 +149,8 @@ export const useRequestList = ({
         throw new Error('You are not authorized to cancel this request');
       }
       
+      console.log(`Cancelling request ${requestId}`);
+      
       await dataService.devices.cancelRequest(requestId);
       
       // Update the local state
@@ -179,6 +182,8 @@ export const useRequestList = ({
   const filteredRequests = userId
     ? requests.filter(request => request.userId === userId)
     : requests;
+  
+  console.log('Filtered requests for userId:', userId, filteredRequests.length);
   
   return {
     loading,

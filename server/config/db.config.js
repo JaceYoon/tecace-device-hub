@@ -37,10 +37,6 @@ module.exports = {
       /ER_LOCK_WAIT_TIMEOUT/ // Added lock wait timeout to retry list
     ],
     max: 5 // Maximum retry attempts
-  },
-  // Additional settings to help with lock timeouts
-  transactionOptions: {
-    isolationLevel: 'READ COMMITTED',
-    timeout: 30000 // 30 second timeout for transactions
   }
+  // Removed transactionOptions as it's not a standard Sequelize option and could cause conflicts
 };
