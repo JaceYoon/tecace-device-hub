@@ -78,6 +78,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({
               showExportButton={false}
               onRequestProcessed={handleRefresh}
               refreshTrigger={refreshTrigger}
+              pendingOnly={false} // Show all requests for regular users
             />
           </TabsContent>
         </>

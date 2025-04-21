@@ -7,6 +7,7 @@ import { useRequestList } from './hooks/useRequestList';
 import { Button } from '@/components/ui/button';
 import { dataService } from '@/services/data.service';
 import { exportRequestsToExcel } from '@/utils/exports';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 interface RequestListProps {
   title?: string;
@@ -14,6 +15,7 @@ interface RequestListProps {
   refreshTrigger?: number;
   userId?: string;
   showExportButton?: boolean;
+  pendingOnly?: boolean;
 }
 
 const RequestList: React.FC<RequestListProps> = ({ 
@@ -21,8 +23,12 @@ const RequestList: React.FC<RequestListProps> = ({
   onRequestProcessed, 
   refreshTrigger,
   userId,
-  showExportButton = false
+  showExportButton = false,
+  pendingOnly = false
 }) => {
+  const { isAdmin } = useAuth();
+
+  // Add pendingOnly param to show only pending requests for admins when true
   const {
     loading,
     processing,
@@ -32,13 +38,14 @@ const RequestList: React.FC<RequestListProps> = ({
     handleApprove,
     handleReject,
     handleCancel,
-    isAdmin,
+    isAdmin: userIsAdmin,
     user,
     handleRefresh
   } = useRequestList({
     userId,
     onRequestProcessed,
-    refreshTrigger
+    refreshTrigger,
+    pendingOnly: isAdmin ? true : pendingOnly // Always true for admins, otherwise use prop
   });
 
   // Register for global refresh events
@@ -57,8 +64,9 @@ const RequestList: React.FC<RequestListProps> = ({
 
   console.log("RequestList received userId:", userId);
   console.log("RequestList: filtered requests count:", filteredRequests.length);
-  console.log("RequestList: isAdmin:", isAdmin);
+  console.log("RequestList: isAdmin:", userIsAdmin);
   console.log("RequestList: current user:", user?.id, user?.name);
+  console.log("RequestList: pendingOnly:", pendingOnly);
   console.log("RequestList: all requests data:", filteredRequests);
 
   return (
@@ -66,7 +74,7 @@ const RequestList: React.FC<RequestListProps> = ({
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>{title}</CardTitle>
         <div className="flex gap-2">
-          {showExportButton && isAdmin && filteredRequests.length > 0 && (
+          {showExportButton && userIsAdmin && filteredRequests.length > 0 && (
             <Button variant="outline" size="sm" onClick={handleExport}>
               Export
             </Button>
@@ -91,7 +99,7 @@ const RequestList: React.FC<RequestListProps> = ({
             requests={filteredRequests}
             getDeviceName={getDeviceName}
             getUserName={getUserName}
-            isAdmin={isAdmin}
+            isAdmin={userIsAdmin}
             userId={user?.id}
             processing={processing}
             onApprove={handleApprove}
