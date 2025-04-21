@@ -31,32 +31,8 @@ export const useRequestList = ({
       setLoading(true);
       console.log("Fetching requests...");
       
-      let allRequests: DeviceRequest[] = [];
-      
-      // Add retry logic for fetching requests
-      let retryCount = 0;
-      const maxRetries = 3;
-      
-      while (retryCount < maxRetries) {
-        try {
-          allRequests = await dataService.devices.getAllRequests();
-          console.log(`Successfully fetched ${allRequests.length} requests on try ${retryCount + 1}`);
-          break; // Success, exit the retry loop
-        } catch (error) {
-          retryCount++;
-          console.error(`Error fetching requests (attempt ${retryCount}):`, error);
-          
-          if (retryCount >= maxRetries) {
-            throw error; // Re-throw if we've exhausted retries
-          }
-          
-          // Wait before retrying (exponential backoff)
-          await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
-        }
-      }
-      
-      // Fetch devices and users for display names
-      const [devices, users] = await Promise.all([
+      const [allRequests, devices, users] = await Promise.all([
+        dataService.devices.getAllRequests(),
         dataService.getDevices(),
         dataService.getUsers()
       ]);
@@ -82,11 +58,6 @@ export const useRequestList = ({
     } catch (error) {
       console.error('Error fetching requests:', error);
       toast.error('Failed to load requests');
-      
-      // Set empty arrays to prevent undefined errors
-      setRequests([]);
-      setDeviceNameMap({});
-      setUserNameMap({});
     } finally {
       setLoading(false);
     }
@@ -209,7 +180,7 @@ export const useRequestList = ({
   
   // Filter requests based on userId if provided
   const filteredRequests = userId
-    ? requests.filter(request => String(request.userId) === String(userId))
+    ? requests.filter(request => request.userId === userId)
     : requests;
   
   console.log('Filtered requests for userId:', userId, filteredRequests.length);
