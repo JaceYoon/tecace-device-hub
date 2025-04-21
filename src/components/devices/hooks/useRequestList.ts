@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { DeviceRequest } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -177,33 +176,29 @@ export const useRequestList = ({
     fetchRequests();
   }, [fetchRequests]);
   
-  // SIMPLIFIED FILTERING LOGIC - this is the key fix
+  // FIX: Simplified filtering logic that works for all cases
   let filteredRequests: DeviceRequest[] = [];
-
-  console.log("Filtering requests with userId:", userId, "user:", user?.id, "isAdmin:", isAdmin);
   
-  // For non-admin users viewing "My Requests" on dashboard tab
-  if (!isAdmin && userId) {
-    console.log(`Regular user with specific userId (${userId}) - showing their requests`);
-    filteredRequests = requests.filter(request => request.userId === userId);
-  }
-  // For admin with pendingOnly flag
-  else if (isAdmin && pendingOnly) {
-    console.log("Admin with pendingOnly - showing only pending requests");
-    filteredRequests = requests.filter(request => request.status === 'pending');
-  }
-  // For admin without filters - show all requests
-  else if (isAdmin) {
-    console.log("Admin without filters - showing all requests");
-    filteredRequests = requests;
-  }
-  // Fallback to filter by current user if available
-  else if (user) {
-    console.log(`Fallback: Filtering by current user (${user.id})`);
+  console.log("DEBUG useRequestList - Filtering requests:");
+  console.log("- userId param:", userId);
+  console.log("- current user:", user?.id);
+  console.log("- isAdmin:", isAdmin);
+  console.log("- pendingOnly:", pendingOnly);
+  console.log("- total requests:", requests.length);
+  
+  // CASE 1: Non-admin user on Dashboard "Requests" tab - should see all their requests
+  if (!isAdmin && user) {
+    console.log("CASE 1: Non-admin user viewing their requests tab");
     filteredRequests = requests.filter(request => request.userId === user.id);
-  }
-  // If nothing else applies, show all requests (shouldn't happen)
-  else {
+  } 
+  // CASE 2: Admin with pendingOnly flag (for dashboard widgets)
+  else if (isAdmin && pendingOnly) {
+    console.log("CASE 2: Admin with pendingOnly - showing pending requests");
+    filteredRequests = requests.filter(request => request.status === 'pending');
+  } 
+  // CASE 3: Admin viewing all requests
+  else if (isAdmin) {
+    console.log("CASE 3: Admin without filters - showing all requests");
     filteredRequests = requests;
   }
   

@@ -26,13 +26,14 @@ const RequestList: React.FC<RequestListProps> = ({
   showExportButton = false,
   pendingOnly = false
 }) => {
-  const { isAdmin } = useAuth();
+  const { isAdmin, user } = useAuth();
 
   console.log("RequestList component rendering with props:", { 
     title, 
     userId, 
     pendingOnly, 
-    isAdmin: isAdmin 
+    isAdmin: isAdmin,
+    currentUser: user?.id 
   });
 
   // Ensure we pass the correct parameters to useRequestList
@@ -46,7 +47,7 @@ const RequestList: React.FC<RequestListProps> = ({
     handleReject,
     handleCancel,
     isAdmin: userIsAdmin,
-    user,
+    user: currentUser,
     handleRefresh
   } = useRequestList({
     userId,
@@ -69,11 +70,7 @@ const RequestList: React.FC<RequestListProps> = ({
     }
   };
 
-  console.log("RequestList received userId:", userId);
   console.log("RequestList: requests count:", requests.length);
-  console.log("RequestList: isAdmin:", userIsAdmin);
-  console.log("RequestList: current user:", user?.id, user?.name);
-  console.log("RequestList: pendingOnly:", pendingOnly);
   console.log("RequestList: all requests data:", requests);
 
   return (
@@ -107,7 +104,7 @@ const RequestList: React.FC<RequestListProps> = ({
             getDeviceName={getDeviceName}
             getUserName={getUserName}
             isAdmin={userIsAdmin}
-            userId={user?.id}
+            userId={currentUser?.id}
             processing={processing}
             onApprove={handleApprove}
             onReject={handleReject}
