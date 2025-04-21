@@ -29,6 +29,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({
   console.log("- userId:", userId);
   console.log("- current user ID:", user?.id);
   console.log("- activeTab:", activeTab);
+  console.log("- isAdmin:", isAdmin);
   
   return (
     <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -79,8 +80,7 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({
           <TabsContent value="requests" className="animate-slide-up">
             <RequestList
               title="My Requests"
-              // Don't pass userId prop as that's causing the filtering issue
-              // Let the hook use the current user ID from Auth context
+              // Don't pass userId prop - let the hook use auth context
               showExportButton={false}
               onRequestProcessed={handleRefresh}
               refreshTrigger={refreshTrigger}

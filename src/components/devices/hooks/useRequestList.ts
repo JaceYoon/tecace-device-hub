@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { DeviceRequest } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -30,7 +31,12 @@ export const useRequestList = ({
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("Fetching requests with params:", { userId, pendingOnly, isAdmin });
+      console.log("Fetching requests with params:", { 
+        userId, 
+        pendingOnly, 
+        isAdmin,
+        currentUser: user?.id 
+      });
       
       // Use the correct API endpoints to get all data
       const [allRequests, devices, users] = await Promise.all([
@@ -39,8 +45,8 @@ export const useRequestList = ({
         dataService.getUsers()
       ]);
       
-      console.log(`Fetched ${allRequests.length} requests`);
-      console.log('Raw request data:', allRequests);
+      console.log(`Fetched ${allRequests.length} total requests`);
+      console.log('Raw request data (first 3 items):', allRequests.slice(0, 3));
       
       // Create maps for more efficient lookups
       const deviceMap: Record<string, string> = {};
@@ -63,7 +69,7 @@ export const useRequestList = ({
     } finally {
       setLoading(false);
     }
-  }, [userId, pendingOnly, isAdmin]);
+  }, [userId, pendingOnly, isAdmin, user?.id]);
   
   // Initial load and refresh when trigger changes
   useEffect(() => {
@@ -176,33 +182,33 @@ export const useRequestList = ({
     fetchRequests();
   }, [fetchRequests]);
   
-  // FIX: Simplified filtering logic that works for all cases
-  let filteredRequests: DeviceRequest[] = [];
-  
   console.log("DEBUG useRequestList - Filtering requests:");
   console.log("- userId param:", userId);
   console.log("- current user:", user?.id);
   console.log("- isAdmin:", isAdmin);
   console.log("- pendingOnly:", pendingOnly);
-  console.log("- total requests:", requests.length);
+  console.log("- total requests before filtering:", requests.length);
   
-  // CASE 1: Non-admin user on Dashboard "Requests" tab - should see all their requests
+  // Apply filters to requests
+  let filteredRequests = [...requests];
+  
+  // For non-admin users viewing their requests
   if (!isAdmin && user) {
-    console.log("CASE 1: Non-admin user viewing their requests tab");
-    filteredRequests = requests.filter(request => request.userId === user.id);
+    console.log("Filtering for non-admin user:", user.id);
+    filteredRequests = requests.filter(request => {
+      const matches = request.userId === user.id;
+      console.log(`Request ${request.id} userId: ${request.userId}, matches current user: ${matches}`);
+      return matches;
+    });
   } 
-  // CASE 2: Admin with pendingOnly flag (for dashboard widgets)
+  // For admin with pendingOnly flag
   else if (isAdmin && pendingOnly) {
-    console.log("CASE 2: Admin with pendingOnly - showing pending requests");
     filteredRequests = requests.filter(request => request.status === 'pending');
-  } 
-  // CASE 3: Admin viewing all requests
-  else if (isAdmin) {
-    console.log("CASE 3: Admin without filters - showing all requests");
-    filteredRequests = requests;
   }
+  // Admin viewing all requests (no additional filtering needed)
   
   console.log('Final filtered requests count:', filteredRequests.length);
+  console.log('First 3 filtered requests:', filteredRequests.slice(0, 3));
   
   return {
     loading,

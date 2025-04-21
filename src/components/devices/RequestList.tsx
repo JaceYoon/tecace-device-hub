@@ -36,7 +36,7 @@ const RequestList: React.FC<RequestListProps> = ({
     currentUser: user?.id 
   });
 
-  // Ensure we pass the correct parameters to useRequestList
+  // Pass the userId prop to useRequestList, but it will use the current user from auth context if needed
   const {
     loading,
     processing,
@@ -70,8 +70,13 @@ const RequestList: React.FC<RequestListProps> = ({
     }
   };
 
-  console.log("RequestList: requests count:", requests.length);
-  console.log("RequestList: all requests data:", requests);
+  console.log("RequestList: filtered requests count:", requests.length);
+  console.log("RequestList: first 3 requests:", requests.slice(0, 3));
+  
+  // Force a refresh on mount to ensure we get the latest data
+  useEffect(() => {
+    handleRefresh();
+  }, [handleRefresh]);
 
   return (
     <Card className="w-full">
