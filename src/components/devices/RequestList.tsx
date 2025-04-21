@@ -28,7 +28,7 @@ const RequestList: React.FC<RequestListProps> = ({
 }) => {
   const { isAdmin } = useAuth();
 
-  // Use the useRequestList hook with the appropriate parameters
+  // Ensure we pass the correct parameters to useRequestList
   const {
     loading,
     processing,

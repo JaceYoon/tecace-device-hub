@@ -74,11 +74,11 @@ const DashboardTabs: React.FC<DashboardTabsProps> = ({
           <TabsContent value="requests" className="animate-slide-up">
             <RequestList
               title="My Requests"
-              userId={userId}
+              userId={userId} 
               showExportButton={false}
               onRequestProcessed={handleRefresh}
               refreshTrigger={refreshTrigger}
-              pendingOnly={false} // Make sure we show ALL requests not just pending ones
+              pendingOnly={false} // Explicitly show ALL requests for non-admin users
             />
           </TabsContent>
         </>

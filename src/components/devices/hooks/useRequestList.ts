@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react';
 import { DeviceRequest } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -176,25 +177,28 @@ export const useRequestList = ({
     fetchRequests();
   }, [fetchRequests]);
   
-  // IMPORTANT: Filter requests based on userId or current user
-  let filteredRequests = requests;
+  // IMPORTANT: Fix the filtering logic for requests
+  let filteredRequests = [...requests]; // Start with a copy of all requests
   
-  // If a specific userId is provided, filter by that
+  // If a specific userId is provided, filter by that user ID
   if (userId) {
     console.log(`Filtering requests for specific userId: ${userId}`);
-    filteredRequests = requests.filter(request => request.userId === userId);
+    filteredRequests = filteredRequests.filter(request => request.userId === userId);
   }
-  // Otherwise filter based on admin status
-  else if (isAdmin) {
-    console.log(`Admin user, pendingOnly: ${pendingOnly}`);
-    filteredRequests = pendingOnly 
-      ? requests.filter(request => request.status === 'pending')
-      : requests; // Show all requests if pendingOnly is false
+  // For admin users with pendingOnly flag
+  else if (isAdmin && pendingOnly) {
+    console.log(`Admin user with pendingOnly flag - showing only pending requests`);
+    filteredRequests = filteredRequests.filter(request => request.status === 'pending');
   }
-  // Otherwise, for regular users, show all their own requests regardless of status
+  // For admin users without pendingOnly flag - show all requests
+  else if (isAdmin && !pendingOnly) {
+    console.log(`Admin user without pendingOnly flag - showing all requests`);
+    // No filtering needed - admin sees all requests
+  }
+  // For regular users - show all THEIR OWN requests regardless of status
   else if (user) {
-    console.log(`Regular user (${user.id}), showing their requests`);
-    filteredRequests = requests.filter(request => request.userId === user.id);
+    console.log(`Regular user (${user.id}) - showing all their requests regardless of status`);
+    filteredRequests = filteredRequests.filter(request => request.userId === user.id);
   }
   
   console.log('Filtered requests count:', filteredRequests.length);
