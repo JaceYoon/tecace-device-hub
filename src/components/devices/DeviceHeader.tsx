@@ -59,7 +59,7 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
             <img 
               src={oldTagIcon} 
               alt="Old Device" 
-              className="h-7 inline-block" 
+              className="h-8 inline-block" // Increased from h-7 to h-8 to make it bigger
               title="Device is over 1 year old"
             />
           )}
