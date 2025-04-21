@@ -31,7 +31,7 @@ export const useRequestList = ({
   const fetchRequests = useCallback(async () => {
     try {
       setLoading(true);
-      console.log("Fetching requests...");
+      console.log("Fetching requests with params:", { userId, pendingOnly, isAdmin });
       
       // Use the correct API endpoints to get all data
       const [allRequests, devices, users] = await Promise.all([
@@ -41,7 +41,7 @@ export const useRequestList = ({
       ]);
       
       console.log(`Fetched ${allRequests.length} requests`);
-      console.log('Request data:', allRequests);
+      console.log('Raw request data:', allRequests);
       
       // Create maps for more efficient lookups
       const deviceMap: Record<string, string> = {};
@@ -64,7 +64,7 @@ export const useRequestList = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [userId, pendingOnly, isAdmin]);
   
   // Initial load and refresh when trigger changes
   useEffect(() => {
@@ -180,33 +180,37 @@ export const useRequestList = ({
   // IMPORTANT: Fix the filtering logic for requests
   let filteredRequests = [...requests]; // Start with a copy of all requests
   
-  // If a specific userId is provided, filter by that user ID
+  console.log("Filtering requests with userId:", userId, "user:", user?.id, "isAdmin:", isAdmin);
+  
+  // If a specific userId is provided from props, filter by that user ID
   if (userId) {
-    console.log(`Filtering requests for specific userId: ${userId}`);
-    filteredRequests = filteredRequests.filter(request => request.userId === userId);
+    console.log(`Filtering by specific userId from props: ${userId}`);
+    filteredRequests = requests.filter(request => request.userId === userId);
+    console.log(`After filtering by userId ${userId}, found ${filteredRequests.length} requests`);
   }
-  // For admin users with pendingOnly flag
+  // For regular users viewing their own requests tab (from Dashboard)
+  else if (!isAdmin && user) {
+    console.log(`Non-admin user (${user.id}) viewing their own requests - showing all their requests`);
+    filteredRequests = requests.filter(request => request.userId === user.id);
+    console.log(`After filtering for user ${user.id}, found ${filteredRequests.length} requests`);
+  }
+  // For admin with pendingOnly flag
   else if (isAdmin && pendingOnly) {
-    console.log(`Admin user with pendingOnly flag - showing only pending requests`);
-    filteredRequests = filteredRequests.filter(request => request.status === 'pending');
+    console.log("Admin with pendingOnly - showing only pending requests");
+    filteredRequests = requests.filter(request => request.status === 'pending');
   }
-  // For admin users without pendingOnly flag - show all requests
-  else if (isAdmin && !pendingOnly) {
-    console.log(`Admin user without pendingOnly flag - showing all requests`);
-    // No filtering needed - admin sees all requests
-  }
-  // For regular users - show all THEIR OWN requests regardless of status
-  else if (user) {
-    console.log(`Regular user (${user.id}) - showing all their requests regardless of status`);
-    filteredRequests = filteredRequests.filter(request => request.userId === user.id);
+  // For admin without filters - show all requests
+  else if (isAdmin) {
+    console.log("Admin without filters - showing all requests");
+    // No filtering needed
   }
   
-  console.log('Filtered requests count:', filteredRequests.length);
+  console.log('Final filtered requests count:', filteredRequests.length);
   
   return {
     loading,
     processing,
-    requests: filteredRequests, // Return filtered requests here
+    requests: filteredRequests,
     getUserName,
     getDeviceName,
     handleApprove,
