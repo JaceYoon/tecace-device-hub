@@ -28,7 +28,7 @@ const RequestList: React.FC<RequestListProps> = ({
 }) => {
   const { isAdmin } = useAuth();
 
-  // Add pendingOnly param to show only pending requests for admins when true
+  // Use the useRequestList hook with the appropriate parameters
   const {
     loading,
     processing,

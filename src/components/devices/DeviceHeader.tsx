@@ -5,6 +5,8 @@ import { Device } from '@/types';
 import { CardTitle, CardDescription } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import DeviceAdminMenu from './DeviceAdminMenu';
+import { addYears, isAfter, parseISO } from 'date-fns';
+import oldTagIcon from '/lovable-uploads/6780a054-59cb-4a22-9a5b-d4606450c9e8.png';
 
 interface DeviceHeaderProps {
   device: Device;
@@ -23,17 +25,48 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
   onDelete,
   onAction
 }) => {
+  // Check if device is older than 1 year
+  const isOldDevice = () => {
+    if (!device.receivedDate) return false;
+    
+    const now = new Date();
+    
+    // Make sure receivedDate is a Date object
+    const receivedDate = typeof device.receivedDate === 'string' 
+      ? parseISO(device.receivedDate) 
+      : device.receivedDate;
+    
+    // Calculate one year after received date
+    const oneYearAfterReceived = addYears(receivedDate, 1);
+    
+    // Check if current date is after the one year mark
+    return isAfter(now, oneYearAfterReceived);
+  };
+
+  // Only show old device tag if assigned and over 1 year old
+  const showOldDeviceTag = device.status === 'assigned' && isOldDevice();
+
   return (
     <div className="flex justify-between items-start w-full">
       <div className="flex-1 min-w-0">
-        <CardTitle className="text-lg font-medium leading-tight">
-          {device.project}
-          {device.projectGroup && (
-            <div className="text-base text-muted-foreground">
-              ({device.projectGroup})
-            </div>
+        <div className="flex items-center">
+          <CardTitle className="text-lg font-medium leading-tight mr-2">
+            {device.project}
+          </CardTitle>
+          {showOldDeviceTag && (
+            <img 
+              src={oldTagIcon} 
+              alt="Old Device" 
+              className="h-7 inline-block" 
+              title="Device is over 1 year old"
+            />
           )}
-        </CardTitle>
+        </div>
+        {device.projectGroup && (
+          <div className="text-base text-muted-foreground">
+            ({device.projectGroup})
+          </div>
+        )}
         <div className="mt-1">
           <CardDescription className="flex items-center gap-1">
             <Smartphone className="h-3.5 w-3.5 flex-shrink-0" />
