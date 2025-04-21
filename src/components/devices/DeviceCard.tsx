@@ -88,6 +88,8 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
     return isAfter(now, oneYearAfterReceived);
   };
 
+  const showOldDeviceBadge = isOldDevice() && device.status === 'assigned';
+
   return (
     <>
       <ContextMenu>
@@ -111,7 +113,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 onDelete={() => setDeleteConfirmOpen(true)}
                 onAction={onAction}
               />
-              {isOldDevice() && device.status === 'assigned' && (
+              {showOldDeviceBadge && (
                 <div className="mt-2 flex justify-end">
                   <Badge className="bg-amber-500 text-white">
                     <CalendarClock className="h-3 w-3 mr-1" /> 

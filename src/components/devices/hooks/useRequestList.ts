@@ -182,9 +182,11 @@ export const useRequestList = ({
   // Filter requests based on userId if provided
   const filteredRequests = userId
     ? requests.filter(request => request.userId === userId)
-    : requests;
+    : isAdmin 
+      ? requests
+      : requests.filter(request => request.userId === user?.id);
   
-  console.log('Filtered requests for userId:', userId, filteredRequests.length);
+  console.log('Filtered requests for userId:', userId || user?.id, filteredRequests.length);
   
   return {
     loading,
