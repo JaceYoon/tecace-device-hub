@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { cn } from "@/lib/utils";
 import { useAuth } from '@/components/auth/AuthProvider';
-import { DeviceConfirmDialog } from './DeviceConfirmDialog';
+import DeviceConfirmDialog from './DeviceConfirmDialog';
 import { useDeviceActions } from './hooks/useDeviceActions';
 import StatusBadge from '@/components/ui/StatusBadge';
 // Import the necessary components for the old device badge
@@ -82,7 +83,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   };
 
   const handleRequest = () => {
-    handleRequestDevice(device, user, showConfirmation, closeConfirmation, onAction);
+    handleRequestDevice();
   };
 
   const handleDelete = () => {
@@ -239,7 +240,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
         description={confirmDialog.description}
         onConfirm={confirmDialog.action}
         onCancel={closeConfirmation}
-        isLoading={isProcessing}
       />
     </Card>
   );
