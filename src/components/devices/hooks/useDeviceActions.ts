@@ -66,7 +66,8 @@ export const useDeviceActions = (
       return;
     }
     
-    if (device.requestedBy && device.requestedBy !== "") {
+    // Don't allow requesting devices that are already pending or have a request
+    if (device.status === 'pending' || (device.requestedBy && device.requestedBy !== "")) {
       toast.error('This device is already requested');
       return;
     }
@@ -75,6 +76,7 @@ export const useDeviceActions = (
       setIsProcessing(true);
       setRequestInProgress(true);
       
+      // Check if user already has a pending request for this device
       const requests = await dataService.devices.getAllRequests();
       const userPendingRequests = requests.filter(
         req => req.userId === user.id && 
@@ -94,28 +96,20 @@ export const useDeviceActions = (
         `Are you sure you want to request ${device.project}?`,
         async () => {
           try {
-            // Create the request
-            await dataService.addRequest({
-              deviceId: device.id,
-              userId: user.id,
-              status: 'pending',
-              type: 'assign',
+            console.log(`Creating device request for ${device.id} by user ${user.id}`);
+            
+            // Use the devices service to request device
+            const request = await dataService.devices.requestDevice(device.id, 'assign', {
+              reason: `Device requested by ${user.name}`
             });
-
-            // Only update the device AFTER we've successfully created the request
-            try {
-              await dataService.updateDevice(device.id, {
-                requestedBy: user.id
-              });
-            } catch (updateError) {
-              console.error('Error updating device status to pending:', updateError);
-            }
-
+            
+            console.log('Request created:', request);
             toast.success('Device requested successfully');
+            
             if (onAction) onAction();
           } catch (error) {
             console.error('Error requesting device:', error);
-            toast.error('Failed to request device');
+            toast.error('Failed to request device. Please try again later.');
           } finally {
             closeConfirmation();
             setIsProcessing(false);
