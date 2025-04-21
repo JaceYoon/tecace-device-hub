@@ -29,7 +29,7 @@ const DeviceReturnReminder: React.FC<DeviceReturnReminderProps> = ({ devices, us
     // 3. receivedDate is over 1 year ago
     // 4. Not in dismissed list
     const overdue = devices.filter(device => {
-      if (device.assignedToId !== userId || !device.receivedDate || dismissed.includes(device.id)) {
+      if (device.assignedTo !== userId || !device.receivedDate || dismissed.includes(device.id)) {
         return false;
       }
       

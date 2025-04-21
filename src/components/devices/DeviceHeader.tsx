@@ -24,7 +24,7 @@ const DeviceHeader: React.FC<DeviceHeaderProps> = ({
   onAction
 }) => {
   return (
-    <div className="flex justify-between items-start">
+    <div className="flex justify-between items-start w-full">
       <div className="flex-1 min-w-0">
         <CardTitle className="text-lg font-medium leading-tight">
           {device.project}
