@@ -33,7 +33,8 @@ const RequestList: React.FC<RequestListProps> = ({
     userId, 
     pendingOnly, 
     isAdmin: isAdmin,
-    currentUser: user?.id 
+    currentUser: user?.id,
+    currentUserType: user?.id ? typeof user.id : 'undefined'
   });
 
   // Pass the userId prop to useRequestList, but it will use the current user from auth context if needed
@@ -109,7 +110,7 @@ const RequestList: React.FC<RequestListProps> = ({
             getDeviceName={getDeviceName}
             getUserName={getUserName}
             isAdmin={userIsAdmin}
-            userId={currentUser?.id}
+            userId={String(currentUser?.id)} // Explicitly convert to string
             processing={processing}
             onApprove={handleApprove}
             onReject={handleReject}

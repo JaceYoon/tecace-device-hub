@@ -196,8 +196,11 @@ export const useRequestList = ({
   if (!isAdmin && user) {
     console.log("Filtering for non-admin user:", user.id);
     filteredRequests = requests.filter(request => {
-      const matches = request.userId === user.id;
-      console.log(`Request ${request.id} userId: ${request.userId}, matches current user: ${matches}`);
+      // Convert both IDs to strings to ensure consistent comparison
+      const requestUserId = String(request.userId);
+      const currentUserId = String(user.id);
+      const matches = requestUserId === currentUserId;
+      console.log(`Request ${request.id} userId: ${request.userId} (${typeof request.userId}), current user: ${user.id} (${typeof user.id}), matches: ${matches}`);
       return matches;
     });
   } 

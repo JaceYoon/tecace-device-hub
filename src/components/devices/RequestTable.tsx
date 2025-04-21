@@ -72,14 +72,24 @@ const RequestTable: React.FC<RequestTableProps> = ({
 
   // Check if the user can cancel this request (they created it and it's still pending)
   const canCancel = (request: DeviceRequest) => {
+    // Convert both to strings for comparison
+    const requestUserId = String(request.userId);
+    const currentUserId = userId ? String(userId) : '';
+    
+    console.log(`Can cancel check - request userId: ${requestUserId}, current userId: ${currentUserId}, pending: ${request.status === 'pending'}`);
+    
     return request.status === 'pending' && 
-           request.userId === userId &&
+           requestUserId === currentUserId &&
            !processing.has(request.id);
   };
 
   console.log("RequestTable received requests:", requests);
-  console.log("Current userId:", userId);
+  console.log("Current userId:", userId, typeof userId);
   console.log("Is admin:", isAdmin);
+  
+  if (requests.length > 0) {
+    console.log("Sample first request userId:", requests[0].userId, typeof requests[0].userId);
+  }
 
   return (
     <div className="overflow-auto">
