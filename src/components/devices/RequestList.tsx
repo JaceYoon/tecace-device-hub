@@ -28,6 +28,13 @@ const RequestList: React.FC<RequestListProps> = ({
 }) => {
   const { isAdmin } = useAuth();
 
+  console.log("RequestList component rendering with props:", { 
+    title, 
+    userId, 
+    pendingOnly, 
+    isAdmin: isAdmin 
+  });
+
   // Ensure we pass the correct parameters to useRequestList
   const {
     loading,
