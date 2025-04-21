@@ -75,7 +75,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   const isRequestedByOthers = device.requestedBy && device.requestedBy !== user?.id;
 
-  // Check if device is older than 1 year - fixed to properly detect old devices
+  // Check if device is older than 1 year
   const isOldDevice = () => {
     if (!device.receivedDate) return false;
     
@@ -97,7 +97,10 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   const showOldDeviceBadge = isOldDevice() && device.status === 'assigned';
   
   console.log(`Device: ${device.project}, receivedDate:`, device.receivedDate);
-  console.log(`IsOldDevice calculation: `, isOldDevice());
+  console.log(`Received date parsed:`, typeof device.receivedDate === 'string' ? parseISO(device.receivedDate) : device.receivedDate);
+  console.log(`One year after:`, device.receivedDate ? addYears(typeof device.receivedDate === 'string' ? parseISO(device.receivedDate) : device.receivedDate, 1) : 'No received date');
+  console.log(`Current date:`, new Date());
+  console.log(`IsOldDevice calculation: ${isOldDevice()}`);
   console.log(`showOldDeviceBadge: ${showOldDeviceBadge}`);
 
   return (

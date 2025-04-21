@@ -50,6 +50,20 @@ const DeviceReturnReminder: React.FC<DeviceReturnReminderProps> = ({ devices, us
     console.log('User ID:', userId);
     console.log('Devices with dates:', devices.filter(d => !!d.receivedDate).length);
     console.log('Devices assigned to user:', devices.filter(d => d.assignedTo === userId).length);
+    
+    // Log the received date of each device assigned to the user
+    devices
+      .filter(d => d.assignedTo === userId && !!d.receivedDate)
+      .forEach(device => {
+        const receivedDate = typeof device.receivedDate === 'string' 
+          ? parseISO(device.receivedDate) 
+          : device.receivedDate;
+        
+        const returnDueDate = addYears(receivedDate, 1);
+        const isDeviceOverdue = isAfter(now, returnDueDate);
+        
+        console.log(`Device Return Check: ${device.project}, received: ${receivedDate}, due: ${returnDueDate}, overdue: ${isDeviceOverdue}`);
+      });
 
     setOverdueDevices(overdue);
   }, [devices, userId, dismissed]);

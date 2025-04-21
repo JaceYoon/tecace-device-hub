@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react';
 import { DeviceRequest } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -182,15 +181,25 @@ export const useRequestList = ({
   }, [fetchRequests]);
   
   // IMPORTANT: Filter requests based on userId or current user
-  let filteredRequests = userId
-    ? requests.filter(request => request.userId === userId)
-    : isAdmin 
-      ? requests 
-      : requests.filter(request => request.userId === user?.id);
+  let filteredRequests = requests;
   
-  // Apply additional pending-only filter if required
-  if (pendingOnly) {
-    filteredRequests = filteredRequests.filter(request => request.status === 'pending');
+  // If a specific userId is provided, filter by that
+  if (userId) {
+    console.log(`Filtering requests for specific userId: ${userId}`);
+    filteredRequests = requests.filter(request => request.userId === userId);
+  }
+  // Otherwise filter based on admin status
+  else if (isAdmin) {
+    // For admins, only show pending requests if pendingOnly is true
+    console.log(`Admin user, pendingOnly: ${pendingOnly}`);
+    filteredRequests = pendingOnly 
+      ? requests.filter(request => request.status === 'pending')
+      : requests;
+  }
+  // Otherwise, for regular users, show their own requests
+  else if (user) {
+    console.log(`Regular user (${user.id}), showing their requests`);
+    filteredRequests = requests.filter(request => request.userId === user.id);
   }
   
   console.log('Filtered requests for userId:', userId || user?.id, filteredRequests.length);
