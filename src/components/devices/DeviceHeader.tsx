@@ -1,12 +1,12 @@
 
 import React from 'react';
-import { Smartphone, Clock } from 'lucide-react';
+import { Smartphone } from 'lucide-react';
 import { Device } from '@/types';
 import { CardTitle, CardDescription } from '@/components/ui/card';
 import StatusBadge from '@/components/ui/StatusBadge';
 import DeviceAdminMenu from './DeviceAdminMenu';
 import { addYears, isAfter, parseISO } from 'date-fns';
-import oldTagIcon from '/lovable-uploads/6780a054-59cb-4a22-9a5b-d4606450c9e8.png';
+import oldTagIcon from '@/assets/icons/device/old-device-tag.png';
 
 interface DeviceHeaderProps {
   device: Device;
