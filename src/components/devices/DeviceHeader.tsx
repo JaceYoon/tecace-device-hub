@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Smartphone } from 'lucide-react';
 import { Device } from '@/types';
