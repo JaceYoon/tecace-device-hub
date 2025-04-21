@@ -177,22 +177,15 @@ export const useRequestList = ({
     fetchRequests();
   }, [fetchRequests]);
   
-  // IMPORTANT: Fix the filtering logic for requests
-  let filteredRequests = [...requests]; // Start with a copy of all requests
-  
+  // SIMPLIFIED FILTERING LOGIC - this is the key fix
+  let filteredRequests: DeviceRequest[] = [];
+
   console.log("Filtering requests with userId:", userId, "user:", user?.id, "isAdmin:", isAdmin);
   
-  // If a specific userId is provided from props, filter by that user ID
-  if (userId) {
-    console.log(`Filtering by specific userId from props: ${userId}`);
+  // For non-admin users viewing "My Requests" on dashboard tab
+  if (!isAdmin && userId) {
+    console.log(`Regular user with specific userId (${userId}) - showing their requests`);
     filteredRequests = requests.filter(request => request.userId === userId);
-    console.log(`After filtering by userId ${userId}, found ${filteredRequests.length} requests`);
-  }
-  // For regular users viewing their own requests tab (from Dashboard)
-  else if (!isAdmin && user) {
-    console.log(`Non-admin user (${user.id}) viewing their own requests - showing all their requests`);
-    filteredRequests = requests.filter(request => request.userId === user.id);
-    console.log(`After filtering for user ${user.id}, found ${filteredRequests.length} requests`);
   }
   // For admin with pendingOnly flag
   else if (isAdmin && pendingOnly) {
@@ -202,7 +195,16 @@ export const useRequestList = ({
   // For admin without filters - show all requests
   else if (isAdmin) {
     console.log("Admin without filters - showing all requests");
-    // No filtering needed
+    filteredRequests = requests;
+  }
+  // Fallback to filter by current user if available
+  else if (user) {
+    console.log(`Fallback: Filtering by current user (${user.id})`);
+    filteredRequests = requests.filter(request => request.userId === user.id);
+  }
+  // If nothing else applies, show all requests (shouldn't happen)
+  else {
+    filteredRequests = requests;
   }
   
   console.log('Final filtered requests count:', filteredRequests.length);
