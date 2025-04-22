@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Clock, Check, X, RefreshCcw } from 'lucide-react';
+import { Clock, Check, X, Ban } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 
 interface RequestTableProps {
@@ -177,7 +177,7 @@ const RequestTable: React.FC<RequestTableProps> = ({
                         {processing.has(request.id) ? (
                           <Clock className="h-4 w-4 animate-spin" />
                         ) : (
-                          <RefreshCcw className="h-4 w-4" />
+                          <Ban className="h-4 w-4" />
                         )}
                       </Button>
                     )}

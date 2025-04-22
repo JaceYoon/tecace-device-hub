@@ -149,11 +149,15 @@ export const useRequestList = ({
       }
       
       // Only the requester or admin can cancel
-      if (request.userId !== user?.id && !isAdmin) {
+      // Make sure to convert IDs to strings for consistent comparison
+      const requestUserId = String(request.userId);
+      const currentUserId = user ? String(user.id) : '';
+      
+      if (requestUserId !== currentUserId && !isAdmin) {
         throw new Error('You are not authorized to cancel this request');
       }
       
-      console.log(`Cancelling request ${requestId}`);
+      console.log(`Cancelling request ${requestId} - Request user: ${requestUserId}, current user: ${currentUserId}`);
       
       await dataService.devices.cancelRequest(requestId);
       
