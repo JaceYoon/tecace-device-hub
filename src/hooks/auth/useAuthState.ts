@@ -15,7 +15,13 @@ export function useAuthState() {
     const checkAuth = async () => {
       try {
         console.log('Checking authentication status...');
+        
+        // Check if we're in production and need to handle auth differently
+        const isProduction = process.env.NODE_ENV === 'production';
+        console.log('Environment:', process.env.NODE_ENV, 'isProduction:', isProduction);
+        
         const response = await authService.checkAuth();
+        
         if (response && 'isAuthenticated' in response && response.isAuthenticated) {
           console.log('User authenticated from server:', response.user);
           
@@ -29,10 +35,23 @@ export function useAuthState() {
         } else {
           console.log('User is not authenticated');
           setUser(null);
+          
+          // In production, we want to make sure the user logs in before API calls
+          if (isProduction && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+            console.log('Redirecting unauthenticated user to login in production');
+            window.location.href = '/login';
+            return;
+          }
         }
       } catch (error) {
         console.error('Authentication check error:', error);
         setUser(null);
+        
+        // In production, redirect to login on auth errors
+        if (process.env.NODE_ENV === 'production' && window.location.pathname !== '/' && window.location.pathname !== '/login') {
+          window.location.href = '/login';
+          return;
+        }
       } finally {
         setIsLoading(false);
       }
@@ -43,6 +62,7 @@ export function useAuthState() {
 
   useEffect(() => {
     const fetchUsers = async () => {
+      // Only fetch users if authenticated and has appropriate role
       if (user && (user.role === 'admin' || user.role === 'TPM' || user.role === 'Software Engineer')) {
         try {
           const response = await userService.getAll();
@@ -55,7 +75,10 @@ export function useAuthState() {
       }
     };
     
-    fetchUsers();
+    // Only attempt to fetch users if we have an authenticated user
+    if (user) {
+      fetchUsers();
+    }
   }, [user, refreshTrigger]);
 
   // Register a refresh callback to update users when changes happen

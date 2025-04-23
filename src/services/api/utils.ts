@@ -39,6 +39,14 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
         
         if (response.status === 401 && !isAuthEndpoint) {
           const errorData = await response.json().catch(() => ({ message: 'Unauthorized' }));
+          
+          // Redirect to login page if unauthorized in production
+          if (process.env.NODE_ENV === 'production') {
+            console.log('Unauthorized request in production, redirecting to login page');
+            window.location.href = '/login';
+            throw new Error(errorData.message || 'Unauthorized - Please log in');
+          }
+          
           throw new Error(errorData.message || 'Unauthorized');
         }
         

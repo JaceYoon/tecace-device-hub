@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
@@ -11,6 +10,7 @@ import { Loader2, Mail, Lock, LogIn, UserPlus } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { toast } from 'sonner';
 
 const loginSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -35,14 +35,15 @@ const LoginPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   
-  const { isAuthenticated, login, register } = useAuth();
+  const { isAuthenticated, login, register, isLoading } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !isLoading) {
+      console.log('User is authenticated, redirecting to dashboard');
       navigate('/dashboard');
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, isLoading]);
 
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -62,13 +63,14 @@ const LoginPage: React.FC = () => {
     },
   });
 
-  const handleLoginSubmit = async (values: LoginFormValues) => {
+  const handleLoginSubmit = async (values: any) => {
     setIsSubmitting(true);
     setLoginError(null);
     try {
       console.log('Attempting login with:', values.email);
       const success = await login(values.email, values.password);
       if (success) {
+        toast.success('Login successful!');
         navigate('/dashboard');
       } else {
         setLoginError('Invalid email or password. Please try again.');
@@ -84,7 +86,6 @@ const LoginPage: React.FC = () => {
   const handleRegisterSubmit = async (values: RegisterFormValues) => {
     setIsSubmitting(true);
     try {
-      // Extract first/last name from full name
       const nameParts = values.name.trim().split(' ');
       const firstName = nameParts[0];
       const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
@@ -103,6 +104,17 @@ const LoginPage: React.FC = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/50">
+        <div className="text-center">
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Loading authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/50">
@@ -129,6 +141,11 @@ const LoginPage: React.FC = () => {
             
             <CardContent>
               <TabsContent value="login" className="space-y-4">
+                {loginError && (
+                  <div className="p-3 rounded-md bg-red-50 text-red-500 text-sm">
+                    {loginError}
+                  </div>
+                )}
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4" id="login-form" name="login-form">
                     <FormField
