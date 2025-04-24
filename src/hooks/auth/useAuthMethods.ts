@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { User, UserRole } from '@/types';
 import { useNavigate } from 'react-router-dom';
@@ -12,6 +13,8 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
       // Log credentials in development mode only
       if (process.env.NODE_ENV === 'development') {
         console.log('Development mode login attempt:', { email, password });
+      } else {
+        console.log('Production login attempt with email:', email);
       }
       
       const response = await authService.login(email, password);
@@ -23,6 +26,13 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
         };
         
         setUser(userWithAvatar as User);
+        
+        // In production, set a flag to prevent immediate logout redirects
+        if (process.env.NODE_ENV === 'production') {
+          localStorage.setItem('auth-state', 'authenticated');
+          localStorage.setItem('auth-login-time', Date.now().toString());
+        }
+        
         toast.success(`Welcome back, ${response.user.name}!`);
         return true;
       }
@@ -40,6 +50,14 @@ export function useAuthMethods(setUser: (user: User | null) => void) {
     try {
       await authService.logout();
       setUser(null);
+      
+      // Clear auth state in production
+      if (process.env.NODE_ENV === 'production') {
+        localStorage.removeItem('auth-state');
+        localStorage.removeItem('auth-login-time');
+        localStorage.setItem('auth-logout-time', Date.now().toString());
+      }
+      
       toast.info('Logged out successfully');
       navigate('/');
     } catch (error) {

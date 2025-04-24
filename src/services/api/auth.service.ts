@@ -12,9 +12,11 @@ export const authService = {
         if (result.isAuthenticated && result.user) {
           // Save successful auth to localStorage to help detect auth state changes
           localStorage.setItem('auth-check-time', Date.now().toString());
+          localStorage.setItem('auth-state', 'authenticated');
         } else {
           // Clear any stored login indications
           localStorage.removeItem('auth-check-time');
+          localStorage.removeItem('auth-state');
           resetLoggedOutState();
         }
       }
@@ -35,20 +37,24 @@ export const authService = {
     
     return apiCall<{ success: boolean; user: User; isAuthenticated: boolean }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password }),
+      credentials: 'include' // Ensure cookies are sent with the request
     });
   },
 
   logout: (): Promise<{ success: boolean }> => {
     setUserLoggedOut();
-    return apiCall<{ success: boolean }>('/auth/logout');
+    return apiCall<{ success: boolean }>('/auth/logout', {
+      credentials: 'include' // Ensure cookies are sent with the request
+    });
   },
 
   register: (name: string, email: string, password: string): Promise<{ success: boolean; user: User; message?: string }> => {
     resetLoggedOutState();
     return apiCall<{ success: boolean; user: User; message?: string }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ name, email, password })
+      body: JSON.stringify({ name, email, password }),
+      credentials: 'include' // Ensure cookies are sent with the request
     });
   },
 };
@@ -58,6 +64,12 @@ let userLoggedOut = false;
 
 export const resetLoggedOutState = () => {
   userLoggedOut = false;
+  localStorage.removeItem('auth-logout-time');
+  
+  // For production, track login attempts
+  if (process.env.NODE_ENV === 'production') {
+    localStorage.setItem('auth-login-attempt', Date.now().toString());
+  }
 };
 
 export const setUserLoggedOut = () => {
@@ -65,4 +77,10 @@ export const setUserLoggedOut = () => {
   localStorage.removeItem('dev-user-logged-in');
   localStorage.removeItem('dev-user-id');
   localStorage.removeItem('auth-check-time');
+  localStorage.removeItem('auth-state');
+  
+  // For production, track logout time
+  if (process.env.NODE_ENV === 'production') {
+    localStorage.setItem('auth-logout-time', Date.now().toString());
+  }
 };

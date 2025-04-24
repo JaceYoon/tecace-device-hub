@@ -23,9 +23,21 @@ const Index: React.FC = () => {
         console.log('Auth check complete. isAuthenticated:', isAuthenticated);
         console.log('User info:', user);
         
+        // If in production, check for recent login attempt
+        const isProduction = process.env.NODE_ENV === 'production';
+        const recentLogin = localStorage.getItem('auth-login-time');
+        const currentTime = Date.now();
+        const loginTime = recentLogin ? parseInt(recentLogin) : 0;
+        const justLoggedIn = recentLogin && (currentTime - loginTime < 5000);
+        
         if (isAuthenticated && user) {
           console.log('User authenticated, redirecting to dashboard');
           navigate('/dashboard');
+        } else if (isProduction && justLoggedIn) {
+          // If we just logged in but session not yet detected, wait a moment
+          console.log('Recent login detected, checking authentication status again...');
+          setTimeout(() => setCheckingAuth(false), 1500);
+          return;
         }
         
         setAuthChecked(true);

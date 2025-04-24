@@ -26,12 +26,14 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
     
     while (retries > 0) {
       try {
-        const response = await fetch(`${API_URL}${endpoint}`, {
+        const requestOptions: RequestInit = {
           ...options,
           headers,
-          credentials: 'include',
+          credentials: 'include', // Always include credentials
           signal: controller.signal
-        });
+        };
+        
+        const response = await fetch(`${API_URL}${endpoint}`, requestOptions);
         
         clearTimeout(timeoutId);
     
@@ -43,8 +45,18 @@ export async function apiCall<T>(endpoint: string, options: RequestInit = {}): P
           // Redirect to login page if unauthorized in production
           if (process.env.NODE_ENV === 'production') {
             console.log('Unauthorized request in production, redirecting to login page');
-            window.location.href = '/login';
-            throw new Error(errorData.message || 'Unauthorized - Please log in');
+            
+            // Don't immediately redirect if we just tried to login
+            const recentLoginAttempt = localStorage.getItem('auth-login-attempt');
+            const currentTime = Date.now();
+            const loginAttemptTime = recentLoginAttempt ? parseInt(recentLoginAttempt) : 0;
+            
+            // If it's been more than 2 seconds since login attempt, redirect
+            if (!recentLoginAttempt || (currentTime - loginAttemptTime > 2000)) {
+              localStorage.removeItem('auth-state');
+              window.location.href = '/login';
+              throw new Error(errorData.message || 'Unauthorized - Please log in');
+            }
           }
           
           throw new Error(errorData.message || 'Unauthorized');

@@ -20,6 +20,21 @@ export function useAuthState() {
         const isProduction = process.env.NODE_ENV === 'production';
         console.log('Environment:', process.env.NODE_ENV, 'isProduction:', isProduction);
         
+        // In production, don't redirect if user has just logged in
+        const recentLogin = localStorage.getItem('auth-login-time');
+        const currentTime = Date.now();
+        const loginTime = recentLogin ? parseInt(recentLogin) : 0;
+        
+        // Check if login was very recent (within 5 seconds)
+        const justLoggedIn = recentLogin && (currentTime - loginTime < 5000);
+        
+        // If we just logged in and we're on login page, we might be waiting for session to establish
+        if (isProduction && justLoggedIn && (window.location.pathname === '/' || window.location.pathname === '/login')) {
+          console.log('Recent login detected, waiting for session to establish...');
+          // Short delay to allow cookie to be set
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+        
         const response = await authService.checkAuth();
         
         if (response && 'isAuthenticated' in response && response.isAuthenticated) {
@@ -31,6 +46,11 @@ export function useAuthState() {
               avatarUrl: response.user.avatarUrl || undefined
             };
             setUser(userWithAvatar as User);
+            
+            // Update auth state in production
+            if (isProduction) {
+              localStorage.setItem('auth-state', 'authenticated');
+            }
           }
         } else {
           console.log('User is not authenticated');
@@ -38,9 +58,12 @@ export function useAuthState() {
           
           // In production, we want to make sure the user logs in before API calls
           if (isProduction && window.location.pathname !== '/' && window.location.pathname !== '/login') {
-            console.log('Redirecting unauthenticated user to login in production');
-            window.location.href = '/login';
-            return;
+            // Don't redirect if we just attempted to log in - could be waiting for session
+            if (!justLoggedIn) {
+              console.log('Redirecting unauthenticated user to login in production');
+              window.location.href = '/login';
+              return;
+            }
           }
         }
       } catch (error) {
