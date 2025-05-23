@@ -15,7 +15,7 @@ module.exports = (sequelize, Sequelize) => {
       allowNull: false
     },
     type: {
-      type: Sequelize.ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'Accessory', 'Other'),
+      type: Sequelize.ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other'),
       allowNull: false
     },
     deviceType: {

@@ -22,6 +22,7 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
     'Tablet',
     'Smartwatch',
     'Box',
+    'PC',
     'Accessory',
     'Other',
   ];

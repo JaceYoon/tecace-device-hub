@@ -43,13 +43,13 @@ const DeviceTypeSelector: React.FC<DeviceTypeSelectorProps> = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="deviceType-select">Type</Label>
+        <Label htmlFor="deviceType-select">Type Category</Label>
         <Select
           value={deviceTypeCategory}
           onValueChange={(value) => handleSelectChange(value, 'deviceType')}
         >
           <SelectTrigger id="deviceType-select" name="deviceType" aria-label="Select device type category">
-            <SelectValue placeholder="Select Type" />
+            <SelectValue placeholder="Select Category" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="C-Type">C-Type</SelectItem>

@@ -13,7 +13,7 @@ export interface User {
 
 export type DeviceStatus = 'available' | 'assigned' | 'missing' | 'stolen' | 'returned' | 'dead' | 'pending';
 export type DeviceTypeCategory = 'C-Type' | 'Lunchbox';
-export type DeviceTypeValue = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | 'Accessory' | 'Other';
+export type DeviceTypeValue = 'Smartphone' | 'Tablet' | 'Smartwatch' | 'Box' | 'PC' | 'Accessory' | 'Other';
 
 export interface Device {
   id: string;

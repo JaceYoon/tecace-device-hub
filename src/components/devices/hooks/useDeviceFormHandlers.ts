@@ -31,6 +31,7 @@ export const useDeviceFormHandlers = (
     'Tablet',
     'Smartwatch',
     'Box',
+    'PC',
     'Accessory',
     'Other',
   ];
