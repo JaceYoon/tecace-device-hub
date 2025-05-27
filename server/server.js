@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -113,6 +114,54 @@ app.use((err, req, res, next) => {
   });
 });
 
+// Function to run migrations
+const runMigrations = async () => {
+  try {
+    console.log('=== RUNNING MIGRATIONS ===');
+    const { Umzug, SequelizeStorage } = require('umzug');
+    const path = require('path');
+    
+    const umzug = new Umzug({
+      migrations: {
+        glob: path.join(__dirname, 'migrations/*.js'),
+      },
+      context: db.sequelize.getQueryInterface(),
+      storage: new SequelizeStorage({ sequelize: db.sequelize }),
+      logger: console,
+    });
+
+    // Check pending migrations
+    const pending = await umzug.pending();
+    console.log('Pending migrations:', pending.map(m => m.name));
+
+    if (pending.length > 0) {
+      console.log('Running pending migrations...');
+      await umzug.up();
+      console.log('✅ All migrations completed successfully');
+    } else {
+      console.log('✅ No pending migrations');
+    }
+
+    // Check current database state
+    const [results] = await db.sequelize.query(
+      "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'devices' AND COLUMN_NAME = 'type' AND TABLE_SCHEMA = DATABASE()"
+    );
+    
+    const currentEnum = results[0]?.COLUMN_TYPE || '';
+    console.log('Current device type ENUM after migrations:', currentEnum);
+    
+    if (currentEnum.includes("'PC'")) {
+      console.log('✅ PC is available in device type ENUM');
+    } else {
+      console.log('❌ PC is NOT available in device type ENUM');
+    }
+
+  } catch (error) {
+    console.error('❌ Migration error:', error);
+    throw error;
+  }
+};
+
 // Database sync & server start
 console.log('Connecting to the database...');
 
@@ -124,6 +173,11 @@ console.log('Force sync database:', shouldForceSync);
 db.sequelize.sync({ force: shouldForceSync })
   .then(async () => {
     console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);
+
+    // Run migrations after sync
+    if (!shouldForceSync) {
+      await runMigrations();
+    }
 
     // Check if admin account exists, create one if it doesn't
     try {
