@@ -223,6 +223,28 @@ exports.update = async (req, res) => {
       project: device.project
     });
 
+    // Validate the type value against allowed ENUM values
+    const allowedTypes = ['Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other'];
+    if (type && !allowedTypes.includes(type)) {
+      console.error('❌ Invalid device type:', type);
+      console.error('Allowed types:', allowedTypes);
+      return res.status(400).json({ 
+        message: `Invalid device type: ${type}. Allowed values: ${allowedTypes.join(', ')}` 
+      });
+    }
+
+    // Validate deviceType value
+    const allowedDeviceTypes = ['C-Type', 'Lunchbox'];
+    if (deviceType && !allowedDeviceTypes.includes(deviceType)) {
+      console.error('❌ Invalid device type category:', deviceType);
+      console.error('Allowed device types:', allowedDeviceTypes);
+      return res.status(400).json({ 
+        message: `Invalid device type: ${deviceType}. Allowed values: ${allowedDeviceTypes.join(', ')}` 
+      });
+    }
+
+    console.log('✅ Validation passed for type:', type, 'and deviceType:', deviceType);
+
     // Format receivedDate to remove time part if provided
     let formattedReceivedDate = receivedDate;
     if (receivedDate) {
@@ -265,7 +287,7 @@ exports.update = async (req, res) => {
       project: project || device.project,
       projectGroup: projectGroup || device.projectGroup,
       type: type || device.type,
-      deviceType: deviceType !== undefined ? deviceType : device.deviceType, // Fix: properly handle deviceType
+      deviceType: deviceType !== undefined ? deviceType : device.deviceType,
       imei: imei !== undefined ? imei : device.imei,
       serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
       status: updatedStatus,
@@ -285,8 +307,10 @@ exports.update = async (req, res) => {
     
     console.log(`Updating device ${device.id}, keeping image: ${!!updatedDevicePicture}`);
     
-    // Update device
-    await device.update(updateData);
+    // Update device with transaction for better error handling
+    await db.sequelize.transaction(async (t) => {
+      await device.update(updateData, { transaction: t });
+    });
 
     console.log('=== DEVICE UPDATED SUCCESSFULLY ===');
     console.log('Updated device data:', {
@@ -340,6 +364,19 @@ exports.update = async (req, res) => {
     console.error("Error name:", err.name);
     if (err.name === 'SequelizeValidationError') {
       console.error('Validation errors:', err.errors);
+      // Send more specific error message for validation errors
+      const errorMessages = err.errors.map(error => `${error.path}: ${error.message}`);
+      return res.status(400).json({ 
+        message: `Validation error: ${errorMessages.join(', ')}`,
+        details: err.errors
+      });
+    }
+    if (err.name === 'SequelizeDatabaseError' && err.message.includes('Data truncated')) {
+      console.error('Database constraint violation - invalid ENUM value');
+      return res.status(400).json({ 
+        message: 'Invalid value provided for device type. Please check your selection.',
+        details: err.message
+      });
     }
     res.status(500).json({ message: err.message });
   }

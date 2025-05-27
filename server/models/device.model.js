@@ -16,12 +16,24 @@ module.exports = (sequelize, Sequelize) => {
     },
     type: {
       type: Sequelize.ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other'),
-      allowNull: false
+      allowNull: false,
+      validate: {
+        isIn: {
+          args: [['Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other']],
+          msg: 'Device type must be one of: Smartphone, Tablet, Smartwatch, Box, PC, Accessory, Other'
+        }
+      }
     },
     deviceType: {
       type: Sequelize.ENUM('C-Type', 'Lunchbox'),
       allowNull: false,
-      defaultValue: 'C-Type'
+      defaultValue: 'C-Type',
+      validate: {
+        isIn: {
+          args: [['C-Type', 'Lunchbox']],
+          msg: 'Device type must be either C-Type or Lunchbox'
+        }
+      }
     },
     imei: {
       type: Sequelize.STRING,
