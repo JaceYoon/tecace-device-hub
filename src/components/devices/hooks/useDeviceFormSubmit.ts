@@ -47,24 +47,21 @@ export const useDeviceFormSubmit = ({
     setIsSubmitting(true);
     
     try {
-      // Prepare update data, ensuring assignedToId is properly handled
-      // IMPORTANT: Only include devicePicture if it has changed
-      // This prevents the image from being cleared when not modified
+      // Prepare update data, ensuring deviceType is properly included
       const updateData = {
         project,
         projectGroup,
         type,
-        deviceType,
+        deviceType, // Make sure deviceType is included in the update
         imei: imei || null,
         serialNumber: serialNumber || null,
-        status: status as DeviceStatus, // Cast to specific DeviceStatus type
+        status: status as DeviceStatus,
         deviceStatus: deviceStatus || null,
         receivedDate,
         notes: notes || null,
         // Only include devicePicture if it has a value
         ...(devicePicture ? { devicePicture } : {}),
         // Properly handle null values for assignedToId
-        // Use null directly instead of 'null' string when assignedToId is null/undefined/empty
         assignedToId: assignedToId ? String(assignedToId) : null
       };
       

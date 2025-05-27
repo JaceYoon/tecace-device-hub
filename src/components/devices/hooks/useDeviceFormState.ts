@@ -15,6 +15,7 @@ export const useDeviceFormState = (device: Device) => {
       'Tablet',
       'Smartwatch',
       'Box',
+      'PC',
       'Accessory',
       'Other'
     ];
