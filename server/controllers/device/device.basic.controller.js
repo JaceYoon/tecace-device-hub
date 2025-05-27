@@ -1,4 +1,3 @@
-
 const db = require('../../models');
 const Device = db.device;
 const User = db.user;
@@ -8,9 +7,12 @@ const Op = db.Sequelize.Op;
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, deviceStatus, receivedDate, notes, devicePicture } = req.body;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes, devicePicture } = req.body;
 
-    console.log('Creating device with data:', JSON.stringify(req.body, null, 2));
+    console.log('Creating device with data:', JSON.stringify({
+      ...req.body,
+      devicePicture: devicePicture ? '[BASE64_IMAGE_DATA]' : null
+    }, null, 2));
 
     // Validate request
     if (!project || !type || !projectGroup) {
@@ -31,6 +33,7 @@ exports.create = async (req, res) => {
       project,
       projectGroup,
       type,
+      deviceType: deviceType || 'C-Type', // Ensure deviceType is set
       imei: imei || null,
       serialNumber: serialNumber || null,
       deviceStatus: deviceStatus || null,
@@ -197,18 +200,28 @@ exports.findOne = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, projectGroup, type, imei, serialNumber, status, deviceStatus, receivedDate, returnDate, notes, assignedToId, devicePicture } = req.body;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, returnDate, notes, assignedToId, devicePicture } = req.body;
     
-    console.log('Update device request body:', JSON.stringify({
+    console.log('=== DEVICE UPDATE REQUEST ===');
+    console.log('Device ID:', req.params.id);
+    console.log('Update request body:', JSON.stringify({
       ...req.body,
-      devicePicture: devicePicture ? '[BASE64_IMAGE_DATA]' : null
+      devicePicture: devicePicture ? '[BASE64_IMAGE_DATA]' : 'Not provided'
     }, null, 2));
 
     const device = await Device.findByPk(req.params.id);
 
     if (!device) {
+      console.log('Device not found:', req.params.id);
       return res.status(404).json({ message: 'Device not found' });
     }
+
+    console.log('Current device data:', {
+      id: device.id,
+      type: device.type,
+      deviceType: device.deviceType,
+      project: device.project
+    });
 
     // Format receivedDate to remove time part if provided
     let formattedReceivedDate = receivedDate;
@@ -247,13 +260,12 @@ exports.update = async (req, res) => {
     // This prevents clearing the image when it wasn't changed
     const updatedDevicePicture = devicePicture !== undefined ? devicePicture : device.devicePicture;
     
-    console.log(`Updating device ${device.id}, keeping image: ${!!updatedDevicePicture}`);
-    
-    // Update device
-    await device.update({
+    // Prepare update data
+    const updateData = {
       project: project || device.project,
       projectGroup: projectGroup || device.projectGroup,
       type: type || device.type,
+      deviceType: deviceType !== undefined ? deviceType : device.deviceType, // Fix: properly handle deviceType
       imei: imei !== undefined ? imei : device.imei,
       serialNumber: serialNumber !== undefined ? serialNumber : device.serialNumber,
       status: updatedStatus,
@@ -261,8 +273,27 @@ exports.update = async (req, res) => {
       receivedDate: formattedReceivedDate !== undefined ? formattedReceivedDate : device.receivedDate,
       returnDate: formattedReturnDate !== undefined ? formattedReturnDate : device.returnDate,
       notes: notes !== undefined ? notes : device.notes,
-      devicePicture: updatedDevicePicture, // Use the properly preserved device picture
+      devicePicture: updatedDevicePicture,
       assignedToId: updatedAssignedToId
+    };
+
+    console.log('=== FINAL UPDATE DATA ===');
+    console.log('Update data being applied:', {
+      ...updateData,
+      devicePicture: updateData.devicePicture ? '[BASE64_IMAGE_DATA]' : 'Not changed'
+    });
+    
+    console.log(`Updating device ${device.id}, keeping image: ${!!updatedDevicePicture}`);
+    
+    // Update device
+    await device.update(updateData);
+
+    console.log('=== DEVICE UPDATED SUCCESSFULLY ===');
+    console.log('Updated device data:', {
+      id: device.id,
+      type: device.type,
+      deviceType: device.deviceType,
+      project: device.project
     });
 
     // If the device is being released, create an auto-approved release request
@@ -303,7 +334,13 @@ exports.update = async (req, res) => {
 
     res.json(device);
   } catch (err) {
+    console.error("=== ERROR UPDATING DEVICE ===");
     console.error("Error updating device:", err);
+    console.error("Error message:", err.message);
+    console.error("Error name:", err.name);
+    if (err.name === 'SequelizeValidationError') {
+      console.error('Validation errors:', err.errors);
+    }
     res.status(500).json({ message: err.message });
   }
 };
