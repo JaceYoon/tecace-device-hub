@@ -72,7 +72,9 @@ export const useDeviceFormSubmit = ({
       
       console.log('Sending update with data:', {
         ...updateData,
-        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed'
+        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed',
+        deviceType: updateData.deviceType,
+        type: updateData.type
       });
       
       // Update the device

@@ -38,6 +38,7 @@ export const useDeviceFormHandlers = (
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    console.log(`Form field changed: ${name} = ${value}`);
     setDeviceData(prev => ({
       ...prev,
       [name]: value,
@@ -45,6 +46,7 @@ export const useDeviceFormHandlers = (
   };
   
   const handleSelectChange = (value: string, field: string) => {
+    console.log(`Select field changed: ${field} = ${value}`);
     setDeviceData(prev => ({
       ...prev,
       [field]: value,
