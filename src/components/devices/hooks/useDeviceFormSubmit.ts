@@ -22,6 +22,17 @@ export const useDeviceFormSubmit = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Original device data:', {
+      id: device.id,
+      type: device.type,
+      deviceType: device.deviceType
+    });
+    console.log('Form deviceData state:', {
+      type: deviceData.type,
+      deviceType: deviceData.deviceType
+    });
+    
     // Validate fields before submitting
     if (!validateDeviceFields(
       deviceData.imei, 
@@ -70,15 +81,23 @@ export const useDeviceFormSubmit = ({
         updateData.status = 'assigned';
       }
       
-      console.log('Sending update with data:', {
+      console.log('=== UPDATE DATA BEING SENT ===');
+      console.log('Update data:', {
         ...updateData,
-        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed',
-        deviceType: updateData.deviceType,
-        type: updateData.type
+        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed'
       });
+      console.log('Device Type specifically:', updateData.deviceType);
+      console.log('Device Category specifically:', updateData.type);
       
       // Update the device
       const updatedDevice = await dataService.updateDevice(device.id, updateData);
+      
+      console.log('=== RESPONSE FROM SERVER ===');
+      console.log('Updated device response:', updatedDevice ? {
+        id: updatedDevice.id,
+        type: updatedDevice.type,
+        deviceType: updatedDevice.deviceType
+      } : 'null');
       
       if (updatedDevice) {
         toast.success('Device updated successfully', {
@@ -95,6 +114,7 @@ export const useDeviceFormSubmit = ({
         });
       }
     } catch (error) {
+      console.error('=== ERROR UPDATING DEVICE ===');
       console.error('Error updating device:', error);
       toast.error('Failed to update device');
     } finally {
