@@ -36,10 +36,12 @@ const ensurePCDeviceType = async () => {
     const updatedColumnType = verifyResults[0]?.Type || '';
     console.log('Updated database ENUM:', updatedColumnType);
     
+    // Only show error if PC is still not there after the ALTER command
     if (updatedColumnType.includes("'PC'")) {
       console.log('✅ PC successfully added to database ENUM');
       return true;
     } else {
+      // This is a real error - the ALTER command ran but PC wasn't added
       console.log('❌ Failed to add PC - please check database permissions');
       return false;
     }
