@@ -2,17 +2,24 @@
 const dbConfig = require("../config/db.config.js");
 const Sequelize = require("sequelize");
 
-// Configure Sequelize
+// Configure Sequelize with better MariaDB compatibility
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
-  operatorsAliases: false,
-  logging: console.log, // Enable detailed SQL logging
+  logging: false, // Disable SQL logging to reduce noise
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
     acquire: dbConfig.pool.acquire,
     idle: dbConfig.pool.idle
+  },
+  dialectOptions: dbConfig.dialectOptions,
+  retry: dbConfig.retry,
+  // Remove operatorsAliases completely as it's deprecated
+  define: {
+    timestamps: true,
+    underscored: false,
+    freezeTableName: false
   }
 });
 

@@ -7,22 +7,19 @@ module.exports = {
   DB: process.env.DB_NAME || 'tecace_devices',
   dialect: 'mariadb',
   dialectOptions: {
-    // Improved connection options for MariaDB
-    connectTimeout: 120000, // Increased connection timeout to 2 minutes
+    connectTimeout: 120000,
     supportBigNumbers: true,
     bigNumberStrings: true,
     trace: false,
     debug: false,
-    // Try to handle various authentication methods
-    authPlugins: {
-      mysql_native_password: () => ({ password: process.env.DB_PASSWORD || 'Tecace6070' })
-    }
+    // Remove problematic auth plugins for compatibility
+    timezone: '+00:00'
   },
   pool: {
-    max: 10, // Increased max connections
+    max: 10,
     min: 0,
-    acquire: 120000, // Increased acquire timeout to 2 minutes
-    idle: 30000 // Increased idle timeout
+    acquire: 120000,
+    idle: 30000
   },
   logging: false,
   retry: {
@@ -34,9 +31,8 @@ module.exports = {
       /PROTOCOL_CONNECTION_LOST/,
       /PROTOCOL_SEQUENCE_TIMEOUT/,
       /ER_LOCK_DEADLOCK/,
-      /ER_LOCK_WAIT_TIMEOUT/ // Added lock wait timeout to retry list
+      /ER_LOCK_WAIT_TIMEOUT/
     ],
-    max: 5 // Maximum retry attempts
+    max: 5
   }
-  // Removed transactionOptions as it's not a standard Sequelize option and could cause conflicts
 };
