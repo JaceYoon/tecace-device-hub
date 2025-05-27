@@ -6,7 +6,7 @@ const Sequelize = require("sequelize");
 const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   host: dbConfig.HOST,
   dialect: dbConfig.dialect,
-  logging: false, // Disable SQL logging to reduce noise
+  logging: false,
   pool: {
     max: dbConfig.pool.max,
     min: dbConfig.pool.min,
@@ -15,7 +15,6 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   },
   dialectOptions: dbConfig.dialectOptions,
   retry: dbConfig.retry,
-  // Remove operatorsAliases completely as it's deprecated
   define: {
     timestamps: true,
     underscored: false,
@@ -34,8 +33,6 @@ db.device = require("./device.model.js")(sequelize, Sequelize);
 db.request = require("./request.model.js")(sequelize, Sequelize);
 
 // Define relationships
-
-// User - Device relationships
 db.user.hasMany(db.device, { as: "addedDevices", foreignKey: "addedById" });
 db.device.belongsTo(db.user, { as: "addedBy", foreignKey: "addedById" });
 

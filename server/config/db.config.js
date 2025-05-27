@@ -10,9 +10,6 @@ module.exports = {
     connectTimeout: 120000,
     supportBigNumbers: true,
     bigNumberStrings: true,
-    trace: false,
-    debug: false,
-    // Remove problematic auth plugins for compatibility
     timezone: '+00:00'
   },
   pool: {

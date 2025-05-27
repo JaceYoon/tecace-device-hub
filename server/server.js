@@ -10,6 +10,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
+const { ensurePCDeviceType } = require('./utils/dbSchemaFixer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -54,7 +55,6 @@ const sessionStore = new MySQLStore({
   user: dbConfig.USER,
   password: dbConfig.PASSWORD,
   database: dbConfig.DB,
-  // The session table name
   schema: {
     tableName: 'sessions',
     columnNames: {
@@ -63,10 +63,10 @@ const sessionStore = new MySQLStore({
       data: 'data'
     }
   },
-  createDatabaseTable: true, // Auto-create the sessions table
-  clearExpired: true, // Automatically clear expired sessions
-  checkExpirationInterval: 900000, // Check for expired sessions every 15 minutes
-  expiration: 86400000, // Sessions expire after 24 hours
+  createDatabaseTable: true,
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+  expiration: 86400000,
 });
 
 // Session setup with MySQL session store
@@ -79,7 +79,7 @@ app.use(session({
   cookie: {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    maxAge: 24 * 60 * 60 * 1000
   }
 }));
 
@@ -114,61 +114,18 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Function to run migrations with better error handling
-const runMigrations = async () => {
-  try {
-    console.log('=== RUNNING MIGRATIONS ===');
-    const { Umzug, SequelizeStorage } = require('umzug');
-    const path = require('path');
-    
-    const umzug = new Umzug({
-      migrations: {
-        glob: path.join(__dirname, 'migrations/*.js'),
-      },
-      context: db.sequelize.getQueryInterface(),
-      storage: new SequelizeStorage({ sequelize: db.sequelize }),
-      logger: console,
-    });
-
-    // Check pending migrations
-    const pending = await umzug.pending();
-    console.log('Pending migrations:', pending.map(m => m.name));
-
-    if (pending.length > 0) {
-      console.log('Running pending migrations...');
-      await umzug.up();
-      console.log('✅ All migrations completed successfully');
-    } else {
-      console.log('✅ No pending migrations');
-    }
-
-    // Simple verification without problematic query
-    console.log('✅ Migration verification completed');
-
-  } catch (error) {
-    console.error('❌ Migration error:', error);
-    console.error('Error details:', error.message);
-    // Don't throw error to allow server to start
-    console.log('⚠️ Server will continue despite migration errors');
-  }
-};
-
 // Database sync & server start
 console.log('Connecting to the database...');
 
-// Determine whether to force sync based on RESET_DATABASE environment variable
 const shouldForceSync = process.env.RESET_DATABASE === 'true';
 console.log('Force sync database:', shouldForceSync);
 
-// Use force:true to drop existing tables and create new ones if RESET_DATABASE is true
 db.sequelize.sync({ force: shouldForceSync })
   .then(async () => {
     console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);
 
-    // Run migrations after sync
-    if (!shouldForceSync) {
-      await runMigrations();
-    }
+    // Ensure PC device type exists
+    await ensurePCDeviceType();
 
     // Check if admin account exists, create one if it doesn't
     try {
@@ -203,7 +160,6 @@ db.sequelize.sync({ force: shouldForceSync })
     console.error('❌ Failed to sync database:', err);
     console.log('ERROR DETAILS:', err.message);
 
-    // Start server anyway to allow health check endpoint
     app.listen(PORT, () => {
       console.log(`⚠️ Server running on port ${PORT} but database sync failed!`);
       console.log(`⚠️ Limited functionality may be available at http://localhost:${PORT}/api`);
