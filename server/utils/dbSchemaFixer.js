@@ -5,57 +5,49 @@ const ensurePCDeviceType = async () => {
   try {
     console.log('=== CHECKING PC DEVICE TYPE ===');
     
-    // Use Sequelize's queryInterface to modify the ENUM safely
-    const queryInterface = db.sequelize.getQueryInterface();
+    // Check the ACTUAL database schema, not the Sequelize model
+    const [results] = await db.sequelize.query(
+      "SHOW COLUMNS FROM devices WHERE Field = 'type'",
+      { type: db.Sequelize.QueryTypes.SELECT }
+    );
     
-    // Check if PC already exists by trying to create a test record
-    try {
-      const testDevice = await db.device.build({
-        project: 'TEST_PROJECT',
-        projectGroup: 'TEST_GROUP', 
-        type: 'PC',
-        deviceType: 'C-Type'
-      });
-      
-      // Validate the model - this will throw if PC is not a valid type
-      await testDevice.validate();
-      console.log('✅ PC already exists in device type ENUM');
+    const columnType = results[0]?.Type || '';
+    console.log('Actual database ENUM for type column:', columnType);
+    
+    // Check if PC is in the actual database ENUM
+    if (columnType.includes("'PC'")) {
+      console.log('✅ PC already exists in database ENUM');
       return true;
-      
-    } catch (validationError) {
-      if (validationError.message && validationError.message.includes('type must be one of')) {
-        console.log('🔄 PC not found in ENUM, adding it...');
-        
-        // Use ALTER TABLE with proper MariaDB syntax
-        await queryInterface.changeColumn('devices', 'type', {
-          type: db.Sequelize.ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other'),
-          allowNull: false
-        });
-        
-        console.log('✅ PC successfully added to device type ENUM');
-        return true;
-      } else {
-        throw validationError;
-      }
+    }
+    
+    console.log('🔄 PC not found in database ENUM, adding it now...');
+    
+    // Add PC to the database ENUM
+    await db.sequelize.query(
+      "ALTER TABLE devices MODIFY COLUMN type ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other') NOT NULL"
+    );
+    
+    // Verify it was added
+    const [verifyResults] = await db.sequelize.query(
+      "SHOW COLUMNS FROM devices WHERE Field = 'type'",
+      { type: db.Sequelize.QueryTypes.SELECT }
+    );
+    
+    const updatedColumnType = verifyResults[0]?.Type || '';
+    console.log('Updated database ENUM:', updatedColumnType);
+    
+    if (updatedColumnType.includes("'PC'")) {
+      console.log('✅ PC successfully added to database ENUM');
+      return true;
+    } else {
+      console.log('❌ Failed to add PC - please check database permissions');
+      return false;
     }
     
   } catch (error) {
     console.error('❌ Error ensuring PC device type:', error);
     console.error('❌ Error message:', error.message);
-    
-    // Fallback: Try direct ALTER TABLE if Sequelize methods fail
-    try {
-      console.log('🔄 Trying direct ALTER TABLE approach...');
-      await db.sequelize.query(
-        "ALTER TABLE devices MODIFY COLUMN type ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other') NOT NULL",
-        { type: db.Sequelize.QueryTypes.RAW }
-      );
-      console.log('✅ PC added via direct ALTER TABLE');
-      return true;
-    } catch (fallbackError) {
-      console.error('❌ Fallback also failed:', fallbackError.message);
-      return false;
-    }
+    return false;
   }
 };
 
