@@ -2,6 +2,7 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
+const passport = require('passport');
 const db = require('../models');
 const User = db.user;
 
@@ -51,7 +52,7 @@ router.post('/login', async (req, res, next) => {
           name: user.name,
           email: user.email,
           role: user.role,
-          avatarUrl: user.avatarUrl // Ensure avatarUrl is included in the response
+          avatarUrl: user.avatarUrl
         } 
       });
     });
@@ -60,6 +61,24 @@ router.post('/login', async (req, res, next) => {
     return res.status(500).json({ message: 'Server error', error: error.message });
   }
 });
+
+// Microsoft OAuth routes
+router.get('/microsoft', 
+  passport.authenticate('microsoft', {
+    scope: ['user.read']
+  })
+);
+
+router.get('/microsoft/callback', 
+  passport.authenticate('microsoft', { 
+    failureRedirect: '/?error=oauth_failed' 
+  }),
+  (req, res) => {
+    // Successful authentication, redirect to dashboard
+    console.log('Microsoft OAuth successful for user:', req.user.email);
+    res.redirect('/dashboard');
+  }
+);
 
 // Register route
 router.post('/register', async (req, res) => {
@@ -101,7 +120,7 @@ router.post('/register', async (req, res) => {
           name: newUser.name,
           email: newUser.email,
           role: newUser.role,
-          avatarUrl: newUser.avatarUrl // Include avatarUrl in response even if null
+          avatarUrl: newUser.avatarUrl
         } 
       });
     });

@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
@@ -105,6 +106,11 @@ const LoginPage: React.FC = () => {
     }
   };
 
+  const handleMicrosoftLogin = () => {
+    // Redirect to Microsoft OAuth endpoint
+    window.location.href = '/api/auth/microsoft';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/50">
@@ -141,6 +147,34 @@ const LoginPage: React.FC = () => {
             
             <CardContent>
               <TabsContent value="login" className="space-y-4">
+                {/* Microsoft Login Button */}
+                <Button 
+                  onClick={handleMicrosoftLogin}
+                  variant="outline" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                  disabled={isSubmitting}
+                >
+                  <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23">
+                    <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
+                    <path fill="#f35325" d="M1 1h10v10H1z"/>
+                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                  </svg>
+                  Sign in with Microsoft
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+
                 {loginError && (
                   <div className="p-3 rounded-md bg-red-50 text-red-500 text-sm">
                     {loginError}
@@ -221,6 +255,34 @@ const LoginPage: React.FC = () => {
               </TabsContent>
               
               <TabsContent value="register" className="space-y-4">
+                {/* Microsoft Login Button for Register Tab */}
+                <Button 
+                  onClick={handleMicrosoftLogin}
+                  variant="outline" 
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white border-blue-600"
+                  disabled={isSubmitting}
+                >
+                  <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23">
+                    <path fill="#f3f3f3" d="M0 0h23v23H0z"/>
+                    <path fill="#f35325" d="M1 1h10v10H1z"/>
+                    <path fill="#81bc06" d="M12 1h10v10H12z"/>
+                    <path fill="#05a6f0" d="M1 12h10v10H1z"/>
+                    <path fill="#ffba08" d="M12 12h10v10H12z"/>
+                  </svg>
+                  Sign up with Microsoft
+                </Button>
+
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with email
+                    </span>
+                  </div>
+                </div>
+
                 <Form {...registerForm}>
                   <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4" id="register-form" name="register-form">
                     <FormField
