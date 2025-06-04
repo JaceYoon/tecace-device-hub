@@ -119,9 +119,13 @@ const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
 
+// Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/users', userRoutes);
+
+// Mount OAuth routes directly under /auth for OAuth providers
+app.use('/auth', authRoutes);
 
 // Root route
 app.get('/', (req, res) => {
