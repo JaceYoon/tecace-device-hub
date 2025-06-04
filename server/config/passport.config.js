@@ -56,23 +56,32 @@ module.exports = () => {
   console.log('Actual MICROSOFT_CLIENT_SECRET:', process.env.MICROSOFT_CLIENT_SECRET ? '***HIDDEN***' : 'NOT SET');
 
   // Only configure Microsoft OAuth if credentials are provided
-  if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+  if (process.env.MICROSOFT_CLIENT_ID) {
     console.log('Configuring Microsoft OAuth strategy...');
     
     try {
-      // Configure Microsoft OAuth strategy with tenant-specific endpoint
+      // Configure Microsoft OAuth strategy for public client (without client secret)
+      const strategyConfig = {
+        clientID: process.env.MICROSOFT_CLIENT_ID,
+        callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:5000/auth/microsoft/callback',
+        // Use tenant-specific endpoint for single-tenant apps
+        tenant: 'organizations',
+        authorizationURL: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize',
+        tokenURL: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
+        scope: ['user.read']
+      };
+
+      // Only add client secret if it exists (for confidential clients)
+      if (process.env.MICROSOFT_CLIENT_SECRET) {
+        strategyConfig.clientSecret = process.env.MICROSOFT_CLIENT_SECRET;
+        console.log('Using confidential client flow with client secret');
+      } else {
+        console.log('Using public client flow without client secret');
+      }
+
       passport.use(
         new MicrosoftStrategy(
-          {
-            clientID: process.env.MICROSOFT_CLIENT_ID,
-            clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
-            callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:5000/auth/microsoft/callback',
-            // Use tenant-specific endpoint instead of /common for single-tenant apps
-            tenant: 'common', // This will be overridden by authorizationURL
-            authorizationURL: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize',
-            tokenURL: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
-            scope: ['user.read']
-          },
+          strategyConfig,
           async (accessToken, refreshToken, profile, done) => {
             try {
               console.log('Microsoft OAuth profile received:', profile);
@@ -134,7 +143,7 @@ module.exports = () => {
     }
   } else {
     console.warn('Microsoft OAuth credentials not found. Microsoft authentication will be disabled.');
-    console.warn('Please set MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET in your .env file');
+    console.warn('Please set MICROSOFT_CLIENT_ID in your .env file');
   }
 
   // Serialize user
