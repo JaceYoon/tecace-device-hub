@@ -62,23 +62,38 @@ router.post('/login', async (req, res, next) => {
   }
 });
 
-// Microsoft OAuth routes
-router.get('/microsoft', 
-  passport.authenticate('microsoft', {
-    scope: ['user.read']
-  })
-);
+// Microsoft OAuth routes - only if configured
+if (process.env.MICROSOFT_CLIENT_ID && process.env.MICROSOFT_CLIENT_SECRET) {
+  router.get('/microsoft', 
+    passport.authenticate('microsoft', {
+      scope: ['user.read']
+    })
+  );
 
-router.get('/microsoft/callback', 
-  passport.authenticate('microsoft', { 
-    failureRedirect: '/?error=oauth_failed' 
-  }),
-  (req, res) => {
-    // Successful authentication, redirect to dashboard
-    console.log('Microsoft OAuth successful for user:', req.user.email);
-    res.redirect('/dashboard');
-  }
-);
+  router.get('/microsoft/callback', 
+    passport.authenticate('microsoft', { 
+      failureRedirect: '/?error=oauth_failed' 
+    }),
+    (req, res) => {
+      // Successful authentication, redirect to dashboard
+      console.log('Microsoft OAuth successful for user:', req.user.email);
+      res.redirect('/dashboard');
+    }
+  );
+} else {
+  // Fallback routes when Microsoft OAuth is not configured
+  router.get('/microsoft', (req, res) => {
+    res.status(501).json({ 
+      message: 'Microsoft OAuth is not configured. Please set MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET in your environment variables.' 
+    });
+  });
+
+  router.get('/microsoft/callback', (req, res) => {
+    res.status(501).json({ 
+      message: 'Microsoft OAuth is not configured.' 
+    });
+  });
+}
 
 // Register route
 router.post('/register', async (req, res) => {
