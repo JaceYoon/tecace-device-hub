@@ -3,37 +3,47 @@ const passport = require('passport');
 const LocalStrategy = require('passport-local').Strategy;
 const MicrosoftStrategy = require('passport-microsoft').Strategy;
 const bcrypt = require('bcrypt');
-const db = require('../models');
-const User = db.user;
+
+// Check if we're in force dev mode
+const FORCE_DEV_MODE = process.env.FORCE_DEV_MODE === 'true';
+
+// Only require db models if not in dev mode
+let User = null;
+if (!FORCE_DEV_MODE) {
+  const db = require('../models');
+  User = db.user;
+}
 
 module.exports = () => {
-  // Configure local strategy for authentication
-  passport.use(
-    new LocalStrategy(
-      { usernameField: 'email' },
-      async (email, password, done) => {
-        try {
-          // Find user by email
-          const user = await User.findOne({ where: { email } });
-          
-          if (!user) {
-            return done(null, false, { message: 'Invalid email or password' });
+  // Configure local strategy for authentication - only if not in dev mode
+  if (!FORCE_DEV_MODE) {
+    passport.use(
+      new LocalStrategy(
+        { usernameField: 'email' },
+        async (email, password, done) => {
+          try {
+            // Find user by email
+            const user = await User.findOne({ where: { email } });
+            
+            if (!user) {
+              return done(null, false, { message: 'Invalid email or password' });
+            }
+            
+            // Verify password
+            const isValidPassword = await bcrypt.compare(password, user.password);
+            
+            if (!isValidPassword) {
+              return done(null, false, { message: 'Invalid email or password' });
+            }
+            
+            return done(null, user);
+          } catch (error) {
+            return done(error);
           }
-          
-          // Verify password
-          const isValidPassword = await bcrypt.compare(password, user.password);
-          
-          if (!isValidPassword) {
-            return done(null, false, { message: 'Invalid email or password' });
-          }
-          
-          return done(null, user);
-        } catch (error) {
-          return done(error);
         }
-      }
-    )
-  );
+      )
+    );
+  }
 
   // Debug Microsoft OAuth environment variables
   console.log('Microsoft OAuth Configuration:');
@@ -54,7 +64,7 @@ module.exports = () => {
       passport.use(
         new MicrosoftStrategy(
           {
-            clientID: process.env.MICROSOFT_CLIENT_ID,  // Make sure this is clientID with capital ID
+            clientID: process.env.MICROSOFT_CLIENT_ID,
             clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
             callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:5000/auth/microsoft/callback',
             scope: ['user.read']
@@ -71,7 +81,20 @@ module.exports = () => {
                 return done(new Error('No email found in Microsoft profile'), null);
               }
               
-              // Check if user already exists
+              if (FORCE_DEV_MODE) {
+                // In dev mode, just create a mock user for the session
+                console.log('DEV MODE: Creating mock user from Microsoft OAuth:', email);
+                const mockUser = {
+                  id: 'microsoft_' + Date.now(),
+                  name: name,
+                  email: email,
+                  role: 'user',
+                  avatarUrl: profile.photos && profile.photos[0] ? profile.photos[0].value : null
+                };
+                return done(null, mockUser);
+              }
+              
+              // Database mode - check if user already exists
               let user = await User.findOne({ where: { email } });
               
               if (user) {
@@ -118,6 +141,19 @@ module.exports = () => {
   // Deserialize user
   passport.deserializeUser(async (id, done) => {
     try {
+      if (FORCE_DEV_MODE) {
+        // In dev mode, create a mock user
+        const mockUser = {
+          id: id,
+          name: 'Dev User',
+          email: 'dev@tecace.com',
+          role: 'admin',
+          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=dev'
+        };
+        done(null, mockUser);
+        return;
+      }
+      
       const user = await User.findByPk(id);
       if (user) {
         done(null, user);
