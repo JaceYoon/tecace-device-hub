@@ -60,13 +60,17 @@ module.exports = () => {
     console.log('Configuring Microsoft OAuth strategy...');
     
     try {
-      // Configure Microsoft OAuth strategy with correct property names
+      // Configure Microsoft OAuth strategy with tenant-specific endpoint
       passport.use(
         new MicrosoftStrategy(
           {
             clientID: process.env.MICROSOFT_CLIENT_ID,
             clientSecret: process.env.MICROSOFT_CLIENT_SECRET,
             callbackURL: process.env.MICROSOFT_CALLBACK_URL || 'http://localhost:5000/auth/microsoft/callback',
+            // Use tenant-specific endpoint instead of /common for single-tenant apps
+            tenant: 'common', // This will be overridden by authorizationURL
+            authorizationURL: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize',
+            tokenURL: 'https://login.microsoftonline.com/organizations/oauth2/v2.0/token',
             scope: ['user.read']
           },
           async (accessToken, refreshToken, profile, done) => {
