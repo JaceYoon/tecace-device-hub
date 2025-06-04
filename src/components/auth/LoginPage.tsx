@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { Button } from '../ui/button';
@@ -54,8 +55,13 @@ const LoginPage: React.FC = () => {
   };
 
   const handleMicrosoftLogin = () => {
-    // Redirect to Microsoft OAuth endpoint
-    window.location.href = '/auth/microsoft';
+    // Use full backend server URL for Microsoft OAuth
+    const backendUrl = process.env.NODE_ENV === 'production' 
+      ? 'https://dm.tecace.com' 
+      : 'http://localhost:5000';
+    
+    console.log('Redirecting to Microsoft OAuth:', `${backendUrl}/auth/microsoft`);
+    window.location.href = `${backendUrl}/auth/microsoft`;
   };
 
   return (
