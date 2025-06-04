@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
 import { Button } from '../ui/button';
@@ -29,12 +28,17 @@ const LoginPage: React.FC = () => {
 
     try {
       if (isLogin) {
-        const result = await login(email, password);
-        if (result.success) {
+        const success = await login(email, password);
+        if (success) {
           toast.success('Successfully logged in!');
         }
       } else {
-        const result = await register(name, email, password);
+        // Split name into firstName and lastName for register function
+        const nameParts = name.trim().split(' ');
+        const firstName = nameParts[0] || '';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        
+        const result = await register(firstName, lastName, email, password);
         if (result.success) {
           toast.success('Successfully registered and logged in!');
         }
@@ -51,7 +55,7 @@ const LoginPage: React.FC = () => {
 
   const handleMicrosoftLogin = () => {
     // Redirect to Microsoft OAuth endpoint
-    window.location.href = `${window.location.protocol}//${window.location.host.includes('localhost') ? 'localhost:5000' : window.location.host}/auth/microsoft`;
+    window.location.href = '/auth/microsoft';
   };
 
   return (
