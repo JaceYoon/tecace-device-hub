@@ -53,4 +53,47 @@ const ensurePCDeviceType = async () => {
   }
 };
 
-module.exports = { ensurePCDeviceType };
+const ensureMemoField = async () => {
+  try {
+    console.log('=== CHECKING MEMO FIELD ===');
+    
+    // Check if memo column exists in the devices table
+    const [results] = await db.sequelize.query(
+      "SHOW COLUMNS FROM devices WHERE Field = 'memo'",
+      { type: db.Sequelize.QueryTypes.SELECT }
+    );
+    
+    if (results && results.length > 0) {
+      console.log('✅ Memo field already exists in devices table');
+      return true;
+    }
+    
+    console.log('🔄 Memo field not found, adding it now...');
+    
+    // Add memo column to the devices table
+    await db.sequelize.query(
+      "ALTER TABLE devices ADD COLUMN memo TEXT NULL COMMENT 'Memo field for additional device information'"
+    );
+    
+    // Verify it was added
+    const [verifyResults] = await db.sequelize.query(
+      "SHOW COLUMNS FROM devices WHERE Field = 'memo'",
+      { type: db.Sequelize.QueryTypes.SELECT }
+    );
+    
+    if (verifyResults && verifyResults.length > 0) {
+      console.log('✅ Memo field successfully added to devices table');
+      return true;
+    } else {
+      console.log('❌ Failed to add memo field - please check database permissions');
+      return false;
+    }
+    
+  } catch (error) {
+    console.error('❌ Error ensuring memo field:', error);
+    console.error('❌ Error message:', error.message);
+    return false;
+  }
+};
+
+module.exports = { ensurePCDeviceType, ensureMemoField };
