@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -145,17 +144,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 serialNumber={device.serialNumber}
                 imei={device.imei}
               />
-
-              {/* Show memo for all users if it exists */}
-              {device.memo && (
-                <div className="flex items-start text-sm">
-                  <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
-                  <div>
-                    <span className="text-muted-foreground text-xs">Memo: </span>
-                    <span className="text-sm">{device.memo}</span>
-                  </div>
-                </div>
-              )}
 
               {isExpanded && (
                 <div className="animate-fade-in">
