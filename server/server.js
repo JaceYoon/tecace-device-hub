@@ -5,6 +5,12 @@ const cors = require('cors');
 const session = require('express-session');
 const passport = require('passport');
 const bcrypt = require('bcrypt');
+const db = require('./models');
+const MySQLStore = require('express-mysql-session')(session);
+const authRoutes = require('./routes/auth.routes');
+const deviceRoutes = require('./routes/device.routes');
+const userRoutes = require('./routes/user.routes');
+const { ensurePCDeviceType } = require('./utils/dbSchemaFixer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -15,15 +21,12 @@ const CLIENT_URL = process.env.NODE_ENV === 'production'
   ? 'https://dm.tecace.com'
   : 'http://localhost:8080';
 
-// Check if we should force dev mode (skip database)
-const FORCE_DEV_MODE = process.env.FORCE_DEV_MODE === 'true';
-
 // Print environment for debugging
 console.log('Environment settings:');
 console.log('NODE_ENV:', process.env.NODE_ENV);
 console.log('CLIENT_URL:', CLIENT_URL);
 console.log('API_BASE_URL:', API_BASE_URL);
-console.log('FORCE_DEV_MODE:', FORCE_DEV_MODE);
+console.log('FORCE_DEV_MODE:', process.env.FORCE_DEV_MODE);
 console.log('RESET_DATABASE:', process.env.RESET_DATABASE);
 console.log('Server will run on port:', PORT);
 
@@ -44,59 +47,41 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '100mb' }));
 app.use(express.urlencoded({ limit: '100mb', extended: true }));
 
-// Only set up database-dependent middleware if not in force dev mode
-if (!FORCE_DEV_MODE) {
-  // Database configuration for session store
-  const dbConfig = require('./config/db.config');
-  const MySQLStore = require('express-mysql-session')(session);
-  
-  const sessionStore = new MySQLStore({
-    host: dbConfig.HOST,
-    port: dbConfig.PORT,
-    user: dbConfig.USER,
-    password: dbConfig.PASSWORD,
-    database: dbConfig.DB,
-    schema: {
-      tableName: 'sessions',
-      columnNames: {
-        session_id: 'session_id',
-        expires: 'expires',
-        data: 'data'
-      }
-    },
-    createDatabaseTable: true,
-    clearExpired: true,
-    checkExpirationInterval: 900000,
-    expiration: 86400000,
-  });
+// Database configuration for session store
+const dbConfig = require('./config/db.config');
+const sessionStore = new MySQLStore({
+  host: dbConfig.HOST,
+  port: dbConfig.PORT,
+  user: dbConfig.USER,
+  password: dbConfig.PASSWORD,
+  database: dbConfig.DB,
+  schema: {
+    tableName: 'sessions',
+    columnNames: {
+      session_id: 'session_id',
+      expires: 'expires',
+      data: 'data'
+    }
+  },
+  createDatabaseTable: true,
+  clearExpired: true,
+  checkExpirationInterval: 900000,
+  expiration: 86400000,
+});
 
-  // Session setup with MySQL session store
-  app.use(session({
-    key: 'tecace_session',
-    secret: process.env.SESSION_SECRET || 'tecace-device-secret',
-    store: sessionStore,
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      maxAge: 24 * 60 * 60 * 1000
-    }
-  }));
-} else {
-  console.log('🔧 FORCE_DEV_MODE enabled - using memory session store');
-  // Use memory session store for dev mode
-  app.use(session({
-    secret: process.env.SESSION_SECRET || 'tecace-device-secret',
-    resave: false,
-    saveUninitialized: false,
-    cookie: {
-      httpOnly: true,
-      secure: false,
-      maxAge: 24 * 60 * 60 * 1000
-    }
-  }));
-}
+// Session setup with MySQL session store
+app.use(session({
+  key: 'tecace_session',
+  secret: process.env.SESSION_SECRET || 'tecace-device-secret',
+  store: sessionStore,
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000
+  }
+}));
 
 // Initialize Passport
 app.use(passport.initialize());
@@ -107,32 +92,17 @@ require('./config/passport.config')();
 
 // Add a health check endpoint
 app.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'UP', 
-    timestamp: new Date(),
-    devMode: FORCE_DEV_MODE 
-  });
+  res.status(200).json({ status: 'UP', timestamp: new Date() });
 });
 
 // Routes
-const authRoutes = require('./routes/auth.routes');
-const deviceRoutes = require('./routes/device.routes');
-const userRoutes = require('./routes/user.routes');
-
-// Mount API routes
 app.use('/api/auth', authRoutes);
 app.use('/api/devices', deviceRoutes);
 app.use('/api/users', userRoutes);
 
-// Mount OAuth routes directly under /auth for OAuth providers
-app.use('/auth', authRoutes);
-
 // Root route
 app.get('/', (req, res) => {
-  res.json({ 
-    message: 'Welcome to Tecace Device Management API',
-    devMode: FORCE_DEV_MODE 
-  });
+  res.json({ message: 'Welcome to Tecace Device Management API' });
 });
 
 // Add error handler middleware
@@ -145,69 +115,54 @@ app.use((err, req, res, next) => {
 });
 
 // Database sync & server start
-if (FORCE_DEV_MODE) {
-  console.log('🔧 FORCE_DEV_MODE enabled - skipping database connection');
-  console.log('🚀 Starting server without database...');
-  
-  app.listen(PORT, () => {
-    console.log(`✅ Server running on port ${PORT} (DEV MODE - NO DATABASE)`);
-    console.log(`✅ API is available at ${API_BASE_URL}`);
-    console.log(`✅ Client URL: ${CLIENT_URL}`);
-    console.log('🔧 DEV MODE: Database operations are disabled');
-    console.log('🔧 To enable database, set FORCE_DEV_MODE=false in .env');
-  });
-} else {
-  console.log('Connecting to the database...');
-  const db = require('./models');
-  const { ensurePCDeviceType } = require('./utils/dbSchemaFixer');
+console.log('Connecting to the database...');
 
-  const shouldForceSync = process.env.RESET_DATABASE === 'true';
-  console.log('Force sync database:', shouldForceSync);
+const shouldForceSync = process.env.RESET_DATABASE === 'true';
+console.log('Force sync database:', shouldForceSync);
 
-  db.sequelize.sync({ force: shouldForceSync })
-    .then(async () => {
-      console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);
+db.sequelize.sync({ force: shouldForceSync })
+  .then(async () => {
+    console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);
 
-      // Ensure PC device type exists
-      await ensurePCDeviceType();
+    // Ensure PC device type exists
+    await ensurePCDeviceType();
 
-      // Check if admin account exists, create one if it doesn't
-      try {
-        const adminCount = await db.user.count({ where: { role: 'admin' } });
-        if (adminCount === 0) {
-          const hashedPassword = await bcrypt.hash('admin123', 10);
-          await db.user.create({
-            name: 'Administrator',
-            email: 'admin@tecace.com',
-            password: hashedPassword,
-            role: 'admin',
-            avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin',
-            active: true
-          });
-          console.log('Default admin account created: admin@tecace.com / admin123');
-        } else {
-          console.log('Admin account already exists, no need to create');
-        }
-      } catch (error) {
-        console.error('Error checking/creating admin account:', error);
-        console.log('ERROR DETAILS:', error.message);
+    // Check if admin account exists, create one if it doesn't
+    try {
+      const adminCount = await db.user.count({ where: { role: 'admin' } });
+      if (adminCount === 0) {
+        const hashedPassword = await bcrypt.hash('admin123', 10);
+        await db.user.create({
+          name: 'Administrator',
+          email: 'admin@tecace.com',
+          password: hashedPassword,
+          role: 'admin',
+          avatarUrl: 'https://api.dicebear.com/7.x/personas/svg?seed=admin',
+          active: true
+        });
+        console.log('Default admin account created: admin@tecace.com / admin123');
+      } else {
+        console.log('Admin account already exists, no need to create');
       }
-      
-      app.listen(PORT, () => {
-        console.log(`✅ Server running on port ${PORT}`);
-        console.log(`✅ API is available at ${API_BASE_URL}`);
-        console.log(`✅ Client URL: ${CLIENT_URL}`);
-        console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
-      });
-    })
-    .catch(err => {
-      console.error('❌ Failed to sync database:', err);
-      console.log('ERROR DETAILS:', err.message);
-
-      app.listen(PORT, () => {
-        console.log(`⚠️ Server running on port ${PORT} but database sync failed!`);
-        console.log(`⚠️ Limited functionality may be available at http://localhost:${PORT}/api`);
-        console.log('Please fix database connection issues and restart the server.');
-      });
+    } catch (error) {
+      console.error('Error checking/creating admin account:', error);
+      console.log('ERROR DETAILS:', error.message);
+    }
+    
+    app.listen(PORT, () => {
+      console.log(`✅ Server running on port ${PORT}`);
+      console.log(`✅ API is available at ${API_BASE_URL}`);
+      console.log(`✅ Client URL: ${CLIENT_URL}`);
+      console.log('🔑 Default admin credentials: admin@tecace.com / admin123');
     });
-}
+  })
+  .catch(err => {
+    console.error('❌ Failed to sync database:', err);
+    console.log('ERROR DETAILS:', err.message);
+
+    app.listen(PORT, () => {
+      console.log(`⚠️ Server running on port ${PORT} but database sync failed!`);
+      console.log(`⚠️ Limited functionality may be available at http://localhost:${PORT}/api`);
+      console.log('Please fix database connection issues and restart the server.');
+    });
+  });

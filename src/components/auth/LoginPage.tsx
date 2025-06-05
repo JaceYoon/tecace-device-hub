@@ -1,213 +1,337 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from './AuthProvider';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { Separator } from '../ui/separator';
-import { Alert, AlertDescription } from '../ui/alert';
-import { Loader2, Eye, EyeOff } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { Loader2, Mail, Lock, LogIn, UserPlus } from 'lucide-react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
-import { VERSION } from '@/constants/version';
+
+const loginSchema = z.object({
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+});
+
+const registerSchema = z.object({
+  name: z.string().min(2, 'Name must be at least 2 characters'),
+  email: z.string().email('Please enter a valid email'),
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+});
+
+type LoginFormValues = z.infer<typeof loginSchema>;
+type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const LoginPage: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
-  const [name, setName] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState('login');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loginError, setLoginError] = useState<string | null>(null);
+  
+  const { isAuthenticated, login, register, isLoading } = useAuth();
+  const navigate = useNavigate();
 
-  const { login, register } = useAuth();
+  useEffect(() => {
+    if (isAuthenticated && !isLoading) {
+      console.log('User is authenticated, redirecting to dashboard');
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate, isLoading]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError('');
+  const loginForm = useForm<LoginFormValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
 
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
+  });
+
+  const handleLoginSubmit = async (values: any) => {
+    setIsSubmitting(true);
+    setLoginError(null);
     try {
-      if (isLogin) {
-        const success = await login(email, password);
-        if (success) {
-          toast.success('Successfully logged in!');
-        }
+      console.log('Attempting login with:', values.email);
+      const success = await login(values.email, values.password);
+      if (success) {
+        toast.success('Login successful!');
+        navigate('/dashboard');
       } else {
-        // Split name into firstName and lastName for register function
-        const nameParts = name.trim().split(' ');
-        const firstName = nameParts[0] || '';
-        const lastName = nameParts.slice(1).join(' ') || '';
-        
-        const result = await register(firstName, lastName, email, password);
-        if (result.success) {
-          toast.success('Successfully registered and logged in!');
-        }
+        setLoginError('Invalid email or password. Please try again.');
       }
-    } catch (error: any) {
-      console.error('Authentication error:', error);
-      const errorMessage = error?.message || 'An error occurred during authentication';
-      setError(errorMessage);
-      toast.error(errorMessage);
+    } catch (error) {
+      console.error('Login error:', error);
+      setLoginError('Failed to connect to server. Please try again later.');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
-  const handleMicrosoftLogin = () => {
-    // Use full backend server URL for Microsoft OAuth
-    const backendUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://dm.tecace.com' 
-      : 'http://localhost:5000';
-    
-    console.log('Redirecting to Microsoft OAuth:', `${backendUrl}/auth/microsoft`);
-    window.location.href = `${backendUrl}/auth/microsoft`;
+  const handleRegisterSubmit = async (values: RegisterFormValues) => {
+    setIsSubmitting(true);
+    try {
+      const nameParts = values.name.trim().split(' ');
+      const firstName = nameParts[0];
+      const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+      
+      const { success } = await register(
+        firstName,
+        lastName,
+        values.email,
+        values.password
+      );
+      
+      if (success) {
+        navigate('/dashboard');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/50">
         <div className="text-center">
-          <h1 className="text-3xl font-bold text-gray-900">TecAce Device Management</h1>
-          <p className="mt-2 text-sm text-gray-600">Version {VERSION}</p>
-          <p className="mt-2 text-lg text-gray-600">
-            {isLogin ? 'Sign in to your account' : 'Create your account'}
-          </p>
+          <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4" />
+          <p className="text-lg font-medium">Loading authentication...</p>
         </div>
+      </div>
+    );
+  }
 
-        <Card>
-          <CardHeader>
-            <CardTitle>{isLogin ? 'Sign In' : 'Sign Up'}</CardTitle>
-            <CardDescription>
-              {isLogin 
-                ? 'Enter your credentials to access your account' 
-                : 'Fill in your details to create a new account'
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-
-            <form onSubmit={handleSubmit} className="space-y-4">
-              {!isLogin && (
-                <div>
-                  <Label htmlFor="name">Full Name</Label>
-                  <Input
-                    id="name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required={!isLogin}
-                    placeholder="Enter your full name"
-                  />
-                </div>
-              )}
-
-              <div>
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="Enter your email"
-                />
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password</Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="Enter your password"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {isLogin ? 'Signing in...' : 'Creating account...'}
-                  </>
-                ) : (
-                  isLogin ? 'Sign In' : 'Sign Up'
+  return (
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-b from-background to-secondary/50">
+      <div className="w-full max-w-md animate-fade-in">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Device Management Tool</h1>
+          <p className="text-muted-foreground mt-2 text-sm">Sign in to access your device dashboard</p>
+        </div>
+        
+        <Card className="w-full shadow-soft-lg">
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab}>
+            <CardHeader>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login" className="flex items-center gap-1">
+                  <LogIn className="h-4 w-4" />
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="register" className="flex items-center gap-1">
+                  <UserPlus className="h-4 w-4" />
+                  Register
+                </TabsTrigger>
+              </TabsList>
+            </CardHeader>
+            
+            <CardContent>
+              <TabsContent value="login" className="space-y-4">
+                {loginError && (
+                  <div className="p-3 rounded-md bg-red-50 text-red-500 text-sm">
+                    {loginError}
+                  </div>
                 )}
-              </Button>
-            </form>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <Separator className="w-full" />
-              </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">Or continue with</span>
-              </div>
-            </div>
-
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={handleMicrosoftLogin}
-            >
-              <svg className="mr-2 h-4 w-4" viewBox="0 0 23 23">
-                <path fill="#f35325" d="M1 1h10v10H1z"/>
-                <path fill="#81bc06" d="M12 1h10v10H12z"/>
-                <path fill="#05a6f0" d="M1 12h10v10H1z"/>
-                <path fill="#ffba08" d="M12 12h10v10H12z"/>
-              </svg>
-              Sign in with Microsoft
-            </Button>
-
-            <div className="text-center">
-              <Button
-                type="button"
-                variant="link"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setError('');
-                  setName('');
-                  setEmail('');
-                  setPassword('');
-                }}
-              >
-                {isLogin 
-                  ? "Don't have an account? Sign up" 
-                  : "Already have an account? Sign in"
-                }
-              </Button>
-            </div>
-
-            {process.env.NODE_ENV === 'development' && (
-              <div className="text-center text-xs text-gray-500 space-y-1">
-                <p>Development Mode - Test Credentials:</p>
-                <p>Email: admin@tecace.com | Password: admin123</p>
-              </div>
-            )}
-          </CardContent>
+                <Form {...loginForm}>
+                  <form onSubmit={loginForm.handleSubmit(handleLoginSubmit)} className="space-y-4" id="login-form" name="login-form">
+                    <FormField
+                      control={loginForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="login-email">Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                id="login-email"
+                                name="login-email"
+                                placeholder="your.email@example.com" 
+                                className="pl-10" 
+                                autoComplete="email"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={loginForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="login-password">Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                id="login-password"
+                                name="login-password"
+                                type="password" 
+                                placeholder="••••••" 
+                                className="pl-10"
+                                autoComplete="current-password"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Signing in...
+                        </>
+                      ) : (
+                        "Sign In"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+                
+                <div className="text-center text-sm mt-4">
+                  <p className="text-muted-foreground">
+                    For any login or registration issues,
+                  </p>
+                  <p className="text-muted-foreground">
+                    please contact the administrator
+                  </p>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="register" className="space-y-4">
+                <Form {...registerForm}>
+                  <form onSubmit={registerForm.handleSubmit(handleRegisterSubmit)} className="space-y-4" id="register-form" name="register-form">
+                    <FormField
+                      control={registerForm.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="register-name">Full Name</FormLabel>
+                          <FormControl>
+                            <Input 
+                              id="register-name"
+                              name="register-name"
+                              placeholder="John Doe" 
+                              autoComplete="name"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="register-email">Email</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                id="register-email"
+                                name="register-email"
+                                placeholder="your.email@example.com" 
+                                className="pl-10"
+                                autoComplete="email"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="register-password">Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                id="register-password"
+                                name="register-password"
+                                type="password" 
+                                placeholder="••••••" 
+                                className="pl-10"
+                                autoComplete="new-password"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={registerForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel htmlFor="register-confirm-password">Confirm Password</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                              <Input 
+                                id="register-confirm-password"
+                                name="register-confirm-password"
+                                type="password" 
+                                placeholder="••••••" 
+                                className="pl-10"
+                                autoComplete="new-password"
+                                {...field} 
+                              />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <Button type="submit" className="w-full" disabled={isSubmitting}>
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Registering...
+                        </>
+                      ) : (
+                        "Register"
+                      )}
+                    </Button>
+                  </form>
+                </Form>
+              </TabsContent>
+            </CardContent>
+          </Tabs>
         </Card>
       </div>
     </div>
