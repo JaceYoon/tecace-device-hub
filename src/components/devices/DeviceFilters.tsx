@@ -1,9 +1,13 @@
 
-import React from 'react';
-import { Search, Filter } from 'lucide-react';
+import React, { useState } from 'react';
+import { Search, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
 import { DeviceTypeValue } from '@/types';
 
 interface DeviceFiltersProps {
@@ -29,64 +33,163 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   sortBy = 'none',
   onSortChange
 }) => {
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [isOpen, setIsOpen] = useState(false);
+
+  const handleSortChange = (field: string) => {
+    if (onSortChange) {
+      const sortValue = field === 'none' ? 'none' : `${field}-${sortOrder}`;
+      onSortChange(sortValue);
+    }
+  };
+
+  const toggleSortOrder = () => {
+    const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
+    setSortOrder(newOrder);
+    
+    if (sortBy !== 'none' && onSortChange) {
+      const currentField = sortBy.split('-')[0];
+      onSortChange(`${currentField}-${newOrder}`);
+    }
+  };
+
+  const clearAllFilters = () => {
+    onSearchChange('');
+    onStatusChange('all');
+    onTypeChange('all');
+    if (onSortChange) {
+      onSortChange('none');
+    }
+    setSortOrder('asc');
+  };
+
+  const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || sortBy !== 'none';
+
   return (
-    <div className="flex flex-col md:flex-row gap-4 mb-6">
-      <div className="relative flex-1 min-w-0">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-        <Input
-          placeholder="Search devices..."
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-10"
-        />
+    <div className="flex flex-col gap-4 mb-6">
+      <div className="flex gap-2">
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <Input
+            placeholder="Search devices..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+
+        <Popover open={isOpen} onOpenChange={setIsOpen}>
+          <PopoverTrigger asChild>
+            <Button variant="outline" size="default" className="px-3">
+              <SlidersHorizontal className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-80 p-4" align="end">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h4 className="font-medium text-sm">Filters & Sort</h4>
+                {hasActiveFilters && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearAllFilters}
+                    className="text-xs"
+                  >
+                    Clear All
+                  </Button>
+                )}
+              </div>
+              
+              <Separator />
+              
+              {/* Filters Section */}
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Filters</Label>
+                
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Status</Label>
+                  <Select value={statusFilter} onValueChange={onStatusChange}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="available">Available</SelectItem>
+                      <SelectItem value="assigned">Assigned</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="missing">Missing</SelectItem>
+                      <SelectItem value="stolen">Stolen</SelectItem>
+                      <SelectItem value="dead">Dead</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Type</Label>
+                  <Select value={typeFilter} onValueChange={onTypeChange}>
+                    <SelectTrigger className="h-8">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      {deviceTypes.map(type => (
+                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Sort Section */}
+              {onSortChange && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-sm font-medium">Sort</Label>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={toggleSortOrder}
+                      className="h-6 px-2"
+                    >
+                      {sortOrder === 'asc' ? (
+                        <ChevronUp className="h-3 w-3" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3" />
+                      )}
+                      <span className="text-xs ml-1">
+                        {sortOrder === 'asc' ? 'A-Z' : 'Z-A'}
+                      </span>
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">Sort by</Label>
+                    <Select 
+                      value={sortBy === 'none' ? 'none' : sortBy.split('-')[0]} 
+                      onValueChange={handleSortChange}
+                    >
+                      <SelectTrigger className="h-8">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No sorting</SelectItem>
+                        <SelectItem value="currentName">Current owner</SelectItem>
+                        <SelectItem value="deviceName">Device name</SelectItem>
+                        <SelectItem value="receivedDate">Received date</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>
 
-      <div className="flex flex-wrap gap-2">
-        <Select value={statusFilter} onValueChange={onStatusChange}>
-          <SelectTrigger className="w-[140px]">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="available">Available</SelectItem>
-            <SelectItem value="assigned">Assigned</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="missing">Missing</SelectItem>
-            <SelectItem value="stolen">Stolen</SelectItem>
-            <SelectItem value="dead">Dead</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Select value={typeFilter} onValueChange={onTypeChange}>
-          <SelectTrigger className="w-[120px]">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {deviceTypes.map(type => (
-              <SelectItem key={type} value={type}>{type}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        {onSortChange && (
-          <Select value={sortBy} onValueChange={onSortChange}>
-            <SelectTrigger className="w-[140px]">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="none">No sorting</SelectItem>
-              <SelectItem value="currentName">Current name</SelectItem>
-              <SelectItem value="deviceName">Device name</SelectItem>
-              <SelectItem value="receivedDate">Received date</SelectItem>
-            </SelectContent>
-          </Select>
-        )}
-      </div>
-
-      {(statusFilter !== 'all' || typeFilter !== 'all' || searchQuery || sortBy !== 'none') && (
-        <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
+      {hasActiveFilters && (
+        <div className="flex flex-wrap gap-2">
           {searchQuery && (
             <Badge variant="secondary" className="text-xs">
               Search: {searchQuery}
@@ -104,9 +207,9 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
           )}
           {sortBy !== 'none' && (
             <Badge variant="secondary" className="text-xs">
-              Sort: {sortBy === 'currentName' ? 'Current name' : 
-                     sortBy === 'deviceName' ? 'Device name' : 
-                     sortBy === 'receivedDate' ? 'Received date' : sortBy}
+              Sort: {sortBy.split('-')[0] === 'currentName' ? 'Current owner' : 
+                     sortBy.split('-')[0] === 'deviceName' ? 'Device name' : 
+                     sortBy.split('-')[0] === 'receivedDate' ? 'Received date' : sortBy.split('-')[0]} ({sortOrder === 'asc' ? 'A-Z' : 'Z-A'})
             </Badge>
           )}
         </div>

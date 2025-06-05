@@ -222,28 +222,43 @@ export const useDeviceFilters = ({
 
     // Apply sorting
     if (sortBy !== 'none') {
+      const [sortField, sortOrder = 'asc'] = sortBy.split('-');
+      
       filtered = [...filtered].sort((a, b) => {
-        switch (sortBy) {
+        let aValue: string | number = '';
+        let bValue: string | number = '';
+
+        switch (sortField) {
           case 'currentName': {
             const aOwnerId = String(a.assignedTo || a.assignedToId || '');
             const bOwnerId = String(b.assignedTo || b.assignedToId || '');
-            const aOwnerName = userIdToNameMap.get(aOwnerId) || '';
-            const bOwnerName = userIdToNameMap.get(bOwnerId) || '';
-            return aOwnerName.localeCompare(bOwnerName);
+            aValue = userIdToNameMap.get(aOwnerId) || '';
+            bValue = userIdToNameMap.get(bOwnerId) || '';
+            break;
           }
           case 'deviceName': {
-            const aProject = a.project || '';
-            const bProject = b.project || '';
-            return aProject.localeCompare(bProject);
+            aValue = a.project || '';
+            bValue = b.project || '';
+            break;
           }
           case 'receivedDate': {
-            const aDate = a.receivedDate ? new Date(a.receivedDate).getTime() : 0;
-            const bDate = b.receivedDate ? new Date(b.receivedDate).getTime() : 0;
-            return bDate - aDate; // Most recent first
+            aValue = a.receivedDate ? new Date(a.receivedDate).getTime() : 0;
+            bValue = b.receivedDate ? new Date(b.receivedDate).getTime() : 0;
+            break;
           }
           default:
             return 0;
         }
+
+        // For receivedDate, we want to sort by time value
+        if (sortField === 'receivedDate') {
+          const result = (bValue as number) - (aValue as number); // Most recent first by default
+          return sortOrder === 'desc' ? result : -result;
+        }
+
+        // For string values
+        const result = (aValue as string).localeCompare(bValue as string);
+        return sortOrder === 'desc' ? -result : result;
       });
     }
 
