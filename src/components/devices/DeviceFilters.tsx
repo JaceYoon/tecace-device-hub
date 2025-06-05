@@ -9,6 +9,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { DeviceTypeValue } from '@/types';
+import { useAuth } from '@/hooks/auth/useAuth';
 
 interface DeviceFiltersProps {
   searchQuery: string;
@@ -33,6 +34,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   sortBy = 'none',
   onSortChange
 }) => {
+  const { isAdmin } = useAuth();
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isOpen, setIsOpen] = useState(false);
 
@@ -117,9 +119,13 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
                       <SelectItem value="available">Available</SelectItem>
                       <SelectItem value="assigned">Assigned</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
-                      <SelectItem value="missing">Missing</SelectItem>
-                      <SelectItem value="stolen">Stolen</SelectItem>
                       <SelectItem value="dead">Dead</SelectItem>
+                      {isAdmin && (
+                        <>
+                          <SelectItem value="missing">Missing</SelectItem>
+                          <SelectItem value="stolen">Stolen</SelectItem>
+                        </>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

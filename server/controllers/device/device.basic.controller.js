@@ -1,3 +1,4 @@
+
 const db = require('../../models');
 const Device = db.device;
 const User = db.user;
@@ -76,7 +77,8 @@ exports.findAll = async (req, res) => {
     if (type) condition.type = type;
     if (status) condition.status = status;
 
-    // Regular users shouldn't see missing/stolen devices, but managers and admins should
+    // Regular users shouldn't see missing/stolen devices, but can see dead devices
+    // Admins and managers can see all devices
     if (req.user.role !== 'admin' && req.user.role !== 'manager') {
       condition.status = { [Op.notIn]: ['missing', 'stolen'] };
     }
@@ -167,8 +169,8 @@ exports.findOne = async (req, res) => {
       return res.status(404).json({ message: 'Device not found' });
     }
 
-    // Regular users shouldn't see missing/stolen devices (unless they're managers)
-    if (req.user.role !== 'manager' && ['missing', 'stolen'].includes(device.status)) {
+    // Regular users shouldn't see missing/stolen devices but can see dead devices
+    if (req.user.role !== 'admin' && req.user.role !== 'manager' && ['missing', 'stolen'].includes(device.status)) {
       return res.status(403).json({ message: 'Access denied' });
     }
 
