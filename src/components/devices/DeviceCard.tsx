@@ -14,6 +14,7 @@ import DeviceExpandButton from './DeviceExpandButton';
 import DeviceHeader from './DeviceHeader';
 import DeviceBasicInfo from './DeviceBasicInfo';
 import DeviceAssignmentInfo from './DeviceAssignmentInfo';
+import DeviceMemoDialog from './DeviceMemoDialog';
 import { useDeviceActions } from './hooks/useDeviceActions';
 import { Badge } from '@/components/ui/badge';
 import { CalendarClock, FileText } from 'lucide-react';
@@ -171,6 +172,14 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </CardContent>
 
             <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
+              {/* Add Memo Button */}
+              <div className="w-full">
+                <DeviceMemoDialog 
+                  device={device} 
+                  onMemoUpdated={onAction}
+                />
+              </div>
+
               <DeviceCardActions 
                 device={device}
                 isAdmin={isAdmin}
