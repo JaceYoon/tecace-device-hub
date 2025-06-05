@@ -16,8 +16,8 @@ import DeviceBasicInfo from './DeviceBasicInfo';
 import DeviceAssignmentInfo from './DeviceAssignmentInfo';
 import { useDeviceActions } from './hooks/useDeviceActions';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock } from 'lucide-react';
-import { addYears, isAfter, parseISO } from 'date-fns';
+import { CalendarClock, Calendar, Memo } from 'lucide-react';
+import { addYears, isAfter, parseISO, format } from 'date-fns';
 
 interface DeviceCardProps {
   device: Device;
@@ -103,6 +103,12 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
   console.log(`IsOldDevice calculation: ${isOldDevice()}`);
   console.log(`showOldDeviceBadge: ${showOldDeviceBadge}`);
 
+  // Format received date for display
+  const formatReceivedDate = (date: Date) => {
+    const receivedDate = typeof date === 'string' ? parseISO(date) : date;
+    return format(receivedDate, 'MMM dd, yyyy');
+  };
+
   return (
     <>
       <ContextMenu>
@@ -151,6 +157,25 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 serialNumber={device.serialNumber}
                 imei={device.imei}
               />
+
+              {/* Show received date for all users */}
+              {device.receivedDate && (
+                <div className="flex items-center text-sm text-muted-foreground">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  <span>Received: {formatReceivedDate(device.receivedDate)}</span>
+                </div>
+              )}
+
+              {/* Show memo for all users if it exists */}
+              {device.memo && (
+                <div className="flex items-start text-sm">
+                  <Memo className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                  <div>
+                    <span className="text-muted-foreground text-xs">Memo: </span>
+                    <span className="text-sm">{device.memo}</span>
+                  </div>
+                </div>
+              )}
 
               {isExpanded && (
                 <div className="animate-fade-in">

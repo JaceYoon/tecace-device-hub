@@ -63,6 +63,11 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.TEXT,
       allowNull: true
     },
+    memo: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: 'Memo field for additional device information'
+    },
     devicePicture: {
       type: Sequelize.TEXT('long'),
       allowNull: true,

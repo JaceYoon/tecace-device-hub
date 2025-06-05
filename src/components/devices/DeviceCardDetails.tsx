@@ -1,8 +1,8 @@
 
 import React from 'react';
 import { Device, User } from '@/types';
-import { Box, Calendar, Clock, FileText, Image, Download } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { Box, Calendar, Clock, FileText, Image, Download, Memo } from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { DeviceHistoryDialog } from './DeviceHistoryDialog';
 import {
@@ -36,14 +36,38 @@ const DeviceCardDetails: React.FC<DeviceCardDetailsProps> = ({
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
 
+  const formatReceivedDate = (date: Date) => {
+    return format(new Date(date), 'MMM dd, yyyy');
+  };
+
   return (
     <div className="space-y-2 text-sm">
+      {device.receivedDate && (
+        <div className="flex items-start">
+          <Calendar className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+          <div>
+            <p className="text-muted-foreground">Received Date</p>
+            <p className="text-sm">{formatReceivedDate(device.receivedDate)}</p>
+          </div>
+        </div>
+      )}
+
       {device.deviceType && (
         <div className="flex items-start">
           <Box className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
           <div>
             <p className="text-muted-foreground">Type</p>
             <p className="text-sm">{device.deviceType}</p>
+          </div>
+        </div>
+      )}
+
+      {device.memo && (
+        <div className="flex items-start">
+          <Memo className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+          <div>
+            <p className="text-muted-foreground">Memo</p>
+            <p className="text-sm">{device.memo}</p>
           </div>
         </div>
       )}
