@@ -16,7 +16,7 @@ import DeviceBasicInfo from './DeviceBasicInfo';
 import DeviceAssignmentInfo from './DeviceAssignmentInfo';
 import { useDeviceActions } from './hooks/useDeviceActions';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Calendar, Memo } from 'lucide-react';
+import { CalendarClock, Calendar, FileText } from 'lucide-react';
 import { addYears, isAfter, parseISO, format } from 'date-fns';
 
 interface DeviceCardProps {
@@ -169,7 +169,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
               {/* Show memo for all users if it exists */}
               {device.memo && (
                 <div className="flex items-start text-sm">
-                  <Memo className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+                  <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
                   <div>
                     <span className="text-muted-foreground text-xs">Memo: </span>
                     <span className="text-sm">{device.memo}</span>

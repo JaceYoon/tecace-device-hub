@@ -1,7 +1,6 @@
-
 import React from 'react';
 import { Device, User } from '@/types';
-import { Box, Calendar, Clock, FileText, Image, Download, Memo } from 'lucide-react';
+import { Box, Calendar, Clock, FileText, Image, Download } from 'lucide-react';
 import { formatDistanceToNow, format } from 'date-fns';
 import { Button } from "@/components/ui/button";
 import { DeviceHistoryDialog } from './DeviceHistoryDialog';
@@ -64,7 +63,7 @@ const DeviceCardDetails: React.FC<DeviceCardDetailsProps> = ({
 
       {device.memo && (
         <div className="flex items-start">
-          <Memo className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
+          <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
           <div>
             <p className="text-muted-foreground">Memo</p>
             <p className="text-sm">{device.memo}</p>
