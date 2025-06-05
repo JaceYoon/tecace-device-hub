@@ -22,6 +22,7 @@ export const useDeviceFilters = ({
   const [statusFilter, setStatusFilter] = useState<string>(filterByAvailable ? 'available' : 'all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
   const [ownerFilter, setOwnerFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>('none');
   
   const [effectiveStatusFilters, setEffectiveStatusFilters] = useState<string[] | undefined>(filterByStatus);
   
@@ -156,7 +157,7 @@ export const useDeviceFilters = ({
   }, [devices, userIdToNameMap]);
 
   const filteredDevices = useMemo(() => {
-    return devices.filter(device => {
+    let filtered = devices.filter(device => {
       const searchLower = searchQuery.toLowerCase();
       
       // Get the owner name for this device if it exists
@@ -218,7 +219,36 @@ export const useDeviceFilters = ({
       
       return true;
     });
-  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter]);
+
+    // Apply sorting
+    if (sortBy !== 'none') {
+      filtered = [...filtered].sort((a, b) => {
+        switch (sortBy) {
+          case 'currentName': {
+            const aOwnerId = String(a.assignedTo || a.assignedToId || '');
+            const bOwnerId = String(b.assignedTo || b.assignedToId || '');
+            const aOwnerName = userIdToNameMap.get(aOwnerId) || '';
+            const bOwnerName = userIdToNameMap.get(bOwnerId) || '';
+            return aOwnerName.localeCompare(bOwnerName);
+          }
+          case 'deviceName': {
+            const aProject = a.project || '';
+            const bProject = b.project || '';
+            return aProject.localeCompare(bProject);
+          }
+          case 'receivedDate': {
+            const aDate = a.receivedDate ? new Date(a.receivedDate).getTime() : 0;
+            const bDate = b.receivedDate ? new Date(b.receivedDate).getTime() : 0;
+            return bDate - aDate; // Most recent first
+          }
+          default:
+            return 0;
+        }
+      });
+    }
+
+    return filtered;
+  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter, sortBy]);
 
   return {
     devices,
@@ -233,6 +263,8 @@ export const useDeviceFilters = ({
     setTypeFilter,
     ownerFilter,
     setOwnerFilter,
+    sortBy,
+    setSortBy,
     fetchData,
     deviceOwners,
     userIdToNameMap

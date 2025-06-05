@@ -67,6 +67,8 @@ const DeviceList: React.FC<DeviceListProps> = ({
     setStatusFilter,
     typeFilter,
     setTypeFilter,
+    sortBy,
+    setSortBy,
     fetchData
   } = useDeviceFilters({
     filterByAvailable,
@@ -129,6 +131,8 @@ const DeviceList: React.FC<DeviceListProps> = ({
           typeFilter={typeFilter}
           onTypeChange={setTypeFilter}
           deviceTypes={deviceTypes}
+          sortBy={sortBy}
+          onSortChange={setSortBy}
         />
       )}
 

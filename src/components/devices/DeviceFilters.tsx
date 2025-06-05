@@ -1,26 +1,21 @@
+
 import React from 'react';
+import { Search, Filter } from 'lucide-react';
 import { Input } from '@/components/ui/input';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { useAuth } from '@/components/auth/AuthProvider';
-import { Search } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { DeviceTypeValue } from '@/types';
 
 interface DeviceFiltersProps {
   searchQuery: string;
-  onSearchChange: (value: string) => void;
+  onSearchChange: (query: string) => void;
   statusFilter: string;
-  onStatusChange: (value: string) => void;
+  onStatusChange: (status: string) => void;
   typeFilter: string;
-  onTypeChange: (value: string) => void;
-  deviceTypes: string[];
-  ownerFilter?: string;
-  onOwnerChange?: (value: string) => void;
-  owners?: { id: string; name: string }[];
+  onTypeChange: (type: string) => void;
+  deviceTypes: DeviceTypeValue[];
+  sortBy?: string;
+  onSortChange?: (sort: string) => void;
 }
 
 const DeviceFilters: React.FC<DeviceFiltersProps> = ({
@@ -31,93 +26,90 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   typeFilter,
   onTypeChange,
   deviceTypes,
-  ownerFilter = 'all',
-  onOwnerChange,
-  owners = [],
+  sortBy = 'none',
+  onSortChange
 }) => {
-  const { isAdmin } = useAuth();
-
-  // Status options based on user role
-  const getStatusOptions = () => {
-    const baseOptions = [
-      { value: 'all', label: 'All Statuses' },
-      { value: 'available', label: 'Available' },
-      { value: 'assigned', label: 'Assigned' },
-      { value: 'pending', label: 'Request Pending' },
-      { value: 'dead', label: 'Dead' },
-    ];
-
-    // Only show these status options to admin users
-    if (isAdmin) {
-      baseOptions.push(
-        { value: 'missing', label: 'Missing' },
-        { value: 'stolen', label: 'Stolen' }
-      );
-    }
-
-    return baseOptions;
-  };
-
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-      <div className="relative flex-1">
-        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="relative flex-1 min-w-0">
+        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
         <Input
-          placeholder="Search by name, serial, IMEI, owner or notes..."
+          placeholder="Search devices..."
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-9"
-          aria-label="Search devices"
+          className="pl-10"
         />
       </div>
-      
-      <Select
-        value={statusFilter}
-        onValueChange={onStatusChange}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="Filter by status" />
-        </SelectTrigger>
-        <SelectContent>
-          {getStatusOptions().map(option => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-      
-      <Select
-        value={typeFilter}
-        onValueChange={onTypeChange}
-      >
-        <SelectTrigger className="w-full sm:w-[180px]">
-          <SelectValue placeholder="Filter by type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">All Types</SelectItem>
-          {deviceTypes.map(type => {
-            if (type === 'all') return null;
-            return <SelectItem key={type} value={type}>{type}</SelectItem>;
-          })}
-        </SelectContent>
-      </Select>
-      
-      {onOwnerChange && owners.length > 0 && (
-        <Select
-          value={ownerFilter}
-          onValueChange={onOwnerChange}
-        >
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Filter by owner" />
+
+      <div className="flex flex-wrap gap-2">
+        <Select value={statusFilter} onValueChange={onStatusChange}>
+          <SelectTrigger className="w-[140px]">
+            <Filter className="h-4 w-4 mr-2" />
+            <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Owners</SelectItem>
-            {owners.map(owner => (
-              <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
+            <SelectItem value="all">All Status</SelectItem>
+            <SelectItem value="available">Available</SelectItem>
+            <SelectItem value="assigned">Assigned</SelectItem>
+            <SelectItem value="pending">Pending</SelectItem>
+            <SelectItem value="missing">Missing</SelectItem>
+            <SelectItem value="stolen">Stolen</SelectItem>
+            <SelectItem value="dead">Dead</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={typeFilter} onValueChange={onTypeChange}>
+          <SelectTrigger className="w-[120px]">
+            <SelectValue placeholder="Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {deviceTypes.map(type => (
+              <SelectItem key={type} value={type}>{type}</SelectItem>
             ))}
           </SelectContent>
         </Select>
+
+        {onSortChange && (
+          <Select value={sortBy} onValueChange={onSortChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">No sorting</SelectItem>
+              <SelectItem value="currentName">Current name</SelectItem>
+              <SelectItem value="deviceName">Device name</SelectItem>
+              <SelectItem value="receivedDate">Received date</SelectItem>
+            </SelectContent>
+          </Select>
+        )}
+      </div>
+
+      {(statusFilter !== 'all' || typeFilter !== 'all' || searchQuery || sortBy !== 'none') && (
+        <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
+          {searchQuery && (
+            <Badge variant="secondary" className="text-xs">
+              Search: {searchQuery}
+            </Badge>
+          )}
+          {statusFilter !== 'all' && (
+            <Badge variant="secondary" className="text-xs">
+              Status: {statusFilter}
+            </Badge>
+          )}
+          {typeFilter !== 'all' && (
+            <Badge variant="secondary" className="text-xs">
+              Type: {typeFilter}
+            </Badge>
+          )}
+          {sortBy !== 'none' && (
+            <Badge variant="secondary" className="text-xs">
+              Sort: {sortBy === 'currentName' ? 'Current name' : 
+                     sortBy === 'deviceName' ? 'Device name' : 
+                     sortBy === 'receivedDate' ? 'Received date' : sortBy}
+            </Badge>
+          )}
+        </div>
       )}
     </div>
   );
