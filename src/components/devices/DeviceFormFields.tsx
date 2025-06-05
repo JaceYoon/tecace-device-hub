@@ -5,6 +5,7 @@ import DeviceFormBasicInfo from './form-fields/DeviceFormBasicInfo';
 import DeviceFormIdentifiers from './form-fields/DeviceFormIdentifiers';
 import DeviceFormStatus from './form-fields/DeviceFormStatus';
 import DeviceFormMedia from './form-fields/DeviceFormMedia';
+import MemoField from './form-fields/MemoField';
 
 interface DeviceData {
   project: string;
@@ -17,6 +18,7 @@ interface DeviceData {
   deviceStatus?: string;
   receivedDate?: Date;
   notes?: string;
+  memo?: string;
   devicePicture?: string;
   assignedTo?: any;
   assignedToId?: string;
@@ -76,6 +78,12 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         deviceStatus={deviceData.deviceStatus || ''}
         handleChange={handleChange}
         handleDateChange={handleDateChange}
+      />
+
+      {/* Memo Section */}
+      <MemoField 
+        memo={deviceData.memo || ''}
+        handleChange={handleChange}
       />
 
       {/* Media and Notes Section */}

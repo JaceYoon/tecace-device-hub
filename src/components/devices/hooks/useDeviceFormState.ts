@@ -58,6 +58,7 @@ export const useDeviceFormState = (device: Device) => {
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
     notes: device.notes || '',
+    memo: device.memo || '',
     devicePicture: device.devicePicture || '',
     assignedTo: device.assignedTo,
     assignedToId: device.assignedToId,

@@ -16,7 +16,7 @@ import DeviceBasicInfo from './DeviceBasicInfo';
 import DeviceAssignmentInfo from './DeviceAssignmentInfo';
 import { useDeviceActions } from './hooks/useDeviceActions';
 import { Badge } from '@/components/ui/badge';
-import { CalendarClock, Calendar, FileText } from 'lucide-react';
+import { CalendarClock, FileText } from 'lucide-react';
 import { addYears, isAfter, parseISO, format } from 'date-fns';
 
 interface DeviceCardProps {
@@ -95,19 +95,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
 
   // Determine whether to show the old device badge
   const showOldDeviceBadge = isOldDevice() && device.status === 'assigned';
-  
-  console.log(`Device: ${device.project}, receivedDate:`, device.receivedDate);
-  console.log(`Received date parsed:`, typeof device.receivedDate === 'string' ? parseISO(device.receivedDate) : device.receivedDate);
-  console.log(`One year after:`, device.receivedDate ? addYears(typeof device.receivedDate === 'string' ? parseISO(device.receivedDate) : device.receivedDate, 1) : 'No received date');
-  console.log(`Current date:`, new Date());
-  console.log(`IsOldDevice calculation: ${isOldDevice()}`);
-  console.log(`showOldDeviceBadge: ${showOldDeviceBadge}`);
-
-  // Format received date for display
-  const formatReceivedDate = (date: Date) => {
-    const receivedDate = typeof date === 'string' ? parseISO(date) : date;
-    return format(receivedDate, 'MMM dd, yyyy');
-  };
 
   return (
     <>
@@ -157,14 +144,6 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
                 serialNumber={device.serialNumber}
                 imei={device.imei}
               />
-
-              {/* Show received date for all users */}
-              {device.receivedDate && (
-                <div className="flex items-center text-sm text-muted-foreground">
-                  <Calendar className="h-4 w-4 mr-2" />
-                  <span>Received: {formatReceivedDate(device.receivedDate)}</span>
-                </div>
-              )}
 
               {/* Show memo for all users if it exists */}
               {device.memo && (

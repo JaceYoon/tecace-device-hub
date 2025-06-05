@@ -13,6 +13,7 @@ export interface DeviceFormData {
   deviceStatus: string;
   receivedDate?: Date;
   notes: string;
+  memo: string;
   devicePicture: string;
   assignedTo?: any;
   assignedToId?: string;

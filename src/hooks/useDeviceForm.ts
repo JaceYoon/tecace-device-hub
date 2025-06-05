@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
@@ -17,6 +18,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     serialNumber: '',
     deviceStatus: '',
     notes: '',
+    memo: '',
     receivedDate: undefined as Date | undefined,
     devicePicture: '',
   });
@@ -53,6 +55,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       serialNumber: '',
       deviceStatus: '',
       notes: '',
+      memo: '',
       receivedDate: undefined,
       devicePicture: '',
     });
@@ -77,7 +80,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, receivedDate, devicePicture } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, memo, receivedDate, devicePicture } = deviceData;
     
     // Validate fields before submitting
     if (!validateDeviceFields(imei, serialNumber, receivedDate, deviceStatus, notes)) {
@@ -112,6 +115,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
         serialNumber: serialNumber || undefined,
         deviceStatus: deviceStatus || undefined,
         notes: notes || undefined,
+        memo: memo || undefined,
         receivedDate,
         addedById: user?.id,
         status: 'available',
