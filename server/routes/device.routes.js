@@ -2,17 +2,23 @@
 const express = require('express');
 const router = express.Router();
 const deviceController = require('../controllers/device');
+const optimizedController = require('../controllers/device/device.optimized.controller');
 const { isAuthenticated, isAdmin } = require('../middleware/auth.middleware');
 
 // Configure JSON body parser with increased limit for all device routes
 router.use(express.json({ limit: '100mb', extended: true }));
-// Add urlencoded parser with increased limit for form data
 router.use(express.urlencoded({ limit: '100mb', extended: true }));
+
+// Optimized endpoints for large datasets
+router.get('/paged', isAuthenticated, optimizedController.getPagedDevices);
+router.get('/search', isAuthenticated, optimizedController.searchDevices);
+router.get('/stats', isAuthenticated, optimizedController.getDeviceStats);
+router.post('/bulk-update', isAuthenticated, isAdmin, optimizedController.bulkUpdateDevices);
 
 // Get all requests endpoint must be before /:id route to avoid conflict
 router.get('/requests/all', isAuthenticated, deviceController.findAllRequests);
 
-// Get all devices
+// Get all devices (legacy - use /paged for better performance)
 router.get('/', isAuthenticated, deviceController.findAll);
 
 // Get a single device
