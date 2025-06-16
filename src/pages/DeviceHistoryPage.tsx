@@ -74,8 +74,14 @@ const DeviceHistoryPage = () => {
 
         const allHistoryArrays = await Promise.all(historyPromises);
         const flatHistory = allHistoryArrays.flat();
-        console.log('Fetched history:', flatHistory);
-        setAllHistory(flatHistory);
+        
+        // Filter out pending requests and invalid entries
+        const validHistory = flatHistory.filter(entry => 
+          entry && entry.assignedAt && entry.userId && entry.userName
+        );
+        
+        console.log('Valid history entries:', validHistory.length);
+        setAllHistory(validHistory);
       } catch (error) {
         console.error('Error fetching all history:', error);
       }
@@ -88,6 +94,10 @@ const DeviceHistoryPage = () => {
 
   const getDeviceInfo = (deviceId: string) => {
     return devices.find(d => d.id === deviceId);
+  };
+
+  const getUserInfo = (userId: string) => {
+    return users.find(u => u.id === userId);
   };
 
   const formatDate = (dateString: string | null) => {
@@ -135,7 +145,17 @@ const DeviceHistoryPage = () => {
       const device = getDeviceInfo(deviceId);
       if (device) {
         const sortedHistory = history.sort((a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime());
-        const currentOwner = sortedHistory.find(entry => !entry.releasedAt);
+        
+        // Find current owner - should be the most recent entry without releasedAt
+        // But also check device's current assignment status
+        let currentOwner: HistoryEntry | undefined;
+        
+        if (device.status === 'assigned' && device.assignedToId) {
+          // Find the entry for the currently assigned user
+          currentOwner = sortedHistory.find(entry => 
+            entry.userId === device.assignedToId && !entry.releasedAt
+          );
+        }
         
         result.push({
           device,
@@ -157,10 +177,13 @@ const DeviceHistoryPage = () => {
     }>();
 
     allHistory.forEach((entry) => {
-      const user = users.find(u => u.id === entry.userId);
+      const user = getUserInfo(entry.userId);
       const device = getDeviceInfo(entry.deviceId);
       
-      if (!user) return;
+      if (!user) {
+        console.log(`User not found for entry: ${entry.userId}`);
+        return;
+      }
 
       if (!userHistoryMap.has(entry.userId)) {
         userHistoryMap.set(entry.userId, {
@@ -173,15 +196,23 @@ const DeviceHistoryPage = () => {
       const userHistory = userHistoryMap.get(entry.userId)!;
       const entryWithDevice = { ...entry, device };
       
-      if (entry.releasedAt) {
-        userHistory.previousDevices.push(entryWithDevice);
-      } else {
+      // Check if this is a current assignment by looking at device status and assignment
+      const isCurrentAssignment = device && 
+        device.status === 'assigned' && 
+        device.assignedToId === entry.userId && 
+        !entry.releasedAt;
+      
+      if (isCurrentAssignment) {
         userHistory.currentDevices.push(entryWithDevice);
+      } else if (entry.releasedAt) {
+        userHistory.previousDevices.push(entryWithDevice);
       }
     });
 
-    return Array.from(userHistoryMap.values());
-  }, [allHistory, users]);
+    const result = Array.from(userHistoryMap.values());
+    console.log(`Found ${result.length} users with history`);
+    return result;
+  }, [allHistory, users, devices]);
 
   // Filter devices with history
   const filteredDevicesWithHistory = devicesWithHistory.filter((deviceWithHistory) => {
@@ -336,7 +367,10 @@ const DeviceHistoryPage = () => {
                                 </TableHeader>
                                 <TableBody>
                                   {deviceWithHistory.history.map((entry) => {
-                                    const isActive = !entry.releasedAt;
+                                    // Check if this is the current assignment
+                                    const isCurrentAssignment = deviceWithHistory.currentOwner?.id === entry.id;
+                                    const isActive = isCurrentAssignment && !entry.releasedAt;
+                                    
                                     return (
                                       <TableRow key={entry.id}>
                                         <TableCell>
