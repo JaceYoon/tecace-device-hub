@@ -30,8 +30,8 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
-        <AuthProvider>
-          <Router>
+        <Router>
+          <AuthProvider>
             <div className="min-h-screen bg-background">
               <Navbar />
               <main className="pt-16">
@@ -49,8 +49,8 @@ const App = () => {
               </main>
               <Toaster />
             </div>
-          </Router>
-        </AuthProvider>
+          </AuthProvider>
+        </Router>
       </ThemeProvider>
     </QueryClientProvider>
   );
