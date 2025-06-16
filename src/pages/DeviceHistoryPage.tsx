@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageContainer from '../components/layout/PageContainer';
@@ -122,7 +121,7 @@ const DeviceHistoryPage = () => {
   }>();
 
   allHistory.forEach((entry) => {
-    const user = users.find(u => u.id === parseInt(entry.userId));
+    const user = users.find(u => u.id === entry.userId);
     if (!user) return;
 
     if (!userHistoryMap.has(entry.userId)) {
