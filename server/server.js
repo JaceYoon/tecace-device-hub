@@ -1,3 +1,4 @@
+
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -10,6 +11,7 @@ const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
 const { ensurePCDeviceType, ensureMemoField } = require('./utils/dbSchemaFixer');
+const { runMigrations } = require('./utils/migrationRunner');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -122,6 +124,9 @@ console.log('Force sync database:', shouldForceSync);
 db.sequelize.sync({ force: shouldForceSync })
   .then(async () => {
     console.log(`Database synced successfully${shouldForceSync ? ' with force:true - tables were recreated' : ''}`);
+
+    // Run migrations after database sync
+    await runMigrations(db.sequelize);
 
     // Ensure PC device type exists
     await ensurePCDeviceType();
