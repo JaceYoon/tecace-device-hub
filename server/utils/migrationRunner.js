@@ -19,9 +19,13 @@ const runMigrations = async (sequelize) => {
       .filter(file => file.endsWith('.js'))
       .sort();
     
-    // Get already executed migrations
-    const [executedMigrations] = await sequelize.query(
-      'SELECT name FROM `SequelizeMeta` ORDER BY name'
+    // Get already executed migrations - use raw query with proper options
+    const executedMigrations = await sequelize.query(
+      'SELECT name FROM `SequelizeMeta` ORDER BY name',
+      { 
+        type: sequelize.QueryTypes.SELECT,
+        raw: true
+      }
     );
     
     const executedNames = executedMigrations.map(m => m.name);
@@ -52,10 +56,13 @@ const runMigrations = async (sequelize) => {
         // Run the migration
         await migration.up(queryInterface, sequelize.Sequelize);
         
-        // Mark migration as executed
+        // Mark migration as executed - use raw query with proper options
         await sequelize.query(
           'INSERT INTO `SequelizeMeta` (name) VALUES (?)',
-          { replacements: [migrationFile] }
+          { 
+            replacements: [migrationFile],
+            type: sequelize.QueryTypes.INSERT
+          }
         );
         
         console.log(`✅ Migration ${migrationFile} completed successfully`);
