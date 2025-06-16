@@ -70,23 +70,23 @@ const ensureMemoField = async () => {
     
     console.log('🔄 Memo field not found, adding it now...');
     
-    // Add memo column to the devices table
-    await db.sequelize.query(
-      "ALTER TABLE devices ADD COLUMN memo TEXT NULL COMMENT 'Memo field for additional device information'"
-    );
-    
-    // Verify it was added
-    const [verifyResults] = await db.sequelize.query(
-      "SHOW COLUMNS FROM devices WHERE Field = 'memo'",
-      { type: db.Sequelize.QueryTypes.SELECT }
-    );
-    
-    if (verifyResults && verifyResults.length > 0) {
+    try {
+      // Add memo column to the devices table
+      await db.sequelize.query(
+        "ALTER TABLE devices ADD COLUMN memo TEXT NULL COMMENT 'Memo field for additional device information'"
+      );
+      
       console.log('✅ Memo field successfully added to devices table');
       return true;
-    } else {
-      console.log('❌ Failed to add memo field - please check database permissions');
-      return false;
+    } catch (addError) {
+      // Check if the error is due to duplicate column (column already exists)
+      if (addError.original && addError.original.code === 'ER_DUP_FIELDNAME') {
+        console.log('✅ Memo field already exists (detected during add attempt)');
+        return true;
+      } else {
+        // This is a different error, re-throw it
+        throw addError;
+      }
     }
     
   } catch (error) {
