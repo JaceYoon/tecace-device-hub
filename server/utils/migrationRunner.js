@@ -6,10 +6,10 @@ const runMigrations = async (sequelize) => {
   try {
     console.log('=== CHECKING FOR PENDING MIGRATIONS ===');
     
-    // Create migrations table if it doesn't exist
+    // Create migrations table if it doesn't exist (MariaDB syntax)
     await sequelize.query(`
-      CREATE TABLE IF NOT EXISTS "SequelizeMeta" (
-        "name" VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
+      CREATE TABLE IF NOT EXISTS \`SequelizeMeta\` (
+        \`name\` VARCHAR(255) NOT NULL UNIQUE PRIMARY KEY
       )
     `);
     
@@ -21,7 +21,7 @@ const runMigrations = async (sequelize) => {
     
     // Get already executed migrations
     const [executedMigrations] = await sequelize.query(
-      'SELECT name FROM "SequelizeMeta" ORDER BY name'
+      'SELECT name FROM `SequelizeMeta` ORDER BY name'
     );
     
     const executedNames = executedMigrations.map(m => m.name);
@@ -54,7 +54,7 @@ const runMigrations = async (sequelize) => {
         
         // Mark migration as executed
         await sequelize.query(
-          'INSERT INTO "SequelizeMeta" (name) VALUES (?)',
+          'INSERT INTO `SequelizeMeta` (name) VALUES (?)',
           { replacements: [migrationFile] }
         );
         

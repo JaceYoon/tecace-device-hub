@@ -8,9 +8,9 @@ module.exports = {
     try {
       console.log('=== MIGRATION 006: Adding History Tracking Tables ===');
       
-      // Check if device_history table already exists
+      // Check if device_history table already exists (MariaDB syntax)
       const [historyTableExists] = await queryInterface.sequelize.query(
-        "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'device_history'",
+        "SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'device_history'",
         { type: QueryTypes.SELECT, transaction }
       );
       
@@ -25,7 +25,7 @@ module.exports = {
       // Create device_history table
       await queryInterface.createTable('device_history', {
         id: {
-          type: Sequelize.UUID,
+          type: Sequelize.STRING(36),
           defaultValue: Sequelize.UUIDV4,
           primaryKey: true,
           allowNull: false
@@ -92,7 +92,7 @@ module.exports = {
           allowNull: true
         },
         additional_data: {
-          type: Sequelize.JSONB,
+          type: Sequelize.JSON,
           allowNull: true
         },
         created_at: {
@@ -107,7 +107,7 @@ module.exports = {
       // Create user_activity_logs table
       await queryInterface.createTable('user_activity_logs', {
         id: {
-          type: Sequelize.UUID,
+          type: Sequelize.STRING(36),
           defaultValue: Sequelize.UUIDV4,
           primaryKey: true,
           allowNull: false
@@ -135,7 +135,7 @@ module.exports = {
           onDelete: 'SET NULL'
         },
         ip_address: {
-          type: Sequelize.INET,
+          type: Sequelize.STRING(45),
           allowNull: true
         },
         user_agent: {
@@ -143,7 +143,7 @@ module.exports = {
           allowNull: true
         },
         additional_data: {
-          type: Sequelize.JSONB,
+          type: Sequelize.JSON,
           allowNull: true
         },
         created_at: {
@@ -158,7 +158,7 @@ module.exports = {
       // Create analytics_summary table
       await queryInterface.createTable('analytics_summary', {
         id: {
-          type: Sequelize.UUID,
+          type: Sequelize.STRING(36),
           defaultValue: Sequelize.UUIDV4,
           primaryKey: true,
           allowNull: false
