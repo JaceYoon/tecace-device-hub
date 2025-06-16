@@ -55,17 +55,18 @@ export const generateLargeMockDataset = (config: MockDataConfig) => {
       assignedUserIds[Math.floor(Math.random() * assignedUserIds.length)] : 
       undefined;
 
-    // Generate status based on assignment
+    // Generate status based on assignment - Fixed TypeScript error
     let status: DeviceStatus;
     if (assignedUserId) {
       status = 'assigned';
     } else {
-      const availableStatuses = ['available', 'dead', 'missing', 'stolen'];
+      const availableStatuses: DeviceStatus[] = ['available', 'dead', 'missing', 'stolen'];
       // Bias towards available (70% chance)
       if (Math.random() < 0.7) {
         status = 'available';
       } else {
-        status = availableStatuses[Math.floor(Math.random() * availableStatuses.length)];
+        const randomIndex = Math.floor(Math.random() * availableStatuses.length);
+        status = availableStatuses[randomIndex];
       }
     }
 
