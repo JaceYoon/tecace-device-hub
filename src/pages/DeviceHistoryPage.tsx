@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageContainer from '../components/layout/PageContainer';
@@ -46,19 +47,24 @@ const DeviceHistoryPage = () => {
     const fetchAllHistory = async () => {
       if (devices.length === 0) return;
       
-      const historyPromises = devices.map(async (device) => {
-        try {
-          const history = await dataService.getDeviceHistory(device.id);
-          return history || [];
-        } catch (error) {
-          console.error(`Error fetching history for device ${device.id}:`, error);
-          return [];
-        }
-      });
+      try {
+        const historyPromises = devices.map(async (device) => {
+          try {
+            const history = await dataService.getDeviceHistory(device.id);
+            return history || [];
+          } catch (error) {
+            console.error(`Error fetching history for device ${device.id}:`, error);
+            return [];
+          }
+        });
 
-      const allHistoryArrays = await Promise.all(historyPromises);
-      const flatHistory = allHistoryArrays.flat();
-      setAllHistory(flatHistory);
+        const allHistoryArrays = await Promise.all(historyPromises);
+        const flatHistory = allHistoryArrays.flat();
+        console.log('Fetched history:', flatHistory);
+        setAllHistory(flatHistory);
+      } catch (error) {
+        console.error('Error fetching all history:', error);
+      }
     };
 
     if (!devicesLoading && devices.length > 0) {
@@ -103,7 +109,8 @@ const DeviceHistoryPage = () => {
     const matchesSearch = 
       entry.userName.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
       device?.project?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
-      device?.serialNumber?.toLowerCase().includes(deviceSearchTerm.toLowerCase());
+      device?.serialNumber?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
+      device?.imei?.toLowerCase().includes(deviceSearchTerm.toLowerCase());
 
     const matchesStatus = 
       deviceStatusFilter === 'all' ||
@@ -116,12 +123,14 @@ const DeviceHistoryPage = () => {
   // Group history by user for user view
   const userHistoryMap = new Map<string, {
     user: User;
-    currentDevices: HistoryEntry[];
-    previousDevices: HistoryEntry[];
+    currentDevices: (HistoryEntry & { device?: Device })[];
+    previousDevices: (HistoryEntry & { device?: Device })[];
   }>();
 
   allHistory.forEach((entry) => {
     const user = users.find(u => u.id === entry.userId);
+    const device = getDeviceInfo(entry.deviceId);
+    
     if (!user) return;
 
     if (!userHistoryMap.has(entry.userId)) {
@@ -133,10 +142,12 @@ const DeviceHistoryPage = () => {
     }
 
     const userHistory = userHistoryMap.get(entry.userId)!;
+    const entryWithDevice = { ...entry, device };
+    
     if (entry.releasedAt) {
-      userHistory.previousDevices.push(entry);
+      userHistory.previousDevices.push(entryWithDevice);
     } else {
-      userHistory.currentDevices.push(entry);
+      userHistory.currentDevices.push(entryWithDevice);
     }
   });
 
@@ -187,7 +198,7 @@ const DeviceHistoryPage = () => {
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                     <Input
-                      placeholder="Search by user, device, or serial number..."
+                      placeholder="Search by user, device, serial number, or IMEI..."
                       value={deviceSearchTerm}
                       onChange={(e) => setDeviceSearchTerm(e.target.value)}
                       className="pl-10"
@@ -248,8 +259,13 @@ const DeviceHistoryPage = () => {
                                 <TableCell>
                                   <div>
                                     <div className="font-medium">{device?.project || 'Unknown Device'}</div>
-                                    <div className="text-sm text-muted-foreground">
-                                      S/N: {device?.serialNumber || 'N/A'}
+                                    <div className="text-sm text-muted-foreground space-y-1">
+                                      {device?.serialNumber && (
+                                        <div>S/N: {device.serialNumber}</div>
+                                      )}
+                                      {device?.imei && (
+                                        <div>IMEI: {device.imei}</div>
+                                      )}
                                     </div>
                                   </div>
                                 </TableCell>
@@ -342,20 +358,23 @@ const DeviceHistoryPage = () => {
                             <div>
                               <h4 className="font-medium text-sm text-muted-foreground mb-2">Current Devices</h4>
                               <div className="space-y-2">
-                                {userHistory.currentDevices.map((entry) => {
-                                  const device = getDeviceInfo(entry.deviceId);
-                                  return (
-                                    <div key={entry.id} className="flex items-center justify-between bg-muted/50 rounded p-2">
-                                      <div>
-                                        <div className="font-medium">{device?.project || 'Unknown Device'}</div>
-                                        <div className="text-sm text-muted-foreground">
-                                          S/N: {device?.serialNumber || 'N/A'} • Assigned: {formatDate(entry.assignedAt)}
-                                        </div>
+                                {userHistory.currentDevices.map((entry) => (
+                                  <div key={entry.id} className="flex items-center justify-between bg-muted/50 rounded p-3">
+                                    <div className="flex-1">
+                                      <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
+                                      <div className="text-sm text-muted-foreground space-y-1">
+                                        {entry.device?.serialNumber && (
+                                          <div>S/N: {entry.device.serialNumber}</div>
+                                        )}
+                                        {entry.device?.imei && (
+                                          <div>IMEI: {entry.device.imei}</div>
+                                        )}
+                                        <div>Assigned: {formatDate(entry.assignedAt)}</div>
                                       </div>
-                                      <Badge variant="default">Active</Badge>
                                     </div>
-                                  );
-                                })}
+                                    <Badge variant="default">Active</Badge>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )}
@@ -366,22 +385,26 @@ const DeviceHistoryPage = () => {
                               <div className="space-y-2">
                                 {userHistory.previousDevices
                                   .sort((a, b) => new Date(b.releasedAt!).getTime() - new Date(a.releasedAt!).getTime())
-                                  .map((entry) => {
-                                    const device = getDeviceInfo(entry.deviceId);
-                                    return (
-                                      <div key={entry.id} className="flex items-center justify-between bg-muted/20 rounded p-2">
-                                        <div>
-                                          <div className="font-medium">{device?.project || 'Unknown Device'}</div>
-                                          <div className="text-sm text-muted-foreground">
-                                            S/N: {device?.serialNumber || 'N/A'} • 
+                                  .map((entry) => (
+                                    <div key={entry.id} className="flex items-center justify-between bg-muted/20 rounded p-3">
+                                      <div className="flex-1">
+                                        <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
+                                        <div className="text-sm text-muted-foreground space-y-1">
+                                          {entry.device?.serialNumber && (
+                                            <div>S/N: {entry.device.serialNumber}</div>
+                                          )}
+                                          {entry.device?.imei && (
+                                            <div>IMEI: {entry.device.imei}</div>
+                                          )}
+                                          <div>
                                             {formatDate(entry.assignedAt)} - {formatDate(entry.releasedAt)} • 
                                             Duration: {calculateDuration(entry.assignedAt, entry.releasedAt)}
                                           </div>
                                         </div>
-                                        <Badge variant="secondary">Returned</Badge>
                                       </div>
-                                    );
-                                  })}
+                                      <Badge variant="secondary">Returned</Badge>
+                                    </div>
+                                  ))}
                               </div>
                             </div>
                           )}
