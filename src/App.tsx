@@ -10,6 +10,7 @@ import DeviceManagement from './pages/DeviceManagement';
 import UserManagement from './pages/UserManagement';
 import ProfilePage from './pages/ProfilePage';
 import DeviceReturnsPage from './pages/DeviceReturnsPage';
+import DeviceHistoryPage from './pages/DeviceHistoryPage';
 import { AuthProvider } from './components/auth/AuthProvider';
 import { ThemeProvider } from 'next-themes';
 
@@ -36,6 +37,7 @@ function App() {
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/device-management" element={<DeviceManagement />} />
                   <Route path="/device-returns" element={<DeviceReturnsPage />} />
+                  <Route path="/history" element={<DeviceHistoryPage />} />
                   <Route path="/user-management" element={<UserManagement />} />
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/login" element={<Index />} />
