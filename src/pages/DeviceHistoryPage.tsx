@@ -24,6 +24,7 @@ interface HistoryEntry {
   releasedById: string | null;
   releasedByName: string | null;
   releaseReason: string | null;
+  isActive: boolean;
 }
 
 interface DeviceWithHistory {
@@ -75,7 +76,8 @@ const DeviceHistoryPage = () => {
         const allHistoryArrays = await Promise.all(historyPromises);
         const flatHistory = allHistoryArrays.flat();
         
-        // Process history to create proper assignment-release pairs
+        console.log('Raw history data:', flatHistory);
+        
         const processedHistory = processHistoryEntries(flatHistory);
         
         console.log('Processed history entries:', processedHistory.length);
@@ -92,57 +94,79 @@ const DeviceHistoryPage = () => {
 
   // Process raw history entries to create proper assignment periods
   const processHistoryEntries = (rawHistory: any[]): HistoryEntry[] => {
+    console.log('Processing history entries, raw count:', rawHistory.length);
+    
     const processedEntries: HistoryEntry[] = [];
     
-    // Filter out pending requests and process each approved/returned request
-    const validEntries = rawHistory.filter(entry => 
-      entry && 
-      entry.deviceId && 
-      entry.userId && 
-      entry.userName &&
-      entry.assignedAt // Only include entries with actual assignment dates
-    );
+    // Group entries by device and user combination to create assignment periods
+    const deviceUserMap = new Map<string, any[]>();
     
-    console.log('Valid history entries before processing:', validEntries.length);
-    
-    // Group by device to handle device-specific logic
-    const deviceGroups = new Map<string, any[]>();
-    validEntries.forEach(entry => {
-      if (!deviceGroups.has(entry.deviceId)) {
-        deviceGroups.set(entry.deviceId, []);
+    rawHistory.forEach(entry => {
+      if (!entry || !entry.deviceId || !entry.userId || !entry.assignedAt) {
+        return;
       }
-      deviceGroups.get(entry.deviceId)!.push(entry);
+      
+      const key = `${entry.deviceId}-${entry.userId}`;
+      if (!deviceUserMap.has(key)) {
+        deviceUserMap.set(key, []);
+      }
+      deviceUserMap.get(key)!.push(entry);
     });
     
-    deviceGroups.forEach((entries, deviceId) => {
+    console.log('Device-user combinations found:', deviceUserMap.size);
+    
+    deviceUserMap.forEach((entries, key) => {
       // Sort by assigned date
       entries.sort((a, b) => new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime());
       
-      // Process each entry individually - don't merge same user entries
-      entries.forEach((entry, index) => {
-        const device = devices.find(d => d.id === deviceId);
+      const [deviceId, userId] = key.split('-');
+      const device = devices.find(d => d.id === deviceId);
+      
+      // For each assignment period, find the corresponding release
+      entries.forEach((assignEntry, index) => {
+        // Find if there's a release entry for this assignment
+        const releaseEntry = rawHistory.find(entry => 
+          entry.deviceId === deviceId &&
+          entry.userId === userId &&
+          entry.type === 'release' &&
+          entry.status === 'approved' &&
+          new Date(entry.processedAt) > new Date(assignEntry.assignedAt)
+        );
         
-        // Determine if this is currently active
-        const isCurrentlyActive = device && 
+        // Check if this is currently active (device is assigned to this user and no release found)
+        const isCurrentlyActive = !releaseEntry && 
+          device && 
           device.status === 'assigned' && 
-          device.assignedToId === entry.userId &&
-          index === entries.length - 1; // Only the last entry can be active
+          device.assignedToId === userId;
+        
+        console.log(`Processing entry for device ${deviceId}, user ${userId}:`, {
+          assignedAt: assignEntry.assignedAt,
+          releaseEntry: releaseEntry?.processedAt || 'none',
+          isActive: isCurrentlyActive,
+          deviceStatus: device?.status,
+          deviceAssignedTo: device?.assignedToId
+        });
         
         processedEntries.push({
-          id: `${entry.deviceId}-${entry.userId}-${entry.assignedAt}`,
-          deviceId: entry.deviceId,
-          userId: entry.userId,
-          userName: entry.userName,
-          assignedAt: entry.assignedAt,
-          releasedAt: isCurrentlyActive ? null : entry.releasedAt,
-          releasedById: entry.releasedById,
-          releasedByName: entry.releasedByName,
-          releaseReason: entry.releaseReason
+          id: `${deviceId}-${userId}-${assignEntry.assignedAt}`,
+          deviceId,
+          userId,
+          userName: assignEntry.userName,
+          assignedAt: assignEntry.assignedAt,
+          releasedAt: releaseEntry ? releaseEntry.processedAt : null,
+          releasedById: releaseEntry ? releaseEntry.processedById : null,
+          releasedByName: releaseEntry ? releaseEntry.processedByName : null,
+          releaseReason: releaseEntry ? releaseEntry.reason : null,
+          isActive: isCurrentlyActive
         });
       });
     });
     
     console.log('Final processed entries:', processedEntries.length);
+    processedEntries.forEach(entry => {
+      console.log(`Entry: ${entry.userName} - ${entry.deviceId}, Active: ${entry.isActive}, Released: ${entry.releasedAt || 'No'}`);
+    });
+    
     return processedEntries;
   };
 
@@ -181,7 +205,7 @@ const DeviceHistoryPage = () => {
     }
   };
 
-  // Group devices with their rental history (only devices that have history)
+  // Group devices with their rental history
   const devicesWithHistory: DeviceWithHistory[] = React.useMemo(() => {
     const deviceHistoryMap = new Map<string, HistoryEntry[]>();
     
@@ -193,19 +217,14 @@ const DeviceHistoryPage = () => {
       deviceHistoryMap.get(entry.deviceId)!.push(entry);
     });
 
-    // Create devices with history array
     const result: DeviceWithHistory[] = [];
     deviceHistoryMap.forEach((history, deviceId) => {
       const device = getDeviceInfo(deviceId);
       if (device) {
         const sortedHistory = history.sort((a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime());
         
-        // Find current owner - entry without releasedAt and device still assigned to that user
-        const currentOwner = sortedHistory.find(entry => 
-          !entry.releasedAt && 
-          device.status === 'assigned' && 
-          device.assignedToId === entry.userId
-        );
+        // Find current owner - the active entry
+        const currentOwner = sortedHistory.find(entry => entry.isActive);
         
         result.push({
           device,
@@ -215,13 +234,20 @@ const DeviceHistoryPage = () => {
       }
     });
 
+    console.log('Devices with history:', result.length);
     return result;
   }, [allHistory, devices]);
 
-  // Group users with their rental history - FIXED VERSION
+  // Group users with their rental history
   const usersWithHistory: UserWithHistory[] = React.useMemo(() => {
-    console.log('Processing users with history. Total history entries:', allHistory.length);
-    console.log('Total users:', users.length);
+    console.log('Processing users with history...');
+    console.log('All history entries:', allHistory.length);
+    console.log('All users:', users.length);
+    
+    if (allHistory.length === 0 || users.length === 0) {
+      console.log('No history or users available');
+      return [];
+    }
     
     const userHistoryMap = new Map<string, {
       user: User;
@@ -251,18 +277,19 @@ const DeviceHistoryPage = () => {
       const userHistory = userHistoryMap.get(entry.userId)!;
       const entryWithDevice = { ...entry, device };
       
-      // Check if this is a current assignment
-      const isCurrentAssignment = !entry.releasedAt && 
-        device && 
-        device.status === 'assigned' && 
-        device.assignedToId === entry.userId;
+      console.log(`Processing entry for user ${user.name}:`, {
+        device: device?.project,
+        isActive: entry.isActive,
+        assignedAt: entry.assignedAt,
+        releasedAt: entry.releasedAt
+      });
       
-      console.log(`Processing entry for user ${user.name}: device ${device?.project}, isCurrentAssignment: ${isCurrentAssignment}`);
-      
-      if (isCurrentAssignment) {
+      if (entry.isActive) {
         userHistory.currentDevices.push(entryWithDevice);
+        console.log(`Added current device for ${user.name}: ${device?.project}`);
       } else {
         userHistory.previousDevices.push(entryWithDevice);
+        console.log(`Added previous device for ${user.name}: ${device?.project}`);
       }
     });
 
@@ -271,7 +298,7 @@ const DeviceHistoryPage = () => {
       userHistory.currentDevices.length > 0 || userHistory.previousDevices.length > 0
     );
     
-    console.log(`Found ${result.length} users with history`);
+    console.log(`Final users with history: ${result.length}`);
     result.forEach(userHistory => {
       console.log(`User ${userHistory.user.name}: ${userHistory.currentDevices.length} current, ${userHistory.previousDevices.length} previous`);
     });
@@ -431,27 +458,23 @@ const DeviceHistoryPage = () => {
                                   </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                  {deviceWithHistory.history.map((entry) => {
-                                    const isActive = !entry.releasedAt;
-                                    
-                                    return (
-                                      <TableRow key={entry.id}>
-                                        <TableCell>
-                                          <div className="font-medium">{entry.userName}</div>
-                                        </TableCell>
-                                        <TableCell>{formatDate(entry.assignedAt)}</TableCell>
-                                        <TableCell>{formatDate(entry.releasedAt)}</TableCell>
-                                        <TableCell>
-                                          <Badge variant={isActive ? "default" : "secondary"}>
-                                            {isActive ? "Active" : "Returned"}
-                                          </Badge>
-                                        </TableCell>
-                                        <TableCell>
-                                          <span className="text-sm">{calculateDuration(entry.assignedAt, entry.releasedAt)}</span>
-                                        </TableCell>
-                                      </TableRow>
-                                    );
-                                  })}
+                                  {deviceWithHistory.history.map((entry) => (
+                                    <TableRow key={entry.id}>
+                                      <TableCell>
+                                        <div className="font-medium">{entry.userName}</div>
+                                      </TableCell>
+                                      <TableCell>{formatDate(entry.assignedAt)}</TableCell>
+                                      <TableCell>{formatDate(entry.releasedAt)}</TableCell>
+                                      <TableCell>
+                                        <Badge variant={entry.isActive ? "default" : "secondary"}>
+                                          {entry.isActive ? "Active" : "Returned"}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        <span className="text-sm">{calculateDuration(entry.assignedAt, entry.releasedAt)}</span>
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
                                 </TableBody>
                               </Table>
                             </div>
