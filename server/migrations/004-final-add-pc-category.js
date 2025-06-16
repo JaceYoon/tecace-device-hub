@@ -6,9 +6,13 @@ module.exports = {
     try {
       console.log('=== FINAL PC MIGRATION START ===');
       
-      // Get current ENUM values
-      const [results] = await queryInterface.sequelize.query(
-        "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'devices' AND COLUMN_NAME = 'type' AND TABLE_SCHEMA = DATABASE()"
+      // Get current ENUM values - use proper query format for MariaDB
+      const results = await queryInterface.sequelize.query(
+        "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'devices' AND COLUMN_NAME = 'type' AND TABLE_SCHEMA = DATABASE()",
+        { 
+          type: queryInterface.sequelize.QueryTypes.SELECT,
+          raw: true
+        }
       );
       
       const columnType = results[0]?.COLUMN_TYPE || '';
@@ -20,14 +24,21 @@ module.exports = {
         
         // Add PC to the ENUM - make sure to include all existing values
         await queryInterface.sequelize.query(
-          "ALTER TABLE devices MODIFY COLUMN type ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other') NOT NULL"
+          "ALTER TABLE devices MODIFY COLUMN type ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other') NOT NULL",
+          { 
+            type: queryInterface.sequelize.QueryTypes.RAW
+          }
         );
         
         console.log('Successfully added PC to device type ENUM');
         
         // Verify the change
-        const [verifyResults] = await queryInterface.sequelize.query(
-          "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'devices' AND COLUMN_NAME = 'type' AND TABLE_SCHEMA = DATABASE()"
+        const verifyResults = await queryInterface.sequelize.query(
+          "SELECT COLUMN_TYPE FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_NAME = 'devices' AND COLUMN_NAME = 'type' AND TABLE_SCHEMA = DATABASE()",
+          { 
+            type: queryInterface.sequelize.QueryTypes.SELECT,
+            raw: true
+          }
         );
         console.log('Updated ENUM values:', verifyResults[0]?.COLUMN_TYPE);
         
@@ -46,7 +57,10 @@ module.exports = {
     try {
       // Remove PC from the ENUM (this will fail if there are devices with type 'PC')
       await queryInterface.sequelize.query(
-        "ALTER TABLE devices MODIFY COLUMN type ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'Accessory', 'Other') NOT NULL"
+        "ALTER TABLE devices MODIFY COLUMN type ENUM('Smartphone', 'Tablet', 'Smartwatch', 'Box', 'Accessory', 'Other') NOT NULL",
+        { 
+          type: queryInterface.sequelize.QueryTypes.RAW
+        }
       );
       console.log('Removed PC from device type ENUM');
     } catch (error) {
