@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import PageContainer from './components/layout/PageContainer';
+import PageContainer from '../components/layout/PageContainer';
 import { dataService } from '@/services/data.service';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
