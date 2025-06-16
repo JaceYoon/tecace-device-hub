@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageContainer from '../components/layout/PageContainer';
@@ -75,13 +74,11 @@ const DeviceHistoryPage = () => {
         const allHistoryArrays = await Promise.all(historyPromises);
         const flatHistory = allHistoryArrays.flat();
         
-        // Filter out pending requests and invalid entries
-        const validHistory = flatHistory.filter(entry => 
-          entry && entry.assignedAt && entry.userId && entry.userName
-        );
+        // Process history to create proper assignment-release pairs
+        const processedHistory = processHistoryEntries(flatHistory);
         
-        console.log('Valid history entries:', validHistory.length);
-        setAllHistory(validHistory);
+        console.log('Processed history entries:', processedHistory.length);
+        setAllHistory(processedHistory);
       } catch (error) {
         console.error('Error fetching all history:', error);
       }
@@ -91,6 +88,73 @@ const DeviceHistoryPage = () => {
       fetchAllHistory();
     }
   }, [devices, devicesLoading]);
+
+  // Process raw history entries to create proper assignment periods
+  const processHistoryEntries = (rawHistory: any[]): HistoryEntry[] => {
+    const deviceHistoryMap = new Map<string, any[]>();
+    
+    // Group by device
+    rawHistory.forEach(entry => {
+      if (!entry || !entry.deviceId || !entry.userId || !entry.userName) return;
+      
+      if (!deviceHistoryMap.has(entry.deviceId)) {
+        deviceHistoryMap.set(entry.deviceId, []);
+      }
+      deviceHistoryMap.get(entry.deviceId)!.push(entry);
+    });
+    
+    const processedEntries: HistoryEntry[] = [];
+    
+    deviceHistoryMap.forEach((entries, deviceId) => {
+      // Sort by assignedAt date
+      entries.sort((a, b) => new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime());
+      
+      // Group consecutive entries by the same user
+      let currentAssignment: any = null;
+      
+      entries.forEach(entry => {
+        if (!currentAssignment || currentAssignment.userId !== entry.userId) {
+          // Start new assignment period
+          if (currentAssignment) {
+            // Close previous assignment
+            processedEntries.push({
+              id: `${currentAssignment.deviceId}-${currentAssignment.userId}-${currentAssignment.assignedAt}`,
+              deviceId: currentAssignment.deviceId,
+              userId: currentAssignment.userId,
+              userName: currentAssignment.userName,
+              assignedAt: currentAssignment.assignedAt,
+              releasedAt: entry.assignedAt, // This user got the device when previous user released it
+              releasedById: null,
+              releasedByName: null,
+              releaseReason: null
+            });
+          }
+          
+          currentAssignment = entry;
+        }
+      });
+      
+      // Handle the last assignment
+      if (currentAssignment) {
+        const device = devices.find(d => d.id === deviceId);
+        const isStillAssigned = device && device.status === 'assigned' && device.assignedToId === currentAssignment.userId;
+        
+        processedEntries.push({
+          id: `${currentAssignment.deviceId}-${currentAssignment.userId}-${currentAssignment.assignedAt}`,
+          deviceId: currentAssignment.deviceId,
+          userId: currentAssignment.userId,
+          userName: currentAssignment.userName,
+          assignedAt: currentAssignment.assignedAt,
+          releasedAt: isStillAssigned ? null : currentAssignment.releasedAt,
+          releasedById: currentAssignment.releasedById,
+          releasedByName: currentAssignment.releasedByName,
+          releaseReason: currentAssignment.releaseReason
+        });
+      }
+    });
+    
+    return processedEntries;
+  };
 
   const getDeviceInfo = (deviceId: string) => {
     return devices.find(d => d.id === deviceId);
@@ -146,16 +210,12 @@ const DeviceHistoryPage = () => {
       if (device) {
         const sortedHistory = history.sort((a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime());
         
-        // Find current owner - should be the most recent entry without releasedAt
-        // But also check device's current assignment status
-        let currentOwner: HistoryEntry | undefined;
-        
-        if (device.status === 'assigned' && device.assignedToId) {
-          // Find the entry for the currently assigned user
-          currentOwner = sortedHistory.find(entry => 
-            entry.userId === device.assignedToId && !entry.releasedAt
-          );
-        }
+        // Find current owner - entry without releasedAt and device still assigned to that user
+        const currentOwner = sortedHistory.find(entry => 
+          !entry.releasedAt && 
+          device.status === 'assigned' && 
+          device.assignedToId === entry.userId
+        );
         
         result.push({
           device,
@@ -196,21 +256,25 @@ const DeviceHistoryPage = () => {
       const userHistory = userHistoryMap.get(entry.userId)!;
       const entryWithDevice = { ...entry, device };
       
-      // Check if this is a current assignment by looking at device status and assignment
-      const isCurrentAssignment = device && 
+      // Check if this is a current assignment
+      const isCurrentAssignment = !entry.releasedAt && 
+        device && 
         device.status === 'assigned' && 
-        device.assignedToId === entry.userId && 
-        !entry.releasedAt;
+        device.assignedToId === entry.userId;
       
       if (isCurrentAssignment) {
         userHistory.currentDevices.push(entryWithDevice);
-      } else if (entry.releasedAt) {
+      } else {
         userHistory.previousDevices.push(entryWithDevice);
       }
     });
 
-    const result = Array.from(userHistoryMap.values());
+    const result = Array.from(userHistoryMap.values()).filter(userHistory => 
+      userHistory.currentDevices.length > 0 || userHistory.previousDevices.length > 0
+    );
+    
     console.log(`Found ${result.length} users with history`);
+    console.log('Users with history:', result.map(u => u.user.name));
     return result;
   }, [allHistory, users, devices]);
 
@@ -367,9 +431,7 @@ const DeviceHistoryPage = () => {
                                 </TableHeader>
                                 <TableBody>
                                   {deviceWithHistory.history.map((entry) => {
-                                    // Check if this is the current assignment
-                                    const isCurrentAssignment = deviceWithHistory.currentOwner?.id === entry.id;
-                                    const isActive = isCurrentAssignment && !entry.releasedAt;
+                                    const isActive = !entry.releasedAt;
                                     
                                     return (
                                       <TableRow key={entry.id}>
