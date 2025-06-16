@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageContainer from '../components/layout/PageContainer';
@@ -96,67 +95,77 @@ const DeviceHistoryPage = () => {
   const processHistoryEntries = (rawHistory: any[]): HistoryEntry[] => {
     console.log('Processing history entries, raw count:', rawHistory.length);
     
+    if (!rawHistory || rawHistory.length === 0) {
+      return [];
+    }
+
     const processedEntries: HistoryEntry[] = [];
     
-    // Group entries by device and user combination to create assignment periods
-    const deviceUserMap = new Map<string, any[]>();
+    // Group entries by device
+    const deviceMap = new Map<string, any[]>();
     
     rawHistory.forEach(entry => {
-      if (!entry || !entry.deviceId || !entry.userId || !entry.assignedAt) {
+      if (!entry || !entry.deviceId || !entry.userId) {
         return;
       }
       
-      const key = `${entry.deviceId}-${entry.userId}`;
-      if (!deviceUserMap.has(key)) {
-        deviceUserMap.set(key, []);
+      if (!deviceMap.has(entry.deviceId)) {
+        deviceMap.set(entry.deviceId, []);
       }
-      deviceUserMap.get(key)!.push(entry);
+      deviceMap.get(entry.deviceId)!.push(entry);
     });
     
-    console.log('Device-user combinations found:', deviceUserMap.size);
+    console.log('Device groups found:', deviceMap.size);
     
-    deviceUserMap.forEach((entries, key) => {
-      // Sort by assigned date
-      entries.sort((a, b) => new Date(a.assignedAt).getTime() - new Date(b.assignedAt).getTime());
+    deviceMap.forEach((entries, deviceId) => {
+      // Sort entries by date (oldest first)
+      entries.sort((a, b) => {
+        const dateA = new Date(a.assignedAt || a.releasedAt).getTime();
+        const dateB = new Date(b.assignedAt || b.releasedAt).getTime();
+        return dateA - dateB;
+      });
       
-      const [deviceId, userId] = key.split('-');
       const device = devices.find(d => d.id === deviceId);
       
-      // For each assignment period, find the corresponding release
-      entries.forEach((assignEntry, index) => {
-        // Find if there's a release entry for this assignment
-        const releaseEntry = rawHistory.find(entry => 
-          entry.deviceId === deviceId &&
-          entry.userId === userId &&
-          entry.type === 'release' &&
-          entry.status === 'approved' &&
-          new Date(entry.processedAt) > new Date(assignEntry.assignedAt)
-        );
+      // Process each assign/release pair
+      const assignEntries = entries.filter(e => e.assignedAt);
+      const releaseEntries = entries.filter(e => e.releasedAt);
+      
+      console.log(`Device ${deviceId}: ${assignEntries.length} assigns, ${releaseEntries.length} releases`);
+      
+      assignEntries.forEach(assignEntry => {
+        // Find the corresponding release entry for this assignment
+        const correspondingRelease = releaseEntries.find(releaseEntry => {
+          const assignDate = new Date(assignEntry.assignedAt);
+          const releaseDate = new Date(releaseEntry.releasedAt);
+          const sameUser = String(assignEntry.userId) === String(releaseEntry.userId);
+          const releaseAfterAssign = releaseDate > assignDate;
+          
+          return sameUser && releaseAfterAssign;
+        });
         
-        // Check if this is currently active (device is assigned to this user and no release found)
-        const isCurrentlyActive = !releaseEntry && 
+        // Check if this assignment is currently active
+        const isCurrentlyActive = !correspondingRelease && 
           device && 
           device.status === 'assigned' && 
-          device.assignedToId === userId;
+          String(device.assignedToId) === String(assignEntry.userId);
         
-        console.log(`Processing entry for device ${deviceId}, user ${userId}:`, {
+        console.log(`Processing assignment for device ${deviceId}, user ${assignEntry.userId}:`, {
           assignedAt: assignEntry.assignedAt,
-          releaseEntry: releaseEntry?.processedAt || 'none',
-          isActive: isCurrentlyActive,
-          deviceStatus: device?.status,
-          deviceAssignedTo: device?.assignedToId
+          releasedAt: correspondingRelease?.releasedAt || null,
+          isActive: isCurrentlyActive
         });
         
         processedEntries.push({
-          id: `${deviceId}-${userId}-${assignEntry.assignedAt}`,
+          id: `${deviceId}-${assignEntry.userId}-${assignEntry.assignedAt}`,
           deviceId,
-          userId,
+          userId: String(assignEntry.userId),
           userName: assignEntry.userName,
           assignedAt: assignEntry.assignedAt,
-          releasedAt: releaseEntry ? releaseEntry.processedAt : null,
-          releasedById: releaseEntry ? releaseEntry.processedById : null,
-          releasedByName: releaseEntry ? releaseEntry.processedByName : null,
-          releaseReason: releaseEntry ? releaseEntry.reason : null,
+          releasedAt: correspondingRelease ? correspondingRelease.releasedAt : null,
+          releasedById: correspondingRelease ? String(correspondingRelease.releasedById) : null,
+          releasedByName: correspondingRelease ? correspondingRelease.releasedByName : null,
+          releaseReason: correspondingRelease ? correspondingRelease.releaseReason : null,
           isActive: isCurrentlyActive
         });
       });
@@ -175,7 +184,8 @@ const DeviceHistoryPage = () => {
   };
 
   const getUserInfo = (userId: string) => {
-    return users.find(u => u.id === userId);
+    // Convert both user ID and entry user ID to strings for comparison
+    return users.find(u => String(u.id) === String(userId));
   };
 
   const formatDate = (dateString: string | null) => {
@@ -261,20 +271,23 @@ const DeviceHistoryPage = () => {
       const device = getDeviceInfo(entry.deviceId);
       
       if (!user) {
-        console.log(`User not found for entry: ${entry.userId}`);
+        console.log(`User not found for entry: ${entry.userId}. Available user IDs:`, users.map(u => `${u.id} (${typeof u.id})`));
         return;
       }
 
+      // Use string user ID as key for consistency
+      const userKey = String(user.id);
+      
       // Initialize user history if not exists
-      if (!userHistoryMap.has(entry.userId)) {
-        userHistoryMap.set(entry.userId, {
+      if (!userHistoryMap.has(userKey)) {
+        userHistoryMap.set(userKey, {
           user,
           currentDevices: [],
           previousDevices: []
         });
       }
 
-      const userHistory = userHistoryMap.get(entry.userId)!;
+      const userHistory = userHistoryMap.get(userKey)!;
       const entryWithDevice = { ...entry, device };
       
       console.log(`Processing entry for user ${user.name}:`, {
