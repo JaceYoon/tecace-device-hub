@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Device, User } from '@/types';
 import { dataService } from '@/services/data.service';
-import { PageContainer } from '@/components/layout/PageContainer';
+import PageContainer from '@/components/layout/PageContainer';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
