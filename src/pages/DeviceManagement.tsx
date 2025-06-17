@@ -12,7 +12,7 @@ import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Cloc
 import RequestList from '@/components/devices/RequestList';
 import { dataService } from '@/services/data.service';
 import StatusSummary from '@/components/devices/StatusSummary';
-import { exportDevicesToExcel } from '@/utils/exportUtils';
+import { exportDevicesToExcel } from '@/utils/exports/deviceExport';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -68,7 +68,16 @@ const DeviceManagement: React.FC = () => {
   const handleExportAll = async () => {
     try {
       const devices = await dataService.getDevices();
-      exportDevicesToExcel(devices, 'Complete_Device_Inventory.xlsx');
+      
+      // Generate filename with current date in YYYYMMDD format
+      const currentDate = new Date();
+      const year = currentDate.getFullYear();
+      const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = currentDate.getDate().toString().padStart(2, '0');
+      const dateString = `${year}${month}${day}`;
+      const filename = `TecAce_SEA_DeviceList_${dateString}.xlsx`;
+      
+      exportDevicesToExcel(devices, filename);
       toast.success('Export successful');
     } catch (error) {
       console.error('Export error:', error);
@@ -192,7 +201,7 @@ const DeviceManagement: React.FC = () => {
                 title="Pending Device Requests"
                 onRequestProcessed={handleRequestProcessed}
                 refreshTrigger={refreshTrigger}
-                pendingOnly={true} // Set to true to show only pending requests
+                pendingOnly={true}
               />
             </div>
           </TabsContent>
