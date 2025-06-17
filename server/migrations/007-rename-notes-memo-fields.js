@@ -10,7 +10,7 @@ module.exports = {
       console.log('Renaming notes column to modelNumber...');
       await queryInterface.renameColumn('devices', 'notes', 'modelNumber');
       
-      // Step 2: Add new 'notes' column (since memo doesn't exist in production)
+      // Step 2: Add new 'notes' column for additional device information
       console.log('Adding new notes column...');
       await queryInterface.addColumn('devices', 'notes', {
         type: Sequelize.TEXT,
