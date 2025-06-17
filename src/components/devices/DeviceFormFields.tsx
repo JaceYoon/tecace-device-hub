@@ -5,7 +5,7 @@ import DeviceFormBasicInfo from './form-fields/DeviceFormBasicInfo';
 import DeviceFormIdentifiers from './form-fields/DeviceFormIdentifiers';
 import DeviceFormStatus from './form-fields/DeviceFormStatus';
 import DeviceFormMedia from './form-fields/DeviceFormMedia';
-import NotesField from './form-fields/NotesField';
+import MemoField from './form-fields/MemoField';
 
 interface DeviceData {
   project: string;
@@ -87,9 +87,9 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         onFileChange={handleDevicePictureUpload}
       />
 
-      {/* Notes Section */}
-      <NotesField 
-        notes={deviceData.notes || ''}
+      {/* Notes Section - moved to the end (previously memo) */}
+      <MemoField 
+        memo={deviceData.notes || ''}
         handleChange={handleChange}
       />
     </div>

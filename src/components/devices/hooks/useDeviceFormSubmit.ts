@@ -22,6 +22,22 @@ export const useDeviceFormSubmit = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('=== FORM SUBMISSION DEBUG ===');
+    console.log('Original device data:', {
+      id: device.id,
+      type: device.type,
+      deviceType: device.deviceType,
+      modelNumber: device.modelNumber,
+      notes: device.notes
+    });
+    console.log('Form deviceData state:', {
+      type: deviceData.type,
+      deviceType: deviceData.deviceType,
+      modelNumber: deviceData.modelNumber,
+      notes: deviceData.notes
+    });
+    
+    // Validate fields before submitting - notes is no longer required, modelNumber is now required
     if (!validateDeviceFields(
       deviceData.imei, 
       deviceData.serialNumber, 
@@ -46,33 +62,58 @@ export const useDeviceFormSubmit = ({
     setIsSubmitting(true);
     
     try {
+      // Prepare update data, ensuring deviceType is properly included
       const updateData = {
         project,
         projectGroup,
         type,
-        deviceType,
+        deviceType, // Make sure deviceType is included in the update
         imei: imei || null,
         serialNumber: serialNumber || null,
         status: status as DeviceStatus,
         deviceStatus: deviceStatus || null,
         receivedDate,
-        modelNumber: modelNumber || null,
-        notes: notes || null,
+        modelNumber: modelNumber || null, // Include modelNumber in update
+        notes: notes || null, // Include notes in update
+        // Only include devicePicture if it has a value
         ...(devicePicture ? { devicePicture } : {}),
+        // Properly handle null values for assignedToId
         assignedToId: assignedToId ? String(assignedToId) : null
       };
       
+      // If device is assigned, ensure status is correct
       if (device.status === 'assigned') {
         updateData.status = 'assigned';
       }
       
+      console.log('=== UPDATE DATA BEING SENT ===');
+      console.log('Update data:', {
+        ...updateData,
+        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed'
+      });
+      console.log('Device Type specifically:', updateData.deviceType);
+      console.log('Device Category specifically:', updateData.type);
+      console.log('Model Number specifically:', updateData.modelNumber);
+      console.log('Notes specifically:', updateData.notes);
+      
+      // Update the device
       const updatedDevice = await dataService.updateDevice(device.id, updateData);
+      
+      console.log('=== RESPONSE FROM SERVER ===');
+      console.log('Updated device response:', updatedDevice ? {
+        id: updatedDevice.id,
+        type: updatedDevice.type,
+        deviceType: updatedDevice.deviceType,
+        modelNumber: updatedDevice.modelNumber,
+        notes: updatedDevice.notes
+      } : 'null');
       
       if (updatedDevice) {
         toast.success('Device updated successfully', {
           description: `${project} has been updated`
         });
         
+        // Call onDeviceUpdated which will now close the dialog
         if (onDeviceUpdated) {
           onDeviceUpdated();
         }
@@ -82,6 +123,7 @@ export const useDeviceFormSubmit = ({
         });
       }
     } catch (error) {
+      console.error('=== ERROR UPDATING DEVICE ===');
       console.error('Error updating device:', error);
       toast.error('Failed to update device');
     } finally {

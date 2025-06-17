@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { FileSpreadsheet } from 'lucide-react';
 import { toast } from 'sonner';
 import { Device, User } from '@/types';
-import { exportDevicesToExcel } from '@/utils/exports';
+import { exportDevicesToExcel } from '@/utils/exports'; // Updated import path
 import { useAuth } from '@/components/auth/AuthProvider';
 
 interface ExportButtonProps {
@@ -31,13 +31,9 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // Generate filename with current date in YYYYMMDD format
-      const currentDate = new Date();
-      const year = currentDate.getFullYear();
-      const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-      const day = String(currentDate.getDate()).padStart(2, '0');
-      const dateString = `${year}${month}${day}`;
-      const filename = exportFileName || `TecAce_SEA_DeviceList_${dateString}.xlsx`;
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const filename = exportFileName || `TecAce_SEA_DeviceList_${currentDate}.xlsx`;
       
       exportDevicesToExcel(devices, filename);
       toast.success('Device list exported successfully!');

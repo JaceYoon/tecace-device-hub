@@ -3,12 +3,12 @@ import React from 'react';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 
-interface NotesFieldProps {
-  notes: string;
+interface MemoFieldProps {
+  memo: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
-const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
+const MemoField: React.FC<MemoFieldProps> = ({ memo, handleChange }) => {
   return (
     <div className="space-y-2">
       <Label htmlFor="notes">Notes (Optional)</Label>
@@ -16,7 +16,7 @@ const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
         id="notes"
         name="notes"
         placeholder="Enter additional notes about this device..."
-        value={notes}
+        value={memo}
         onChange={handleChange}
         rows={3}
         className="resize-none"
@@ -29,4 +29,4 @@ const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
   );
 };
 
-export default NotesField;
+export default MemoField;
