@@ -65,10 +65,11 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         handleSelectChange={handleSelectChange}
       />
 
-      {/* Identifiers Section */}
+      {/* Identifiers Section - now includes Model Number */}
       <DeviceFormIdentifiers 
         serialNumber={deviceData.serialNumber || ''}
         imei={deviceData.imei || ''}
+        notes={deviceData.notes || ''}
         handleChange={handleChange}
       />
 
@@ -80,17 +81,15 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         handleDateChange={handleDateChange}
       />
 
-      {/* Memo Section */}
-      <MemoField 
-        memo={deviceData.memo || ''}
-        handleChange={handleChange}
-      />
-
-      {/* Media and Notes Section */}
+      {/* Media Section - without notes field */}
       <DeviceFormMedia 
         devicePicture={deviceData.devicePicture}
-        notes={deviceData.notes || ''}
         onFileChange={handleDevicePictureUpload}
+      />
+
+      {/* Memo Section - moved to the end */}
+      <MemoField 
+        memo={deviceData.memo || ''}
         handleChange={handleChange}
       />
     </div>

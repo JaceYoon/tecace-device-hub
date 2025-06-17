@@ -1,16 +1,19 @@
 
 import React from 'react';
 import DeviceIdentifiers from './DeviceIdentifiers';
+import NotesField from './NotesField';
 
 interface DeviceFormIdentifiersProps {
   serialNumber: string;
   imei: string;
+  notes: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
 const DeviceFormIdentifiers: React.FC<DeviceFormIdentifiersProps> = ({
   serialNumber,
   imei,
+  notes,
   handleChange
 }) => {
   return (
@@ -19,6 +22,10 @@ const DeviceFormIdentifiers: React.FC<DeviceFormIdentifiersProps> = ({
       <DeviceIdentifiers
         serialNumber={serialNumber}
         imei={imei}
+        handleChange={handleChange}
+      />
+      <NotesField
+        notes={notes}
         handleChange={handleChange}
       />
     </div>

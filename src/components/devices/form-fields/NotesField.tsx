@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 
 interface NotesFieldProps {
   notes: string;
@@ -11,16 +11,15 @@ interface NotesFieldProps {
 const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="notes">Notes *</Label>
-      <Textarea
+      <Label htmlFor="notes">Model Number</Label>
+      <Input
         id="notes"
         name="notes"
-        placeholder="Enter additional notes about this device"
+        placeholder="Enter model number"
         value={notes}
         onChange={handleChange}
-        rows={3}
         autoComplete="off"
-        aria-label="Device notes"
+        aria-label="Device model number"
       />
     </div>
   );
