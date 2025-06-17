@@ -9,9 +9,11 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, History, Monitor, User as UserIcon, ChevronDown, ChevronRight } from 'lucide-react';
+import { Search, History, Monitor, User as UserIcon, Eye } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 
 interface HistoryEntry {
   id: string;
@@ -422,19 +424,9 @@ const DeviceHistoryPage = () => {
                       </div>
                     ) : (
                       filteredDevicesWithHistory.map((deviceWithHistory) => (
-                        <div key={deviceWithHistory.device.id} className="border rounded-lg">
-                          <div 
-                            className="p-4 cursor-pointer hover:bg-muted/50 flex items-center justify-between"
-                            onClick={() => setExpandedDeviceId(
-                              expandedDeviceId === deviceWithHistory.device.id ? null : deviceWithHistory.device.id
-                            )}
-                          >
+                        <div key={deviceWithHistory.device.id} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              {expandedDeviceId === deviceWithHistory.device.id ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
                               <div>
                                 <div className="font-medium">{deviceWithHistory.device.project || 'Unknown Device'}</div>
                                 <div className="text-sm text-muted-foreground space-y-1">
@@ -454,44 +446,51 @@ const DeviceHistoryPage = () => {
                               <Badge variant="outline">
                                 {deviceWithHistory.history.length} rental{deviceWithHistory.history.length !== 1 ? 's' : ''}
                               </Badge>
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    View History
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[600px] max-h-[400px] overflow-y-auto">
+                                  <div className="space-y-4">
+                                    <h4 className="font-medium">Rental History - {deviceWithHistory.device.project}</h4>
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>User</TableHead>
+                                          <TableHead>Assigned</TableHead>
+                                          <TableHead>Returned</TableHead>
+                                          <TableHead>Status</TableHead>
+                                          <TableHead>Duration</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {deviceWithHistory.history.map((entry) => (
+                                          <TableRow key={entry.id}>
+                                            <TableCell>
+                                              <div className="font-medium">{entry.userName}</div>
+                                            </TableCell>
+                                            <TableCell>{formatDate(entry.assignedAt)}</TableCell>
+                                            <TableCell>{formatDate(entry.releasedAt)}</TableCell>
+                                            <TableCell>
+                                              <Badge variant={entry.isActive ? "default" : "secondary"}>
+                                                {entry.isActive ? "Active" : "Returned"}
+                                              </Badge>
+                                            </TableCell>
+                                            <TableCell>
+                                              <span className="text-sm">{calculateDuration(entry.assignedAt, entry.releasedAt)}</span>
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                           </div>
-                          
-                          {expandedDeviceId === deviceWithHistory.device.id && (
-                            <div className="border-t p-4">
-                              <h4 className="font-medium mb-3">Rental History</h4>
-                              <Table>
-                                <TableHeader>
-                                  <TableRow>
-                                    <TableHead>User</TableHead>
-                                    <TableHead>Assigned</TableHead>
-                                    <TableHead>Returned</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Duration</TableHead>
-                                  </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                  {deviceWithHistory.history.map((entry) => (
-                                    <TableRow key={entry.id}>
-                                      <TableCell>
-                                        <div className="font-medium">{entry.userName}</div>
-                                      </TableCell>
-                                      <TableCell>{formatDate(entry.assignedAt)}</TableCell>
-                                      <TableCell>{formatDate(entry.releasedAt)}</TableCell>
-                                      <TableCell>
-                                        <Badge variant={entry.isActive ? "default" : "secondary"}>
-                                          {entry.isActive ? "Active" : "Returned"}
-                                        </Badge>
-                                      </TableCell>
-                                      <TableCell>
-                                        <span className="text-sm">{calculateDuration(entry.assignedAt, entry.releasedAt)}</span>
-                                      </TableCell>
-                                    </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </div>
-                          )}
                         </div>
                       ))
                     )}
@@ -545,19 +544,9 @@ const DeviceHistoryPage = () => {
                       </div>
                     ) : (
                       filteredUsersWithHistory.map((userWithHistory) => (
-                        <div key={userWithHistory.user.id} className="border rounded-lg">
-                          <div 
-                            className="p-4 cursor-pointer hover:bg-muted/50 flex items-center justify-between"
-                            onClick={() => setExpandedUserId(
-                              expandedUserId === userWithHistory.user.id ? null : userWithHistory.user.id
-                            )}
-                          >
+                        <div key={userWithHistory.user.id} className="border rounded-lg p-4">
+                          <div className="flex items-center justify-between">
                             <div className="flex items-center gap-4">
-                              {expandedUserId === userWithHistory.user.id ? (
-                                <ChevronDown className="h-4 w-4" />
-                              ) : (
-                                <ChevronRight className="h-4 w-4" />
-                              )}
                               <div>
                                 <h3 className="text-lg font-semibold">{userWithHistory.user.name}</h3>
                                 <p className="text-sm text-muted-foreground">{userWithHistory.user.email}</p>
@@ -574,67 +563,76 @@ const DeviceHistoryPage = () => {
                                   {userWithHistory.previousDevices.length} Previous
                                 </Badge>
                               )}
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <Button variant="outline" size="sm">
+                                    <Eye className="h-4 w-4 mr-1" />
+                                    View Devices
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[500px] max-h-[400px] overflow-y-auto">
+                                  <div className="space-y-4">
+                                    <h4 className="font-medium">Device History - {userWithHistory.user.name}</h4>
+                                    
+                                    {userWithHistory.currentDevices.length > 0 && (
+                                      <div>
+                                        <h5 className="font-medium text-sm text-muted-foreground mb-2">Current Devices</h5>
+                                        <div className="space-y-2">
+                                          {userWithHistory.currentDevices.map((entry) => (
+                                            <div key={entry.id} className="flex items-center justify-between bg-muted/50 rounded p-3">
+                                              <div className="flex-1">
+                                                <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
+                                                <div className="text-sm text-muted-foreground space-y-1">
+                                                  {entry.device?.serialNumber && (
+                                                    <div>S/N: {entry.device.serialNumber}</div>
+                                                  )}
+                                                  {entry.device?.imei && (
+                                                    <div>IMEI: {entry.device.imei}</div>
+                                                  )}
+                                                  <div>Assigned: {formatDate(entry.assignedAt)}</div>
+                                                </div>
+                                              </div>
+                                              <Badge variant="default">Active</Badge>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {userWithHistory.previousDevices.length > 0 && (
+                                      <div>
+                                        <h5 className="font-medium text-sm text-muted-foreground mb-2">Previous Devices</h5>
+                                        <div className="space-y-2">
+                                          {userWithHistory.previousDevices
+                                            .sort((a, b) => new Date(b.releasedAt!).getTime() - new Date(a.releasedAt!).getTime())
+                                            .map((entry) => (
+                                              <div key={entry.id} className="flex items-center justify-between bg-muted/20 rounded p-3">
+                                                <div className="flex-1">
+                                                  <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
+                                                  <div className="text-sm text-muted-foreground space-y-1">
+                                                    {entry.device?.serialNumber && (
+                                                      <div>S/N: {entry.device.serialNumber}</div>
+                                                    )}
+                                                    {entry.device?.imei && (
+                                                      <div>IMEI: {entry.device.imei}</div>
+                                                    )}
+                                                    <div>
+                                                      {formatDate(entry.assignedAt)} - {formatDate(entry.releasedAt)} • 
+                                                      Duration: {calculateDuration(entry.assignedAt, entry.releasedAt)}
+                                                    </div>
+                                                  </div>
+                                                </div>
+                                                <Badge variant="secondary">Returned</Badge>
+                                              </div>
+                                            ))}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
                             </div>
                           </div>
-
-                          {expandedUserId === userWithHistory.user.id && (
-                            <div className="border-t p-4 space-y-4">
-                              {userWithHistory.currentDevices.length > 0 && (
-                                <div>
-                                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Current Devices</h4>
-                                  <div className="space-y-2">
-                                    {userWithHistory.currentDevices.map((entry) => (
-                                      <div key={entry.id} className="flex items-center justify-between bg-muted/50 rounded p-3">
-                                        <div className="flex-1">
-                                          <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
-                                          <div className="text-sm text-muted-foreground space-y-1">
-                                            {entry.device?.serialNumber && (
-                                              <div>S/N: {entry.device.serialNumber}</div>
-                                            )}
-                                            {entry.device?.imei && (
-                                              <div>IMEI: {entry.device.imei}</div>
-                                            )}
-                                            <div>Assigned: {formatDate(entry.assignedAt)}</div>
-                                          </div>
-                                        </div>
-                                        <Badge variant="default">Active</Badge>
-                                      </div>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {userWithHistory.previousDevices.length > 0 && (
-                                <div>
-                                  <h4 className="font-medium text-sm text-muted-foreground mb-2">Previous Devices</h4>
-                                  <div className="space-y-2">
-                                    {userWithHistory.previousDevices
-                                      .sort((a, b) => new Date(b.releasedAt!).getTime() - new Date(a.releasedAt!).getTime())
-                                      .map((entry) => (
-                                        <div key={entry.id} className="flex items-center justify-between bg-muted/20 rounded p-3">
-                                          <div className="flex-1">
-                                            <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
-                                            <div className="text-sm text-muted-foreground space-y-1">
-                                              {entry.device?.serialNumber && (
-                                                <div>S/N: {entry.device.serialNumber}</div>
-                                              )}
-                                              {entry.device?.imei && (
-                                                <div>IMEI: {entry.device.imei}</div>
-                                              )}
-                                              <div>
-                                                {formatDate(entry.assignedAt)} - {formatDate(entry.releasedAt)} • 
-                                                Duration: {calculateDuration(entry.assignedAt, entry.releasedAt)}
-                                              </div>
-                                            </div>
-                                          </div>
-                                          <Badge variant="secondary">Returned</Badge>
-                                        </div>
-                                      ))}
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
                         </div>
                       ))
                     )}
