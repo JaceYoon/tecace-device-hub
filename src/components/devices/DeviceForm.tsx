@@ -30,13 +30,13 @@ const DeviceForm: React.FC<DeviceFormProps> = ({ onDeviceAdded, onCancel }) => {
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validate fields before submitting
+    // Validate fields before submitting - notes is no longer required, modelNumber is now required
     if (!validateDeviceFields(
       deviceData.imei, 
       deviceData.serialNumber,
       deviceData.receivedDate,
       deviceData.deviceStatus,
-      deviceData.notes
+      deviceData.modelNumber
     )) {
       return;
     }

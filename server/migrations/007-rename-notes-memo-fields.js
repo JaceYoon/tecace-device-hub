@@ -14,6 +14,20 @@ module.exports = {
       console.log('Renaming memo column to notes...');
       await queryInterface.renameColumn('devices', 'memo', 'notes');
       
+      // Step 3: Drop the old memo column if it still exists
+      try {
+        console.log('Checking if memo column still exists...');
+        const tableDescription = await queryInterface.describeTable('devices');
+        if (tableDescription.memo) {
+          console.log('Dropping memo column...');
+          await queryInterface.removeColumn('devices', 'memo');
+        } else {
+          console.log('Memo column already removed or renamed');
+        }
+      } catch (memoError) {
+        console.log('Memo column does not exist or already removed');
+      }
+      
       console.log('✅ Migration completed successfully');
       
     } catch (error) {
@@ -26,6 +40,13 @@ module.exports = {
     console.log('=== REVERTING NOTES AND MEMO FIELDS ===');
     
     try {
+      // Add memo column back
+      console.log('Adding memo column back...');
+      await queryInterface.addColumn('devices', 'memo', {
+        type: Sequelize.TEXT,
+        allowNull: true
+      });
+      
       // Revert the changes
       console.log('Reverting notes column to memo...');
       await queryInterface.renameColumn('devices', 'notes', 'memo');

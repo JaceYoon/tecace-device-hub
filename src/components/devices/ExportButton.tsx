@@ -18,7 +18,7 @@ interface ExportButtonProps {
 const ExportButton: React.FC<ExportButtonProps> = ({
   devices,
   users,
-  exportFileName = 'Complete_Device_Inventory2',
+  exportFileName,
   variant = 'outline',
   className,
 }) => {
@@ -31,8 +31,10 @@ const ExportButton: React.FC<ExportButtonProps> = ({
         return;
       }
       
-      // Make sure the filename has the .xlsx extension
-      const filename = exportFileName.endsWith('.xlsx') ? exportFileName : `${exportFileName}.xlsx`;
+      // Generate filename with current date
+      const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      const filename = exportFileName || `TecAce_SEA_DeviceList_${currentDate}.xlsx`;
+      
       exportDevicesToExcel(devices, filename);
       toast.success('Device list exported successfully!');
     } catch (error) {

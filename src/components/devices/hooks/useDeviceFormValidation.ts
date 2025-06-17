@@ -7,7 +7,7 @@ export const validateDeviceFields = (
   serialNumber: string,
   receivedDate?: Date,
   deviceStatus?: string,
-  notes?: string
+  modelNumber?: string
 ) => {
   // Validate that either IMEI or Serial Number is provided
   if (!imei && !serialNumber) {
@@ -39,9 +39,9 @@ export const validateDeviceFields = (
     return false;
   }
   
-  // Validate Notes
-  if (!notes) {
-    toast.error('Notes are required');
+  // Validate Model Number (now required)
+  if (!modelNumber || modelNumber.trim() === '') {
+    toast.error('Model Number is required');
     return false;
   }
   

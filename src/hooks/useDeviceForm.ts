@@ -82,7 +82,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, modelNumber, notes, receivedDate, devicePicture } = deviceData;
     
-    // Validate fields before submitting
+    // Validate fields before submitting - notes is no longer required, modelNumber is now required
     if (!validateDeviceFields(imei, serialNumber, receivedDate, deviceStatus, modelNumber)) {
       return;
     }

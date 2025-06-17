@@ -6,11 +6,16 @@ import { applyBorders, styleHeaderRow, generateExcelFile } from './core';
 /**
  * Exports devices to an Excel file grouped by project
  */
-export const exportDevicesToExcel = (devices: Device[], filename: string = 'Complete_Device_Inventory2.xlsx'): void => {
+export const exportDevicesToExcel = (devices: Device[], filename?: string): void => {
   // If no devices, just return
   if (!devices || devices.length === 0) {
     return;
   }
+
+  // Generate filename with current date if not provided
+  const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const defaultFilename = `TecAce_SEA_DeviceList_${currentDate}.xlsx`;
+  const finalFilename = filename || defaultFilename;
 
   // Create a new workbook
   const workbook = new ExcelJS.Workbook();
@@ -45,12 +50,6 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   
   // Style the header row
   styleHeaderRow(worksheet.getRow(1));
-  
-  // Add autofilter to the header row
-  worksheet.autoFilter = {
-    from: { row: 1, column: 1 },
-    to: { row: 1, column: headers.length }
-  };
   
   // Current row index (starting after header)
   let rowIndex = 2;
@@ -148,7 +147,15 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     
     rowIndex++;
   });
+
+  // Add autofilter to the entire data range (including all rows with data)
+  if (rowIndex > 2) {
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: rowIndex - 1, column: headers.length }
+    };
+  }
   
   // Generate and download the Excel file
-  generateExcelFile(workbook, filename);
+  generateExcelFile(workbook, finalFilename);
 };

@@ -33,13 +33,13 @@ export const useDeviceFormSubmit = ({
       deviceType: deviceData.deviceType
     });
     
-    // Validate fields before submitting
+    // Validate fields before submitting - notes is no longer required, modelNumber is now required
     if (!validateDeviceFields(
       deviceData.imei, 
       deviceData.serialNumber, 
       deviceData.receivedDate,
       deviceData.deviceStatus,
-      deviceData.notes
+      deviceData.modelNumber
     )) {
       return;
     }
