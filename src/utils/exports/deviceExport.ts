@@ -13,8 +13,12 @@ export const exportDevicesToExcel = (devices: Device[], filename?: string): void
   }
 
   // Generate filename with current date if not provided
-  const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const defaultFilename = `TecAce_SEA_DeviceList_${currentDate}.xlsx`;
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = (currentDate.getMonth() + 1).toString().padStart(2, '0');
+  const day = currentDate.getDate().toString().padStart(2, '0');
+  const dateString = `${year}${month}${day}`;
+  const defaultFilename = `TecAce_SEA_DeviceList_${dateString}.xlsx`;
   const finalFilename = filename || defaultFilename;
 
   // Create a new workbook
