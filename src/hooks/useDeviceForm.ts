@@ -17,8 +17,8 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     imei: '',
     serialNumber: '',
     deviceStatus: '',
+    modelNumber: '',
     notes: '',
-    memo: '',
     receivedDate: undefined as Date | undefined,
     devicePicture: '',
   });
@@ -54,8 +54,8 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
       imei: '',
       serialNumber: '',
       deviceStatus: '',
+      modelNumber: '',
       notes: '',
-      memo: '',
       receivedDate: undefined,
       devicePicture: '',
     });
@@ -80,10 +80,10 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, notes, memo, receivedDate, devicePicture } = deviceData;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, modelNumber, notes, receivedDate, devicePicture } = deviceData;
     
     // Validate fields before submitting
-    if (!validateDeviceFields(imei, serialNumber, receivedDate, deviceStatus, notes)) {
+    if (!validateDeviceFields(imei, serialNumber, receivedDate, deviceStatus, modelNumber)) {
       return;
     }
     
@@ -114,8 +114,8 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
         imei: imei || undefined,
         serialNumber: serialNumber || undefined,
         deviceStatus: deviceStatus || undefined,
+        modelNumber: modelNumber || undefined,
         notes: notes || undefined,
-        memo: memo || undefined,
         receivedDate,
         addedById: user?.id,
         status: 'available',

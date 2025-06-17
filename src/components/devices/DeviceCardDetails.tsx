@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Device, User } from '@/types';
 import { Box, Calendar, Clock, FileText, Image, Download } from 'lucide-react';
@@ -61,12 +62,12 @@ const DeviceCardDetails: React.FC<DeviceCardDetailsProps> = ({
         </div>
       )}
 
-      {device.memo && (
+      {device.modelNumber && (
         <div className="flex items-start">
           <FileText className="h-4 w-4 mr-2 text-muted-foreground shrink-0 mt-0.5" />
           <div>
-            <p className="text-muted-foreground">Memo</p>
-            <p className="text-sm">{device.memo}</p>
+            <p className="text-muted-foreground">Model Number</p>
+            <p className="text-sm">{device.modelNumber}</p>
           </div>
         </div>
       )}
