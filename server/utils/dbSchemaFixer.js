@@ -53,47 +53,6 @@ const ensurePCDeviceType = async () => {
   }
 };
 
-const ensureMemoField = async () => {
-  try {
-    console.log('=== CHECKING MEMO FIELD ===');
-    
-    // Check if memo column exists in the devices table
-    const [results] = await db.sequelize.query(
-      "SHOW COLUMNS FROM devices WHERE Field = 'memo'",
-      { type: db.Sequelize.QueryTypes.SELECT }
-    );
-    
-    if (results && results.length > 0) {
-      console.log('✅ Memo field already exists in devices table');
-      return true;
-    }
-    
-    console.log('🔄 Memo field not found, adding it now...');
-    
-    try {
-      // Add memo column to the devices table
-      await db.sequelize.query(
-        "ALTER TABLE devices ADD COLUMN memo TEXT NULL COMMENT 'Memo field for additional device information'"
-      );
-      
-      console.log('✅ Memo field successfully added to devices table');
-      return true;
-    } catch (addError) {
-      // Check if the error is due to duplicate column (column already exists)
-      if (addError.original && addError.original.code === 'ER_DUP_FIELDNAME') {
-        console.log('✅ Memo field already exists (detected during add attempt)');
-        return true;
-      } else {
-        // This is a different error, re-throw it
-        throw addError;
-      }
-    }
-    
-  } catch (error) {
-    console.error('❌ Error ensuring memo field:', error);
-    console.error('❌ Error message:', error.message);
-    return false;
-  }
-};
+// Remove the ensureMemoField function since we're handling this in migrations now
 
-module.exports = { ensurePCDeviceType, ensureMemoField };
+module.exports = { ensurePCDeviceType };

@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -10,7 +9,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const authRoutes = require('./routes/auth.routes');
 const deviceRoutes = require('./routes/device.routes');
 const userRoutes = require('./routes/user.routes');
-const { ensurePCDeviceType, ensureMemoField } = require('./utils/dbSchemaFixer');
+const { ensurePCDeviceType } = require('./utils/dbSchemaFixer');
 const { runMigrations } = require('./utils/migrationRunner');
 
 const app = express();
@@ -130,9 +129,6 @@ db.sequelize.sync({ force: shouldForceSync })
 
     // Ensure PC device type exists
     await ensurePCDeviceType();
-
-    // Ensure memo field exists
-    await ensureMemoField();
 
     // Check if admin account exists, create one if it doesn't
     try {
