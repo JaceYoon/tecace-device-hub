@@ -69,7 +69,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       <DeviceFormIdentifiers 
         serialNumber={deviceData.serialNumber || ''}
         imei={deviceData.imei || ''}
-        notes={deviceData.modelNumber || ''}
+        modelNumber={deviceData.modelNumber || ''}
         handleChange={handleChange}
       />
 

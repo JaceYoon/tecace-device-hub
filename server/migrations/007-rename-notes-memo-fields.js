@@ -3,30 +3,20 @@
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    console.log('=== RENAMING NOTES AND MEMO FIELDS ===');
+    console.log('=== RENAMING NOTES FIELD AND ADDING NEW NOTES COLUMN ===');
     
     try {
       // Step 1: Rename 'notes' column to 'modelNumber'
       console.log('Renaming notes column to modelNumber...');
       await queryInterface.renameColumn('devices', 'notes', 'modelNumber');
       
-      // Step 2: Rename 'memo' column to 'notes'
-      console.log('Renaming memo column to notes...');
-      await queryInterface.renameColumn('devices', 'memo', 'notes');
-      
-      // Step 3: Drop the old memo column if it still exists
-      try {
-        console.log('Checking if memo column still exists...');
-        const tableDescription = await queryInterface.describeTable('devices');
-        if (tableDescription.memo) {
-          console.log('Dropping memo column...');
-          await queryInterface.removeColumn('devices', 'memo');
-        } else {
-          console.log('Memo column already removed or renamed');
-        }
-      } catch (memoError) {
-        console.log('Memo column does not exist or already removed');
-      }
+      // Step 2: Add new 'notes' column (since memo doesn't exist in production)
+      console.log('Adding new notes column...');
+      await queryInterface.addColumn('devices', 'notes', {
+        type: Sequelize.TEXT,
+        allowNull: true,
+        comment: 'Notes field for additional device information'
+      });
       
       console.log('✅ Migration completed successfully');
       
@@ -37,21 +27,15 @@ module.exports = {
   },
 
   down: async (queryInterface, Sequelize) => {
-    console.log('=== REVERTING NOTES AND MEMO FIELDS ===');
+    console.log('=== REVERTING NOTES AND MODEL NUMBER FIELDS ===');
     
     try {
-      // Add memo column back
-      console.log('Adding memo column back...');
-      await queryInterface.addColumn('devices', 'memo', {
-        type: Sequelize.TEXT,
-        allowNull: true
-      });
+      // Remove the new notes column
+      console.log('Removing notes column...');
+      await queryInterface.removeColumn('devices', 'notes');
       
-      // Revert the changes
-      console.log('Reverting notes column to memo...');
-      await queryInterface.renameColumn('devices', 'notes', 'memo');
-      
-      console.log('Reverting modelNumber column to notes...');
+      // Revert modelNumber back to notes
+      console.log('Reverting modelNumber column back to notes...');
       await queryInterface.renameColumn('devices', 'modelNumber', 'notes');
       
       console.log('✅ Migration reverted successfully');

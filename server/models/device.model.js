@@ -62,12 +62,12 @@ module.exports = (sequelize, Sequelize) => {
     modelNumber: {
       type: Sequelize.TEXT,
       allowNull: true,
-      comment: 'Model number of the device'
+      comment: 'Model number of the device (renamed from notes)'
     },
     notes: {
       type: Sequelize.TEXT,
       allowNull: true,
-      comment: 'Notes field for additional device information'
+      comment: 'Notes field for additional device information (new field replacing memo)'
     },
     devicePicture: {
       type: Sequelize.TEXT('long'),

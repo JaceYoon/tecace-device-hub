@@ -6,14 +6,14 @@ import NotesField from './NotesField';
 interface DeviceFormIdentifiersProps {
   serialNumber: string;
   imei: string;
-  notes: string;
+  modelNumber: string;
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
 }
 
 const DeviceFormIdentifiers: React.FC<DeviceFormIdentifiersProps> = ({
   serialNumber,
   imei,
-  notes,
+  modelNumber,
   handleChange
 }) => {
   return (
@@ -25,7 +25,7 @@ const DeviceFormIdentifiers: React.FC<DeviceFormIdentifiersProps> = ({
         handleChange={handleChange}
       />
       <NotesField
-        notes={notes}
+        notes={modelNumber}
         handleChange={handleChange}
       />
     </div>
