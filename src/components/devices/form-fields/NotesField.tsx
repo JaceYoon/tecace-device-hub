@@ -11,15 +11,15 @@ interface NotesFieldProps {
 const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="modelNumber">Model Number</Label>
+      <Label htmlFor="notes">Notes</Label>
       <Input
-        id="modelNumber"
-        name="modelNumber"
-        placeholder="Enter model number"
+        id="notes"
+        name="notes"
+        placeholder="Enter notes"
         value={notes}
         onChange={handleChange}
         autoComplete="off"
-        aria-label="Device model number"
+        aria-label="Device notes"
       />
     </div>
   );

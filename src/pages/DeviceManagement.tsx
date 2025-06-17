@@ -12,7 +12,7 @@ import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Cloc
 import RequestList from '@/components/devices/RequestList';
 import { dataService } from '@/services/data.service';
 import StatusSummary from '@/components/devices/StatusSummary';
-import { exportDevicesToExcel } from '@/utils/exportUtils';
+import { exportDevicesToExcel } from '@/utils/exports';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -30,14 +30,12 @@ const DeviceManagement: React.FC = () => {
       return;
     }
     
-    // Only admin can access this page
     if (!isAdmin) {
       navigate('/dashboard');
       toast.error('Only administrators can access this page');
       return;
     }
 
-    // Set active tab based on URL parameter
     if (tabParam && ['all-devices', 'assigned', 'pending', 'special'].includes(tabParam)) {
       setActiveTab(tabParam);
     }
@@ -61,7 +59,6 @@ const DeviceManagement: React.FC = () => {
 
   const handleTabChange = (value: string) => {
     setActiveTab(value);
-    // Update URL with the tab parameter
     navigate(`/device-management?tab=${value}`);
   };
 
@@ -87,7 +84,6 @@ const DeviceManagement: React.FC = () => {
     );
   }
 
-  // If user is not authorized, return null (redirection happens in useEffect)
   if (!isAdmin) return null;
 
   return (
@@ -192,7 +188,7 @@ const DeviceManagement: React.FC = () => {
                 title="Pending Device Requests"
                 onRequestProcessed={handleRequestProcessed}
                 refreshTrigger={refreshTrigger}
-                pendingOnly={true} // Set to true to show only pending requests
+                pendingOnly={true}
               />
             </div>
           </TabsContent>
