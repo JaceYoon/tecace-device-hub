@@ -15,12 +15,12 @@ export const dataStore = {
   addUser: userStore.addUser.bind(userStore),
   updateUser: userStore.updateUser.bind(userStore),
 
-  // Device methods
-  getDevices: deviceStore.getDevices.bind(deviceStore),
-  getDeviceById: deviceStore.getDeviceById.bind(deviceStore),
-  addDevice: deviceStore.addDevice.bind(deviceStore),
-  updateDevice: deviceStore.updateDevice.bind(deviceStore),
-  deleteDevice: deviceStore.deleteDevice.bind(deviceStore),
+  // Device methods - now using the new deviceStore
+  getDevices: () => import('@/services/data.service').then(({ dataService }) => dataService.getDevices()),
+  getDeviceById: deviceStore.getDeviceById,
+  addDevice: (device: any) => import('@/services/data.service').then(({ dataService }) => dataService.addDevice(device)),
+  updateDevice: deviceStore.updateDevice,
+  deleteDevice: (id: string) => import('@/services/data.service').then(({ dataService }) => dataService.deleteDevice(id)),
 
   // Request methods
   getRequests: requestStore.getRequests.bind(requestStore),
