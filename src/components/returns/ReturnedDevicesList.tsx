@@ -4,9 +4,22 @@ import { Device } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { format } from 'date-fns';
-import { RefreshCw, Search } from 'lucide-react';
+import { RefreshCw, Search, RotateCcw } from 'lucide-react';
 import StatusBadge from '@/components/ui/StatusBadge';
 import { Input } from '@/components/ui/input';
+import { dataService } from '@/services/data.service';
+import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 interface ReturnedDevicesListProps {
   returnedDevices: Device[];
@@ -21,6 +34,7 @@ const ReturnedDevicesList: React.FC<ReturnedDevicesListProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredDevices, setFilteredDevices] = useState<Device[]>(returnedDevices);
+  const [processingDeviceId, setProcessingDeviceId] = useState<string | null>(null);
 
   // Effect to log devices count when it changes
   useEffect(() => {
@@ -56,6 +70,29 @@ const ReturnedDevicesList: React.FC<ReturnedDevicesListProps> = ({
   const handleRefresh = () => {
     console.log('Manual refresh requested');
     onRefresh();
+  };
+
+  const handleMakeAvailable = async (device: Device) => {
+    if (processingDeviceId) {
+      return; // Prevent multiple simultaneous requests
+    }
+
+    setProcessingDeviceId(device.id);
+    
+    try {
+      await dataService.devices.update(device.id, {
+        status: 'available',
+        returnDate: null
+      });
+      
+      toast.success(`${device.project} is now available for assignment`);
+      onRefresh(); // Refresh the data to reflect changes
+    } catch (error) {
+      console.error('Error making device available:', error);
+      toast.error('Failed to update device status');
+    } finally {
+      setProcessingDeviceId(null);
+    }
   };
 
   return (
@@ -123,6 +160,37 @@ const ReturnedDevicesList: React.FC<ReturnedDevicesListProps> = ({
                       <span>{device.projectGroup}</span>
                     </div>
                   )}
+                </div>
+                
+                <div className="mt-4">
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full"
+                        disabled={processingDeviceId === device.id}
+                      >
+                        <RotateCcw className="mr-2 h-4 w-4" />
+                        {processingDeviceId === device.id ? 'Processing...' : 'Make Available'}
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Make Device Available</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to make "{device.project}" available for assignment? 
+                          This will change its status from "returned" to "available" and clear the return date.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleMakeAvailable(device)}>
+                          Confirm
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </div>
               </CardContent>
             </Card>
