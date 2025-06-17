@@ -26,11 +26,15 @@ export const useDeviceFormSubmit = ({
     console.log('Original device data:', {
       id: device.id,
       type: device.type,
-      deviceType: device.deviceType
+      deviceType: device.deviceType,
+      modelNumber: device.modelNumber,
+      notes: device.notes
     });
     console.log('Form deviceData state:', {
       type: deviceData.type,
-      deviceType: deviceData.deviceType
+      deviceType: deviceData.deviceType,
+      modelNumber: deviceData.modelNumber,
+      notes: deviceData.notes
     });
     
     // Validate fields before submitting - notes is no longer required, modelNumber is now required
@@ -46,7 +50,7 @@ export const useDeviceFormSubmit = ({
     
     const { 
       project, projectGroup, type, deviceType, imei, serialNumber, 
-      status, deviceStatus, receivedDate, notes, devicePicture,
+      status, deviceStatus, receivedDate, modelNumber, notes, devicePicture,
       assignedTo, assignedToId 
     } = deviceData;
     
@@ -69,7 +73,8 @@ export const useDeviceFormSubmit = ({
         status: status as DeviceStatus,
         deviceStatus: deviceStatus || null,
         receivedDate,
-        notes: notes || null,
+        modelNumber: modelNumber || null, // Include modelNumber in update
+        notes: notes || null, // Include notes in update
         // Only include devicePicture if it has a value
         ...(devicePicture ? { devicePicture } : {}),
         // Properly handle null values for assignedToId
@@ -88,6 +93,8 @@ export const useDeviceFormSubmit = ({
       });
       console.log('Device Type specifically:', updateData.deviceType);
       console.log('Device Category specifically:', updateData.type);
+      console.log('Model Number specifically:', updateData.modelNumber);
+      console.log('Notes specifically:', updateData.notes);
       
       // Update the device
       const updatedDevice = await dataService.updateDevice(device.id, updateData);
@@ -96,7 +103,9 @@ export const useDeviceFormSubmit = ({
       console.log('Updated device response:', updatedDevice ? {
         id: updatedDevice.id,
         type: updatedDevice.type,
-        deviceType: updatedDevice.deviceType
+        deviceType: updatedDevice.deviceType,
+        modelNumber: updatedDevice.modelNumber,
+        notes: updatedDevice.notes
       } : 'null');
       
       if (updatedDevice) {

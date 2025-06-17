@@ -33,6 +33,7 @@ const DeviceMemoDialog: React.FC<DeviceMemoDialogProps> = ({
     setIsSubmitting(true);
     
     try {
+      console.log('Updating device notes:', { deviceId: device.id, notes });
       await dataService.updateDevice(device.id, { notes });
       toast.success('Notes updated successfully');
       setOpen(false);
