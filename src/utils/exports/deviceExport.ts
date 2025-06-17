@@ -13,12 +13,8 @@ export const exportDevicesToExcel = (devices: Device[], filename?: string): void
   }
 
   // Generate filename with current date if not provided
-  const currentDate = new Date();
-  const year = currentDate.getFullYear();
-  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-  const day = String(currentDate.getDate()).padStart(2, '0');
-  const dateString = `${year}${month}${day}`;
-  const defaultFilename = `TecAce_SEA_DeviceList_${dateString}.xlsx`;
+  const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+  const defaultFilename = `TecAce_SEA_DeviceList_${currentDate}.xlsx`;
   const finalFilename = filename || defaultFilename;
 
   // Create a new workbook
@@ -76,7 +72,7 @@ export const exportDevicesToExcel = (devices: Device[], filename?: string): void
       };
       
       const dataRow = worksheet.addRow({
-        project: device.project,
+        project: device.project, // Using project name instead of projectGroup
         type: displayType,
         imei: device.imei || '',
         sn: device.serialNumber || '',
@@ -106,7 +102,7 @@ export const exportDevicesToExcel = (devices: Device[], filename?: string): void
     
     // Add project group summary row with Total devices count
     const summaryRow = worksheet.addRow([
-      projectGroup,
+      projectGroup, // Project group name
       `Total devices = ${groupDevices.length}`,
       '', '', '', '',
       '', ''
@@ -120,21 +116,24 @@ export const exportDevicesToExcel = (devices: Device[], filename?: string): void
       cell.fill = {
         type: 'pattern',
         pattern: 'solid',
-        fgColor: { argb: 'FFB8C4E4' }
+        fgColor: { argb: 'FFB8C4E4' } // Light blue background (#b8c4e4)
       };
       
+      // Set default font color to #9C5700
       cell.font = {
-        color: { argb: 'FF9C5700' },
-        bold: false
+        color: { argb: 'FF9C5700' }, // Orange text (#9C5700)
+        bold: false // Default to non-bold
       };
       
+      // Cell alignment to center
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
       
       applyBorders(cell);
       
+      // Special formatting for "Total devices = X" cell
       if (colNumber === 2) {
         cell.font = {
-          color: { argb: 'FF9C5700' },
+          color: { argb: 'FF9C5700' }, // Orange text (#9C5700)
           bold: true
         };
       }
