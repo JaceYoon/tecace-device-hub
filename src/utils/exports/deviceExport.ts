@@ -1,4 +1,3 @@
-
 import ExcelJS from 'exceljs';
 import { Device } from '@/types';
 import { applyBorders, styleHeaderRow, generateExcelFile } from './core';
@@ -13,8 +12,12 @@ export const exportDevicesToExcel = (devices: Device[], filename?: string): void
   }
 
   // Generate filename with current date if not provided
-  const currentDate = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-  const defaultFilename = `TecAce_SEA_DeviceList_${currentDate}.xlsx`;
+  const currentDate = new Date();
+  const year = currentDate.getFullYear();
+  const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const day = String(currentDate.getDate()).padStart(2, '0');
+  const dateString = `${year}${month}${day}`;
+  const defaultFilename = `TecAce_SEA_DeviceList_${dateString}.xlsx`;
   const finalFilename = filename || defaultFilename;
 
   // Create a new workbook

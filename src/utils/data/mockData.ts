@@ -1,13 +1,12 @@
 
 import { Device, DeviceRequest, User } from '@/types';
 
-// Mock user data
 export const mockUsers: User[] = [
   {
     id: '1',
     name: 'Admin User',
     email: 'admin@tecace.com',
-    role: 'TPM', // Changed from 'manager' to 'TPM'
+    role: 'TPM',
     avatarUrl: 'https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff'
   },
   {
@@ -26,12 +25,11 @@ export const mockUsers: User[] = [
   }
 ];
 
-// Mock device data
 export const mockDevices: Device[] = [
   {
     id: '1',
     project: 'iPhone 13 Pro',
-    projectGroup: 'Eureka',  // Added projectGroup
+    projectGroup: 'Eureka',
     type: 'Smartphone',
     imei: '123456789012345',
     serialNumber: 'ABCD1234XYZ',
@@ -45,8 +43,8 @@ export const mockDevices: Device[] = [
   {
     id: '2',
     project: 'MacBook Pro M1',
-    projectGroup: 'Eureka',  // Added projectGroup
-    type: 'Other', // Changed from "Laptop" to "Other"
+    projectGroup: 'Eureka',
+    type: 'Other',
     imei: '987654321098765',
     serialNumber: 'MBP20221234',
     status: 'assigned',
@@ -60,7 +58,7 @@ export const mockDevices: Device[] = [
   {
     id: '3',
     project: 'iPad Air',
-    projectGroup: 'Eureka',  // Added projectGroup
+    projectGroup: 'Eureka',
     type: 'Tablet',
     imei: '567890123456789',
     serialNumber: 'IPAD2022987',
@@ -75,7 +73,7 @@ export const mockDevices: Device[] = [
   {
     id: '4',
     project: 'Samsung Galaxy S22',
-    projectGroup: 'Eureka',  // Added projectGroup
+    projectGroup: 'Eureka',
     type: 'Smartphone',
     imei: '678901234567890',
     serialNumber: 'SGS22ABC123',
@@ -90,8 +88,8 @@ export const mockDevices: Device[] = [
   {
     id: '5',
     project: 'Dell XPS 13',
-    projectGroup: 'Eureka',  // Added projectGroup
-    type: 'Other', // Changed from "Laptop" to "Other"
+    projectGroup: 'Eureka',
+    type: 'Other',
     imei: '345678901234567',
     serialNumber: 'XPS13DEF456',
     status: 'available',
@@ -104,7 +102,6 @@ export const mockDevices: Device[] = [
   }
 ];
 
-// Mock device request data
 export const mockDeviceRequests: DeviceRequest[] = [
   {
     id: '1',
