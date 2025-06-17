@@ -28,7 +28,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
   
   // Define headers
   const headers = [
-    'Project', 'Device Type', 'IMEI', 'S/N', 'Notes', 'Received Date', 'Device Status', 'Returned Date'
+    'Project', 'Device Type', 'IMEI', 'S/N', 'Model Number', 'Received Date', 'Device Status', 'Returned Date'
   ];
   
   // Define column widths with updated values
@@ -37,7 +37,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
     { header: headers[1], key: 'type', width: 18.5 },
     { header: headers[2], key: 'imei', width: 22.8 },
     { header: headers[3], key: 'sn', width: 20 },
-    { header: headers[4], key: 'notes', width: 33.3 },
+    { header: headers[4], key: 'modelNumber', width: 33.3 },
     { header: headers[5], key: 'receivedDate', width: 17.9 },
     { header: headers[6], key: 'deviceStatus', width: 33.5 },
     { header: headers[7], key: 'returnedDate', width: 22.5 }
@@ -77,7 +77,7 @@ export const exportDevicesToExcel = (devices: Device[], filename: string = 'Comp
         type: displayType,
         imei: device.imei || '',
         sn: device.serialNumber || '',
-        notes: device.notes || '',
+        modelNumber: device.modelNumber || '',
         receivedDate: formatDate(device.receivedDate),
         deviceStatus: device.deviceStatus || '',
         returnedDate: device.status === 'returned' && device.returnDate ? formatDate(device.returnDate) : ''

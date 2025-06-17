@@ -12,8 +12,8 @@ export interface DeviceFormData {
   status: DeviceStatus;
   deviceStatus: string;
   receivedDate?: Date;
+  modelNumber: string;
   notes: string;
-  memo: string;
   devicePicture: string;
   assignedTo?: any;
   assignedToId?: string;

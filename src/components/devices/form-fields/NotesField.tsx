@@ -11,10 +11,10 @@ interface NotesFieldProps {
 const NotesField: React.FC<NotesFieldProps> = ({ notes, handleChange }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="notes">Model Number</Label>
+      <Label htmlFor="modelNumber">Model Number</Label>
       <Input
-        id="notes"
-        name="notes"
+        id="modelNumber"
+        name="modelNumber"
         placeholder="Enter model number"
         value={notes}
         onChange={handleChange}

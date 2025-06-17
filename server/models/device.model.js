@@ -59,14 +59,15 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.DATE,
       allowNull: true
     },
-    notes: {
-      type: Sequelize.TEXT,
-      allowNull: true
-    },
-    memo: {
+    modelNumber: {
       type: Sequelize.TEXT,
       allowNull: true,
-      comment: 'Memo field for additional device information'
+      comment: 'Model number of the device'
+    },
+    notes: {
+      type: Sequelize.TEXT,
+      allowNull: true,
+      comment: 'Notes field for additional device information'
     },
     devicePicture: {
       type: Sequelize.TEXT('long'),

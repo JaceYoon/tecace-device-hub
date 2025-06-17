@@ -17,8 +17,8 @@ interface DeviceData {
   status?: string;
   deviceStatus?: string;
   receivedDate?: Date;
+  modelNumber?: string;
   notes?: string;
-  memo?: string;
   devicePicture?: string;
   assignedTo?: any;
   assignedToId?: string;
@@ -69,7 +69,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       <DeviceFormIdentifiers 
         serialNumber={deviceData.serialNumber || ''}
         imei={deviceData.imei || ''}
-        notes={deviceData.notes || ''}
+        notes={deviceData.modelNumber || ''}
         handleChange={handleChange}
       />
 
@@ -81,15 +81,15 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         handleDateChange={handleDateChange}
       />
 
-      {/* Media Section - without notes field */}
+      {/* Media Section */}
       <DeviceFormMedia 
         devicePicture={deviceData.devicePicture}
         onFileChange={handleDevicePictureUpload}
       />
 
-      {/* Memo Section - moved to the end */}
+      {/* Notes Section - moved to the end (previously memo) */}
       <MemoField 
-        memo={deviceData.memo || ''}
+        memo={deviceData.notes || ''}
         handleChange={handleChange}
       />
     </div>

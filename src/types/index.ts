@@ -1,3 +1,4 @@
+
 export type UserRole = 'admin' | 'TPM' | 'Software Engineer' | 'user';
 
 export interface User {
@@ -26,8 +27,8 @@ export interface Device {
   deviceStatus?: string;
   receivedDate?: Date;
   returnDate?: Date;
-  notes?: string;
-  memo?: string; // Added memo field
+  modelNumber?: string; // Renamed from notes
+  notes?: string; // Renamed from memo
   devicePicture?: string; // Base64 encoded device image
   addedBy?: string;
   addedById?: string;

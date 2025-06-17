@@ -8,7 +8,7 @@ const Op = db.Sequelize.Op;
 // Create a new device
 exports.create = async (req, res) => {
   try {
-    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, receivedDate, notes, memo, devicePicture } = req.body;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, receivedDate, modelNumber, notes, devicePicture } = req.body;
 
     console.log('Creating device with data:', JSON.stringify({
       ...req.body,
@@ -39,8 +39,8 @@ exports.create = async (req, res) => {
       serialNumber: serialNumber || null,
       deviceStatus: deviceStatus || null,
       receivedDate: formattedReceivedDate,
+      modelNumber: modelNumber || null,
       notes: notes || null,
-      memo: memo || null,
       devicePicture: devicePicture || null,
       addedById: req.user ? req.user.id : null,
       status: 'available'
@@ -203,7 +203,7 @@ exports.findOne = async (req, res) => {
 // Update a device
 exports.update = async (req, res) => {
   try {
-    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, returnDate, notes, memo, assignedToId, devicePicture } = req.body;
+    const { project, projectGroup, type, deviceType, imei, serialNumber, status, deviceStatus, receivedDate, returnDate, modelNumber, notes, assignedToId, devicePicture } = req.body;
     
     console.log('=== DEVICE UPDATE REQUEST ===');
     console.log('Device ID:', req.params.id);
@@ -297,8 +297,8 @@ exports.update = async (req, res) => {
       deviceStatus: deviceStatus !== undefined ? deviceStatus : device.deviceStatus,
       receivedDate: formattedReceivedDate !== undefined ? formattedReceivedDate : device.receivedDate,
       returnDate: formattedReturnDate !== undefined ? formattedReturnDate : device.returnDate,
+      modelNumber: modelNumber !== undefined ? modelNumber : device.modelNumber,
       notes: notes !== undefined ? notes : device.notes,
-      memo: memo !== undefined ? memo : device.memo,
       devicePicture: updatedDevicePicture,
       assignedToId: updatedAssignedToId
     };

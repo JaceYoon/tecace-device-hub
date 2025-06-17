@@ -11,16 +11,16 @@ interface MemoFieldProps {
 const MemoField: React.FC<MemoFieldProps> = ({ memo, handleChange }) => {
   return (
     <div className="space-y-2">
-      <Label htmlFor="memo">Memo</Label>
+      <Label htmlFor="notes">Notes</Label>
       <Textarea
-        id="memo"
-        name="memo"
-        placeholder="Enter memo for this device"
+        id="notes"
+        name="notes"
+        placeholder="Enter notes for this device"
         value={memo}
         onChange={handleChange}
         rows={3}
         autoComplete="off"
-        aria-label="Device memo"
+        aria-label="Device notes"
       />
     </div>
   );

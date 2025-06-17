@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Device, User } from '@/types';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
@@ -160,7 +161,7 @@ const DeviceCard: React.FC<DeviceCardProps> = ({
             </CardContent>
 
             <CardFooter className="pt-2 flex flex-col space-y-2 mt-auto">
-              {/* Add Memo Button */}
+              {/* Add Notes Button */}
               <div className="w-full">
                 <DeviceMemoDialog 
                   device={device} 
