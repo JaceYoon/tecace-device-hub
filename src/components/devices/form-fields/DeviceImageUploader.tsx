@@ -26,6 +26,12 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     const file = e.target.files?.[0];
     if (!file) return;
 
+    console.log('File selected:', {
+      name: file.name,
+      size: file.size,
+      type: file.type
+    });
+
     // 파일 크기 체크 (5MB 제한)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB');
@@ -63,6 +69,13 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       reader.onload = async (event) => {
         const base64Data = event.target?.result as string;
         
+        console.log('Uploading image with data:', {
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          base64Length: base64Data.length
+        });
+        
         const response = await fetch(`/api/devices/${deviceId}/images`, {
           method: 'POST',
           headers: {
@@ -76,11 +89,15 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         });
 
         if (response.ok) {
+          const result = await response.json();
+          console.log('Upload successful:', result);
           toast.success('Image uploaded successfully');
           if (onImageUpdate) {
             onImageUpdate();
           }
         } else {
+          const error = await response.text();
+          console.error('Upload failed:', error);
           toast.error('Failed to upload image');
         }
       };
@@ -105,30 +122,40 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   };
 
   const removeImage = () => {
+    console.log('Removing image - before:', { previewImage: !!previewImage });
+    
     setPreviewImage(null);
     
     // 파일 입력 필드 리셋
     const fileInput = document.getElementById('devicePicture-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
+      console.log('File input cleared');
     }
 
-    // 폼 데이터에서도 이미지 제거 - 빈 이벤트 객체 생성
+    // 폼 데이터에서도 이미지 제거 - 올바른 이벤트 객체 생성
     if (onFileChange) {
+      const mockInput = document.createElement('input');
+      mockInput.type = 'file';
+      mockInput.name = 'devicePicture';
+      mockInput.value = '';
+      
       const emptyEvent = {
-        target: {
-          name: 'devicePicture',
-          value: '',
-          files: null
-        }
+        target: mockInput,
+        currentTarget: mockInput
       } as React.ChangeEvent<HTMLInputElement>;
+      
+      console.log('Calling onFileChange with empty event');
       onFileChange(emptyEvent);
     }
 
     // 디바이스 편집 모드에서 이미지 업데이트 콜백 호출
     if (onImageUpdate) {
+      console.log('Calling onImageUpdate');
       onImageUpdate();
     }
+
+    console.log('Image removal complete');
   };
 
   return (

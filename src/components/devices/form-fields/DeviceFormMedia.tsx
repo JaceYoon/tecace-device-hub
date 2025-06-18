@@ -18,7 +18,8 @@ const DeviceFormMedia: React.FC<DeviceFormMediaProps> = ({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     console.log('DeviceFormMedia: Image change event received', {
       fileName: e.target.files?.[0]?.name || 'No file',
-      value: e.target.value
+      value: e.target.value,
+      hasFiles: !!e.target.files?.length
     });
     onFileChange(e);
   };
