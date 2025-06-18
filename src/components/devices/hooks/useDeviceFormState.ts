@@ -1,60 +1,22 @@
 
 import { useState, useEffect } from 'react';
-import { Device, DeviceTypeValue, DeviceTypeCategory, DeviceStatus } from '@/types';
+import { Device } from '@/types';
+import { DeviceFormData } from './useDeviceFormHandlers';
 
-export const useDeviceFormState = (device: Device) => {
-  // Make sure we have a valid deviceType value from the allowed options
-  const deviceTypeValue = device.deviceType && 
-    (device.deviceType === 'C-Type' || device.deviceType === 'Lunchbox') ? 
-    device.deviceType : 'C-Type';
-  
-  // Ensure device.type is one of the allowed values
-  const ensureValidType = (type: string): DeviceTypeValue => {
-    const validTypes: DeviceTypeValue[] = [
-      'Smartphone',
-      'Tablet',
-      'Smartwatch',
-      'Box',
-      'PC',
-      'Accessory',
-      'Other'
-    ];
-    
-    return validTypes.includes(type as DeviceTypeValue) 
-      ? (type as DeviceTypeValue) 
-      : 'Other';
-  };
+interface UseDeviceFormStateProps {
+  device: Device;
+}
 
-  // Ensure we have a valid DeviceStatus
-  const ensureValidStatus = (status: string): DeviceStatus => {
-    const validStatuses: DeviceStatus[] = [
-      'available',
-      'assigned',
-      'missing',
-      'stolen',
-      'returned',
-      'dead',
-      'pending'
-    ];
-    
-    return validStatuses.includes(status as DeviceStatus)
-      ? (status as DeviceStatus)
-      : 'available';
-  };
-
-  // Make sure to set the initial project group from the device
-  const initialProjectGroup = device.projectGroup && device.projectGroup.trim() !== '' 
-    ? device.projectGroup 
-    : '';
-
-  const [deviceData, setDeviceData] = useState({
-    project: device.project,
-    projectGroup: initialProjectGroup,
-    type: ensureValidType(device.type),
-    deviceType: deviceTypeValue as DeviceTypeCategory,
+export const useDeviceFormState = ({ device }: UseDeviceFormStateProps) => {
+  const [deviceData, setDeviceData] = useState<DeviceFormData>({
+    id: device.id || '', // Add id to form data
+    project: device.project || '',
+    projectGroup: device.projectGroup || '',
+    type: device.type,
+    deviceType: device.deviceType || 'C-Type',
     imei: device.imei || '',
     serialNumber: device.serialNumber || '',
-    status: ensureValidStatus(device.status),
+    status: device.status,
     deviceStatus: device.deviceStatus || '',
     receivedDate: device.receivedDate,
     modelNumber: device.modelNumber || '',
@@ -62,8 +24,35 @@ export const useDeviceFormState = (device: Device) => {
     devicePicture: device.devicePicture || '',
     assignedTo: device.assignedTo,
     assignedToId: device.assignedToId,
-    assignedToName: device.assignedToName,
+    assignedToName: device.assignedToName
   });
+
+  // Update form data when device prop changes
+  useEffect(() => {
+    console.log('useDeviceFormState: Device changed, updating form data', {
+      deviceId: device.id,
+      deviceProject: device.project
+    });
+    
+    setDeviceData({
+      id: device.id || '', // Include id in the update
+      project: device.project || '',
+      projectGroup: device.projectGroup || '',
+      type: device.type,
+      deviceType: device.deviceType || 'C-Type',
+      imei: device.imei || '',
+      serialNumber: device.serialNumber || '',
+      status: device.status,
+      deviceStatus: device.deviceStatus || '',
+      receivedDate: device.receivedDate,
+      modelNumber: device.modelNumber || '',
+      notes: device.notes || '',
+      devicePicture: device.devicePicture || '',
+      assignedTo: device.assignedTo,
+      assignedToId: device.assignedToId,
+      assignedToName: device.assignedToName
+    });
+  }, [device]);
 
   return {
     deviceData,

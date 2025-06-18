@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { DeviceTypeValue, DeviceStatus } from '@/types';
 
 export interface DeviceFormData {
+  id?: string; // Add id field
   project: string;
   projectGroup: string;
   type: DeviceTypeValue;
