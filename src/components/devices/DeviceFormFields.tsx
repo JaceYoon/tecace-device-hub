@@ -8,6 +8,7 @@ import DeviceFormMedia from './form-fields/DeviceFormMedia';
 import MemoField from './form-fields/MemoField';
 
 interface DeviceData {
+  id?: string;
   project: string;
   projectGroup: string;
   type: DeviceTypeValue;
@@ -76,7 +77,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       {/* Media Section */}
       <DeviceFormMedia 
         devicePicture={deviceData.devicePicture}
-        deviceId={isEditMode ? deviceData.assignedToId : undefined}
+        deviceId={isEditMode ? deviceData.id : undefined}
         onFileChange={handleFileChange}
       />
 

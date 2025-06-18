@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Image, Upload, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { dataService } from '@/services/data.service';
 
 interface DeviceImageUploaderProps {
   devicePicture?: string;
@@ -124,7 +125,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     document.body.removeChild(link);
   };
 
-  const removeImage = () => {
+  const removeImage = async () => {
     console.log('Removing image - clearing all states');
     
     // 미리보기 제거
@@ -137,17 +138,43 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       console.log('File input cleared');
     }
 
+    // 데이터베이스에서 devicePicture를 null로 업데이트 (편집 모드일 때)
+    if (deviceId) {
+      try {
+        console.log('Updating database to remove devicePicture');
+        await dataService.updateDevice(deviceId, { devicePicture: null });
+        toast.success('Image removed successfully');
+        console.log('Database updated successfully');
+      } catch (error) {
+        console.error('Failed to update database:', error);
+        toast.error('Failed to remove image from database');
+      }
+    }
+
     // onFileChange에 빈 이벤트 전달해서 폼 데이터에서 이미지 제거
     if (onFileChange) {
       console.log('Calling onFileChange to clear form data');
       
-      // 빈 파일로 이벤트 생성
       const clearEvent = {
         target: {
           files: null,
           value: '',
           name: 'devicePicture-upload'
-        }
+        },
+        preventDefault: () => {},
+        stopPropagation: () => {},
+        nativeEvent: new Event('change'),
+        currentTarget: null as any,
+        bubbles: false,
+        cancelable: false,
+        defaultPrevented: false,
+        eventPhase: 0,
+        isTrusted: false,
+        timeStamp: Date.now(),
+        type: 'change',
+        isDefaultPrevented: () => false,
+        isPropagationStopped: () => false,
+        persist: () => {}
       } as React.ChangeEvent<HTMLInputElement>;
       
       onFileChange(clearEvent);
