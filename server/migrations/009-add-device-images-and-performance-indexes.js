@@ -25,16 +25,16 @@ module.exports = {
           INDEX \`idx_uploaded_at\` (\`uploaded_at\`),
           
           FOREIGN KEY (\`device_id\`) REFERENCES \`devices\`(\`id\`) ON DELETE CASCADE
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci
       `);
       
-      // 2. projects 정규화 테이블 생성
+      // 2. projects 정규화 테이블 생성 (기존 devices 테이블과 동일한 collation 사용)
       console.log('📁 Creating projects table...');
       await queryInterface.sequelize.query(`
         CREATE TABLE IF NOT EXISTS \`projects\` (
           \`id\` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-          \`name\` VARCHAR(255) NOT NULL,
-          \`project_group\` VARCHAR(255) NOT NULL,
+          \`name\` VARCHAR(255) NOT NULL COLLATE utf8mb4_uca1400_ai_ci,
+          \`project_group\` VARCHAR(255) NOT NULL COLLATE utf8mb4_uca1400_ai_ci,
           \`description\` TEXT,
           \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
           \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -42,7 +42,7 @@ module.exports = {
           UNIQUE KEY \`idx_name_group\` (\`name\`, \`project_group\`),
           INDEX \`idx_project_group\` (\`project_group\`),
           INDEX \`idx_name\` (\`name\`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci
       `);
       
       // 3. devices 테이블 성능 개선 인덱스 추가 (안전하게 하나씩)
@@ -142,11 +142,12 @@ module.exports = {
         }
       }
       
-      // 8. project_id 값 업데이트 (기존 데이터 기반)
+      // 8. project_id 값 업데이트 (기존 데이터 기반) - collation 문제 해결
       console.log('🔄 Updating project_id values...');
       await queryInterface.sequelize.query(`
         UPDATE \`devices\` d
-        INNER JOIN \`projects\` p ON d.\`project\` = p.\`name\` AND d.\`projectGroup\` = p.\`project_group\`
+        INNER JOIN \`projects\` p ON d.\`project\` COLLATE utf8mb4_uca1400_ai_ci = p.\`name\` 
+          AND d.\`projectGroup\` COLLATE utf8mb4_uca1400_ai_ci = p.\`project_group\`
         SET d.\`project_id\` = p.\`id\`
         WHERE d.\`project_id\` IS NULL
       `);
