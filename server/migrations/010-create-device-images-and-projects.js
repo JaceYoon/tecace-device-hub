@@ -1,3 +1,4 @@
+
 const { QueryTypes } = require('sequelize');
 
 module.exports = {
@@ -5,7 +6,7 @@ module.exports = {
     console.log('=== MIGRATION 010: CREATING DEVICE IMAGES TABLE AND PERFORMANCE INDEXES ===');
     
     try {
-      // 1. device_images 테이블 생성 (간소화된 버전)
+      // 1. Create device_images table (simplified version)
       console.log('📷 Creating device_images table...');
       await queryInterface.sequelize.query(`
         CREATE TABLE IF NOT EXISTS \`device_images\` (
@@ -22,7 +23,7 @@ module.exports = {
       `);
       console.log('✅ device_images table created');
 
-      // 2. projects 테이블 생성
+      // 2. Create projects table
       console.log('📁 Creating projects table...');
       await queryInterface.sequelize.query(`
         CREATE TABLE IF NOT EXISTS \`projects\` (
@@ -40,7 +41,7 @@ module.exports = {
       `);
       console.log('✅ projects table created');
 
-      // 3. 기존 project 데이터 마이그레이션 (안전한 방식으로)
+      // 3. Migrate existing project data (safe approach)
       console.log('📊 Migrating existing project data...');
       try {
         await queryInterface.sequelize.query(`
@@ -54,10 +55,10 @@ module.exports = {
         console.log('⚠️ Project data migration skipped or failed:', error.message);
       }
 
-      // 4. devices 테이블에 project_id 컬럼 추가 (존재하지 않는 경우만)
+      // 4. Add project_id column to devices table (if not exists)
       console.log('🔗 Adding project_id column to devices...');
       try {
-        // 컬럼 존재 여부를 안전하게 확인
+        // Safely check if column exists
         const columnExists = await queryInterface.sequelize.query(`
           SELECT COUNT(*) as count FROM information_schema.columns 
           WHERE table_schema = DATABASE() 
@@ -71,7 +72,7 @@ module.exports = {
           `);
           console.log('✅ Added project_id column');
           
-          // 인덱스 추가
+          // Add index
           await queryInterface.sequelize.query(`
             ALTER TABLE \`devices\` ADD INDEX \`idx_project_id\` (\`project_id\`)
           `);
@@ -83,7 +84,7 @@ module.exports = {
         console.log('⚠️ Could not add project_id column:', error.message);
       }
 
-      // 5. project_id 값 업데이트 (안전한 방식으로)
+      // 5. Update project_id values (safe approach)
       console.log('🔄 Updating project_id values...');
       try {
         await queryInterface.sequelize.query(`
@@ -99,7 +100,7 @@ module.exports = {
         console.log('⚠️ Could not update project_id values:', error.message);
       }
 
-      // 6. 기존 devicePicture 데이터를 device_images로 마이그레이션
+      // 6. Migrate existing devicePicture data to device_images
       console.log('🖼️ Migrating existing device pictures...');
       try {
         const devicesWithPictures = await queryInterface.sequelize.query(`
@@ -124,7 +125,7 @@ module.exports = {
         console.log('⚠️ Could not migrate device pictures:', error.message);
       }
 
-      // 7. 성능 인덱스 추가
+      // 7. Add performance indexes
       console.log('🚀 Adding performance indexes...');
       const deviceIndexes = [
         { name: 'idx_project_status', columns: '(`project`, `status`)' },
@@ -166,7 +167,7 @@ module.exports = {
     console.log('=== ROLLING BACK MIGRATION 010 ===');
     
     try {
-      // 인덱스 제거
+      // Remove indexes
       const deviceIndexes = [
         'idx_serial_number', 'idx_imei', 'idx_updated_at', 'idx_created_at',
         'idx_status_created', 'idx_assigned_status', 'idx_device_type_status',
@@ -182,14 +183,14 @@ module.exports = {
         }
       }
       
-      // project_id 컬럼 제거
+      // Remove project_id column
       try {
         await queryInterface.sequelize.query(`ALTER TABLE \`devices\` DROP COLUMN \`project_id\``);
       } catch (error) {
         console.log('⚠️ project_id column may not exist, continuing...');
       }
       
-      // 테이블 제거
+      // Drop tables
       await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`device_images\``);
       await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`projects\``);
       

@@ -42,19 +42,19 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       return;
     }
 
-    // 파일 크기 체크 (5MB 제한)
+    // Check file size (5MB limit)
     if (file.size > 5 * 1024 * 1024) {
       toast.error('Image size must be less than 5MB');
       return;
     }
 
-    // 이미지 파일 타입 체크
+    // Check image file type
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file');
       return;
     }
 
-    // 미리보기 생성
+    // Generate preview
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64Result = event.target?.result as string;
@@ -63,13 +63,13 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     };
     reader.readAsDataURL(file);
 
-    // 폼 데이터용 파일 변경 이벤트 호출
+    // Call file change event for form data
     if (onFileChange) {
       console.log('Calling onFileChange with file data');
       onFileChange(e);
     }
 
-    // 디바이스 ID가 있고 실제 업로드를 원하는 경우
+    // If deviceId exists and wants actual upload
     if (deviceId) {
       await uploadImageToDeviceImages(file);
     }
@@ -89,7 +89,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           base64Length: base64Data.length
         });
         
-        // deviceId가 문자열인지 확인하고 정수로 변환 가능한지 체크
+        // Ensure deviceId is a valid integer
         const deviceIdInt = parseInt(deviceId!, 10);
         if (isNaN(deviceIdInt)) {
           console.error('❌ Invalid deviceId for upload:', deviceId);
@@ -150,20 +150,20 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     console.log('DeviceId type:', typeof deviceId);
     console.log('Is deviceId truthy:', !!deviceId);
     
-    // 미리보기 제거
+    // Remove preview
     setPreviewImage(null);
     
-    // 파일 입력 필드 리셋
+    // Reset file input field
     const fileInput = document.getElementById('devicePicture-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
       console.log('File input cleared');
     }
 
-    // 편집 모드일 때 서버에서 완전 삭제
+    // For edit mode, completely delete from server
     if (deviceId) {
       try {
-        // deviceId가 유효한 숫자인지 확인
+        // Ensure deviceId is a valid number
         const deviceIdInt = parseInt(deviceId, 10);
         if (isNaN(deviceIdInt)) {
           console.error('❌ Invalid deviceId for removal:', deviceId);
@@ -188,16 +188,16 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 
         if (response.ok) {
           const result = await response.json();
-          console.log('✅ 서버 삭제 성공:', result);
+          console.log('✅ Server deletion successful:', result);
           toast.success('Image completely removed from database');
         } else {
           const errorText = await response.text();
-          console.error('❌ 서버 삭제 실패 - Status:', response.status);
-          console.error('❌ 서버 삭제 실패 - Error text:', errorText);
+          console.error('❌ Server deletion failed - Status:', response.status);
+          console.error('❌ Server deletion failed - Error text:', errorText);
           toast.error('Failed to remove image from database');
         }
       } catch (error) {
-        console.error('❌ 완전 삭제 API 호출 실패:', error);
+        console.error('❌ Complete deletion API call failed:', error);
         console.error('Error type:', typeof error);
         console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
         toast.error('Failed to remove image');
@@ -206,7 +206,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       console.log('No deviceId provided, skipping server deletion');
     }
 
-    // 폼 데이터에서도 이미지 제거
+    // Also remove image from form data
     if (onFileChange) {
       console.log('Calling onFileChange to clear form data');
       
@@ -235,7 +235,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       onFileChange(clearEvent);
     }
 
-    // 콜백 호출
+    // Call callback
     if (onImageUpdate) {
       console.log('Calling onImageUpdate');
       onImageUpdate();

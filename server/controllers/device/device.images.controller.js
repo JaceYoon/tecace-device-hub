@@ -3,7 +3,7 @@ const db = require("../../models");
 const DeviceImage = db.deviceImage;
 const Device = db.device;
 
-// 디바이스에 이미지 추가
+// Add image to device
 exports.addDeviceImage = async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -13,7 +13,7 @@ exports.addDeviceImage = async (req, res) => {
     console.log('DeviceId from params (raw):', deviceId);
     console.log('DeviceId type:', typeof deviceId);
     
-    // deviceId를 정수로 변환하고 유효성 검사
+    // Parse deviceId to integer and validate
     const deviceIdInt = parseInt(deviceId, 10);
     console.log('DeviceId parsed to int:', deviceIdInt);
     console.log('Is valid number:', !isNaN(deviceIdInt));
@@ -26,7 +26,7 @@ exports.addDeviceImage = async (req, res) => {
     console.log('Has imageData:', !!imageData);
     console.log('ImageData length:', imageData ? imageData.length : 0);
 
-    // 디바이스 존재 확인 (정수 ID로)
+    // Check if device exists (using integer ID)
     const device = await Device.findByPk(deviceIdInt);
     if (!device) {
       console.log('❌ Device not found for ID:', deviceIdInt);
@@ -35,9 +35,9 @@ exports.addDeviceImage = async (req, res) => {
 
     console.log('✅ Device found:', device.id, 'Type:', typeof device.id);
 
-    // 새 이미지 생성 (deviceId를 정수로 저장)
+    // Create new image (store deviceId as integer)
     const deviceImage = await DeviceImage.create({
-      deviceId: deviceIdInt,  // 정수로 저장
+      deviceId: deviceIdInt,  // Store as integer
       imageData
     });
 
@@ -58,7 +58,7 @@ exports.addDeviceImage = async (req, res) => {
   }
 };
 
-// 디바이스의 모든 이미지 조회
+// Get all images for a device
 exports.getDeviceImages = async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -76,7 +76,7 @@ exports.getDeviceImages = async (req, res) => {
     }
 
     const images = await DeviceImage.findAll({
-      where: { deviceId: deviceIdInt },  // 정수로 검색
+      where: { deviceId: deviceIdInt },  // Search with integer
       order: [['uploadedAt', 'DESC']]
     });
 
@@ -96,7 +96,7 @@ exports.getDeviceImages = async (req, res) => {
   }
 };
 
-// 디바이스의 모든 이미지 삭제 (완전 제거)
+// Delete all images for a device (complete removal)
 exports.deleteDeviceImage = async (req, res) => {
   try {
     const { deviceId } = req.params;
@@ -114,7 +114,7 @@ exports.deleteDeviceImage = async (req, res) => {
       return res.status(400).json({ message: "Invalid device ID" });
     }
 
-    // 1. devices 테이블에서 devicePicture를 null로 업데이트
+    // 1. Update devicePicture to null in devices table
     const device = await Device.findByPk(deviceIdInt);
     if (!device) {
       console.log('❌ Device not found for ID:', deviceIdInt);
@@ -124,14 +124,14 @@ exports.deleteDeviceImage = async (req, res) => {
     console.log('✅ Device found:', device.id, 'Type:', typeof device.id);
     console.log('Current devicePicture exists:', !!device.devicePicture);
 
-    // devicePicture를 null로 업데이트
+    // Update devicePicture to null
     const updateResult = await device.update({ devicePicture: null });
     console.log('✅ Device devicePicture updated to null:', updateResult.devicePicture === null);
 
-    // 2. device_images 테이블에서 해당 디바이스의 모든 이미지 레코드 삭제
+    // 2. Delete all image records for this device from device_images table
     console.log('Searching for images with deviceId:', deviceIdInt);
     
-    // 먼저 삭제할 이미지들을 조회해보자
+    // First find images to delete
     const imagesToDelete = await DeviceImage.findAll({
       where: { deviceId: deviceIdInt }
     });
