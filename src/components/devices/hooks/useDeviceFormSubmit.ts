@@ -28,13 +28,15 @@ export const useDeviceFormSubmit = ({
       type: device.type,
       deviceType: device.deviceType,
       modelNumber: device.modelNumber,
-      notes: device.notes
+      notes: device.notes,
+      devicePicture: device.devicePicture ? 'HAS_IMAGE' : 'NO_IMAGE'
     });
     console.log('Form deviceData state:', {
       type: deviceData.type,
       deviceType: deviceData.deviceType,
       modelNumber: deviceData.modelNumber,
-      notes: deviceData.notes
+      notes: deviceData.notes,
+      devicePicture: deviceData.devicePicture ? 'HAS_IMAGE' : 'NO_IMAGE'
     });
     
     // Validate fields before submitting - notes is no longer required, modelNumber is now required
@@ -75,8 +77,8 @@ export const useDeviceFormSubmit = ({
         receivedDate,
         modelNumber: modelNumber || null, // Include modelNumber in update
         notes: notes || null, // Include notes in update
-        // Only include devicePicture if it has a value
-        ...(devicePicture ? { devicePicture } : {}),
+        // FIXED: Always include devicePicture field to handle deletion
+        devicePicture: devicePicture || null, // Send null to delete, or image data to update
         // Properly handle null values for assignedToId
         assignedToId: assignedToId ? String(assignedToId) : null
       };
@@ -89,12 +91,15 @@ export const useDeviceFormSubmit = ({
       console.log('=== UPDATE DATA BEING SENT ===');
       console.log('Update data:', {
         ...updateData,
-        devicePicture: updateData.devicePicture ? '[IMAGE_DATA]' : 'Not changed'
+        devicePicture: updateData.devicePicture ? 
+          (updateData.devicePicture === null ? 'DELETION_REQUESTED' : '[IMAGE_DATA]') : 
+          'DELETION_REQUESTED'
       });
       console.log('Device Type specifically:', updateData.deviceType);
       console.log('Device Category specifically:', updateData.type);
       console.log('Model Number specifically:', updateData.modelNumber);
       console.log('Notes specifically:', updateData.notes);
+      console.log('DevicePicture field:', updateData.devicePicture === null ? 'NULL (DELETE)' : updateData.devicePicture ? 'HAS_DATA' : 'EMPTY');
       
       // Update the device
       const updatedDevice = await dataService.updateDevice(device.id, updateData);
