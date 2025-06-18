@@ -99,6 +99,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         
         console.log('Using deviceId for upload:', deviceIdInt);
         
+        // FIXED: Use relative path instead of hardcoded localhost:8080
         const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'POST',
           headers: {
@@ -193,6 +194,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         
         console.log(`Calling DELETE API: /api/devices/${deviceIdInt}/images`);
         
+        // FIXED: Use relative path instead of hardcoded localhost:8080
         const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'DELETE',
           headers: {
