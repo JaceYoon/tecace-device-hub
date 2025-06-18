@@ -64,19 +64,48 @@ export const useDeviceFormSubmit = ({
     setIsSubmitting(true);
     
     try {
-      // Prepare update data, ensuring deviceType is properly included
+      // Check if image is being removed (was present but now empty/null)
+      const isImageBeingRemoved = device.devicePicture && (!devicePicture || devicePicture === '');
+      
+      console.log('=== IMAGE REMOVAL CHECK ===');
+      console.log('Device had image:', !!device.devicePicture);
+      console.log('Form has image:', !!devicePicture);
+      console.log('Is image being removed:', isImageBeingRemoved);
+      
+      // If image is being removed, delete it from device_images table first
+      if (isImageBeingRemoved) {
+        console.log('Deleting image from device_images table for device:', device.id);
+        try {
+          const response = await fetch(`/api/devices/${device.id}/images`, {
+            method: 'DELETE',
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (response.ok) {
+            console.log('✅ Successfully deleted image from device_images table');
+          } else {
+            console.error('❌ Failed to delete image from device_images table:', response.status);
+          }
+        } catch (error) {
+          console.error('❌ Error deleting image from device_images table:', error);
+        }
+      }
+      
+      // Prepare update data
       const updateData = {
         project,
         projectGroup,
         type,
-        deviceType, // Make sure deviceType is included in the update
+        deviceType,
         imei: imei || null,
         serialNumber: serialNumber || null,
         status: status as DeviceStatus,
         deviceStatus: deviceStatus || null,
         receivedDate,
-        modelNumber: modelNumber || null, // Include modelNumber in update
-        notes: notes || null, // Include notes in update
+        modelNumber: modelNumber || null,
+        notes: notes || null,
         // FIXED: Always include devicePicture field to handle deletion
         devicePicture: devicePicture || null, // Send null to delete, or image data to update
         // Properly handle null values for assignedToId
