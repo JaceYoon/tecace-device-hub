@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Image, Upload, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
-import { dataService } from '@/services/data.service';
 
 interface DeviceImageUploaderProps {
   devicePicture?: string;
@@ -126,7 +125,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   };
 
   const removeImage = async () => {
-    console.log('Removing image - clearing all states');
+    console.log('=== 완전 이미지 제거 시작 ===');
     
     // 미리보기 제거
     setPreviewImage(null);
@@ -138,20 +137,34 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       console.log('File input cleared');
     }
 
-    // 데이터베이스에서 devicePicture를 null로 업데이트 (편집 모드일 때)
+    // 편집 모드일 때 서버에서 완전 삭제
     if (deviceId) {
       try {
-        console.log('Updating database to remove devicePicture');
-        await dataService.updateDevice(deviceId, { devicePicture: null });
-        toast.success('Image removed successfully');
-        console.log('Database updated successfully');
+        console.log(`서버에서 완전 이미지 삭제 요청 - deviceId: ${deviceId}`);
+        
+        const response = await fetch(`/api/devices/${deviceId}/images`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          console.log('서버 삭제 성공:', result);
+          toast.success('Image completely removed from database');
+        } else {
+          const error = await response.text();
+          console.error('서버 삭제 실패:', error);
+          toast.error('Failed to remove image from database');
+        }
       } catch (error) {
-        console.error('Failed to update database:', error);
-        toast.error('Failed to remove image from database');
+        console.error('완전 삭제 API 호출 실패:', error);
+        toast.error('Failed to remove image');
       }
     }
 
-    // onFileChange에 빈 이벤트 전달해서 폼 데이터에서 이미지 제거
+    // 폼 데이터에서도 이미지 제거
     if (onFileChange) {
       console.log('Calling onFileChange to clear form data');
       
@@ -180,13 +193,13 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       onFileChange(clearEvent);
     }
 
-    // 디바이스 편집 모드에서 이미지 업데이트 콜백 호출
+    // 콜백 호출
     if (onImageUpdate) {
-      console.log('Calling onImageUpdate for removal');
+      console.log('Calling onImageUpdate');
       onImageUpdate();
     }
 
-    console.log('Image removal complete');
+    console.log('=== 완전 이미지 제거 완료 ===');
   };
 
   return (

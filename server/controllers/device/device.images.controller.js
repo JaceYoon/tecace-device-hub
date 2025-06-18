@@ -18,8 +18,7 @@ exports.addDeviceImage = async (req, res) => {
     // 새 이미지 생성
     const deviceImage = await DeviceImage.create({
       deviceId: parseInt(deviceId),
-      imageData,
-      uploadedAt: new Date()
+      imageData
     });
 
     res.status(201).json({
@@ -57,24 +56,40 @@ exports.getDeviceImages = async (req, res) => {
   }
 };
 
-// 특정 이미지 삭제
+// 디바이스의 모든 이미지 삭제 (완전 제거)
 exports.deleteDeviceImage = async (req, res) => {
   try {
-    const { imageId } = req.params;
+    const { deviceId } = req.params;
+    const deviceIdInt = parseInt(deviceId);
 
-    const image = await DeviceImage.findByPk(imageId);
-    if (!image) {
-      return res.status(404).json({ message: "Image not found" });
+    console.log(`완전 이미지 삭제 시작 - deviceId: ${deviceIdInt}`);
+
+    // 1. devices 테이블에서 devicePicture를 null로 업데이트
+    const device = await Device.findByPk(deviceIdInt);
+    if (!device) {
+      return res.status(404).json({ message: "Device not found" });
     }
 
-    await image.destroy();
+    await device.update({ devicePicture: null });
+    console.log("devices 테이블의 devicePicture를 null로 업데이트 완료");
 
-    res.json({ message: "Image deleted successfully" });
+    // 2. device_images 테이블에서 모든 이미지 레코드 삭제
+    const deletedCount = await DeviceImage.destroy({
+      where: { deviceId: deviceIdInt }
+    });
+
+    console.log(`device_images에서 ${deletedCount}개 레코드 삭제 완료`);
+
+    res.json({ 
+      message: "All device images deleted successfully",
+      deletedFromDevices: true,
+      deletedFromDeviceImages: deletedCount
+    });
 
   } catch (error) {
-    console.error("Error deleting device image:", error);
+    console.error("Error deleting device images:", error);
     res.status(500).json({ 
-      message: "Error deleting device image",
+      message: "Error deleting device images",
       error: error.message 
     });
   }

@@ -39,4 +39,9 @@ router.put('/requests/:id', isAuthenticated, deviceController.processRequest);
 // Cancel a device request (only the requester can cancel)
 router.put('/requests/:id/cancel', isAuthenticated, deviceController.cancelRequest);
 
+// Device image routes
+router.post('/:id/images', isAuthenticated, deviceController.addDeviceImage);
+router.get('/:id/images', isAuthenticated, deviceController.getDeviceImages);
+router.delete('/:id/images', isAuthenticated, deviceController.deleteDeviceImage);
+
 module.exports = router;
