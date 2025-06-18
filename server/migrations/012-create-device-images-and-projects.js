@@ -3,7 +3,7 @@ const { QueryTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    console.log('=== MIGRATION 011: CREATING DEVICE IMAGES TABLE AND PROJECTS ===');
+    console.log('=== MIGRATION 012: CREATING DEVICE IMAGES TABLE AND PROJECTS ===');
     
     try {
       // 1. Drop existing device_images table if it exists
@@ -160,16 +160,16 @@ module.exports = {
         }
       }
 
-      console.log('✅ Migration 011 completed successfully');
+      console.log('✅ Migration 012 completed successfully');
       
     } catch (error) {
-      console.error('❌ Migration 011 failed:', error);
+      console.error('❌ Migration 012 failed:', error);
       throw error;
     }
   },
 
   down: async (queryInterface, Sequelize) => {
-    console.log('=== ROLLING BACK MIGRATION 011 ===');
+    console.log('=== ROLLING BACK MIGRATION 012 ===');
     
     try {
       // Remove indexes
@@ -199,10 +199,10 @@ module.exports = {
       await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`device_images\``);
       await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`projects\``);
       
-      console.log('✅ Migration 011 rollback completed');
+      console.log('✅ Migration 012 rollback completed');
       
     } catch (error) {
-      console.error('❌ Migration 011 rollback failed:', error);
+      console.error('❌ Migration 012 rollback failed:', error);
       throw error;
     }
   }
