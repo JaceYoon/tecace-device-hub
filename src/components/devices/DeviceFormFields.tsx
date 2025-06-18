@@ -31,7 +31,7 @@ interface DeviceFormFieldsProps {
   handleChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void;
   handleSelectChange: (value: string, field: string) => void;
   handleDateChange: (date: Date | undefined, field: string) => void;
-  handleFileChange?: (file: File | null, field: string) => void;
+  handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEditMode?: boolean;
 }
 
@@ -44,14 +44,6 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleFileChange,
   isEditMode = false
 }) => {
-  // Handle device picture file upload
-  const handleDevicePictureUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    if (file && handleFileChange) {
-      handleFileChange(file, 'devicePicture');
-    }
-  };
-
   return (
     <div className="space-y-6" role="group" aria-label="Device information form">
       {/* Basic Info Section */}
@@ -84,7 +76,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
       {/* Media Section */}
       <DeviceFormMedia 
         devicePicture={deviceData.devicePicture}
-        onFileChange={handleDevicePictureUpload}
+        deviceId={isEditMode ? deviceData.assignedToId : undefined}
+        onFileChange={handleFileChange}
       />
 
       {/* Notes Section - moved to the end (previously memo) */}

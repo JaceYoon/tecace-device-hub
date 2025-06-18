@@ -61,20 +61,28 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     });
   };
 
-  const handleFileChange = (file: File | null, field: string) => {
-    if (!file) return;
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] || null;
     
-    if (field === 'devicePicture') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const base64String = e.target?.result as string;
-        setDeviceData(prev => ({
-          ...prev,
-          devicePicture: base64String
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file || e.target.value === '') {
+      // 파일이 없거나 입력값이 비어있으면 이미지를 제거
+      setDeviceData(prev => ({
+        ...prev,
+        devicePicture: ''
+      }));
+      return;
     }
+    
+    // Handle device picture image upload
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64String = event.target?.result as string;
+      setDeviceData(prev => ({
+        ...prev,
+        devicePicture: base64String
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
