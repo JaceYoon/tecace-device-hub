@@ -29,7 +29,8 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     console.log('File select event:', {
       hasFile: !!file,
       fileName: file?.name || 'none',
-      deviceId: deviceId
+      deviceId: deviceId,
+      deviceIdType: typeof deviceId
     });
 
     if (!file) {
@@ -84,10 +85,21 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         console.log('=== UPLOAD DEBUG ===');
         console.log('Uploading image to device_images table', {
           deviceId: deviceId,
+          deviceIdType: typeof deviceId,
           base64Length: base64Data.length
         });
         
-        const response = await fetch(`/api/devices/${deviceId}/images`, {
+        // deviceId가 문자열인지 확인하고 정수로 변환 가능한지 체크
+        const deviceIdInt = parseInt(deviceId!, 10);
+        if (isNaN(deviceIdInt)) {
+          console.error('❌ Invalid deviceId for upload:', deviceId);
+          toast.error('Invalid device ID');
+          return;
+        }
+        
+        console.log('Using deviceId for upload:', deviceIdInt);
+        
+        const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -101,20 +113,20 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 
         if (response.ok) {
           const result = await response.json();
-          console.log('Upload successful:', result);
+          console.log('✅ Upload successful:', result);
           toast.success('Image uploaded successfully');
           if (onImageUpdate) {
             onImageUpdate();
           }
         } else {
           const error = await response.text();
-          console.error('Upload failed:', error);
+          console.error('❌ Upload failed:', error);
           toast.error('Failed to upload image');
         }
       };
       reader.readAsDataURL(file);
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('❌ Error uploading image:', error);
       toast.error('Failed to upload image');
     } finally {
       setIsUploading(false);
@@ -151,11 +163,20 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     // 편집 모드일 때 서버에서 완전 삭제
     if (deviceId) {
       try {
-        console.log(`=== CALLING DELETE API ===`);
-        console.log(`URL: /api/devices/${deviceId}/images`);
-        console.log(`Method: DELETE`);
+        // deviceId가 유효한 숫자인지 확인
+        const deviceIdInt = parseInt(deviceId, 10);
+        if (isNaN(deviceIdInt)) {
+          console.error('❌ Invalid deviceId for removal:', deviceId);
+          toast.error('Invalid device ID');
+          return;
+        }
         
-        const response = await fetch(`/api/devices/${deviceId}/images`, {
+        console.log(`=== CALLING DELETE API ===`);
+        console.log(`URL: /api/devices/${deviceIdInt}/images`);
+        console.log(`Method: DELETE`);
+        console.log(`Using deviceId: ${deviceIdInt} (type: ${typeof deviceIdInt})`);
+        
+        const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -167,16 +188,16 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 
         if (response.ok) {
           const result = await response.json();
-          console.log('서버 삭제 성공:', result);
+          console.log('✅ 서버 삭제 성공:', result);
           toast.success('Image completely removed from database');
         } else {
           const errorText = await response.text();
-          console.error('서버 삭제 실패 - Status:', response.status);
-          console.error('서버 삭제 실패 - Error text:', errorText);
+          console.error('❌ 서버 삭제 실패 - Status:', response.status);
+          console.error('❌ 서버 삭제 실패 - Error text:', errorText);
           toast.error('Failed to remove image from database');
         }
       } catch (error) {
-        console.error('완전 삭제 API 호출 실패:', error);
+        console.error('❌ 완전 삭제 API 호출 실패:', error);
         console.error('Error type:', typeof error);
         console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
         toast.error('Failed to remove image');
