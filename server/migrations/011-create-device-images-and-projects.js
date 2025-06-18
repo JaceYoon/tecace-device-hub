@@ -3,13 +3,18 @@ const { QueryTypes } = require('sequelize');
 
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    console.log('=== MIGRATION 010: CREATING DEVICE IMAGES TABLE AND PERFORMANCE INDEXES ===');
+    console.log('=== MIGRATION 011: CREATING DEVICE IMAGES TABLE AND PROJECTS ===');
     
     try {
-      // 1. Create device_images table (simplified version)
-      console.log('📷 Creating device_images table...');
+      // 1. Drop existing device_images table if it exists
+      console.log('📷 Dropping existing device_images table if exists...');
+      await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`device_images\``);
+      console.log('✅ Existing device_images table dropped');
+
+      // 2. Create device_images table with proper structure
+      console.log('📷 Creating new device_images table...');
       await queryInterface.sequelize.query(`
-        CREATE TABLE IF NOT EXISTS \`device_images\` (
+        CREATE TABLE \`device_images\` (
           \`id\` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
           \`device_id\` INT NOT NULL,
           \`image_data\` LONGTEXT COMMENT 'Base64 encoded image data',
@@ -21,9 +26,9 @@ module.exports = {
           FOREIGN KEY (\`device_id\`) REFERENCES \`devices\`(\`id\`) ON DELETE CASCADE
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci
       `);
-      console.log('✅ device_images table created');
+      console.log('✅ device_images table created successfully');
 
-      // 2. Create projects table
+      // 3. Create projects table
       console.log('📁 Creating projects table...');
       await queryInterface.sequelize.query(`
         CREATE TABLE IF NOT EXISTS \`projects\` (
@@ -41,7 +46,7 @@ module.exports = {
       `);
       console.log('✅ projects table created');
 
-      // 3. Migrate existing project data (safe approach)
+      // 4. Migrate existing project data (safe approach)
       console.log('📊 Migrating existing project data...');
       try {
         await queryInterface.sequelize.query(`
@@ -55,7 +60,7 @@ module.exports = {
         console.log('⚠️ Project data migration skipped or failed:', error.message);
       }
 
-      // 4. Add project_id column to devices table (if not exists)
+      // 5. Add project_id column to devices table (if not exists)
       console.log('🔗 Adding project_id column to devices...');
       try {
         // Safely check if column exists
@@ -84,7 +89,7 @@ module.exports = {
         console.log('⚠️ Could not add project_id column:', error.message);
       }
 
-      // 5. Update project_id values (safe approach)
+      // 6. Update project_id values (safe approach)
       console.log('🔄 Updating project_id values...');
       try {
         await queryInterface.sequelize.query(`
@@ -100,7 +105,7 @@ module.exports = {
         console.log('⚠️ Could not update project_id values:', error.message);
       }
 
-      // 6. Migrate existing devicePicture data to device_images
+      // 7. Migrate existing devicePicture data to device_images
       console.log('🖼️ Migrating existing device pictures...');
       try {
         const devicesWithPictures = await queryInterface.sequelize.query(`
@@ -111,7 +116,7 @@ module.exports = {
         if (devicesWithPictures[0].count > 0) {
           console.log(`📸 Found ${devicesWithPictures[0].count} devices with pictures, migrating...`);
           await queryInterface.sequelize.query(`
-            INSERT IGNORE INTO \`device_images\` (\`device_id\`, \`image_data\`, \`uploaded_at\`)
+            INSERT INTO \`device_images\` (\`device_id\`, \`image_data\`, \`uploaded_at\`)
             SELECT \`id\`, \`devicePicture\`, \`createdAt\`
             FROM \`devices\` 
             WHERE \`devicePicture\` IS NOT NULL 
@@ -125,7 +130,7 @@ module.exports = {
         console.log('⚠️ Could not migrate device pictures:', error.message);
       }
 
-      // 7. Add performance indexes
+      // 8. Add performance indexes
       console.log('🚀 Adding performance indexes...');
       const deviceIndexes = [
         { name: 'idx_project_status', columns: '(`project`, `status`)' },
@@ -155,16 +160,16 @@ module.exports = {
         }
       }
 
-      console.log('✅ Migration 010 completed successfully');
+      console.log('✅ Migration 011 completed successfully');
       
     } catch (error) {
-      console.error('❌ Migration 010 failed:', error);
+      console.error('❌ Migration 011 failed:', error);
       throw error;
     }
   },
 
   down: async (queryInterface, Sequelize) => {
-    console.log('=== ROLLING BACK MIGRATION 010 ===');
+    console.log('=== ROLLING BACK MIGRATION 011 ===');
     
     try {
       // Remove indexes
@@ -194,10 +199,10 @@ module.exports = {
       await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`device_images\``);
       await queryInterface.sequelize.query(`DROP TABLE IF EXISTS \`projects\``);
       
-      console.log('✅ Migration 010 rollback completed');
+      console.log('✅ Migration 011 rollback completed');
       
     } catch (error) {
-      console.error('❌ Migration 010 rollback failed:', error);
+      console.error('❌ Migration 011 rollback failed:', error);
       throw error;
     }
   }
