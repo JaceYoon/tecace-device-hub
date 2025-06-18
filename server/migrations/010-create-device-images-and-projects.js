@@ -1,4 +1,3 @@
-
 const { QueryTypes } = require('sequelize');
 
 module.exports = {
@@ -6,20 +5,14 @@ module.exports = {
     console.log('=== MIGRATION 010: CREATING DEVICE IMAGES TABLE AND PERFORMANCE INDEXES ===');
     
     try {
-      // 1. device_images 테이블 생성
+      // 1. device_images 테이블 생성 (간소화된 버전)
       console.log('📷 Creating device_images table...');
       await queryInterface.sequelize.query(`
         CREATE TABLE IF NOT EXISTS \`device_images\` (
           \`id\` INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
           \`device_id\` INT NOT NULL,
-          \`image_url\` VARCHAR(500),
-          \`thumbnail_url\` VARCHAR(500),
           \`image_data\` LONGTEXT COMMENT 'Base64 encoded image data',
-          \`file_size\` INT,
-          \`mime_type\` VARCHAR(100),
           \`uploaded_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          \`created_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          \`updated_at\` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
           
           INDEX \`idx_device_id\` (\`device_id\`),
           INDEX \`idx_uploaded_at\` (\`uploaded_at\`),

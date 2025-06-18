@@ -15,31 +15,11 @@ module.exports = (sequelize, Sequelize) => {
         key: 'id'
       }
     },
-    imageUrl: {
-      type: Sequelize.STRING(500),
-      allowNull: true,
-      field: 'image_url'
-    },
-    thumbnailUrl: {
-      type: Sequelize.STRING(500),
-      allowNull: true,
-      field: 'thumbnail_url'
-    },
     imageData: {
       type: Sequelize.TEXT('long'),
       allowNull: true,
       field: 'image_data',
       comment: 'Base64 encoded image data'
-    },
-    fileSize: {
-      type: Sequelize.INTEGER,
-      allowNull: true,
-      field: 'file_size'
-    },
-    mimeType: {
-      type: Sequelize.STRING(100),
-      allowNull: true,
-      field: 'mime_type'
     },
     uploadedAt: {
       type: Sequelize.DATE,
@@ -49,7 +29,8 @@ module.exports = (sequelize, Sequelize) => {
     }
   }, {
     tableName: 'device_images',
-    underscored: true
+    underscored: true,
+    timestamps: false
   });
   
   return DeviceImage;

@@ -20,17 +20,6 @@ export interface DeviceFormData {
   assignedToName?: string;
 }
 
-// Extend the target interface to include file metadata
-interface EnhancedInputTarget extends HTMLInputElement {
-  fileSize?: number;
-  mimeType?: string;
-  fileName?: string;
-}
-
-interface EnhancedChangeEvent extends React.ChangeEvent<HTMLInputElement> {
-  target: EnhancedInputTarget;
-}
-
 export const useDeviceFormHandlers = (
   deviceData: DeviceFormData,
   setDeviceData: React.Dispatch<React.SetStateAction<DeviceFormData>>
@@ -72,23 +61,19 @@ export const useDeviceFormHandlers = (
     }));
   };
   
-  // Function to handle device picture file upload - React.ChangeEvent 처리
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | EnhancedChangeEvent) => {
+  // 이미지 파일 처리를 간단하게 만듦
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    const enhancedTarget = e.target as EnhancedInputTarget;
     
     console.log('useDeviceFormHandlers handleFileChange called:', {
       hasFile: !!file,
-      fileName: file?.name || enhancedTarget.fileName || 'none',
-      inputValue: e.target.value,
-      inputName: e.target.name,
-      fileSize: file?.size || enhancedTarget.fileSize,
-      mimeType: file?.type || enhancedTarget.mimeType
+      fileName: file?.name || 'none',
+      inputValue: e.target.value
     });
     
     if (!file || e.target.value === '') {
       // 파일이 없거나 입력값이 비어있으면 이미지를 제거
-      console.log('Removing device picture from form data');
+      console.log('Clearing device picture from form data');
       setDeviceData(prev => ({
         ...prev,
         devicePicture: ''
@@ -101,9 +86,7 @@ export const useDeviceFormHandlers = (
     reader.onload = () => {
       const base64String = reader.result as string;
       console.log('Setting device picture in form data:', {
-        base64Length: base64String.length,
-        fileSize: file.size || enhancedTarget.fileSize,
-        mimeType: file.type || enhancedTarget.mimeType
+        base64Length: base64String.length
       });
       setDeviceData(prev => ({
         ...prev,

@@ -1,19 +1,10 @@
+
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import { dataService } from '@/services/data.service';
 import { DeviceTypeValue } from '@/types';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { validateDeviceFields } from '@/components/devices/hooks/useDeviceFormValidation';
-
-interface EnhancedInputTarget extends HTMLInputElement {
-  fileSize?: number;
-  mimeType?: string;
-  fileName?: string;
-}
-
-interface EnhancedChangeEvent extends React.ChangeEvent<HTMLInputElement> {
-  target: EnhancedInputTarget;
-}
 
 export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const { user } = useAuth();
@@ -70,15 +61,12 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     });
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | EnhancedChangeEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    const enhancedTarget = e.target as EnhancedInputTarget;
     
     console.log('useDeviceForm handleFileChange:', {
       hasFile: !!file,
-      fileName: file?.name || enhancedTarget.fileName || 'none',
-      fileSize: file?.size || enhancedTarget.fileSize || 0,
-      mimeType: file?.type || enhancedTarget.mimeType || 'none',
+      fileName: file?.name || 'none',
       inputValue: e.target.value
     });
     
@@ -97,9 +85,7 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     reader.onload = (event) => {
       const base64String = event.target?.result as string;
       console.log('Setting devicePicture in form data:', {
-        base64Length: base64String.length,
-        fileSize: file.size || enhancedTarget.fileSize,
-        mimeType: file.type || enhancedTarget.mimeType
+        base64Length: base64String.length
       });
       setDeviceData(prev => ({
         ...prev,

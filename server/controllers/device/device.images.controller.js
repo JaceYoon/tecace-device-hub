@@ -7,7 +7,7 @@ const Device = db.device;
 exports.addDeviceImage = async (req, res) => {
   try {
     const { deviceId } = req.params;
-    const { imageData, mimeType, fileSize } = req.body;
+    const { imageData } = req.body;
 
     // 디바이스 존재 확인
     const device = await Device.findByPk(deviceId);
@@ -19,8 +19,6 @@ exports.addDeviceImage = async (req, res) => {
     const deviceImage = await DeviceImage.create({
       deviceId: parseInt(deviceId),
       imageData,
-      mimeType,
-      fileSize,
       uploadedAt: new Date()
     });
 

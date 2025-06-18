@@ -27,9 +27,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     
     console.log('File select event:', {
       hasFile: !!file,
-      fileName: file?.name || 'none',
-      fileSize: file?.size || 0,
-      mimeType: file?.type || 'none'
+      fileName: file?.name || 'none'
     });
 
     if (!file) {
@@ -62,21 +60,10 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     };
     reader.readAsDataURL(file);
 
-    // Create enhanced event with file metadata
-    const enhancedEvent = {
-      ...e,
-      target: {
-        ...e.target,
-        fileSize: file.size,
-        mimeType: file.type,
-        fileName: file.name
-      }
-    };
-
     // 폼 데이터용 파일 변경 이벤트 호출
     if (onFileChange) {
-      console.log('Calling onFileChange with enhanced file data');
-      onFileChange(enhancedEvent);
+      console.log('Calling onFileChange with file data');
+      onFileChange(e);
     }
 
     // 디바이스 ID가 있고 실제 업로드를 원하는 경우
@@ -92,12 +79,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       reader.onload = async (event) => {
         const base64Data = event.target?.result as string;
         
-        console.log('Uploading image to device_images table:', {
-          fileName: file.name,
-          fileSize: file.size,
-          mimeType: file.type,
-          base64Length: base64Data.length
-        });
+        console.log('Uploading image to device_images table');
         
         const response = await fetch(`/api/devices/${deviceId}/images`, {
           method: 'POST',
@@ -105,9 +87,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            imageData: base64Data,
-            mimeType: file.type,
-            fileSize: file.size
+            imageData: base64Data
           })
         });
 
@@ -145,8 +125,9 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   };
 
   const removeImage = () => {
-    console.log('Removing image - starting removal process');
+    console.log('Removing image - clearing all states');
     
+    // 미리보기 제거
     setPreviewImage(null);
     
     // 파일 입력 필드 리셋
@@ -154,32 +135,22 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     if (fileInput) {
       fileInput.value = '';
       console.log('File input cleared');
+    }
+
+    // onFileChange에 빈 이벤트 전달해서 폼 데이터에서 이미지 제거
+    if (onFileChange) {
+      console.log('Calling onFileChange to clear form data');
       
-      // Create a proper synthetic React change event
-      if (onFileChange) {
-        console.log('Creating synthetic change event for removal');
-        
-        // Create a synthetic change event that matches React.ChangeEvent<HTMLInputElement>
-        const syntheticEvent = {
-          target: fileInput,
-          currentTarget: fileInput,
-          nativeEvent: new Event('change', { bubbles: true }),
-          bubbles: true,
-          cancelable: true,
-          defaultPrevented: false,
-          eventPhase: 2,
-          isTrusted: false,
-          preventDefault: () => {},
-          isDefaultPrevented: () => false,
-          stopPropagation: () => {},
-          isPropagationStopped: () => false,
-          persist: () => {},
-          timeStamp: Date.now(),
-          type: 'change'
-        } as React.ChangeEvent<HTMLInputElement>;
-        
-        onFileChange(syntheticEvent);
-      }
+      // 빈 파일로 이벤트 생성
+      const clearEvent = {
+        target: {
+          files: null,
+          value: '',
+          name: 'devicePicture-upload'
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      
+      onFileChange(clearEvent);
     }
 
     // 디바이스 편집 모드에서 이미지 업데이트 콜백 호출
