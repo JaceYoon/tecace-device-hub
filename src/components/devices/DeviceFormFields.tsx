@@ -76,7 +76,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         handleDateChange={handleDateChange}
       />
 
-      {/* Media Section */}
+      {/* Media Section - Pass deviceId for edit mode */}
       <DeviceFormMedia 
         devicePicture={deviceData.devicePicture}
         deviceId={isEditMode ? deviceData.id : undefined}
