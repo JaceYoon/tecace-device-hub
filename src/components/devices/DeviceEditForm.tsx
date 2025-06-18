@@ -37,6 +37,13 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
     toast.error('You do not have permission to edit devices');
     return null;
   }
+
+  const handleImageUpdate = () => {
+    console.log('DeviceEditForm: Image updated, refreshing data');
+    if (onDeviceUpdated) {
+      onDeviceUpdated();
+    }
+  };
   
   return (
     <Card className="animate-slide-up shadow-soft border-none">
@@ -50,6 +57,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
             handleDateChange={handleDateChange}
             handleFileChange={handleFileChange}
             isEditMode={true}
+            onImageUpdate={handleImageUpdate}
           />
         </CardContent>
         

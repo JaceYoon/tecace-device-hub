@@ -34,6 +34,7 @@ interface DeviceFormFieldsProps {
   handleDateChange: (date: Date | undefined, field: string) => void;
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   isEditMode?: boolean;
+  onImageUpdate?: () => void;
 }
 
 const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
@@ -43,7 +44,8 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
   handleSelectChange,
   handleDateChange,
   handleFileChange,
-  isEditMode = false
+  isEditMode = false,
+  onImageUpdate
 }) => {
   return (
     <div className="space-y-6" role="group" aria-label="Device information form">
@@ -79,6 +81,7 @@ const DeviceFormFields: React.FC<DeviceFormFieldsProps> = ({
         devicePicture={deviceData.devicePicture}
         deviceId={isEditMode ? deviceData.id : undefined}
         onFileChange={handleFileChange}
+        onImageUpdate={onImageUpdate}
       />
 
       {/* Notes Section - moved to the end (previously memo) */}
