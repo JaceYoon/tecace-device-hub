@@ -99,7 +99,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         
         console.log('Using deviceId for upload:', deviceIdInt);
         
-        // Use relative path to match server port (5000)
+        // Use correct relative path for API call
         const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'POST',
           headers: {
@@ -194,7 +194,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         
         console.log(`Calling DELETE API: /api/devices/${deviceIdInt}/images`);
         
-        // Use relative path to match server port (5000)
+        // Use correct relative path for API call
         const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'DELETE',
           headers: {
