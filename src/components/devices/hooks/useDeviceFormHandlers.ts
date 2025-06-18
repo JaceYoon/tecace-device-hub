@@ -63,13 +63,22 @@ export const useDeviceFormHandlers = (
   
   // Function to handle device picture file upload
   const handleFileChange = (file: File | null, fieldName: string) => {
-    if (!file) return;
-    
-    // Handle device picture image upload
     if (fieldName === 'devicePicture') {
+      if (!file) {
+        // 파일이 null이면 이미지를 제거
+        console.log('Removing device picture from form data');
+        setDeviceData(prev => ({
+          ...prev,
+          devicePicture: ''
+        }));
+        return;
+      }
+      
+      // Handle device picture image upload
       const reader = new FileReader();
       reader.onload = () => {
         const base64String = reader.result as string;
+        console.log('Setting device picture in form data');
         setDeviceData(prev => ({
           ...prev,
           devicePicture: base64String

@@ -106,10 +106,28 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 
   const removeImage = () => {
     setPreviewImage(null);
+    
     // 파일 입력 필드 리셋
     const fileInput = document.getElementById('devicePicture-upload') as HTMLInputElement;
     if (fileInput) {
       fileInput.value = '';
+    }
+
+    // 폼 데이터에서도 이미지 제거 - 빈 이벤트 객체 생성
+    if (onFileChange) {
+      const emptyEvent = {
+        target: {
+          name: 'devicePicture',
+          value: '',
+          files: null
+        }
+      } as React.ChangeEvent<HTMLInputElement>;
+      onFileChange(emptyEvent);
+    }
+
+    // 디바이스 편집 모드에서 이미지 업데이트 콜백 호출
+    if (onImageUpdate) {
+      onImageUpdate();
     }
   };
 
