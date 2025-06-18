@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/components/auth/AuthProvider';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
 import DeviceFormFields from './DeviceFormFields';
@@ -20,6 +20,7 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
   onCancel 
 }) => {
   const { isManager } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0);
   
   const {
     deviceData,
@@ -38,15 +39,22 @@ const DeviceEditForm: React.FC<DeviceEditFormProps> = ({
     return null;
   }
 
-  // Image update handler - only refresh data, don't close dialog
+  // Image update handler - force refresh without closing dialog
   const handleImageUpdate = () => {
-    console.log('DeviceEditForm: Image updated, refreshing data only (not closing dialog)');
-    // Force re-render by triggering a small state update in the form
-    // This will refresh the image display without closing the dialog
+    console.log('DeviceEditForm: Image updated, forcing form refresh');
+    // Force component re-render to refresh image display
+    setRefreshKey(prev => prev + 1);
+    // Clear the devicePicture from form data to reflect deletion
+    handleChange({
+      target: {
+        name: 'devicePicture',
+        value: ''
+      }
+    } as React.ChangeEvent<HTMLInputElement>);
   };
   
   return (
-    <Card className="animate-slide-up shadow-soft border-none">
+    <Card className="animate-slide-up shadow-soft border-none" key={refreshKey}>
       <form onSubmit={handleSubmit} id="device-edit-form" aria-label="Edit device form">
         <CardContent>
           <DeviceFormFields

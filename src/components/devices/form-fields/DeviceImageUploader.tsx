@@ -145,25 +145,38 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   };
 
   const removeImage = async () => {
-    console.log('=== IMAGE REMOVAL DEBUG START ===');
+    console.log('=== IMAGE REMOVAL STARTED ===');
     console.log('DeviceId:', deviceId);
-    console.log('DeviceId type:', typeof deviceId);
-    console.log('Is deviceId truthy:', !!deviceId);
     
     try {
-      // Clear preview immediately
+      // 1. Clear preview immediately
       setPreviewImage(null);
+      console.log('✅ Preview cleared');
       
-      // Reset file input field
+      // 2. Reset file input field
       const fileInput = document.getElementById('devicePicture-upload') as HTMLInputElement;
       if (fileInput) {
         fileInput.value = '';
-        console.log('File input cleared');
+        console.log('✅ File input cleared');
       }
 
-      // For edit mode, completely delete from server
+      // 3. Clear form data by calling onFileChange
+      if (onFileChange) {
+        console.log('Calling onFileChange to clear form data');
+        const mockEvent = Object.create(Event.prototype);
+        Object.assign(mockEvent, {
+          target: {
+            files: null,
+            value: '',
+            name: 'devicePicture-upload'
+          }
+        });
+        onFileChange(mockEvent as React.ChangeEvent<HTMLInputElement>);
+        console.log('✅ Form data cleared');
+      }
+
+      // 4. Delete from server if in edit mode
       if (deviceId) {
-        // Ensure deviceId is a valid number
         const deviceIdInt = parseInt(deviceId, 10);
         if (isNaN(deviceIdInt)) {
           console.error('❌ Invalid deviceId for removal:', deviceId);
@@ -171,10 +184,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           return;
         }
         
-        console.log(`=== CALLING DELETE API ===`);
-        console.log(`URL: /api/devices/${deviceIdInt}/images`);
-        console.log(`Method: DELETE`);
-        console.log(`Using deviceId: ${deviceIdInt} (type: ${typeof deviceIdInt})`);
+        console.log(`Calling DELETE API: /api/devices/${deviceIdInt}/images`);
         
         const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
           method: 'DELETE',
@@ -184,7 +194,6 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         });
 
         console.log('Delete API response status:', response.status);
-        console.log('Delete API response ok:', response.ok);
 
         if (response.ok) {
           const result = await response.json();
@@ -192,44 +201,23 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           toast.success('Image removed successfully');
         } else {
           const errorText = await response.text();
-          console.error('❌ Server deletion failed - Status:', response.status);
-          console.error('❌ Server deletion failed - Error text:', errorText);
+          console.error('❌ Server deletion failed:', errorText);
           toast.error('Failed to remove image from server');
         }
-      } else {
-        console.log('No deviceId provided, skipping server deletion');
       }
 
-      // Clear form data by calling onFileChange with null file
-      if (onFileChange) {
-        console.log('Calling onFileChange to clear form data');
-        
-        // Create a simple mock event to clear the file
-        const mockEvent = {
-          target: {
-            files: null,
-            value: '',
-            name: 'devicePicture-upload'
-          }
-        } as React.ChangeEvent<HTMLInputElement>;
-        
-        onFileChange(mockEvent);
-      }
-
-      // Call callback to refresh parent component
+      // 5. Call callback to refresh parent component
       if (onImageUpdate) {
-        console.log('Calling onImageUpdate');
+        console.log('Calling onImageUpdate to refresh parent');
         onImageUpdate();
       }
 
+      console.log('✅ Image removal completed successfully');
+
     } catch (error) {
-      console.error('❌ Complete deletion failed:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
+      console.error('❌ Image removal failed:', error);
       toast.error('Failed to remove image');
     }
-
-    console.log('=== IMAGE REMOVAL DEBUG END ===');
   };
 
   return (
