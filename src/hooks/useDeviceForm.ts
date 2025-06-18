@@ -64,8 +64,17 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
     
+    console.log('useDeviceForm handleFileChange:', {
+      hasFile: !!file,
+      fileName: file?.name || 'none',
+      fileSize: file?.size || 0,
+      mimeType: file?.type || 'none',
+      inputValue: e.target.value
+    });
+    
     if (!file || e.target.value === '') {
       // 파일이 없거나 입력값이 비어있으면 이미지를 제거
+      console.log('Clearing devicePicture from form data');
       setDeviceData(prev => ({
         ...prev,
         devicePicture: ''
@@ -77,6 +86,11 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     const reader = new FileReader();
     reader.onload = (event) => {
       const base64String = event.target?.result as string;
+      console.log('Setting devicePicture in form data:', {
+        base64Length: base64String.length,
+        fileSize: file.size,
+        mimeType: file.type
+      });
       setDeviceData(prev => ({
         ...prev,
         devicePicture: base64String
@@ -89,6 +103,11 @@ export const useDeviceForm = (onDeviceAdded?: () => void) => {
     e.preventDefault();
     
     const { project, projectGroup, type, deviceType, imei, serialNumber, deviceStatus, modelNumber, notes, receivedDate, devicePicture } = deviceData;
+    
+    console.log('Form submission - devicePicture:', {
+      hasDevicePicture: !!devicePicture,
+      devicePictureLength: devicePicture.length
+    });
     
     // Validate fields before submitting - notes is no longer required, modelNumber is now required
     if (!validateDeviceFields(imei, serialNumber, receivedDate, deviceStatus, modelNumber)) {

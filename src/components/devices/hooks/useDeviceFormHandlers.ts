@@ -64,40 +64,39 @@ export const useDeviceFormHandlers = (
   // Function to handle device picture file upload - React.ChangeEvent 처리
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    const fieldName = 'devicePicture';
     
-    console.log('handleFileChange called:', {
+    console.log('useDeviceFormHandlers handleFileChange called:', {
       hasFile: !!file,
       fileName: file?.name || 'none',
       inputValue: e.target.value,
       inputName: e.target.name
     });
     
-    if (fieldName === 'devicePicture') {
-      if (!file || e.target.value === '') {
-        // 파일이 없거나 입력값이 비어있으면 이미지를 제거
-        console.log('Removing device picture from form data');
-        setDeviceData(prev => ({
-          ...prev,
-          devicePicture: ''
-        }));
-        return;
-      }
-      
-      // Handle device picture image upload
-      const reader = new FileReader();
-      reader.onload = () => {
-        const base64String = reader.result as string;
-        console.log('Setting device picture in form data:', {
-          base64Length: base64String.length
-        });
-        setDeviceData(prev => ({
-          ...prev,
-          devicePicture: base64String
-        }));
-      };
-      reader.readAsDataURL(file);
+    if (!file || e.target.value === '') {
+      // 파일이 없거나 입력값이 비어있으면 이미지를 제거
+      console.log('Removing device picture from form data');
+      setDeviceData(prev => ({
+        ...prev,
+        devicePicture: ''
+      }));
+      return;
     }
+    
+    // Handle device picture image upload
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64String = reader.result as string;
+      console.log('Setting device picture in form data:', {
+        base64Length: base64String.length,
+        fileSize: file.size,
+        mimeType: file.type
+      });
+      setDeviceData(prev => ({
+        ...prev,
+        devicePicture: base64String
+      }));
+    };
+    reader.readAsDataURL(file);
   };
 
   return {
