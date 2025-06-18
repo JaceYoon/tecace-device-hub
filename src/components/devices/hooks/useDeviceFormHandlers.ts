@@ -20,6 +20,17 @@ export interface DeviceFormData {
   assignedToName?: string;
 }
 
+// Extend the target interface to include file metadata
+interface EnhancedInputTarget extends HTMLInputElement {
+  fileSize?: number;
+  mimeType?: string;
+  fileName?: string;
+}
+
+interface EnhancedChangeEvent extends React.ChangeEvent<HTMLInputElement> {
+  target: EnhancedInputTarget;
+}
+
 export const useDeviceFormHandlers = (
   deviceData: DeviceFormData,
   setDeviceData: React.Dispatch<React.SetStateAction<DeviceFormData>>
@@ -62,14 +73,17 @@ export const useDeviceFormHandlers = (
   };
   
   // Function to handle device picture file upload - React.ChangeEvent 처리
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement> | EnhancedChangeEvent) => {
     const file = e.target.files?.[0] || null;
+    const enhancedTarget = e.target as EnhancedInputTarget;
     
     console.log('useDeviceFormHandlers handleFileChange called:', {
       hasFile: !!file,
-      fileName: file?.name || 'none',
+      fileName: file?.name || enhancedTarget.fileName || 'none',
       inputValue: e.target.value,
-      inputName: e.target.name
+      inputName: e.target.name,
+      fileSize: file?.size || enhancedTarget.fileSize,
+      mimeType: file?.type || enhancedTarget.mimeType
     });
     
     if (!file || e.target.value === '') {
@@ -88,8 +102,8 @@ export const useDeviceFormHandlers = (
       const base64String = reader.result as string;
       console.log('Setting device picture in form data:', {
         base64Length: base64String.length,
-        fileSize: file.size,
-        mimeType: file.type
+        fileSize: file.size || enhancedTarget.fileSize,
+        mimeType: file.type || enhancedTarget.mimeType
       });
       setDeviceData(prev => ({
         ...prev,

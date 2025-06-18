@@ -33,7 +33,6 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     });
 
     if (!file) {
-      // 파일이 선택되지 않았을 때 (파일 선택 취소)
       console.log('No file selected, clearing image');
       setPreviewImage(null);
       if (onFileChange) {
@@ -63,10 +62,21 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     };
     reader.readAsDataURL(file);
 
+    // Create enhanced event with file metadata
+    const enhancedEvent = {
+      ...e,
+      target: {
+        ...e.target,
+        fileSize: file.size,
+        mimeType: file.type,
+        fileName: file.name
+      }
+    };
+
     // 폼 데이터용 파일 변경 이벤트 호출
     if (onFileChange) {
-      console.log('Calling onFileChange with file data');
-      onFileChange(e);
+      console.log('Calling onFileChange with enhanced file data');
+      onFileChange(enhancedEvent);
     }
 
     // 디바이스 ID가 있고 실제 업로드를 원하는 경우
@@ -145,15 +155,30 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       fileInput.value = '';
       console.log('File input cleared');
       
-      // 실제 change 이벤트 생성 및 발생
+      // Create a proper synthetic React change event
       if (onFileChange) {
-        console.log('Creating and dispatching empty change event');
-        const changeEvent = new Event('change', { bubbles: true });
-        Object.defineProperty(changeEvent, 'target', {
-          writable: false,
-          value: fileInput
-        });
-        onFileChange(changeEvent as React.ChangeEvent<HTMLInputElement>);
+        console.log('Creating synthetic change event for removal');
+        
+        // Create a synthetic change event that matches React.ChangeEvent<HTMLInputElement>
+        const syntheticEvent = {
+          target: fileInput,
+          currentTarget: fileInput,
+          nativeEvent: new Event('change', { bubbles: true }),
+          bubbles: true,
+          cancelable: true,
+          defaultPrevented: false,
+          eventPhase: 2,
+          isTrusted: false,
+          preventDefault: () => {},
+          isDefaultPrevented: () => false,
+          stopPropagation: () => {},
+          isPropagationStopped: () => false,
+          persist: () => {},
+          timeStamp: Date.now(),
+          type: 'change'
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        onFileChange(syntheticEvent);
       }
     }
 
