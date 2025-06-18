@@ -31,6 +31,7 @@ db.sequelize = sequelize;
 db.user = require("./user.model.js")(sequelize, Sequelize);
 db.device = require("./device.model.js")(sequelize, Sequelize);
 db.request = require("./request.model.js")(sequelize, Sequelize);
+db.deviceImage = require("./deviceImage.model.js")(sequelize, Sequelize);
 
 // Define relationships
 db.user.hasMany(db.device, { as: "addedDevices", foreignKey: "addedById" });
@@ -48,5 +49,9 @@ db.request.belongsTo(db.user, { as: "user", foreignKey: "userId" });
 
 db.user.hasMany(db.request, { as: "processedRequests", foreignKey: "processedById" });
 db.request.belongsTo(db.user, { as: "processedBy", foreignKey: "processedById" });
+
+// DeviceImage relationships
+db.device.hasMany(db.deviceImage, { as: "images", foreignKey: "deviceId" });
+db.deviceImage.belongsTo(db.device, { as: "device", foreignKey: "deviceId" });
 
 module.exports = db;

@@ -3,6 +3,7 @@
 const deviceBasicController = require('./device.basic.controller');
 const deviceRequestController = require('./device.request.controller');
 const deviceHistoryController = require('./device.history.controller');
+const deviceImagesController = require('./device.images.controller');
 
 // Combine all controllers into a single export
 module.exports = {
@@ -20,5 +21,10 @@ module.exports = {
   findAllRequests: deviceRequestController.findAllRequests,
   
   // Device history operations
-  getDeviceHistory: deviceHistoryController.getDeviceHistory
+  getDeviceHistory: deviceHistoryController.getDeviceHistory,
+  
+  // Device image operations
+  addDeviceImage: deviceImagesController.addDeviceImage,
+  getDeviceImages: deviceImagesController.getDeviceImages,
+  deleteDeviceImage: deviceImagesController.deleteDeviceImage
 };

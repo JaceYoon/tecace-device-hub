@@ -4,12 +4,16 @@ import DeviceImageUploader from './DeviceImageUploader';
 
 interface DeviceFormMediaProps {
   devicePicture?: string;
+  deviceId?: string;
   onFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onImageUpdate?: () => void;
 }
 
 const DeviceFormMedia: React.FC<DeviceFormMediaProps> = ({
   devicePicture,
-  onFileChange
+  deviceId,
+  onFileChange,
+  onImageUpdate
 }) => {
   return (
     <div className="space-y-4">
@@ -17,7 +21,9 @@ const DeviceFormMedia: React.FC<DeviceFormMediaProps> = ({
       
       <DeviceImageUploader
         devicePicture={devicePicture}
+        deviceId={deviceId}
         onFileChange={onFileChange}
+        onImageUpdate={onImageUpdate}
       />
     </div>
   );
