@@ -1,4 +1,3 @@
-
 import { Device } from '@/types';
 import { useDeviceFormState } from './useDeviceFormState';
 import { useDeviceFormHandlers } from './useDeviceFormHandlers';
@@ -10,8 +9,8 @@ interface DeviceEditFormProps {
 }
 
 export const useDeviceEditForm = ({ device, onDeviceUpdated }: DeviceEditFormProps) => {
-  // Get form state management functionality
-  const { deviceData, setDeviceData } = useDeviceFormState(device);
+  // Get form state management functionality - pass device as object property
+  const { deviceData, setDeviceData } = useDeviceFormState({ device });
   
   // Get form handlers (change, select, date, file)
   const {
