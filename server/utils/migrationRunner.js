@@ -35,46 +35,6 @@ const runMigrations = async (sequelize) => {
       !executedNames.includes(file)
     );
     
-    // Special check for migration 009 - if tables are missing, force re-run
-    const migration009File = '009-add-device-images-and-performance-indexes.js';
-    if (executedNames.includes(migration009File) && !pendingMigrations.includes(migration009File)) {
-      try {
-        console.log('🔍 Checking if migration 009 tables exist...');
-        const [deviceImagesExists] = await sequelize.query(`
-          SELECT COUNT(*) as count FROM information_schema.tables 
-          WHERE table_schema = DATABASE() AND table_name = 'device_images'
-        `);
-        
-        const [projectsExists] = await sequelize.query(`
-          SELECT COUNT(*) as count FROM information_schema.tables 
-          WHERE table_schema = DATABASE() AND table_name = 'projects'
-        `);
-        
-        const deviceImagesTableExists = deviceImagesExists[0].count > 0;
-        const projectsTableExists = projectsExists[0].count > 0;
-        
-        if (!deviceImagesTableExists || !projectsTableExists) {
-          console.log('⚠️ Migration 009 tables missing! Forcing re-execution...');
-          console.log(`  - device_images: ${deviceImagesTableExists ? 'EXISTS' : 'MISSING'}`);
-          console.log(`  - projects: ${projectsTableExists ? 'EXISTS' : 'MISSING'}`);
-          
-          // Remove from executed migrations to force re-run
-          await sequelize.query(
-            'DELETE FROM `SequelizeMeta` WHERE name = ?',
-            { 
-              replacements: [migration009File],
-              type: sequelize.QueryTypes.DELETE
-            }
-          );
-          
-          pendingMigrations.push(migration009File);
-          pendingMigrations.sort();
-        }
-      } catch (error) {
-        console.log('⚠️ Could not check migration 009 table status:', error.message);
-      }
-    }
-    
     if (pendingMigrations.length === 0) {
       console.log('✅ No pending migrations found');
       return;

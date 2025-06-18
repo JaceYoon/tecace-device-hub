@@ -47,60 +47,88 @@ module.exports = {
       `);
       console.log('✅ projects table created');
 
-      // 3. 기존 project 데이터 마이그레이션
+      // 3. 기존 project 데이터 마이그레이션 (안전한 방식으로)
       console.log('📊 Migrating existing project data...');
-      await queryInterface.sequelize.query(`
-        INSERT IGNORE INTO \`projects\` (\`name\`, \`project_group\`)
-        SELECT DISTINCT \`project\`, \`projectGroup\` 
-        FROM \`devices\` 
-        WHERE \`project\` IS NOT NULL AND \`projectGroup\` IS NOT NULL
-      `);
-      console.log('✅ Project data migrated');
-
-      // 4. devices 테이블에 project_id 컬럼 추가
-      console.log('🔗 Adding project_id column to devices...');
-      const [projectIdExists] = await queryInterface.sequelize.query(`
-        SELECT COUNT(*) as count FROM information_schema.columns 
-        WHERE table_schema = DATABASE() 
-        AND table_name = 'devices' 
-        AND column_name = 'project_id'
-      `);
-      
-      if (projectIdExists[0].count === 0) {
+      try {
         await queryInterface.sequelize.query(`
-          ALTER TABLE \`devices\` ADD COLUMN \`project_id\` INT NULL,
-          ADD INDEX \`idx_project_id\` (\`project_id\`)
+          INSERT IGNORE INTO \`projects\` (\`name\`, \`project_group\`)
+          SELECT DISTINCT \`project\`, \`projectGroup\` 
+          FROM \`devices\` 
+          WHERE \`project\` IS NOT NULL AND \`project\` != '' AND \`projectGroup\` IS NOT NULL AND \`projectGroup\` != ''
         `);
-        console.log('✅ Added project_id column and index');
+        console.log('✅ Project data migrated');
+      } catch (error) {
+        console.log('⚠️ Project data migration skipped or failed:', error.message);
       }
 
-      // 5. project_id 값 업데이트 (collation 명시)
+      // 4. devices 테이블에 project_id 컬럼 추가 (존재하지 않는 경우만)
+      console.log('🔗 Adding project_id column to devices...');
+      try {
+        // 컬럼 존재 여부를 안전하게 확인
+        const columnExists = await queryInterface.sequelize.query(`
+          SELECT COUNT(*) as count FROM information_schema.columns 
+          WHERE table_schema = DATABASE() 
+          AND table_name = 'devices' 
+          AND column_name = 'project_id'
+        `, { type: QueryTypes.SELECT });
+        
+        if (columnExists[0].count === 0) {
+          await queryInterface.sequelize.query(`
+            ALTER TABLE \`devices\` ADD COLUMN \`project_id\` INT NULL
+          `);
+          console.log('✅ Added project_id column');
+          
+          // 인덱스 추가
+          await queryInterface.sequelize.query(`
+            ALTER TABLE \`devices\` ADD INDEX \`idx_project_id\` (\`project_id\`)
+          `);
+          console.log('✅ Added project_id index');
+        } else {
+          console.log('✅ project_id column already exists');
+        }
+      } catch (error) {
+        console.log('⚠️ Could not add project_id column:', error.message);
+      }
+
+      // 5. project_id 값 업데이트 (안전한 방식으로)
       console.log('🔄 Updating project_id values...');
-      await queryInterface.sequelize.query(`
-        UPDATE \`devices\` d
-        INNER JOIN \`projects\` p ON d.\`project\` COLLATE utf8mb4_uca1400_ai_ci = p.\`name\` 
-          AND d.\`projectGroup\` COLLATE utf8mb4_uca1400_ai_ci = p.\`project_group\`
-        SET d.\`project_id\` = p.\`id\`
-        WHERE d.\`project_id\` IS NULL
-      `);
+      try {
+        await queryInterface.sequelize.query(`
+          UPDATE \`devices\` d
+          INNER JOIN \`projects\` p ON 
+            d.\`project\` COLLATE utf8mb4_uca1400_ai_ci = p.\`name\` COLLATE utf8mb4_uca1400_ai_ci
+            AND d.\`projectGroup\` COLLATE utf8mb4_uca1400_ai_ci = p.\`project_group\` COLLATE utf8mb4_uca1400_ai_ci
+          SET d.\`project_id\` = p.\`id\`
+          WHERE d.\`project_id\` IS NULL
+        `);
+        console.log('✅ Project ID values updated');
+      } catch (error) {
+        console.log('⚠️ Could not update project_id values:', error.message);
+      }
 
       // 6. 기존 devicePicture 데이터를 device_images로 마이그레이션
       console.log('🖼️ Migrating existing device pictures...');
-      const [devicesWithPictures] = await queryInterface.sequelize.query(`
-        SELECT COUNT(*) as count FROM \`devices\` 
-        WHERE \`devicePicture\` IS NOT NULL AND \`devicePicture\` != ''
-      `);
-      
-      if (devicesWithPictures[0].count > 0) {
-        console.log(`📸 Found ${devicesWithPictures[0].count} devices with pictures, migrating...`);
-        await queryInterface.sequelize.query(`
-          INSERT IGNORE INTO \`device_images\` (\`device_id\`, \`image_data\`, \`uploaded_at\`)
-          SELECT \`id\`, \`devicePicture\`, \`createdAt\`
-          FROM \`devices\` 
-          WHERE \`devicePicture\` IS NOT NULL 
-          AND \`devicePicture\` != ''
-        `);
-        console.log('✅ Device pictures migrated to device_images table');
+      try {
+        const devicesWithPictures = await queryInterface.sequelize.query(`
+          SELECT COUNT(*) as count FROM \`devices\` 
+          WHERE \`devicePicture\` IS NOT NULL AND \`devicePicture\` != ''
+        `, { type: QueryTypes.SELECT });
+        
+        if (devicesWithPictures[0].count > 0) {
+          console.log(`📸 Found ${devicesWithPictures[0].count} devices with pictures, migrating...`);
+          await queryInterface.sequelize.query(`
+            INSERT IGNORE INTO \`device_images\` (\`device_id\`, \`image_data\`, \`uploaded_at\`)
+            SELECT \`id\`, \`devicePicture\`, \`createdAt\`
+            FROM \`devices\` 
+            WHERE \`devicePicture\` IS NOT NULL 
+            AND \`devicePicture\` != ''
+          `);
+          console.log('✅ Device pictures migrated to device_images table');
+        } else {
+          console.log('📸 No existing device pictures to migrate');
+        }
+      } catch (error) {
+        console.log('⚠️ Could not migrate device pictures:', error.message);
       }
 
       // 7. 성능 인덱스 추가
@@ -127,6 +155,8 @@ module.exports = {
         } catch (error) {
           if (error.message.includes('Duplicate key name')) {
             console.log(`⚠️ Index ${index.name} already exists, skipping...`);
+          } else {
+            console.log(`⚠️ Could not add index ${index.name}:`, error.message);
           }
         }
       }
