@@ -25,9 +25,11 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     
+    console.log('=== FILE SELECT DEBUG ===');
     console.log('File select event:', {
       hasFile: !!file,
-      fileName: file?.name || 'none'
+      fileName: file?.name || 'none',
+      deviceId: deviceId
     });
 
     if (!file) {
@@ -79,7 +81,11 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       reader.onload = async (event) => {
         const base64Data = event.target?.result as string;
         
-        console.log('Uploading image to device_images table');
+        console.log('=== UPLOAD DEBUG ===');
+        console.log('Uploading image to device_images table', {
+          deviceId: deviceId,
+          base64Length: base64Data.length
+        });
         
         const response = await fetch(`/api/devices/${deviceId}/images`, {
           method: 'POST',
@@ -90,6 +96,8 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
             imageData: base64Data
           })
         });
+
+        console.log('Upload response status:', response.status);
 
         if (response.ok) {
           const result = await response.json();
@@ -125,7 +133,10 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   };
 
   const removeImage = async () => {
-    console.log('=== 완전 이미지 제거 시작 ===');
+    console.log('=== IMAGE REMOVAL DEBUG START ===');
+    console.log('DeviceId:', deviceId);
+    console.log('DeviceId type:', typeof deviceId);
+    console.log('Is deviceId truthy:', !!deviceId);
     
     // 미리보기 제거
     setPreviewImage(null);
@@ -140,7 +151,9 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
     // 편집 모드일 때 서버에서 완전 삭제
     if (deviceId) {
       try {
-        console.log(`서버에서 완전 이미지 삭제 요청 - deviceId: ${deviceId}`);
+        console.log(`=== CALLING DELETE API ===`);
+        console.log(`URL: /api/devices/${deviceId}/images`);
+        console.log(`Method: DELETE`);
         
         const response = await fetch(`/api/devices/${deviceId}/images`, {
           method: 'DELETE',
@@ -149,19 +162,27 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           }
         });
 
+        console.log('Delete API response status:', response.status);
+        console.log('Delete API response ok:', response.ok);
+
         if (response.ok) {
           const result = await response.json();
           console.log('서버 삭제 성공:', result);
           toast.success('Image completely removed from database');
         } else {
-          const error = await response.text();
-          console.error('서버 삭제 실패:', error);
+          const errorText = await response.text();
+          console.error('서버 삭제 실패 - Status:', response.status);
+          console.error('서버 삭제 실패 - Error text:', errorText);
           toast.error('Failed to remove image from database');
         }
       } catch (error) {
         console.error('완전 삭제 API 호출 실패:', error);
+        console.error('Error type:', typeof error);
+        console.error('Error message:', error instanceof Error ? error.message : 'Unknown error');
         toast.error('Failed to remove image');
       }
+    } else {
+      console.log('No deviceId provided, skipping server deletion');
     }
 
     // 폼 데이터에서도 이미지 제거
@@ -199,7 +220,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       onImageUpdate();
     }
 
-    console.log('=== 완전 이미지 제거 완료 ===');
+    console.log('=== IMAGE REMOVAL DEBUG END ===');
   };
 
   return (
