@@ -160,18 +160,25 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         console.log('✅ File input cleared');
       }
 
-      // 3. Clear form data by calling onFileChange
+      // 3. Clear form data by creating a proper synthetic event
       if (onFileChange) {
         console.log('Calling onFileChange to clear form data');
-        const mockEvent = Object.create(Event.prototype);
-        Object.assign(mockEvent, {
+        
+        // Create a proper synthetic event that mimics clearing a file input
+        const syntheticEvent = {
           target: {
             files: null,
             value: '',
             name: 'devicePicture-upload'
+          },
+          currentTarget: {
+            files: null,
+            value: '',
+            name: 'devicePicture-upload'
           }
-        });
-        onFileChange(mockEvent as React.ChangeEvent<HTMLInputElement>);
+        } as React.ChangeEvent<HTMLInputElement>;
+        
+        onFileChange(syntheticEvent);
         console.log('✅ Form data cleared');
       }
 
