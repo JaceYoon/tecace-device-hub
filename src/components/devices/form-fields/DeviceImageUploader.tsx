@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Image, Upload, X, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { apiCall } from '@/services/api/utils';
 
 interface DeviceImageUploaderProps {
   devicePicture?: string;
@@ -99,28 +100,21 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         
         console.log('Using deviceId for upload:', deviceIdInt);
         
-        // Use correct relative path for API call
-        const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            imageData: base64Data
-          })
-        });
+        try {
+          // Use apiCall utility to ensure consistent API handling
+          const result = await apiCall(`/devices/${deviceIdInt}/images`, {
+            method: 'POST',
+            body: JSON.stringify({
+              imageData: base64Data
+            })
+          });
 
-        console.log('Upload response status:', response.status);
-
-        if (response.ok) {
-          const result = await response.json();
           console.log('✅ Upload successful:', result);
           toast.success('Image uploaded successfully');
           if (onImageUpdate) {
             onImageUpdate();
           }
-        } else {
-          const error = await response.text();
+        } catch (error) {
           console.error('❌ Upload failed:', error);
           toast.error('Failed to upload image');
         }
@@ -192,25 +186,18 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           return;
         }
         
-        console.log(`Calling DELETE API: /api/devices/${deviceIdInt}/images`);
+        console.log(`Calling DELETE API: /devices/${deviceIdInt}/images`);
         
-        // Use correct relative path for API call
-        const response = await fetch(`/api/devices/${deviceIdInt}/images`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-          }
-        });
+        try {
+          // Use apiCall utility to ensure consistent API handling
+          const result = await apiCall(`/devices/${deviceIdInt}/images`, {
+            method: 'DELETE'
+          });
 
-        console.log('Delete API response status:', response.status);
-
-        if (response.ok) {
-          const result = await response.json();
           console.log('✅ Server deletion successful:', result);
           toast.success('Image removed successfully');
-        } else {
-          const errorText = await response.text();
-          console.error('❌ Server deletion failed:', errorText);
+        } catch (error) {
+          console.error('❌ Server deletion failed:', error);
           toast.error('Failed to remove image from server');
         }
       }
