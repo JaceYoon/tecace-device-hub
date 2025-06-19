@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -90,19 +89,18 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           base64Length: base64Data.length
         });
         
-        // Ensure deviceId is a valid integer
-        const deviceIdInt = parseInt(deviceId!, 10);
-        if (isNaN(deviceIdInt)) {
-          console.error('❌ Invalid deviceId for upload:', deviceId);
+        // Validate deviceId exists and is not empty
+        if (!deviceId || deviceId === '' || deviceId === 'undefined') {
+          console.error('❌ Invalid or empty deviceId for upload:', deviceId);
           toast.error('Invalid device ID');
           return;
         }
         
-        console.log('Using deviceId for upload:', deviceIdInt);
+        console.log('Using deviceId for upload:', deviceId);
         
         try {
-          // Use apiCall utility to ensure consistent API handling
-          const result = await apiCall(`/devices/${deviceIdInt}/images`, {
+          // Use apiCall utility - pass deviceId as string directly
+          const result = await apiCall(`/devices/${deviceId}/images`, {
             method: 'POST',
             body: JSON.stringify({
               imageData: base64Data
@@ -179,18 +177,18 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 
       // 4. Delete from server if in edit mode
       if (deviceId) {
-        const deviceIdInt = parseInt(deviceId, 10);
-        if (isNaN(deviceIdInt)) {
-          console.error('❌ Invalid deviceId for removal:', deviceId);
+        // Validate deviceId exists and is not empty
+        if (!deviceId || deviceId === '' || deviceId === 'undefined') {
+          console.error('❌ Invalid or empty deviceId for removal:', deviceId);
           toast.error('Invalid device ID');
           return;
         }
         
-        console.log(`Calling DELETE API: /devices/${deviceIdInt}/images`);
+        console.log(`Calling DELETE API: /devices/${deviceId}/images`);
         
         try {
-          // Use apiCall utility to ensure consistent API handling
-          const result = await apiCall(`/devices/${deviceIdInt}/images`, {
+          // Use apiCall utility - pass deviceId as string directly
+          const result = await apiCall(`/devices/${deviceId}/images`, {
             method: 'DELETE'
           });
 
