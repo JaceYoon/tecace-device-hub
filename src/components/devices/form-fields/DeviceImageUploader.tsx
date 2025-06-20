@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
@@ -100,11 +99,10 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         console.log('Using deviceId for upload:', deviceId);
         
         try {
-          // Send deviceId in the request body instead of URL parameter
-          const result = await apiCall(`/devices/images/upload`, {
+          // Use correct server route: /devices/:id/images
+          const result = await apiCall(`/devices/${deviceId}/images`, {
             method: 'POST',
             body: JSON.stringify({
-              deviceId: deviceId,
               imageData: base64Data
             })
           });
@@ -186,15 +184,12 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           return;
         }
         
-        console.log(`Calling DELETE API with deviceId in body: ${deviceId}`);
+        console.log(`Calling DELETE API: /devices/${deviceId}/images`);
         
         try {
-          // Send deviceId in the request body instead of URL parameter
-          const result = await apiCall(`/devices/images/delete`, {
-            method: 'DELETE',
-            body: JSON.stringify({
-              deviceId: deviceId
-            })
+          // Use correct server route: /devices/:id/images
+          const result = await apiCall(`/devices/${deviceId}/images`, {
+            method: 'DELETE'
           });
 
           console.log('✅ Server deletion successful:', result);
