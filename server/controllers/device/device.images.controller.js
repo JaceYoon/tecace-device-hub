@@ -6,7 +6,7 @@ const Device = db.device;
 // Add image to device
 exports.addDeviceImage = async (req, res) => {
   try {
-    const { deviceId } = req.params;
+    const { id: deviceId } = req.params; // Fix: use 'id' instead of 'deviceId'
     const { imageData } = req.body;
 
     console.log('=== ADD IMAGE DEBUG ===');
@@ -61,7 +61,7 @@ exports.addDeviceImage = async (req, res) => {
 // Get all images for a device
 exports.getDeviceImages = async (req, res) => {
   try {
-    const { deviceId } = req.params;
+    const { id: deviceId } = req.params; // Fix: use 'id' instead of 'deviceId'
 
     console.log('=== GET IMAGES DEBUG ===');
     console.log('DeviceId from params (raw):', deviceId);
@@ -99,7 +99,7 @@ exports.getDeviceImages = async (req, res) => {
 // Delete all images for a device (complete removal)
 exports.deleteDeviceImage = async (req, res) => {
   try {
-    const { deviceId } = req.params;
+    const { id: deviceId } = req.params; // Fix: use 'id' instead of 'deviceId'
 
     console.log('=== DELETE IMAGE DEBUG START ===');
     console.log('DeviceId from params (raw):', deviceId);
