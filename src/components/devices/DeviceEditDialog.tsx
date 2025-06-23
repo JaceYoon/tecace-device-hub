@@ -42,9 +42,25 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
     // Close the dialog after the device is updated
     setOpen(false);
   };
+
+  const handleOpenChange = (newOpen: boolean) => {
+    setOpen(newOpen);
+    
+    // When dialog opens, close any open dropdown menus
+    if (newOpen) {
+      // Force close all dropdowns by dispatching escape key event
+      const escapeEvent = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        keyCode: 27,
+        which: 27,
+        bubbles: true
+      });
+      document.dispatchEvent(escapeEvent);
+    }
+  };
   
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {triggerElement || (
           <Button variant="ghost" size="icon" className="h-8 w-8">
