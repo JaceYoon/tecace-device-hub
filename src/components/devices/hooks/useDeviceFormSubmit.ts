@@ -70,9 +70,9 @@ export const useDeviceFormSubmit = ({
       
       try {
         console.log('Fetching latest image from device_images table for device:', device.id);
-        const images = await apiCall(`/devices/${device.id}/images`);
+        const images = await apiCall(`/devices/${device.id}/images`) as Array<{ imageData: string }>;
         
-        if (images && images.length > 0) {
+        if (Array.isArray(images) && images.length > 0) {
           latestImageData = images[0].imageData; // Get the most recent image
           console.log('✅ Found image in device_images table');
         } else {

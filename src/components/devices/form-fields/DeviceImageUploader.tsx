@@ -36,9 +36,9 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       setIsLoading(true);
       try {
         console.log('Loading device images for deviceId:', deviceId);
-        const images = await apiCall(`/devices/${deviceId}/images`);
+        const images = await apiCall(`/devices/${deviceId}/images`) as Array<{ imageData: string }>;
         
-        if (images && images.length > 0) {
+        if (Array.isArray(images) && images.length > 0) {
           // Get the most recent image
           const latestImage = images[0];
           console.log('Loaded device image from device_images table');
@@ -145,7 +145,7 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           console.log('✅ Upload successful:', result);
           toast.success('Image uploaded successfully');
           
-          // Don't call onImageUpdate here to prevent form refresh
+          // Don't call onImageUpdate to prevent form refresh
           // The preview is already set from the file reader
         } catch (error) {
           console.error('❌ Upload failed:', error);
@@ -226,6 +226,12 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           console.error('❌ Server deletion failed:', error);
           toast.error('Failed to remove image from server');
         }
+      }
+
+      // 5. Call onImageUpdate to refresh parent
+      if (onImageUpdate) {
+        console.log('Calling onImageUpdate to refresh parent');
+        onImageUpdate();
       }
 
       console.log('✅ Image removal completed successfully');
