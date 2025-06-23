@@ -46,20 +46,35 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     
-    // When dialog opens, close any open dropdown menus without affecting the dialog
+    // When dialog opens, close any open dropdown menus
     if (newOpen) {
       // Use setTimeout to ensure the dialog is fully opened first
       setTimeout(() => {
-        // Find and close dropdown menus by clicking outside
-        const dropdowns = document.querySelectorAll('[data-state="open"][role="menu"]');
-        dropdowns.forEach(dropdown => {
-          const trigger = dropdown.previousElementSibling;
-          if (trigger) {
-            // Simulate clicking outside the dropdown
-            document.body.click();
+        // Close all dropdown menus by finding triggers and setting their data-state
+        const dropdownTriggers = document.querySelectorAll('[data-state="open"]');
+        dropdownTriggers.forEach(trigger => {
+          // Check if this is a dropdown trigger (has aria-expanded)
+          if (trigger.hasAttribute('aria-expanded')) {
+            trigger.setAttribute('aria-expanded', 'false');
+            trigger.setAttribute('data-state', 'closed');
           }
         });
-      }, 10);
+        
+        // Also close any open dropdown content
+        const dropdownContents = document.querySelectorAll('[role="menu"][data-state="open"]');
+        dropdownContents.forEach(content => {
+          content.setAttribute('data-state', 'closed');
+          (content as HTMLElement).style.display = 'none';
+        });
+        
+        // Trigger a click outside to ensure all dropdowns close
+        const clickEvent = new MouseEvent('click', {
+          view: window,
+          bubbles: true,
+          cancelable: true,
+        });
+        document.body.dispatchEvent(clickEvent);
+      }, 50);
     }
   };
   
