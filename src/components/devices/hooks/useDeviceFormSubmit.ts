@@ -4,6 +4,7 @@ import { Device, DeviceStatus } from '@/types';
 import { dataService } from '@/services/data.service';
 import { validateDeviceFields } from './useDeviceFormValidation';
 import { DeviceFormData } from './useDeviceFormHandlers';
+import { apiCall } from '@/services/api/utils';
 
 interface UseDeviceFormSubmitProps {
   device: Device;
@@ -52,7 +53,7 @@ export const useDeviceFormSubmit = ({
     
     const { 
       project, projectGroup, type, deviceType, imei, serialNumber, 
-      status, deviceStatus, receivedDate, modelNumber, notes, devicePicture,
+      status, deviceStatus, receivedDate, modelNumber, notes,
       assignedTo, assignedToId 
     } = deviceData;
     
@@ -64,33 +65,21 @@ export const useDeviceFormSubmit = ({
     setIsSubmitting(true);
     
     try {
-      // Check if image is being removed (was present but now empty/null)
-      const isImageBeingRemoved = device.devicePicture && (!devicePicture || devicePicture === '');
+      // Get the latest image from device_images table
+      let latestImageData = null;
       
-      console.log('=== IMAGE REMOVAL CHECK ===');
-      console.log('Device had image:', !!device.devicePicture);
-      console.log('Form has image:', !!devicePicture);
-      console.log('Is image being removed:', isImageBeingRemoved);
-      
-      // If image is being removed, delete it from device_images table first
-      if (isImageBeingRemoved) {
-        console.log('Deleting image from device_images table for device:', device.id);
-        try {
-          const response = await fetch(`/api/devices/${device.id}/images`, {
-            method: 'DELETE',
-            headers: {
-              'Content-Type': 'application/json',
-            }
-          });
-          
-          if (response.ok) {
-            console.log('✅ Successfully deleted image from device_images table');
-          } else {
-            console.error('❌ Failed to delete image from device_images table:', response.status);
-          }
-        } catch (error) {
-          console.error('❌ Error deleting image from device_images table:', error);
+      try {
+        console.log('Fetching latest image from device_images table for device:', device.id);
+        const images = await apiCall(`/devices/${device.id}/images`);
+        
+        if (images && images.length > 0) {
+          latestImageData = images[0].imageData; // Get the most recent image
+          console.log('✅ Found image in device_images table');
+        } else {
+          console.log('No images found in device_images table');
         }
+      } catch (error) {
+        console.error('Error fetching device images:', error);
       }
       
       // Prepare update data
@@ -106,8 +95,8 @@ export const useDeviceFormSubmit = ({
         receivedDate,
         modelNumber: modelNumber || null,
         notes: notes || null,
-        // FIXED: Always include devicePicture field to handle deletion
-        devicePicture: devicePicture || null, // Send null to delete, or image data to update
+        // Sync devicePicture with device_images table
+        devicePicture: latestImageData || null,
         // Properly handle null values for assignedToId
         assignedToId: assignedToId ? String(assignedToId) : null
       };
@@ -120,15 +109,13 @@ export const useDeviceFormSubmit = ({
       console.log('=== UPDATE DATA BEING SENT ===');
       console.log('Update data:', {
         ...updateData,
-        devicePicture: updateData.devicePicture ? 
-          (updateData.devicePicture === null ? 'DELETION_REQUESTED' : '[IMAGE_DATA]') : 
-          'DELETION_REQUESTED'
+        devicePicture: updateData.devicePicture ? 'HAS_IMAGE_DATA' : 'NULL'
       });
       console.log('Device Type specifically:', updateData.deviceType);
       console.log('Device Category specifically:', updateData.type);
       console.log('Model Number specifically:', updateData.modelNumber);
       console.log('Notes specifically:', updateData.notes);
-      console.log('DevicePicture field:', updateData.devicePicture === null ? 'NULL (DELETE)' : updateData.devicePicture ? 'HAS_DATA' : 'EMPTY');
+      console.log('DevicePicture field synced from device_images:', updateData.devicePicture ? 'HAS_DATA' : 'NULL');
       
       // Update the device
       const updatedDevice = await dataService.updateDevice(device.id, updateData);

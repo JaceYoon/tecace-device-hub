@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,7 +21,43 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
   onImageUpdate
 }) => {
   const [isUploading, setIsUploading] = useState(false);
-  const [previewImage, setPreviewImage] = useState<string | null>(devicePicture || null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Load image from device_images table when component mounts or deviceId changes
+  useEffect(() => {
+    const loadDeviceImage = async () => {
+      if (!deviceId || deviceId === '' || deviceId === 'undefined') {
+        // For new devices, use devicePicture prop if available
+        setPreviewImage(devicePicture || null);
+        return;
+      }
+
+      setIsLoading(true);
+      try {
+        console.log('Loading device images for deviceId:', deviceId);
+        const images = await apiCall(`/devices/${deviceId}/images`);
+        
+        if (images && images.length > 0) {
+          // Get the most recent image
+          const latestImage = images[0];
+          console.log('Loaded device image from device_images table');
+          setPreviewImage(latestImage.imageData);
+        } else {
+          console.log('No images found in device_images table');
+          setPreviewImage(devicePicture || null);
+        }
+      } catch (error) {
+        console.error('Failed to load device images:', error);
+        // Fallback to devicePicture prop
+        setPreviewImage(devicePicture || null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDeviceImage();
+  }, [deviceId, devicePicture]);
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -69,8 +106,8 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       onFileChange(e);
     }
 
-    // If deviceId exists and wants actual upload
-    if (deviceId) {
+    // If deviceId exists, upload to device_images table
+    if (deviceId && deviceId !== '' && deviceId !== 'undefined') {
       await uploadImageToDeviceImages(file);
     }
   };
@@ -89,17 +126,15 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
           base64Length: base64Data.length
         });
         
-        // Validate deviceId exists and is not empty
-        if (!deviceId || deviceId === '' || deviceId === 'undefined') {
-          console.error('❌ Invalid or empty deviceId for upload:', deviceId);
-          toast.error('Invalid device ID');
-          return;
-        }
-        
         console.log('Using deviceId for upload:', deviceId);
         
         try {
-          // Use correct server route: /devices/:id/images
+          // First, delete existing images for this device to prevent duplicates
+          await apiCall(`/devices/${deviceId}/images`, {
+            method: 'DELETE'
+          });
+
+          // Then upload the new image
           const result = await apiCall(`/devices/${deviceId}/images`, {
             method: 'POST',
             body: JSON.stringify({
@@ -109,12 +144,14 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
 
           console.log('✅ Upload successful:', result);
           toast.success('Image uploaded successfully');
-          if (onImageUpdate) {
-            onImageUpdate();
-          }
+          
+          // Don't call onImageUpdate here to prevent form refresh
+          // The preview is already set from the file reader
         } catch (error) {
           console.error('❌ Upload failed:', error);
           toast.error('Failed to upload image');
+          // Reset preview on failure
+          setPreviewImage(null);
         }
       };
       reader.readAsDataURL(file);
@@ -157,7 +194,6 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       if (onFileChange) {
         console.log('Calling onFileChange to clear form data');
         
-        // Create a proper synthetic event that mimics clearing a file input
         const syntheticEvent = {
           target: {
             files: null,
@@ -176,18 +212,10 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       }
 
       // 4. Delete from server if in edit mode
-      if (deviceId) {
-        // Validate deviceId exists and is not empty
-        if (!deviceId || deviceId === '' || deviceId === 'undefined') {
-          console.error('❌ Invalid or empty deviceId for removal:', deviceId);
-          toast.error('Invalid device ID');
-          return;
-        }
-        
+      if (deviceId && deviceId !== '' && deviceId !== 'undefined') {
         console.log(`Calling DELETE API: /devices/${deviceId}/images`);
         
         try {
-          // Use correct server route: /devices/:id/images
           const result = await apiCall(`/devices/${deviceId}/images`, {
             method: 'DELETE'
           });
@@ -200,12 +228,6 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
         }
       }
 
-      // 5. Call callback to refresh parent component
-      if (onImageUpdate) {
-        console.log('Calling onImageUpdate to refresh parent');
-        onImageUpdate();
-      }
-
       console.log('✅ Image removal completed successfully');
 
     } catch (error) {
@@ -213,6 +235,17 @@ const DeviceImageUploader: React.FC<DeviceImageUploaderProps> = ({
       toast.error('Failed to remove image');
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <Label htmlFor="devicePicture-upload">Device Picture</Label>
+        <div className="flex items-center gap-2">
+          <div className="text-sm text-muted-foreground">Loading image...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
