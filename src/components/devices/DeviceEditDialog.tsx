@@ -46,16 +46,20 @@ export const DeviceEditDialog: React.FC<DeviceEditDialogProps> = ({
   const handleOpenChange = (newOpen: boolean) => {
     setOpen(newOpen);
     
-    // When dialog opens, close any open dropdown menus
+    // When dialog opens, close any open dropdown menus without affecting the dialog
     if (newOpen) {
-      // Force close all dropdowns by dispatching escape key event
-      const escapeEvent = new KeyboardEvent('keydown', {
-        key: 'Escape',
-        keyCode: 27,
-        which: 27,
-        bubbles: true
-      });
-      document.dispatchEvent(escapeEvent);
+      // Use setTimeout to ensure the dialog is fully opened first
+      setTimeout(() => {
+        // Find and close dropdown menus by clicking outside
+        const dropdowns = document.querySelectorAll('[data-state="open"][role="menu"]');
+        dropdowns.forEach(dropdown => {
+          const trigger = dropdown.previousElementSibling;
+          if (trigger) {
+            // Simulate clicking outside the dropdown
+            document.body.click();
+          }
+        });
+      }, 10);
     }
   };
   
