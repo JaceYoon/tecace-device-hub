@@ -1,7 +1,7 @@
 
 import React, { useState, useCallback } from 'react';
 import { Search, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { DebouncedInput } from '@/components/ui/debounced-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -38,7 +38,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isOpen, setIsOpen] = useState(false);
 
-  // Debounced search handler to prevent excessive re-renders
+  // Memoized handlers to prevent unnecessary re-renders
   const handleSearchChange = useCallback((value: string) => {
     onSearchChange(value);
   }, [onSearchChange]);
@@ -76,11 +76,12 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
     <div className="flex flex-col gap-4 mb-6">
       <div className="flex gap-2">
         <div className="relative flex-1 min-w-0">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-          <Input
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 pointer-events-none" />
+          <DebouncedInput
             placeholder="Search devices... (실시간 검색)"
             value={searchQuery}
-            onChange={(e) => handleSearchChange(e.target.value)}
+            onChange={handleSearchChange}
+            debounceMs={150}
             className="pl-10"
           />
         </div>

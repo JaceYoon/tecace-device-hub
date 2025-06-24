@@ -29,27 +29,10 @@ export const useDeviceFilters = ({
   const initialLogsDone = useRef(false);
   const fetchInProgress = useRef(false);
   const lastFetchTime = useRef(0);
-  const searchTimeoutRef = useRef<NodeJS.Timeout>();
-  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-
   const stableFilterByStatus = useRef(filterByStatus);
   
-  // Debounce search query to improve performance
-  useEffect(() => {
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-    
-    searchTimeoutRef.current = setTimeout(() => {
-      setDebouncedSearchQuery(searchQuery);
-    }, 300);
-    
-    return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
-    };
-  }, [searchQuery]);
+  // Optimized search query state management - no debouncing here since we handle it in the component
+  const memoizedSearchQuery = useMemo(() => searchQuery.toLowerCase().trim(), [searchQuery]);
   
   useEffect(() => {
     const currentIsArray = Array.isArray(stableFilterByStatus.current);
@@ -157,7 +140,7 @@ export const useDeviceFilters = ({
     return map;
   }, [users]);
 
-  // Pre-compute search index for better performance
+  // Pre-compute search index for better performance - only rebuild when devices or users change
   const searchIndex = useMemo(() => {
     const index = new Map<string, string>();
     devices.forEach(device => {
@@ -242,12 +225,11 @@ export const useDeviceFilters = ({
       });
     }
     
-    // Apply search filter using pre-computed index
-    if (debouncedSearchQuery) {
-      const searchLower = debouncedSearchQuery.toLowerCase();
+    // Apply search filter using pre-computed index - only if search query exists
+    if (memoizedSearchQuery) {
       filtered = filtered.filter(device => {
         const searchableText = searchIndex.get(device.id) || '';
-        return searchableText.includes(searchLower);
+        return searchableText.includes(memoizedSearchQuery);
       });
     }
 
@@ -296,7 +278,12 @@ export const useDeviceFilters = ({
     console.timeEnd('Device filtering');
     console.log(`Filtered ${devices.length} -> ${filtered.length} devices`);
     return filtered;
-  }, [devices, debouncedSearchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter, sortBy, searchIndex]);
+  }, [devices, memoizedSearchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter, sortBy, searchIndex]);
+
+  // Memoize the search handler to prevent unnecessary re-renders
+  const handleSearchChange = useCallback((query: string) => {
+    setSearchQuery(query);
+  }, []);
 
   return {
     devices,
@@ -304,7 +291,7 @@ export const useDeviceFilters = ({
     filteredDevices,
     deviceTypes,
     searchQuery,
-    setSearchQuery,
+    setSearchQuery: handleSearchChange,
     statusFilter,
     setStatusFilter,
     typeFilter,
