@@ -1,18 +1,19 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
 import PageContainer from '@/components/layout/PageContainer';
 import DeviceList from '@/components/devices/DeviceList';
 import DeviceForm from '@/components/devices/DeviceForm';
+import MockDataGenerator from '@/components/devices/MockDataGenerator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
-import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Clock } from 'lucide-react';
+import { Loader2, Package, PlusCircle, Shield, Smartphone, FileSpreadsheet, Clock, Database } from 'lucide-react';
 import RequestList from '@/components/devices/RequestList';
 import { dataService } from '@/services/data.service';
 import StatusSummary from '@/components/devices/StatusSummary';
 import { exportDevicesToExcel } from '@/utils/exports/deviceExport';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 const DeviceManagement: React.FC = () => {
   const { user, isAuthenticated, isAdmin } = useAuth();
@@ -21,6 +22,7 @@ const DeviceManagement: React.FC = () => {
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'all-devices');
   const [showAddForm, setShowAddForm] = useState(false);
+  const [showMockGenerator, setShowMockGenerator] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -85,6 +87,11 @@ const DeviceManagement: React.FC = () => {
     }
   };
 
+  const handleMockDataGenerated = () => {
+    setShowMockGenerator(false);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
   if (isLoading) {
     return (
       <PageContainer>
@@ -111,6 +118,24 @@ const DeviceManagement: React.FC = () => {
           </div>
 
           <div className="flex gap-2 flex-wrap">
+            <Dialog open={showMockGenerator} onOpenChange={setShowMockGenerator}>
+              <DialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Database className="h-4 w-4" />
+                  Mock Data
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Generate Mock Data</DialogTitle>
+                </DialogHeader>
+                <MockDataGenerator onDataGenerated={handleMockDataGenerated} />
+              </DialogContent>
+            </Dialog>
+
             <Button
               onClick={handleExportAll}
               variant="secondary"

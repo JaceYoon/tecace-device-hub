@@ -1,7 +1,7 @@
 
 #!/usr/bin/env node
 
-// Production build script for Tecace Device Management System
+// Production build script for Tecace Device Management System v0.3
 import { spawn } from 'child_process';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -12,7 +12,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const rootDir = path.resolve(__dirname, '..');
 
-console.log('🚀 Starting Tecace DMS Production Build...');
+console.log('🚀 Starting Tecace DMS v0.3 Production Build...');
 
 // Ensure we're using production environment
 process.env.NODE_ENV = 'production';
@@ -38,6 +38,7 @@ const npmCmd = isWindows ? 'npm.cmd' : 'npm';
 
 console.log('📦 Building frontend for production...');
 console.log('[BUILD] Using NODE_ENV=production');
+console.log('[BUILD] Version: 0.3');
 
 const buildProcess = spawn(npmCmd, ['run', 'build'], { 
   cwd: rootDir,
@@ -65,14 +66,16 @@ buildProcess.on('close', (code) => {
       if (fs.existsSync(versionPath)) {
         console.log('📝 Updating version information for production...');
         const versionContent = fs.readFileSync(versionPath, 'utf8');
-        const updatedContent = versionContent.replace(/export const APP_VERSION = '(.+?)';/, 
-          (match, version) => `export const APP_VERSION = '${version}';
-// Build information
-export const BUILD_TYPE = 'production';
-export const BUILD_DATE = '${new Date().toISOString()}';`);
+        const updatedContent = versionContent.replace(
+          /export const BUILD_DATE = '';/,
+          `export const BUILD_DATE = '${new Date().toISOString()}';`
+        ).replace(
+          /export const BUILD_TYPE = process\.env\.NODE_ENV \|\| 'development';/,
+          `export const BUILD_TYPE = 'production';`
+        );
         
         fs.writeFileSync(versionPath, updatedContent);
-        console.log('✅ Version information updated successfully');
+        console.log('✅ Version 0.3 information updated successfully');
       }
     } catch (error) {
       console.error('⚠️ Failed to update version information:', error.message);

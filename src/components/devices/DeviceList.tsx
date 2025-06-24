@@ -1,10 +1,12 @@
-
 import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
+import { usePagination } from '@/hooks/usePagination';
 import DeviceFilters from './DeviceFilters';
 import DeviceGrid from './DeviceGrid';
 import DeviceListHeader from './DeviceListHeader';
 import { useAuth } from '@/components/auth/AuthProvider';
+import { PaginationControls } from '@/components/ui/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface DeviceListProps {
   title?: string;
@@ -77,6 +79,18 @@ const DeviceList: React.FC<DeviceListProps> = ({
     refreshTrigger
   });
 
+  // Add pagination
+  const pagination = usePagination({
+    totalItems: filteredDevices.length,
+    itemsPerPage: 20,
+    initialPage: 1
+  });
+
+  // Get paginated devices
+  const paginatedDevices = useMemo(() => {
+    return filteredDevices.slice(pagination.startIndex, pagination.endIndex);
+  }, [filteredDevices, pagination.startIndex, pagination.endIndex]);
+
   // Only set initial status filter once after component mounts
   useEffect(() => {
     if (initialStatusFilter && !hasSetInitialStatusRef.current) {
@@ -136,12 +150,50 @@ const DeviceList: React.FC<DeviceListProps> = ({
         />
       )}
 
+      {/* Pagination info and controls */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span>
+            Showing {pagination.startIndex + 1} to {pagination.endIndex} of {pagination.totalItems} devices
+          </span>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Items per page:</span>
+          <Select
+            value={pagination.itemsPerPage.toString()}
+            onValueChange={(value) => pagination.setItemsPerPage(parseInt(value))}
+          >
+            <SelectTrigger className="w-20">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="10">10</SelectItem>
+              <SelectItem value="20">20</SelectItem>
+              <SelectItem value="50">50</SelectItem>
+              <SelectItem value="100">100</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <DeviceGrid
-        devices={filteredDevices}
+        devices={paginatedDevices}
         users={users}
         onAction={handleAction}
         showReturnControls={showReturnControls}
       />
+
+      {/* Pagination controls */}
+      {pagination.totalPages > 1 && (
+        <div className="mt-6">
+          <PaginationControls
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={pagination.goToPage}
+          />
+        </div>
+      )}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 
-export const APP_VERSION = '0.2';
+export const APP_VERSION = '0.3';
 export const VERSION = APP_VERSION;
 
 // Build information - will be updated during production build
