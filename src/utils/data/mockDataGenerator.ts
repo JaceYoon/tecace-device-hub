@@ -1,11 +1,11 @@
 
-import { Device, DeviceStatus, DeviceTypeValue } from '@/types';
+import { Device, DeviceStatus, DeviceTypeValue, DeviceTypeCategory } from '@/types';
 import { dataService } from '@/services/data.service';
 import { toast } from 'sonner';
 
 // Device types and categories
 const deviceTypes: DeviceTypeValue[] = ['Smartphone', 'Tablet', 'PC', 'Smartwatch', 'Box', 'Accessory', 'Other'];
-const deviceCategories = ['C-Type', 'Lunchbox'];
+const deviceCategories: DeviceTypeCategory[] = ['C-Type', 'Lunchbox'];
 const statuses: DeviceStatus[] = ['available', 'assigned', 'missing', 'stolen'];
 
 // Sample project names and groups
@@ -120,12 +120,13 @@ export const generateMockDevices = async (options: MockDataOptions): Promise<boo
       for (let i = 0; i < currentBatchSize; i++) {
         const deviceIndex = (batch * batchSize) + i + 1;
         const type = deviceTypes[Math.floor(Math.random() * deviceTypes.length)];
+        const deviceTypeCategory = deviceCategories[Math.floor(Math.random() * deviceCategories.length)];
         
         const deviceData = {
           project: `${projectNames[Math.floor(Math.random() * projectNames.length)]} #${deviceIndex}`,
           projectGroup: projectGroups[Math.floor(Math.random() * projectGroups.length)],
           type,
-          deviceType: deviceCategories[Math.floor(Math.random() * deviceCategories.length)],
+          deviceType: deviceTypeCategory,
           imei: Math.random() > 0.3 ? generateIMEI() : null, // 70% chance of having IMEI
           serialNumber: generateSerialNumber(type.substring(0, 2).toUpperCase()),
           status: statuses[Math.floor(Math.random() * statuses.length)],
