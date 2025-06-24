@@ -29,8 +29,27 @@ export const useDeviceFilters = ({
   const initialLogsDone = useRef(false);
   const fetchInProgress = useRef(false);
   const lastFetchTime = useRef(0);
+  const searchTimeoutRef = useRef<NodeJS.Timeout>();
+  const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
 
   const stableFilterByStatus = useRef(filterByStatus);
+  
+  // Debounce search query to improve performance
+  useEffect(() => {
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    
+    searchTimeoutRef.current = setTimeout(() => {
+      setDebouncedSearchQuery(searchQuery);
+    }, 300);
+    
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [searchQuery]);
   
   useEffect(() => {
     const currentIsArray = Array.isArray(stableFilterByStatus.current);
@@ -116,6 +135,7 @@ export const useDeviceFilters = ({
     };
   }, [refreshTrigger, fetchData]);
 
+  // Memoize device types calculation
   const deviceTypes = useMemo(() => {
     const types = new Set<DeviceTypeValue>();
     devices.forEach(device => {
@@ -126,7 +146,7 @@ export const useDeviceFilters = ({
     return Array.from(types);
   }, [devices]);
 
-  // Create a map of user IDs to user names for quick lookup
+  // Create a map of user IDs to user names for quick lookup - memoized for performance
   const userIdToNameMap = useMemo(() => {
     const map = new Map<string, string>();
     users.forEach(user => {
@@ -137,7 +157,29 @@ export const useDeviceFilters = ({
     return map;
   }, [users]);
 
-  // Get owners for dropdown list
+  // Pre-compute search index for better performance
+  const searchIndex = useMemo(() => {
+    const index = new Map<string, string>();
+    devices.forEach(device => {
+      const ownerId = String(device.assignedTo || device.assignedToId || '');
+      const ownerName = userIdToNameMap.get(ownerId) || '';
+      
+      const searchableText = [
+        device.project || '',
+        device.projectGroup || '',
+        device.type || '',
+        device.serialNumber || '',
+        device.imei || '',
+        device.notes || '',
+        ownerName
+      ].join(' ').toLowerCase();
+      
+      index.set(device.id, searchableText);
+    });
+    return index;
+  }, [devices, userIdToNameMap]);
+
+  // Get owners for dropdown list - optimized
   const deviceOwners = useMemo(() => {
     const ownerIds = new Set<string>();
     const owners: { id: string; name: string }[] = [];
@@ -156,71 +198,60 @@ export const useDeviceFilters = ({
     return owners.sort((a, b) => a.name.localeCompare(b.name));
   }, [devices, userIdToNameMap]);
 
+  // Optimized filtering with early returns and reduced iterations
   const filteredDevices = useMemo(() => {
-    let filtered = devices.filter(device => {
-      const searchLower = searchQuery.toLowerCase();
-      
-      // Get the owner name for this device if it exists
-      let ownerName = '';
-      if (device.assignedTo || device.assignedToId) {
-        const ownerId = String(device.assignedTo || device.assignedToId || '');
-        ownerName = userIdToNameMap.get(ownerId) || '';
-      }
-
-      // Check if device matches search query in any field including owner's name
-      const matchesSearch = searchQuery === '' || 
-        (device.project && device.project.toLowerCase().includes(searchLower)) ||
-        (device.projectGroup && device.projectGroup.toLowerCase().includes(searchLower)) ||
-        (device.type && device.type.toLowerCase().includes(searchLower)) ||
-        (device.serialNumber && device.serialNumber.toLowerCase().includes(searchLower)) ||
-        (device.imei && device.imei.toLowerCase().includes(searchLower)) ||
-        (device.notes && device.notes.toLowerCase().includes(searchLower)) ||
-        (ownerName && ownerName.toLowerCase().includes(searchLower));
-      
-      if (!matchesSearch) return false;
-      
-      // Filter by assigned user if specified
-      if (filterByAssignedToUser) {
+    console.time('Device filtering');
+    
+    let filtered = devices;
+    
+    // Apply status filters first (most selective)
+    if (effectiveStatusFilters && effectiveStatusFilters.length > 0) {
+      filtered = filtered.filter(device => 
+        device.status && effectiveStatusFilters.includes(device.status)
+      );
+    } else if (!effectiveStatusFilters && !filterByAvailable) {
+      filtered = filtered.filter(device => device.status !== 'returned');
+    }
+    
+    // Apply availability filter
+    if (filterByAvailable) {
+      filtered = filtered.filter(device => 
+        device.status !== 'returned' && device.status !== 'dead'
+      );
+    }
+    
+    // Apply assigned user filter
+    if (filterByAssignedToUser) {
+      const userIdToMatch = String(filterByAssignedToUser);
+      filtered = filtered.filter(device => {
         const deviceAssignedTo = String(device.assignedTo || device.assignedToId || '');
-        const userIdToMatch = String(filterByAssignedToUser);
-        
-        if (deviceAssignedTo !== userIdToMatch) {
-          return false;
-        }
-      }
-      
-      // Filter by specific status if provided
-      if (effectiveStatusFilters && effectiveStatusFilters.length > 0) {
-        if (!device.status || !effectiveStatusFilters.includes(device.status)) {
-          return false;
-        }
-      }
-      
-      // Additional filters
-      if (filterByAvailable && (device.status === 'returned' || device.status === 'dead')) {
-        return false;
-      }
-      
-      if (!effectiveStatusFilters && !filterByAvailable && device.status === 'returned') {
-        return false;
-      }
-      
-      if (typeFilter !== 'all' && device.type !== typeFilter) {
-        return false;
-      }
-      
-      // Filter by owner if not "all"
-      if (ownerFilter !== 'all') {
+        return deviceAssignedTo === userIdToMatch;
+      });
+    }
+    
+    // Apply type filter
+    if (typeFilter !== 'all') {
+      filtered = filtered.filter(device => device.type === typeFilter);
+    }
+    
+    // Apply owner filter
+    if (ownerFilter !== 'all') {
+      filtered = filtered.filter(device => {
         const deviceAssignedTo = String(device.assignedTo || device.assignedToId || '');
-        if (deviceAssignedTo !== ownerFilter) {
-          return false;
-        }
-      }
-      
-      return true;
-    });
+        return deviceAssignedTo === ownerFilter;
+      });
+    }
+    
+    // Apply search filter using pre-computed index
+    if (debouncedSearchQuery) {
+      const searchLower = debouncedSearchQuery.toLowerCase();
+      filtered = filtered.filter(device => {
+        const searchableText = searchIndex.get(device.id) || '';
+        return searchableText.includes(searchLower);
+      });
+    }
 
-    // Apply sorting
+    // Apply sorting with optimized comparison
     if (sortBy !== 'none') {
       const [sortField, sortOrder = 'asc'] = sortBy.split('-');
       
@@ -252,7 +283,7 @@ export const useDeviceFilters = ({
 
         // For receivedDate, we want to sort by time value
         if (sortField === 'receivedDate') {
-          const result = (bValue as number) - (aValue as number); // Most recent first by default
+          const result = (bValue as number) - (aValue as number);
           return sortOrder === 'desc' ? result : -result;
         }
 
@@ -262,8 +293,10 @@ export const useDeviceFilters = ({
       });
     }
 
+    console.timeEnd('Device filtering');
+    console.log(`Filtered ${devices.length} -> ${filtered.length} devices`);
     return filtered;
-  }, [devices, searchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter, sortBy]);
+  }, [devices, debouncedSearchQuery, typeFilter, effectiveStatusFilters, filterByAssignedToUser, filterByAvailable, userIdToNameMap, ownerFilter, sortBy, searchIndex]);
 
   return {
     devices,

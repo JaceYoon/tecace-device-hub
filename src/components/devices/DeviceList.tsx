@@ -1,3 +1,4 @@
+
 import React, { useEffect, useCallback, useRef, useMemo } from 'react';
 import { useDeviceFilters } from '@/hooks/useDeviceFilters';
 import { usePagination } from '@/hooks/usePagination';
@@ -37,7 +38,6 @@ const DeviceList: React.FC<DeviceListProps> = ({
   const lastActionTimeRef = useRef(0);
   
   // Memoize values that shouldn't change on every render
-  // This is critical to prevent dependency changes in useEffect
   const effectiveUserFilter = useMemo(() => {
     return filterByAssignedToUser || 
       (title === 'My Devices' && user ? String(user.id) : undefined);
@@ -79,14 +79,14 @@ const DeviceList: React.FC<DeviceListProps> = ({
     refreshTrigger
   });
 
-  // Add pagination
+  // Add pagination with optimized default page size for large datasets
   const pagination = usePagination({
     totalItems: filteredDevices.length,
-    itemsPerPage: 20,
+    itemsPerPage: filteredDevices.length > 1000 ? 50 : 20, // Larger page size for big datasets
     initialPage: 1
   });
 
-  // Get paginated devices
+  // Get paginated devices - memoized to prevent unnecessary re-renders
   const paginatedDevices = useMemo(() => {
     return filteredDevices.slice(pagination.startIndex, pagination.endIndex);
   }, [filteredDevices, pagination.startIndex, pagination.endIndex]);
@@ -119,13 +119,15 @@ const DeviceList: React.FC<DeviceListProps> = ({
     if (title === 'My Devices' && user) {
       console.log("My Devices view - User ID:", user.id);
       console.log("My Devices view - Filtered devices count:", filteredDevices.length);
-      console.log("My Devices view - All filtered devices:", filteredDevices);
       console.log("My Devices view - Filter by assigned user:", effectiveUserFilter);
     }
-  }, [title, user, filteredDevices.length, effectiveUserFilter, filteredDevices]);
+  }, [title, user, filteredDevices.length, effectiveUserFilter]);
 
   // If this is My Devices view, we always want to show the controls for device return
   const showReturnControls = title === 'My Devices';
+
+  // Performance indicator for large datasets
+  const isLargeDataset = filteredDevices.length > 1000;
 
   return (
     <div className={className}>
@@ -150,12 +152,17 @@ const DeviceList: React.FC<DeviceListProps> = ({
         />
       )}
 
-      {/* Pagination info and controls */}
+      {/* Performance info and pagination controls */}
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <span>
             Showing {pagination.startIndex + 1} to {pagination.endIndex} of {pagination.totalItems} devices
           </span>
+          {isLargeDataset && (
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+              Large Dataset - Optimized
+            </span>
+          )}
         </div>
         
         <div className="flex items-center gap-2">
@@ -172,6 +179,7 @@ const DeviceList: React.FC<DeviceListProps> = ({
               <SelectItem value="20">20</SelectItem>
               <SelectItem value="50">50</SelectItem>
               <SelectItem value="100">100</SelectItem>
+              {isLargeDataset && <SelectItem value="200">200</SelectItem>}
             </SelectContent>
           </Select>
         </div>

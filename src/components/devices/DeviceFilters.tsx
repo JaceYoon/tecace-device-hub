@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import { Search, SlidersHorizontal, ChevronDown, ChevronUp } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -38,14 +38,19 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleSortChange = (field: string) => {
+  // Debounced search handler to prevent excessive re-renders
+  const handleSearchChange = useCallback((value: string) => {
+    onSearchChange(value);
+  }, [onSearchChange]);
+
+  const handleSortChange = useCallback((field: string) => {
     if (onSortChange) {
       const sortValue = field === 'none' ? 'none' : `${field}-${sortOrder}`;
       onSortChange(sortValue);
     }
-  };
+  }, [onSortChange, sortOrder]);
 
-  const toggleSortOrder = () => {
+  const toggleSortOrder = useCallback(() => {
     const newOrder = sortOrder === 'asc' ? 'desc' : 'asc';
     setSortOrder(newOrder);
     
@@ -53,9 +58,9 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
       const currentField = sortBy.split('-')[0];
       onSortChange(`${currentField}-${newOrder}`);
     }
-  };
+  }, [sortOrder, sortBy, onSortChange]);
 
-  const clearAllFilters = () => {
+  const clearAllFilters = useCallback(() => {
     onSearchChange('');
     onStatusChange('all');
     onTypeChange('all');
@@ -63,7 +68,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
       onSortChange('none');
     }
     setSortOrder('asc');
-  };
+  }, [onSearchChange, onStatusChange, onTypeChange, onSortChange]);
 
   const hasActiveFilters = searchQuery || statusFilter !== 'all' || typeFilter !== 'all' || sortBy !== 'none';
 
@@ -73,9 +78,9 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <Input
-            placeholder="Search devices..."
+            placeholder="Search devices... (실시간 검색)"
             value={searchQuery}
-            onChange={(e) => onSearchChange(e.target.value)}
+            onChange={(e) => handleSearchChange(e.target.value)}
             className="pl-10"
           />
         </div>
