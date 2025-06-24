@@ -86,6 +86,13 @@ export interface MockDataOptions {
 export const generateMockDevices = async (options: MockDataOptions): Promise<boolean> => {
   const { count, preserveExisting = true, batchSize = 50 } = options;
   
+  // Safety check: prevent running in production
+  if (import.meta.env.PROD) {
+    console.error('Mock data generation is disabled in production mode');
+    toast.error('Mock data generation is only available in development mode');
+    return false;
+  }
+  
   if (count <= 0 || count > 10000) {
     toast.error('Count must be between 1 and 10000');
     return false;
@@ -188,6 +195,13 @@ export const generateMockDevices = async (options: MockDataOptions): Promise<boo
 };
 
 export const clearMockDevices = async (): Promise<boolean> => {
+  // Safety check: prevent running in production
+  if (import.meta.env.PROD) {
+    console.error('Clear mock devices is disabled in production mode');
+    toast.error('Clear function is only available in development mode');
+    return false;
+  }
+  
   try {
     console.log('WARNING: This would clear all devices. Not implemented for safety.');
     toast.warning('Clear function not implemented for data safety');

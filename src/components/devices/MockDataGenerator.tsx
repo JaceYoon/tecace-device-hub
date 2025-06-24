@@ -16,7 +16,14 @@ const MockDataGenerator: React.FC<MockDataGeneratorProps> = ({ onDataGenerated }
   const [count, setCount] = useState(100);
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Check if we're in production mode
+  const isProduction = import.meta.env.PROD;
+
   const handleGenerate = async () => {
+    if (isProduction) {
+      return;
+    }
+
     if (count <= 0 || count > 10000) {
       return;
     }
@@ -42,12 +49,35 @@ const MockDataGenerator: React.FC<MockDataGeneratorProps> = ({ onDataGenerated }
     }
   };
 
+  // Show warning in production
+  if (isProduction) {
+    return (
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-destructive">
+            <AlertTriangle className="h-5 w-5" />
+            Production Mode
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>
+              Mock data generator is not available in production mode for security reasons.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="w-full max-w-md">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Database className="h-5 w-5" />
           Mock Data Generator
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">DEV ONLY</span>
         </CardTitle>
         <CardDescription>
           Generate test devices for stress testing and development

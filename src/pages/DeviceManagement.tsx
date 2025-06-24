@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -25,6 +26,9 @@ const DeviceManagement: React.FC = () => {
   const [showMockGenerator, setShowMockGenerator] = useState(false);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Check if we're in development mode
+  const isDevelopment = import.meta.env.DEV;
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -118,23 +122,25 @@ const DeviceManagement: React.FC = () => {
           </div>
 
           <div className="flex gap-2 flex-wrap">
-            <Dialog open={showMockGenerator} onOpenChange={setShowMockGenerator}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="flex items-center gap-2"
-                >
-                  <Database className="h-4 w-4" />
-                  Mock Data
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Generate Mock Data</DialogTitle>
-                </DialogHeader>
-                <MockDataGenerator onDataGenerated={handleMockDataGenerated} />
-              </DialogContent>
-            </Dialog>
+            {isDevelopment && (
+              <Dialog open={showMockGenerator} onOpenChange={setShowMockGenerator}>
+                <DialogTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="flex items-center gap-2"
+                  >
+                    <Database className="h-4 w-4" />
+                    Mock Data
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Generate Mock Data</DialogTitle>
+                  </DialogHeader>
+                  <MockDataGenerator onDataGenerated={handleMockDataGenerated} />
+                </DialogContent>
+              </Dialog>
+            )}
 
             <Button
               onClick={handleExportAll}
