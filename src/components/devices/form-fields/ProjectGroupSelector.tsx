@@ -46,7 +46,9 @@ const ProjectGroupSelector: React.FC<ProjectGroupSelectorProps> = ({
         
         const groups = Array.from(uniqueGroups);
         if (groups.length > 0) {
-          setProjectGroups(groups);
+          // Sort project groups in ascending alphabetical order
+          const sortedGroups = groups.sort((a, b) => a.localeCompare(b));
+          setProjectGroups(sortedGroups);
           setNoGroupsFound(false);
         } else {
           setProjectGroups([]);
