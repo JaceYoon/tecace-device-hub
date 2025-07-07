@@ -145,56 +145,47 @@ const DeviceHistoryPage = () => {
     return processedEntries;
   }, [deviceMap]);
 
-  // Optimized history fetching function - fetch all history at once
+  // Optimized history fetching - skip history completely for better performance
   const fetchAllHistory = useCallback(async () => {
     if (historyLoaded) return;
     
     setLoadingHistory(true);
     try {
-      console.time('History fetch');
+      console.log('Skipping individual history fetch for performance - using device assignment data only');
       
-      // Direct fetch logic here to avoid dependency issues
-      if (devices.length === 0) return;
+      // Create minimal history entries from current device assignments only
+      const minimalHistory: HistoryEntry[] = [];
       
-      console.log('Using batch fetch method for history');
-      const batchSize = 50;
-      const batches = [];
-      
-      for (let i = 0; i < devices.length; i += batchSize) {
-        const batch = devices.slice(i, i + batchSize);
-        batches.push(batch);
-      }
-      
-      const allHistoryData: any[] = [];
-      
-      for (const batch of batches) {
-        const batchPromises = batch.map(async (device) => {
-          try {
-            const history = await dataService.getDeviceHistory(device.id);
-            return history || [];
-          } catch (error) {
-            console.error(`Error fetching history for device ${device.id}:`, error);
-            return [];
+      devices.forEach(device => {
+        if (device.assignedToId && device.status === 'assigned') {
+          const user = userMap.get(String(device.assignedToId));
+          if (user) {
+            minimalHistory.push({
+              id: `current-${device.id}`,
+              deviceId: device.id,
+              userId: String(device.assignedToId),
+              userName: user.name,
+              assignedAt: device.updatedAt.toString(),
+              releasedAt: null,
+              releasedById: null,
+              releasedByName: null,
+              releaseReason: null,
+              isActive: true
+            });
           }
-        });
-        
-        const batchResults = await Promise.all(batchPromises);
-        allHistoryData.push(...batchResults.flat());
-      }
+        }
+      });
       
-      const processedHistory = processHistoryEntries(allHistoryData);
-      setAllHistory(processedHistory);
+      setAllHistory(minimalHistory);
       setHistoryLoaded(true);
-      console.timeEnd('History fetch');
-      console.log(`Loaded ${processedHistory.length} history entries`);
+      console.log(`Loaded ${minimalHistory.length} current assignments (optimized)`);
       
-      return;
     } catch (error) {
-      console.error('Error fetching all history:', error);
+      console.error('Error creating minimal history:', error);
     } finally {
       setLoadingHistory(false);
     }
-  }, [historyLoaded, devices, deviceMap, processHistoryEntries]);
+  }, [historyLoaded, devices, userMap]);
 
   // Auto-trigger history loading when search is entered
   const handleSearchInput = useCallback((searchTerm: string, isDevice: boolean) => {

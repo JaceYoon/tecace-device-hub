@@ -78,7 +78,7 @@ const DeviceFilters: React.FC<DeviceFiltersProps> = ({
         <div className="relative flex-1 min-w-0">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 pointer-events-none" />
           <DebouncedInput
-            placeholder="Search devices... (실시간 검색)"
+            placeholder="Search devices... (live search)"
             value={searchQuery}
             onChange={handleSearchChange}
             debounceMs={150}
