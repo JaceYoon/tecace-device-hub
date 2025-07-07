@@ -82,54 +82,6 @@ const DeviceHistoryPage = () => {
     return map;
   }, [users]);
 
-  // Optimized history fetching function
-  const fetchAllHistory = useCallback(async () => {
-    if (devices.length === 0 || historyLoaded) return;
-    
-    setLoadingHistory(true);
-    try {
-      console.time('History fetch');
-      
-      // Batch fetch history for better performance
-      const batchSize = 50;
-      const batches = [];
-      
-      for (let i = 0; i < devices.length; i += batchSize) {
-        const batch = devices.slice(i, i + batchSize);
-        batches.push(batch);
-      }
-      
-      const allHistoryData: HistoryEntry[] = [];
-      
-      // Process batches sequentially to avoid overwhelming the server
-      for (const batch of batches) {
-        const batchPromises = batch.map(async (device) => {
-          try {
-            const history = await dataService.getDeviceHistory(device.id);
-            return history || [];
-          } catch (error) {
-            console.error(`Error fetching history for device ${device.id}:`, error);
-            return [];
-          }
-        });
-        
-        const batchResults = await Promise.all(batchPromises);
-        allHistoryData.push(...batchResults.flat());
-      }
-      
-      const processedHistory = processHistoryEntries(allHistoryData);
-      setAllHistory(processedHistory);
-      setHistoryLoaded(true);
-      
-      console.timeEnd('History fetch');
-      console.log(`Loaded ${processedHistory.length} history entries`);
-    } catch (error) {
-      console.error('Error fetching all history:', error);
-    } finally {
-      setLoadingHistory(false);
-    }
-  }, [devices, historyLoaded]);
-
   // Process history entries with performance optimization
   const processHistoryEntries = useCallback((rawHistory: any[]): HistoryEntry[] => {
     if (!rawHistory || rawHistory.length === 0) return [];
@@ -192,6 +144,71 @@ const DeviceHistoryPage = () => {
     
     return processedEntries;
   }, [deviceMap]);
+
+  // Optimized history fetching function - fetch all history at once
+  const fetchAllHistory = useCallback(async () => {
+    if (historyLoaded) return;
+    
+    setLoadingHistory(true);
+    try {
+      console.time('History fetch');
+      
+      // Direct fetch logic here to avoid dependency issues
+      if (devices.length === 0) return;
+      
+      console.log('Using batch fetch method for history');
+      const batchSize = 50;
+      const batches = [];
+      
+      for (let i = 0; i < devices.length; i += batchSize) {
+        const batch = devices.slice(i, i + batchSize);
+        batches.push(batch);
+      }
+      
+      const allHistoryData: any[] = [];
+      
+      for (const batch of batches) {
+        const batchPromises = batch.map(async (device) => {
+          try {
+            const history = await dataService.getDeviceHistory(device.id);
+            return history || [];
+          } catch (error) {
+            console.error(`Error fetching history for device ${device.id}:`, error);
+            return [];
+          }
+        });
+        
+        const batchResults = await Promise.all(batchPromises);
+        allHistoryData.push(...batchResults.flat());
+      }
+      
+      const processedHistory = processHistoryEntries(allHistoryData);
+      setAllHistory(processedHistory);
+      setHistoryLoaded(true);
+      console.timeEnd('History fetch');
+      console.log(`Loaded ${processedHistory.length} history entries`);
+      
+      return;
+    } catch (error) {
+      console.error('Error fetching all history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [historyLoaded, devices, deviceMap, processHistoryEntries]);
+
+  // Auto-trigger history loading when search is entered
+  const handleSearchInput = useCallback((searchTerm: string, isDevice: boolean) => {
+    if (isDevice) {
+      setDeviceSearchTerm(searchTerm);
+    } else {
+      setUserSearchTerm(searchTerm);
+    }
+    
+    // Auto-load history if search term exists but history not loaded
+    if (searchTerm && !historyLoaded && !loadingHistory) {
+      fetchAllHistory();
+    }
+  }, [historyLoaded, loadingHistory, fetchAllHistory]);
 
   // Utility functions
   const formatDate = useCallback((dateString: string | null) => {
@@ -295,11 +312,10 @@ const DeviceHistoryPage = () => {
 
   // Filtered results with search optimization
   const filteredDevicesWithHistory = useMemo(() => {
+    // Show results if either searching or showing all
     if (!showAllDevices && !deviceSearchTerm) return [];
     
     return devicesWithHistory.filter((deviceWithHistory) => {
-      if (!showAllDevices && !deviceSearchTerm) return false;
-      
       const matchesSearch = !deviceSearchTerm || 
         deviceWithHistory.device.project?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
         deviceWithHistory.device.serialNumber?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
@@ -318,11 +334,10 @@ const DeviceHistoryPage = () => {
   }, [devicesWithHistory, deviceSearchTerm, deviceStatusFilter, showAllDevices]);
 
   const filteredUsersWithHistory = useMemo(() => {
+    // Show results if either searching or showing all
     if (!showAllUsers && !userSearchTerm) return [];
     
     return usersWithHistory.filter((userWithHistory) => {
-      if (!showAllUsers && !userSearchTerm) return false;
-      
       const matchesSearch = !userSearchTerm || 
         userWithHistory.user.name.toLowerCase().includes(userSearchTerm.toLowerCase());
       
@@ -382,7 +397,7 @@ const DeviceHistoryPage = () => {
                     <DebouncedInput
                       placeholder="Search by device name, serial number, IMEI, or user..."
                       value={deviceSearchTerm}
-                      onChange={setDeviceSearchTerm}
+                      onChange={(value) => handleSearchInput(value, true)}
                       className="pl-10"
                       debounceMs={300}
                     />
@@ -543,7 +558,7 @@ const DeviceHistoryPage = () => {
                     <DebouncedInput
                       placeholder="Search by user name..."
                       value={userSearchTerm}
-                      onChange={setUserSearchTerm}
+                      onChange={(value) => handleSearchInput(value, false)}
                       className="pl-10"
                       debounceMs={300}
                     />
