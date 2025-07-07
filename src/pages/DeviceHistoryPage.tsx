@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import PageContainer from '../components/layout/PageContainer';
 import { dataService } from '@/services/data.service';
@@ -6,14 +7,15 @@ import { Device, User } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
+import { DebouncedInput } from '@/components/ui/debounced-input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Search, History, Monitor, User as UserIcon, Eye } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Search, History, Monitor, User as UserIcon, Eye, AlertCircle, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { Skeleton } from '@/components/ui/skeleton';
-import { Button } from '@/components/ui/button';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface HistoryEntry {
   id: string;
@@ -41,14 +43,22 @@ interface UserWithHistory {
 }
 
 const DeviceHistoryPage = () => {
+  // Search states
   const [deviceSearchTerm, setDeviceSearchTerm] = useState('');
   const [userSearchTerm, setUserSearchTerm] = useState('');
   const [deviceStatusFilter, setDeviceStatusFilter] = useState('all');
   const [userStatusFilter, setUserStatusFilter] = useState('all');
+  
+  // Display control states
+  const [showAllDevices, setShowAllDevices] = useState(false);
+  const [showAllUsers, setShowAllUsers] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+  
+  // History data
   const [allHistory, setAllHistory] = useState<HistoryEntry[]>([]);
-  const [expandedDeviceId, setExpandedDeviceId] = useState<string | null>(null);
-  const [expandedUserId, setExpandedUserId] = useState<string | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
 
+  // Fetch basic data
   const { data: devices = [], isLoading: devicesLoading } = useQuery({
     queryKey: ['devices'],
     queryFn: () => dataService.devices.getAll(),
@@ -59,12 +69,41 @@ const DeviceHistoryPage = () => {
     queryFn: () => dataService.users.getAll(),
   });
 
-  useEffect(() => {
-    const fetchAllHistory = async () => {
-      if (devices.length === 0) return;
+  // Memoized device and user maps for performance
+  const deviceMap = useMemo(() => {
+    const map = new Map<string, Device>();
+    devices.forEach(device => map.set(device.id, device));
+    return map;
+  }, [devices]);
+
+  const userMap = useMemo(() => {
+    const map = new Map<string, User>();
+    users.forEach(user => map.set(String(user.id), user));
+    return map;
+  }, [users]);
+
+  // Optimized history fetching function
+  const fetchAllHistory = useCallback(async () => {
+    if (devices.length === 0 || historyLoaded) return;
+    
+    setLoadingHistory(true);
+    try {
+      console.time('History fetch');
       
-      try {
-        const historyPromises = devices.map(async (device) => {
+      // Batch fetch history for better performance
+      const batchSize = 50;
+      const batches = [];
+      
+      for (let i = 0; i < devices.length; i += batchSize) {
+        const batch = devices.slice(i, i + batchSize);
+        batches.push(batch);
+      }
+      
+      const allHistoryData: HistoryEntry[] = [];
+      
+      // Process batches sequentially to avoid overwhelming the server
+      for (const batch of batches) {
+        const batchPromises = batch.map(async (device) => {
           try {
             const history = await dataService.getDeviceHistory(device.id);
             return history || [];
@@ -73,70 +112,56 @@ const DeviceHistoryPage = () => {
             return [];
           }
         });
-
-        const allHistoryArrays = await Promise.all(historyPromises);
-        const flatHistory = allHistoryArrays.flat();
         
-        console.log('Raw history data:', flatHistory);
-        
-        const processedHistory = processHistoryEntries(flatHistory);
-        
-        console.log('Processed history entries:', processedHistory.length);
-        setAllHistory(processedHistory);
-      } catch (error) {
-        console.error('Error fetching all history:', error);
-      }
-    };
-
-    if (!devicesLoading && devices.length > 0) {
-      fetchAllHistory();
-    }
-  }, [devices, devicesLoading]);
-
-  // Process raw history entries to create proper assignment periods
-  const processHistoryEntries = (rawHistory: any[]): HistoryEntry[] => {
-    console.log('Processing history entries, raw count:', rawHistory.length);
-    
-    if (!rawHistory || rawHistory.length === 0) {
-      return [];
-    }
-
-    const processedEntries: HistoryEntry[] = [];
-    
-    // Group entries by device
-    const deviceMap = new Map<string, any[]>();
-    
-    rawHistory.forEach(entry => {
-      if (!entry || !entry.deviceId || !entry.userId) {
-        return;
+        const batchResults = await Promise.all(batchPromises);
+        allHistoryData.push(...batchResults.flat());
       }
       
-      if (!deviceMap.has(entry.deviceId)) {
-        deviceMap.set(entry.deviceId, []);
+      const processedHistory = processHistoryEntries(allHistoryData);
+      setAllHistory(processedHistory);
+      setHistoryLoaded(true);
+      
+      console.timeEnd('History fetch');
+      console.log(`Loaded ${processedHistory.length} history entries`);
+    } catch (error) {
+      console.error('Error fetching all history:', error);
+    } finally {
+      setLoadingHistory(false);
+    }
+  }, [devices, historyLoaded]);
+
+  // Process history entries with performance optimization
+  const processHistoryEntries = useCallback((rawHistory: any[]): HistoryEntry[] => {
+    if (!rawHistory || rawHistory.length === 0) return [];
+
+    const processedEntries: HistoryEntry[] = [];
+    const deviceHistoryMap = new Map<string, any[]>();
+    
+    // Group by device for efficient processing
+    rawHistory.forEach(entry => {
+      if (!entry?.deviceId || !entry?.userId) return;
+      
+      if (!deviceHistoryMap.has(entry.deviceId)) {
+        deviceHistoryMap.set(entry.deviceId, []);
       }
-      deviceMap.get(entry.deviceId)!.push(entry);
+      deviceHistoryMap.get(entry.deviceId)!.push(entry);
     });
     
-    console.log('Device groups found:', deviceMap.size);
-    
-    deviceMap.forEach((entries, deviceId) => {
-      // Sort entries by date (oldest first)
+    deviceHistoryMap.forEach((entries, deviceId) => {
+      const device = deviceMap.get(deviceId);
+      if (!device) return;
+      
+      // Sort entries by date
       entries.sort((a, b) => {
         const dateA = new Date(a.assignedAt || a.releasedAt).getTime();
         const dateB = new Date(b.assignedAt || b.releasedAt).getTime();
         return dateA - dateB;
       });
       
-      const device = devices.find(d => d.id === deviceId);
-      
-      // Process each assign/release pair
       const assignEntries = entries.filter(e => e.assignedAt);
       const releaseEntries = entries.filter(e => e.releasedAt);
       
-      console.log(`Device ${deviceId}: ${assignEntries.length} assigns, ${releaseEntries.length} releases`);
-      
       assignEntries.forEach(assignEntry => {
-        // Find the corresponding release entry for this assignment
         const correspondingRelease = releaseEntries.find(releaseEntry => {
           const assignDate = new Date(assignEntry.assignedAt);
           const releaseDate = new Date(releaseEntry.releasedAt);
@@ -146,17 +171,9 @@ const DeviceHistoryPage = () => {
           return sameUser && releaseAfterAssign;
         });
         
-        // Check if this assignment is currently active
         const isCurrentlyActive = !correspondingRelease && 
-          device && 
           device.status === 'assigned' && 
           String(device.assignedToId) === String(assignEntry.userId);
-        
-        console.log(`Processing assignment for device ${deviceId}, user ${assignEntry.userId}:`, {
-          assignedAt: assignEntry.assignedAt,
-          releasedAt: correspondingRelease?.releasedAt || null,
-          isActive: isCurrentlyActive
-        });
         
         processedEntries.push({
           id: `${deviceId}-${assignEntry.userId}-${assignEntry.assignedAt}`,
@@ -173,33 +190,20 @@ const DeviceHistoryPage = () => {
       });
     });
     
-    console.log('Final processed entries:', processedEntries.length);
-    processedEntries.forEach(entry => {
-      console.log(`Entry: ${entry.userName} - ${entry.deviceId}, Active: ${entry.isActive}, Released: ${entry.releasedAt || 'No'}`);
-    });
-    
     return processedEntries;
-  };
+  }, [deviceMap]);
 
-  const getDeviceInfo = (deviceId: string) => {
-    return devices.find(d => d.id === deviceId);
-  };
-
-  const getUserInfo = (userId: string) => {
-    // Convert both user ID and entry user ID to strings for comparison
-    return users.find(u => String(u.id) === String(userId));
-  };
-
-  const formatDate = (dateString: string | null) => {
+  // Utility functions
+  const formatDate = useCallback((dateString: string | null) => {
     if (!dateString) return 'Present';
     try {
       return format(new Date(dateString), 'MMM d, yyyy');
     } catch (error) {
       return 'Invalid date';
     }
-  };
+  }, []);
 
-  const calculateDuration = (assignedAt: string, releasedAt: string | null) => {
+  const calculateDuration = useCallback((assignedAt: string, releasedAt: string | null) => {
     const start = new Date(assignedAt);
     const end = releasedAt ? new Date(releasedAt) : new Date();
     const diffTime = Math.abs(end.getTime() - start.getTime());
@@ -215,13 +219,15 @@ const DeviceHistoryPage = () => {
       const remainingMonths = Math.floor((diffDays % 365) / 30);
       return `${years}y ${remainingMonths}m`;
     }
-  };
+  }, []);
 
-  // Group devices with their rental history
-  const devicesWithHistory: DeviceWithHistory[] = React.useMemo(() => {
+  // Memoized filtered data with performance optimization
+  const devicesWithHistory: DeviceWithHistory[] = useMemo(() => {
+    if (!historyLoaded || allHistory.length === 0) return [];
+    
     const deviceHistoryMap = new Map<string, HistoryEntry[]>();
     
-    // Group history by device
+    // Group history by device efficiently
     allHistory.forEach((entry) => {
       if (!deviceHistoryMap.has(entry.deviceId)) {
         deviceHistoryMap.set(entry.deviceId, []);
@@ -231,11 +237,9 @@ const DeviceHistoryPage = () => {
 
     const result: DeviceWithHistory[] = [];
     deviceHistoryMap.forEach((history, deviceId) => {
-      const device = getDeviceInfo(deviceId);
+      const device = deviceMap.get(deviceId);
       if (device) {
         const sortedHistory = history.sort((a, b) => new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime());
-        
-        // Find current owner - the active entry
         const currentOwner = sortedHistory.find(entry => entry.isActive);
         
         result.push({
@@ -246,20 +250,11 @@ const DeviceHistoryPage = () => {
       }
     });
 
-    console.log('Devices with history:', result.length);
     return result;
-  }, [allHistory, devices]);
+  }, [allHistory, deviceMap, historyLoaded]);
 
-  // Group users with their rental history
-  const usersWithHistory: UserWithHistory[] = React.useMemo(() => {
-    console.log('Processing users with history...');
-    console.log('All history entries:', allHistory.length);
-    console.log('All users:', users.length);
-    
-    if (allHistory.length === 0 || users.length === 0) {
-      console.log('No history or users available');
-      return [];
-    }
+  const usersWithHistory: UserWithHistory[] = useMemo(() => {
+    if (!historyLoaded || allHistory.length === 0) return [];
     
     const userHistoryMap = new Map<string, {
       user: User;
@@ -267,20 +262,14 @@ const DeviceHistoryPage = () => {
       previousDevices: (HistoryEntry & { device?: Device })[];
     }>();
 
-    // Process each history entry
     allHistory.forEach((entry) => {
-      const user = getUserInfo(entry.userId);
-      const device = getDeviceInfo(entry.deviceId);
+      const user = userMap.get(entry.userId);
+      const device = deviceMap.get(entry.deviceId);
       
-      if (!user) {
-        console.log(`User not found for entry: ${entry.userId}. Available user IDs:`, users.map(u => `${u.id} (${typeof u.id})`));
-        return;
-      }
+      if (!user) return;
 
-      // Use string user ID as key for consistency
       const userKey = String(user.id);
       
-      // Initialize user history if not exists
       if (!userHistoryMap.has(userKey)) {
         userHistoryMap.set(userKey, {
           user,
@@ -292,66 +281,62 @@ const DeviceHistoryPage = () => {
       const userHistory = userHistoryMap.get(userKey)!;
       const entryWithDevice = { ...entry, device };
       
-      console.log(`Processing entry for user ${user.name}:`, {
-        device: device?.project,
-        isActive: entry.isActive,
-        assignedAt: entry.assignedAt,
-        releasedAt: entry.releasedAt
-      });
-      
       if (entry.isActive) {
         userHistory.currentDevices.push(entryWithDevice);
-        console.log(`Added current device for ${user.name}: ${device?.project}`);
       } else {
         userHistory.previousDevices.push(entryWithDevice);
-        console.log(`Added previous device for ${user.name}: ${device?.project}`);
       }
     });
 
-    // Convert map to array and filter out users with no history
-    const result = Array.from(userHistoryMap.values()).filter(userHistory => 
+    return Array.from(userHistoryMap.values()).filter(userHistory => 
       userHistory.currentDevices.length > 0 || userHistory.previousDevices.length > 0
     );
+  }, [allHistory, userMap, deviceMap, historyLoaded]);
+
+  // Filtered results with search optimization
+  const filteredDevicesWithHistory = useMemo(() => {
+    if (!showAllDevices && !deviceSearchTerm) return [];
     
-    console.log(`Final users with history: ${result.length}`);
-    result.forEach(userHistory => {
-      console.log(`User ${userHistory.user.name}: ${userHistory.currentDevices.length} current, ${userHistory.previousDevices.length} previous`);
+    return devicesWithHistory.filter((deviceWithHistory) => {
+      if (!showAllDevices && !deviceSearchTerm) return false;
+      
+      const matchesSearch = !deviceSearchTerm || 
+        deviceWithHistory.device.project?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
+        deviceWithHistory.device.serialNumber?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
+        deviceWithHistory.device.imei?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
+        deviceWithHistory.history.some(entry => 
+          entry.userName.toLowerCase().includes(deviceSearchTerm.toLowerCase())
+        );
+
+      const matchesStatus = 
+        deviceStatusFilter === 'all' ||
+        (deviceStatusFilter === 'active' && deviceWithHistory.currentOwner) ||
+        (deviceStatusFilter === 'returned' && !deviceWithHistory.currentOwner);
+
+      return matchesSearch && matchesStatus;
     });
+  }, [devicesWithHistory, deviceSearchTerm, deviceStatusFilter, showAllDevices]);
+
+  const filteredUsersWithHistory = useMemo(() => {
+    if (!showAllUsers && !userSearchTerm) return [];
     
-    return result;
-  }, [allHistory, users, devices]);
+    return usersWithHistory.filter((userWithHistory) => {
+      if (!showAllUsers && !userSearchTerm) return false;
+      
+      const matchesSearch = !userSearchTerm || 
+        userWithHistory.user.name.toLowerCase().includes(userSearchTerm.toLowerCase());
+      
+      const matchesStatus = 
+        userStatusFilter === 'all' ||
+        (userStatusFilter === 'current' && userWithHistory.currentDevices.length > 0) ||
+        (userStatusFilter === 'previous' && userWithHistory.previousDevices.length > 0);
 
-  // Filter devices with history
-  const filteredDevicesWithHistory = devicesWithHistory.filter((deviceWithHistory) => {
-    const matchesSearch = 
-      deviceWithHistory.device.project?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
-      deviceWithHistory.device.serialNumber?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
-      deviceWithHistory.device.imei?.toLowerCase().includes(deviceSearchTerm.toLowerCase()) ||
-      deviceWithHistory.history.some(entry => 
-        entry.userName.toLowerCase().includes(deviceSearchTerm.toLowerCase())
-      );
-
-    const matchesStatus = 
-      deviceStatusFilter === 'all' ||
-      (deviceStatusFilter === 'active' && deviceWithHistory.currentOwner) ||
-      (deviceStatusFilter === 'returned' && !deviceWithHistory.currentOwner);
-
-    return matchesSearch && matchesStatus;
-  });
-
-  // Filter users with history
-  const filteredUsersWithHistory = usersWithHistory.filter((userWithHistory) => {
-    const matchesSearch = userWithHistory.user.name.toLowerCase().includes(userSearchTerm.toLowerCase());
-    
-    const matchesStatus = 
-      userStatusFilter === 'all' ||
-      (userStatusFilter === 'current' && userWithHistory.currentDevices.length > 0) ||
-      (userStatusFilter === 'previous' && userWithHistory.previousDevices.length > 0);
-
-    return matchesSearch && matchesStatus;
-  });
+      return matchesSearch && matchesStatus;
+    });
+  }, [usersWithHistory, userSearchTerm, userStatusFilter, showAllUsers]);
 
   const isLoading = devicesLoading || usersLoading;
+  const hasSearchOrShowAll = (deviceSearchTerm || showAllDevices) || (userSearchTerm || showAllUsers);
 
   return (
     <PageContainer>
@@ -360,11 +345,20 @@ const DeviceHistoryPage = () => {
           <div>
             <h1 className="text-3xl font-bold tracking-tight">Device History</h1>
             <p className="text-muted-foreground">
-              View ownership history by device or by user
+              Search for devices or users to view their rental history
             </p>
           </div>
           <History className="h-8 w-8 text-muted-foreground" />
         </div>
+
+        {/* Performance Info */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            For optimal performance with large datasets ({devices.length} devices), use search to find specific devices or users. 
+            Use "Show All" carefully with large datasets.
+          </AlertDescription>
+        </Alert>
 
         <Tabs defaultValue="devices" className="space-y-6">
           <TabsList className="grid w-full grid-cols-2">
@@ -381,15 +375,16 @@ const DeviceHistoryPage = () => {
           <TabsContent value="devices">
             <Card>
               <CardHeader>
-                <CardTitle>Devices with Rental History</CardTitle>
+                <CardTitle>Device Rental History</CardTitle>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
-                      placeholder="Search by device, serial number, IMEI, or user..."
+                    <DebouncedInput
+                      placeholder="Search by device name, serial number, IMEI, or user..."
                       value={deviceSearchTerm}
-                      onChange={(e) => setDeviceSearchTerm(e.target.value)}
+                      onChange={setDeviceSearchTerm}
                       className="pl-10"
+                      debounceMs={300}
                     />
                   </div>
                   <Select value={deviceStatusFilter} onValueChange={setDeviceStatusFilter}>
@@ -402,6 +397,25 @@ const DeviceHistoryPage = () => {
                       <SelectItem value="returned">Available</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button 
+                    variant={showAllDevices ? "default" : "outline"}
+                    onClick={() => {
+                      setShowAllDevices(!showAllDevices);
+                      if (!showAllDevices && !historyLoaded) {
+                        fetchAllHistory();
+                      }
+                    }}
+                    disabled={loadingHistory}
+                  >
+                    {loadingHistory ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      showAllDevices ? "Hide All" : "Show All"
+                    )}
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -416,83 +430,102 @@ const DeviceHistoryPage = () => {
                       </div>
                     ))}
                   </div>
+                ) : !hasSearchOrShowAll ? (
+                  <div className="text-center text-muted-foreground py-12">
+                    <Search className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-semibold mb-2">Search for Device History</h3>
+                    <p>Enter a search term or click "Show All" to view device rental history.</p>
+                    <p className="text-sm mt-2">Optimized for datasets with {devices.length} devices.</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {filteredDevicesWithHistory.length === 0 ? (
                       <div className="text-center text-muted-foreground py-8">
-                        No devices with rental history found
+                        {loadingHistory ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Loading device history...</span>
+                          </div>
+                        ) : (
+                          "No devices with rental history found"
+                        )}
                       </div>
                     ) : (
-                      filteredDevicesWithHistory.map((deviceWithHistory) => (
-                        <div key={deviceWithHistory.device.id} className="border rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <div className="font-medium">{deviceWithHistory.device.project || 'Unknown Device'}</div>
-                                <div className="text-sm text-muted-foreground space-y-1">
-                                  {deviceWithHistory.device.serialNumber && (
-                                    <div>S/N: {deviceWithHistory.device.serialNumber}</div>
-                                  )}
-                                  {deviceWithHistory.device.imei && (
-                                    <div>IMEI: {deviceWithHistory.device.imei}</div>
-                                  )}
+                      <>
+                        <div className="text-sm text-muted-foreground mb-4">
+                          Showing {filteredDevicesWithHistory.length} device{filteredDevicesWithHistory.length !== 1 ? 's' : ''} with history
+                        </div>
+                        {filteredDevicesWithHistory.map((deviceWithHistory) => (
+                          <div key={deviceWithHistory.device.id} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div>
+                                  <div className="font-medium">{deviceWithHistory.device.project || 'Unknown Device'}</div>
+                                  <div className="text-sm text-muted-foreground space-y-1">
+                                    {deviceWithHistory.device.serialNumber && (
+                                      <div>S/N: {deviceWithHistory.device.serialNumber}</div>
+                                    )}
+                                    {deviceWithHistory.device.imei && (
+                                      <div>IMEI: {deviceWithHistory.device.imei}</div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                              <Badge variant={deviceWithHistory.currentOwner ? "default" : "secondary"}>
-                                {deviceWithHistory.currentOwner ? "Currently Assigned" : "Available"}
-                              </Badge>
-                              <Badge variant="outline">
-                                {deviceWithHistory.history.length} rental{deviceWithHistory.history.length !== 1 ? 's' : ''}
-                              </Badge>
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View History
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[600px] max-h-[400px] overflow-y-auto">
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium">Rental History - {deviceWithHistory.device.project}</h4>
-                                    <Table>
-                                      <TableHeader>
-                                        <TableRow>
-                                          <TableHead>User</TableHead>
-                                          <TableHead>Assigned</TableHead>
-                                          <TableHead>Returned</TableHead>
-                                          <TableHead>Status</TableHead>
-                                          <TableHead>Duration</TableHead>
-                                        </TableRow>
-                                      </TableHeader>
-                                      <TableBody>
-                                        {deviceWithHistory.history.map((entry) => (
-                                          <TableRow key={entry.id}>
-                                            <TableCell>
-                                              <div className="font-medium">{entry.userName}</div>
-                                            </TableCell>
-                                            <TableCell>{formatDate(entry.assignedAt)}</TableCell>
-                                            <TableCell>{formatDate(entry.releasedAt)}</TableCell>
-                                            <TableCell>
-                                              <Badge variant={entry.isActive ? "default" : "secondary"}>
-                                                {entry.isActive ? "Active" : "Returned"}
-                                              </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                              <span className="text-sm">{calculateDuration(entry.assignedAt, entry.releasedAt)}</span>
-                                            </TableCell>
+                              <div className="flex gap-2">
+                                <Badge variant={deviceWithHistory.currentOwner ? "default" : "secondary"}>
+                                  {deviceWithHistory.currentOwner ? "Currently Assigned" : "Available"}
+                                </Badge>
+                                <Badge variant="outline">
+                                  {deviceWithHistory.history.length} rental{deviceWithHistory.history.length !== 1 ? 's' : ''}
+                                </Badge>
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      View History
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[600px] max-h-[400px] overflow-y-auto">
+                                    <div className="space-y-4">
+                                      <h4 className="font-medium">Rental History - {deviceWithHistory.device.project}</h4>
+                                      <Table>
+                                        <TableHeader>
+                                          <TableRow>
+                                            <TableHead>User</TableHead>
+                                            <TableHead>Assigned</TableHead>
+                                            <TableHead>Returned</TableHead>
+                                            <TableHead>Status</TableHead>
+                                            <TableHead>Duration</TableHead>
                                           </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
+                                        </TableHeader>
+                                        <TableBody>
+                                          {deviceWithHistory.history.map((entry) => (
+                                            <TableRow key={entry.id}>
+                                              <TableCell>
+                                                <div className="font-medium">{entry.userName}</div>
+                                              </TableCell>
+                                              <TableCell>{formatDate(entry.assignedAt)}</TableCell>
+                                              <TableCell>{formatDate(entry.releasedAt)}</TableCell>
+                                              <TableCell>
+                                                <Badge variant={entry.isActive ? "default" : "secondary"}>
+                                                  {entry.isActive ? "Active" : "Returned"}
+                                                </Badge>
+                                              </TableCell>
+                                              <TableCell>
+                                                <span className="text-sm">{calculateDuration(entry.assignedAt, entry.releasedAt)}</span>
+                                              </TableCell>
+                                            </TableRow>
+                                          ))}
+                                        </TableBody>
+                                      </Table>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                      </>
                     )}
                   </div>
                 )}
@@ -503,15 +536,16 @@ const DeviceHistoryPage = () => {
           <TabsContent value="users">
             <Card>
               <CardHeader>
-                <CardTitle>Users with Rental History</CardTitle>
+                <CardTitle>User Rental History</CardTitle>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <div className="relative flex-1">
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-                    <Input
+                    <DebouncedInput
                       placeholder="Search by user name..."
                       value={userSearchTerm}
-                      onChange={(e) => setUserSearchTerm(e.target.value)}
+                      onChange={setUserSearchTerm}
                       className="pl-10"
+                      debounceMs={300}
                     />
                   </div>
                   <Select value={userStatusFilter} onValueChange={setUserStatusFilter}>
@@ -524,6 +558,25 @@ const DeviceHistoryPage = () => {
                       <SelectItem value="previous">Has Previous Devices</SelectItem>
                     </SelectContent>
                   </Select>
+                  <Button 
+                    variant={showAllUsers ? "default" : "outline"}
+                    onClick={() => {
+                      setShowAllUsers(!showAllUsers);
+                      if (!showAllUsers && !historyLoaded) {
+                        fetchAllHistory();
+                      }
+                    }}
+                    disabled={loadingHistory}
+                  >
+                    {loadingHistory ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Loading...
+                      </>
+                    ) : (
+                      showAllUsers ? "Hide All" : "Show All"
+                    )}
+                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
@@ -536,77 +589,68 @@ const DeviceHistoryPage = () => {
                       </div>
                     ))}
                   </div>
+                ) : !hasSearchOrShowAll ? (
+                  <div className="text-center text-muted-foreground py-12">
+                    <UserIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <h3 className="text-lg font-semibold mb-2">Search for User History</h3>
+                    <p>Enter a search term or click "Show All" to view user rental history.</p>
+                    <p className="text-sm mt-2">Optimized for datasets with {users.length} users.</p>
+                  </div>
                 ) : (
                   <div className="space-y-4">
                     {filteredUsersWithHistory.length === 0 ? (
                       <div className="text-center text-muted-foreground py-8">
-                        No users with rental history found
+                        {loadingHistory ? (
+                          <div className="flex items-center justify-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Loading user history...</span>
+                          </div>
+                        ) : (
+                          "No users with rental history found"
+                        )}
                       </div>
                     ) : (
-                      filteredUsersWithHistory.map((userWithHistory) => (
-                        <div key={userWithHistory.user.id} className="border rounded-lg p-4">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
-                              <div>
-                                <h3 className="text-lg font-semibold">{userWithHistory.user.name}</h3>
-                                <p className="text-sm text-muted-foreground">{userWithHistory.user.email}</p>
+                      <>
+                        <div className="text-sm text-muted-foreground mb-4">
+                          Showing {filteredUsersWithHistory.length} user{filteredUsersWithHistory.length !== 1 ? 's' : ''} with history
+                        </div>
+                        {filteredUsersWithHistory.map((userWithHistory) => (
+                          <div key={userWithHistory.user.id} className="border rounded-lg p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                <div>
+                                  <h3 className="text-lg font-semibold">{userWithHistory.user.name}</h3>
+                                  <p className="text-sm text-muted-foreground">{userWithHistory.user.email}</p>
+                                </div>
                               </div>
-                            </div>
-                            <div className="flex gap-2">
-                              {userWithHistory.currentDevices.length > 0 && (
-                                <Badge variant="default">
-                                  {userWithHistory.currentDevices.length} Current
-                                </Badge>
-                              )}
-                              {userWithHistory.previousDevices.length > 0 && (
-                                <Badge variant="secondary">
-                                  {userWithHistory.previousDevices.length} Previous
-                                </Badge>
-                              )}
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <Button variant="outline" size="sm">
-                                    <Eye className="h-4 w-4 mr-1" />
-                                    View Devices
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[500px] max-h-[400px] overflow-y-auto">
-                                  <div className="space-y-4">
-                                    <h4 className="font-medium">Device History - {userWithHistory.user.name}</h4>
-                                    
-                                    {userWithHistory.currentDevices.length > 0 && (
-                                      <div>
-                                        <h5 className="font-medium text-sm text-muted-foreground mb-2">Current Devices</h5>
-                                        <div className="space-y-2">
-                                          {userWithHistory.currentDevices.map((entry) => (
-                                            <div key={entry.id} className="flex items-center justify-between bg-muted/50 rounded p-3">
-                                              <div className="flex-1">
-                                                <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
-                                                <div className="text-sm text-muted-foreground space-y-1">
-                                                  {entry.device?.serialNumber && (
-                                                    <div>S/N: {entry.device.serialNumber}</div>
-                                                  )}
-                                                  {entry.device?.imei && (
-                                                    <div>IMEI: {entry.device.imei}</div>
-                                                  )}
-                                                  <div>Assigned: {formatDate(entry.assignedAt)}</div>
-                                                </div>
-                                              </div>
-                                              <Badge variant="default">Active</Badge>
-                                            </div>
-                                          ))}
-                                        </div>
-                                      </div>
-                                    )}
-
-                                    {userWithHistory.previousDevices.length > 0 && (
-                                      <div>
-                                        <h5 className="font-medium text-sm text-muted-foreground mb-2">Previous Devices</h5>
-                                        <div className="space-y-2">
-                                          {userWithHistory.previousDevices
-                                            .sort((a, b) => new Date(b.releasedAt!).getTime() - new Date(a.releasedAt!).getTime())
-                                            .map((entry) => (
-                                              <div key={entry.id} className="flex items-center justify-between bg-muted/20 rounded p-3">
+                              <div className="flex gap-2">
+                                {userWithHistory.currentDevices.length > 0 && (
+                                  <Badge variant="default">
+                                    {userWithHistory.currentDevices.length} Current
+                                  </Badge>
+                                )}
+                                {userWithHistory.previousDevices.length > 0 && (
+                                  <Badge variant="secondary">
+                                    {userWithHistory.previousDevices.length} Previous
+                                  </Badge>
+                                )}
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <Button variant="outline" size="sm">
+                                      <Eye className="h-4 w-4 mr-1" />
+                                      View Devices
+                                    </Button>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-[500px] max-h-[400px] overflow-y-auto">
+                                    <div className="space-y-4">
+                                      <h4 className="font-medium">Device History - {userWithHistory.user.name}</h4>
+                                      
+                                      {userWithHistory.currentDevices.length > 0 && (
+                                        <div>
+                                          <h5 className="font-medium text-sm text-muted-foreground mb-2">Current Devices</h5>
+                                          <div className="space-y-2">
+                                            {userWithHistory.currentDevices.map((entry) => (
+                                              <div key={entry.id} className="flex items-center justify-between bg-muted/50 rounded p-3">
                                                 <div className="flex-1">
                                                   <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
                                                   <div className="text-sm text-muted-foreground space-y-1">
@@ -616,25 +660,53 @@ const DeviceHistoryPage = () => {
                                                     {entry.device?.imei && (
                                                       <div>IMEI: {entry.device.imei}</div>
                                                     )}
-                                                    <div>
-                                                      {formatDate(entry.assignedAt)} - {formatDate(entry.releasedAt)} • 
-                                                      Duration: {calculateDuration(entry.assignedAt, entry.releasedAt)}
-                                                    </div>
+                                                    <div>Assigned: {formatDate(entry.assignedAt)}</div>
                                                   </div>
                                                 </div>
-                                                <Badge variant="secondary">Returned</Badge>
+                                                <Badge variant="default">Active</Badge>
                                               </div>
                                             ))}
+                                          </div>
                                         </div>
-                                      </div>
-                                    )}
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
+                                      )}
+
+                                      {userWithHistory.previousDevices.length > 0 && (
+                                        <div>
+                                          <h5 className="font-medium text-sm text-muted-foreground mb-2">Previous Devices</h5>
+                                          <div className="space-y-2">
+                                            {userWithHistory.previousDevices
+                                              .sort((a, b) => new Date(b.releasedAt!).getTime() - new Date(a.releasedAt!).getTime())
+                                              .map((entry) => (
+                                                <div key={entry.id} className="flex items-center justify-between bg-muted/20 rounded p-3">
+                                                  <div className="flex-1">
+                                                    <div className="font-medium">{entry.device?.project || 'Unknown Device'}</div>
+                                                    <div className="text-sm text-muted-foreground space-y-1">
+                                                      {entry.device?.serialNumber && (
+                                                        <div>S/N: {entry.device.serialNumber}</div>
+                                                      )}
+                                                      {entry.device?.imei && (
+                                                        <div>IMEI: {entry.device.imei}</div>
+                                                      )}
+                                                      <div>
+                                                        {formatDate(entry.assignedAt)} - {formatDate(entry.releasedAt)} • 
+                                                        Duration: {calculateDuration(entry.assignedAt, entry.releasedAt)}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                  <Badge variant="secondary">Returned</Badge>
+                                                </div>
+                                              ))}
+                                          </div>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              </div>
                             </div>
                           </div>
-                        </div>
-                      ))
+                        ))}
+                      </>
                     )}
                   </div>
                 )}
