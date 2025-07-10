@@ -24,4 +24,8 @@ router.patch('/:id/read', notificationController.markAsRead);
 // Mark all notifications as read
 router.patch('/read-all', notificationController.markAllAsRead);
 
+// DEV MODE ONLY: Test endpoints
+router.post('/test/create', notificationController.createTestNotification);
+router.post('/test/check-expiring', notificationController.checkExpiringDevices);
+
 module.exports = router;
