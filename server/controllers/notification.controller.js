@@ -8,35 +8,57 @@ const notificationController = {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      // For now, return empty array since tables might not exist yet
-      console.log('Getting all notifications...');
+      // For admin, show expiring and overdue devices instead of notifications
+      console.log('Getting admin device overview...');
       
       try {
-        const notifications = await db.sequelize.query(`
+        const expiringDevices = await db.sequelize.query(`
           SELECT 
-            dn.id,
-            dn.device_id,
-            dn.user_id,
-            dn.type,
-            dn.message,
-            dn.sent_at,
-            dn.is_read,
+            d.id,
             d.name as device_name,
             d.type as device_type,
+            d.expiration_date,
+            d.assignedTo as user_id,
             u.name as user_name,
-            u.email as user_email
-          FROM device_notifications dn
-          LEFT JOIN devices d ON dn.device_id = d.id
-          LEFT JOIN users u ON dn.user_id = u.id
-          ORDER BY dn.sent_at DESC
-          LIMIT 100
+            u.email as user_email,
+            CASE 
+              WHEN d.expiration_date < NOW() THEN 'overdue'
+              WHEN d.expiration_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 'expiring_soon'
+              ELSE 'ok'
+            END as status,
+            DATEDIFF(d.expiration_date, NOW()) as days_until_expiry
+          FROM devices d
+          LEFT JOIN users u ON d.assignedTo = u.id
+          WHERE d.status = 'assigned' 
+          AND d.expiration_date IS NOT NULL
+          AND (d.expiration_date < NOW() OR d.expiration_date <= DATE_ADD(NOW(), INTERVAL 7 DAY))
+          ORDER BY d.expiration_date ASC
         `, {
           type: db.Sequelize.QueryTypes.SELECT
         });
 
+        // Format as notification-like objects for UI compatibility
+        const notifications = expiringDevices.map(device => ({
+          id: `device-${device.id}`,
+          device_id: device.id,
+          user_id: device.user_id,
+          type: device.status,
+          message: device.status === 'overdue' 
+            ? `Device "${device.device_name}" is overdue for return (expired: ${new Date(device.expiration_date).toLocaleDateString()})`
+            : `Device "${device.device_name}" is expiring soon (${new Date(device.expiration_date).toLocaleDateString()}) and needs to be returned`,
+          sent_at: new Date().toISOString(),
+          is_read: true, // Admin overview doesn't need read status
+          device_name: device.device_name,
+          device_type: device.device_type,
+          user_name: device.user_name,
+          user_email: device.user_email,
+          expiration_date: device.expiration_date,
+          days_until_expiry: device.days_until_expiry
+        }));
+
         res.json(notifications);
       } catch (tableError) {
-        console.log('Notification tables not ready yet, returning empty array');
+        console.log('Device tables not ready yet, returning empty array');
         res.json([]);
       }
     } catch (error) {
@@ -203,6 +225,93 @@ const notificationController = {
     }
   },
 
+  // Send return request for device (admin only)
+  async sendReturnRequest(req, res) {
+    try {
+      if (!req.user || !req.user.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { deviceId, message: customMessage } = req.body;
+
+      if (!deviceId) {
+        return res.status(400).json({ message: 'Device ID is required' });
+      }
+
+      // Get device and user info
+      const device = await db.sequelize.query(`
+        SELECT d.*, u.id as assigned_user_id, u.name as assigned_user_name, u.email as user_email
+        FROM devices d 
+        LEFT JOIN users u ON d.assignedTo = u.id 
+        WHERE d.id = :deviceId AND d.status = 'assigned'
+      `, {
+        replacements: { deviceId },
+        type: db.Sequelize.QueryTypes.SELECT
+      });
+
+      if (!device || device.length === 0) {
+        return res.status(404).json({ message: 'Device not found or not assigned' });
+      }
+
+      const deviceInfo = device[0];
+
+      if (!deviceInfo.assigned_user_id) {
+        return res.status(400).json({ message: 'Device is not assigned to any user' });
+      }
+
+      // Create return request message
+      const message = customMessage || `Please return device "${deviceInfo.name}" at your earliest convenience. Contact admin if you have any questions.`;
+
+      try {
+        // Create notification for the user
+        await db.sequelize.query(`
+          INSERT INTO device_notifications (device_id, user_id, type, message, sent_at, is_read)
+          VALUES (:deviceId, :userId, 'return_request', :message, NOW(), false)
+        `, {
+          replacements: {
+            deviceId,
+            userId: deviceInfo.assigned_user_id,
+            message
+          },
+          type: db.Sequelize.QueryTypes.INSERT
+        });
+
+        // Create web notification for real-time display
+        await db.sequelize.query(`
+          INSERT INTO web_notifications (user_id, title, message, type, is_read, created_at, action_url)
+          VALUES (:userId, :title, :message, 'return_request', false, NOW(), '/notifications')
+        `, {
+          replacements: {
+            userId: deviceInfo.assigned_user_id,
+            title: 'Device Return Request',
+            message: `Return request for device "${deviceInfo.name}"`
+          },
+          type: db.Sequelize.QueryTypes.INSERT
+        });
+
+        // TODO: Send email notification (will implement later)
+        console.log(`Return request sent for device ${deviceInfo.name} to user ${deviceInfo.assigned_user_name} (${deviceInfo.user_email})`);
+
+        res.json({
+          message: 'Return request sent successfully',
+          details: {
+            deviceId,
+            deviceName: deviceInfo.name,
+            userId: deviceInfo.assigned_user_id,
+            userName: deviceInfo.assigned_user_name,
+            userEmail: deviceInfo.user_email
+          }
+        });
+      } catch (tableError) {
+        console.error('Notification table not ready:', tableError);
+        res.status(500).json({ message: 'Notification tables not ready. Please run migrations first.' });
+      }
+    } catch (error) {
+      console.error('Error sending return request:', error);
+      res.status(500).json({ message: 'Internal server error' });
+    }
+  },
+
   // Get notification statistics
   async getNotificationStats(req, res) {
     try {
@@ -211,20 +320,28 @@ const notificationController = {
 
       try {
         if (isAdmin) {
-          const stats = await db.sequelize.query(`
+          // For admin, show device expiration stats instead of personal notifications
+          const deviceStats = await db.sequelize.query(`
             SELECT 
-              COUNT(*) as total_notifications,
-              SUM(CASE WHEN is_read = false THEN 1 ELSE 0 END) as unread_count,
-              SUM(CASE WHEN type = 'expiring_soon' THEN 1 ELSE 0 END) as expiring_soon,
-              SUM(CASE WHEN type = 'overdue' THEN 1 ELSE 0 END) as overdue,
-              SUM(CASE WHEN type = 'returned' THEN 1 ELSE 0 END) as returned
-            FROM device_notifications
-            WHERE sent_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+              COUNT(CASE WHEN d.status = 'assigned' AND d.expiration_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 1 END) as expiring_soon,
+              COUNT(CASE WHEN d.status = 'assigned' AND d.expiration_date < NOW() THEN 1 END) as overdue,
+              COUNT(CASE WHEN d.status = 'assigned' AND d.expiration_date IS NOT NULL THEN 1 END) as total_assigned,
+              COUNT(CASE WHEN dn.type = 'returned' AND dn.sent_at >= DATE_SUB(NOW(), INTERVAL 30 DAY) THEN 1 END) as returned
+            FROM devices d
+            LEFT JOIN device_notifications dn ON d.id = dn.device_id
           `, {
             type: db.Sequelize.QueryTypes.SELECT
           });
 
-          res.json(stats[0]);
+          const stats = deviceStats[0];
+          res.json({
+            total_notifications: parseInt(stats.expiring_soon) + parseInt(stats.overdue),
+            unread_count: parseInt(stats.expiring_soon) + parseInt(stats.overdue),
+            expiring_soon: parseInt(stats.expiring_soon),
+            overdue: parseInt(stats.overdue),
+            returned: parseInt(stats.returned),
+            total_assigned: parseInt(stats.total_assigned)
+          });
         } else {
           const stats = await db.sequelize.query(`
             SELECT 

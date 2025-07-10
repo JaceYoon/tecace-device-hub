@@ -24,6 +24,9 @@ router.patch('/:id/read', notificationController.markAsRead);
 // Mark all notifications as read
 router.patch('/read-all', notificationController.markAllAsRead);
 
+// Send return request for device (admin only)
+router.post('/return-request', notificationController.sendReturnRequest);
+
 // DEV MODE ONLY: Test endpoints
 router.post('/test/create', notificationController.createTestNotification);
 router.post('/test/check-expiring', notificationController.checkExpiringDevices);

@@ -70,6 +70,17 @@ const NotificationsPage: React.FC = () => {
     }
   };
 
+  const handleSendReturnRequest = async (deviceId: string) => {
+    try {
+      await notificationService.sendReturnRequest(deviceId);
+      toast.success('Return request sent successfully');
+      loadData();
+    } catch (error) {
+      console.error('Error sending return request:', error);
+      toast.error('Failed to send return request');
+    }
+  };
+
   const getNotificationIcon = (type: string) => {
     switch (type) {
       case 'expiring_soon':
@@ -78,6 +89,8 @@ const NotificationsPage: React.FC = () => {
         return <AlertTriangle className="h-4 w-4 text-red-500" />;
       case 'returned':
         return <RotateCcw className="h-4 w-4 text-green-500" />;
+      case 'return_request':
+        return <Package className="h-4 w-4 text-blue-500" />;
       default:
         return <Bell className="h-4 w-4 text-blue-500" />;
     }
@@ -91,6 +104,8 @@ const NotificationsPage: React.FC = () => {
         return 'destructive';
       case 'returned':
         return 'secondary';
+      case 'return_request':
+        return 'default';
       default:
         return 'default';
     }
@@ -105,6 +120,63 @@ const NotificationsPage: React.FC = () => {
       minute: '2-digit'
     });
   };
+
+  const AdminDeviceList = ({ notifications: notifs }: { notifications: DeviceNotification[] }) => (
+    <div className="space-y-4">
+      {notifs.length === 0 ? (
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-8">
+            <Package className="h-12 w-12 text-muted-foreground mb-4" />
+            <p className="text-muted-foreground">No devices requiring attention</p>
+          </CardContent>
+        </Card>
+      ) : (
+        notifs.map((notification) => (
+          <Card key={notification.id} className="border-l-4 border-l-amber-500">
+            <CardContent className="p-4">
+              <div className="flex items-start justify-between">
+                <div className="flex items-start space-x-3 flex-1">
+                  {getNotificationIcon(notification.type)}
+                  <div className="flex-1">
+                    <div className="flex items-center space-x-2 mb-2">
+                      <Badge variant={getNotificationBadgeVariant(notification.type)}>
+                        {notification.type.replace('_', ' ')}
+                      </Badge>
+                      {notification.type === 'overdue' && (
+                        <Badge variant="destructive">Urgent</Badge>
+                      )}
+                    </div>
+                    <h3 className="font-medium mb-2">{notification.device_name}</h3>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      <p>Assigned to: {notification.user_name} ({notification.user_email})</p>
+                      <p>Device Type: {notification.device_type}</p>
+                      <p>Expiration: {formatDate(notification.expiration_date || '')}</p>
+                      {notification.days_until_expiry !== undefined && (
+                        <p className={notification.days_until_expiry < 0 ? 'text-red-600 font-medium' : 'text-amber-600'}>
+                          {notification.days_until_expiry < 0 
+                            ? `${Math.abs(notification.days_until_expiry)} days overdue`
+                            : `${notification.days_until_expiry} days remaining`
+                          }
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => handleSendReturnRequest(notification.device_id)}
+                  size="sm"
+                  className="ml-4"
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Request Return
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
 
   const NotificationList = ({ notifications: notifs, showUserInfo = false }: { 
     notifications: DeviceNotification[], 
@@ -181,7 +253,7 @@ const NotificationsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-bold">Notifications</h1>
             <p className="text-muted-foreground">
-              Manage your device notifications and alerts
+              {isAdmin ? 'Manage device expirations and return requests' : 'Manage your device notifications and alerts'}
             </p>
           </div>
         </div>
@@ -191,18 +263,24 @@ const NotificationsPage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {isAdmin ? 'Devices Needing Attention' : 'Total'}
+                </CardTitle>
                 <Bell className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.total_notifications}</div>
-                <p className="text-xs text-muted-foreground">Last 30 days</p>
+                <p className="text-xs text-muted-foreground">
+                  {isAdmin ? 'Requiring action' : 'Last 30 days'}
+                </p>
               </CardContent>
             </Card>
             
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Unread</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {isAdmin ? 'Urgent' : 'Unread'}
+                </CardTitle>
                 <Badge variant="destructive">{stats.unread_count}</Badge>
               </CardHeader>
               <CardContent>
@@ -239,7 +317,9 @@ const NotificationsPage: React.FC = () => {
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <div className="flex items-center justify-between">
             <TabsList>
-              <TabsTrigger value="user">My Notifications</TabsTrigger>
+              <TabsTrigger value="user">
+                {isAdmin ? 'Device Overview' : 'My Notifications'}
+              </TabsTrigger>
               {isAdmin && <TabsTrigger value="all">All Notifications</TabsTrigger>}
             </TabsList>
             
@@ -259,20 +339,37 @@ const NotificationsPage: React.FC = () => {
           </div>
 
           <TabsContent value="user" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Bell className="h-5 w-5" />
-                  <span>Your Notifications</span>
-                </CardTitle>
-                <CardDescription>
-                  Device notifications related to your assignments
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <NotificationList notifications={notifications} />
-              </CardContent>
-            </Card>
+            {isAdmin ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <AlertTriangle className="h-5 w-5" />
+                    <span>Devices Requiring Attention</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Assigned devices that are expiring soon or overdue for return
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <AdminDeviceList notifications={allNotifications} />
+                </CardContent>
+              </Card>
+            ) : (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Bell className="h-5 w-5" />
+                    <span>Your Notifications</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Device notifications related to your assignments
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <NotificationList notifications={notifications} />
+                </CardContent>
+              </Card>
+            )}
           </TabsContent>
 
           {isAdmin && (

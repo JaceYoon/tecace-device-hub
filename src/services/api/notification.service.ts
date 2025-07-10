@@ -6,13 +6,14 @@ export interface NotificationStats {
   expiring_soon: number;
   overdue: number;
   returned?: number;
+  total_assigned?: number;
 }
 
 export interface DeviceNotification {
   id: string;
   device_id: string;
   user_id: string;
-  type: 'expiring_soon' | 'overdue' | 'returned';
+  type: 'expiring_soon' | 'overdue' | 'returned' | 'return_request';
   message: string;
   sent_at: string;
   is_read: boolean;
@@ -20,6 +21,8 @@ export interface DeviceNotification {
   device_type?: string;
   user_name?: string;
   user_email?: string;
+  expiration_date?: string;
+  days_until_expiry?: number;
 }
 
 export interface WebNotification {
@@ -62,5 +65,10 @@ export const notificationService = {
   async markAllAsRead(all?: boolean): Promise<void> {
     const params = all ? '?all=true' : '';
     await api.patch<void>(`/notifications/read-all${params}`);
+  },
+
+  // Send return request for device (admin only)
+  async sendReturnRequest(deviceId: string, message?: string): Promise<void> {
+    await api.post<void>('/notifications/return-request', { deviceId, message });
   }
 };
