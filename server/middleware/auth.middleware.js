@@ -70,3 +70,6 @@ exports.isManager = (req, res, next) => {
   }
   res.status(403).json({ message: 'Forbidden - Requires admin role' });
 };
+
+// Alias for isAuthenticated for backward compatibility
+exports.requireAuth = exports.isAuthenticated;
