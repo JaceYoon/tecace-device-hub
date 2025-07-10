@@ -74,13 +74,13 @@ const Navbar = () => {
             )}
             
             {isAdmin && (
-              <NavLink to="/device-returns">
+              <NavLink to="/device-shipping">
                 <Button 
-                  variant={isActive('/device-returns') ? 'default' : 'ghost'} 
+                  variant={isActive('/device-shipping') ? 'default' : 'ghost'} 
                   className="flex items-center"
                 >
                   <RotateCcw className="h-4 w-4 mr-2" />
-                  Returns
+                  Shipping
                 </Button>
               </NavLink>
             )}

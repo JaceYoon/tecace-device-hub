@@ -9,7 +9,7 @@ import NotFound from './pages/NotFound';
 import DeviceManagement from './pages/DeviceManagement';
 import UserManagement from './pages/UserManagement';
 import ProfilePage from './pages/ProfilePage';
-import DeviceReturnsPage from './pages/DeviceReturnsPage';
+import DeviceShippingPage from './pages/DeviceShippingPage';
 import DeviceHistoryPage from './pages/DeviceHistoryPage';
 import NotificationsPage from './pages/NotificationsPage';
 import { AuthProvider } from './components/auth/AuthProvider';
@@ -37,7 +37,7 @@ function App() {
                   <Route path="/" element={<Index />} />
                   <Route path="/dashboard" element={<Dashboard />} />
                   <Route path="/device-management" element={<DeviceManagement />} />
-                  <Route path="/device-returns" element={<DeviceReturnsPage />} />
+                  <Route path="/device-shipping" element={<DeviceShippingPage />} />
                   <Route path="/history" element={<DeviceHistoryPage />} />
                   <Route path="/notifications" element={<NotificationsPage />} />
                   <Route path="/user-management" element={<UserManagement />} />

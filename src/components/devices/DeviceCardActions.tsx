@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Check, Clock, ChevronRight } from 'lucide-react';
 import ReportDeviceDialog from './ReportDeviceDialog';
 import RequestAssignmentDialog from './RequestAssignmentDialog';
+import RentalReturnRequestDialog from './RentalReturnRequestDialog';
+import AdminReturnRequestDialog from './AdminReturnRequestDialog';
 
 interface DeviceCardActionsProps {
   device: Device;
@@ -45,7 +47,13 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
     <div className="w-full flex flex-col gap-3 px-1 py-2">
       {isAdmin ? (
         <div className="grid grid-cols-1 gap-3 w-full">
-          {/* Admin controls were removed as per the original */}
+          {/* Admin Return Request button - for assigned devices */}
+          {device.status === 'assigned' && device.assignedToId && (
+            <AdminReturnRequestDialog
+              device={device}
+              onRequestSent={onAction}
+            />
+          )}
         </div>
       ) : (
         <>
@@ -116,7 +124,15 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
             </Button>
           )}
 
-          {/* Return Device button */}
+          {/* Rental Return Request button - for assigned devices to request return */}
+          {isDeviceOwner && device.status === 'assigned' && (
+            <RentalReturnRequestDialog
+              device={device}
+              onRequestSubmitted={onAction}
+            />
+          )}
+
+          {/* Return Device button (shipping) */}
           {(isDeviceOwner || showReturnControls) && device.status === 'assigned' && (
             <Button
               variant="destructive"
@@ -131,7 +147,7 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
                   Processing...
                 </>
               ) : (
-                <>Return Device</>
+                <>Release Device</>
               )}
             </Button>
           )}
