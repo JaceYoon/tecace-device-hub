@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Search } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import DeviceFilters from '@/components/devices/DeviceFilters';
 
 // Import shipping components (renamed from returns)
 import ShippableDevicesList from '@/components/shipping/ShippableDevicesList';
@@ -19,6 +20,9 @@ import { useDeviceShipping } from '@/hooks/useDeviceShipping';
 const DeviceShippingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+  const [sortBy, setSortBy] = useState('name');
 
   const {
     devices,
@@ -77,7 +81,7 @@ const DeviceShippingPage = () => {
             <CardHeader>
               <CardTitle>Search Devices for Shipping</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <div className="flex gap-2">
                 <Input
                   placeholder="Search by device name, model, or serial..."
@@ -91,6 +95,18 @@ const DeviceShippingPage = () => {
                   Search
                 </Button>
               </div>
+              
+              <DeviceFilters
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                statusFilter={statusFilter}
+                onStatusChange={setStatusFilter}
+                typeFilter={typeFilter}
+                onTypeChange={setTypeFilter}
+                deviceTypes={[]}
+                sortBy={sortBy}
+                onSortChange={setSortBy}
+              />
             </CardContent>
           </Card>
 

@@ -228,7 +228,7 @@ const notificationController = {
   // Send return request for device (admin only)
   async sendReturnRequest(req, res) {
     try {
-      if (!req.user || !req.user.isAdmin) {
+      if (!req.user || req.user.role !== 'admin') {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
