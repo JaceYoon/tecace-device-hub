@@ -20,6 +20,10 @@ export const api = {
     method: 'PUT',
     body: JSON.stringify(data)
   }),
+  patch: <T>(endpoint: string, data?: any): Promise<T> => apiCall<T>(endpoint, {
+    method: 'PATCH',
+    body: data ? JSON.stringify(data) : undefined
+  }),
   delete: <T>(endpoint: string): Promise<T> => apiCall<T>(endpoint, {
     method: 'DELETE'
   })

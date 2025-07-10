@@ -3,7 +3,7 @@ import React from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import { Button } from '../ui/button';
 import { cn } from '@/lib/utils';
-import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw, Info, History } from 'lucide-react';
+import { Monitor, Users, Package, LogOut, User, Cpu, RotateCcw, Info, History, Bell } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { ThemeToggle } from '../ui/theme-toggle';
 import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar';
@@ -92,6 +92,16 @@ const Navbar = () => {
               >
                 <History className="h-4 w-4 mr-2" />
                 History
+              </Button>
+            </NavLink>
+
+            <NavLink to="/notifications">
+              <Button 
+                variant={isActive('/notifications') ? 'default' : 'ghost'} 
+                className="flex items-center"
+              >
+                <Bell className="h-4 w-4 mr-2" />
+                Notifications
               </Button>
             </NavLink>
             
