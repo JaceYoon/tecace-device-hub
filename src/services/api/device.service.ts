@@ -31,7 +31,7 @@ export const deviceService = {
       method: 'DELETE'
     }),
 
-  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string }): Promise<DeviceRequest> => {
+  requestDevice: (deviceId: string, type: 'assign' | 'release' | 'report' | 'return', options?: { reportType?: 'missing' | 'stolen' | 'dead', reason?: string, rentalPeriodDays?: number }): Promise<DeviceRequest> => {
     console.log(`Sending ${type} request for device ${deviceId} with options:`, options);
     
     return apiCall<DeviceRequest>(`/devices/${deviceId}/request`, {
@@ -39,7 +39,8 @@ export const deviceService = {
       body: JSON.stringify({ 
         type, 
         reportType: options?.reportType,
-        reason: options?.reason
+        reason: options?.reason,
+        rentalPeriodDays: options?.rentalPeriodDays
       })
     });
   },

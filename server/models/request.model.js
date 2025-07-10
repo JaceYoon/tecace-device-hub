@@ -31,6 +31,15 @@ module.exports = (sequelize, Sequelize) => {
       type: Sequelize.STRING,
       allowNull: true,
       comment: 'Reason for request, release or report'
+    },
+    rentalPeriodDays: {
+      type: Sequelize.INTEGER,
+      allowNull: true,
+      comment: 'Rental period in days for assign requests',
+      validate: {
+        min: 7,
+        max: 365
+      }
     }
   });
   

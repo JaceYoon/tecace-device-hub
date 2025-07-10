@@ -97,12 +97,12 @@ exports.requestDevice = async (req, res) => {
         timeout: 30000 // 30 second timeout
       });
       
-      const { type, reportType, reason } = req.body;
+      const { type, reportType, reason, rentalPeriodDays } = req.body;
       const deviceId = req.params.id;
       const userId = req.user.id;
       const userRole = req.user.role;
 
-      console.log('Request device input:', { type, reportType, reason, deviceId, attempt: retryCount + 1 });
+      console.log('Request device input:', { type, reportType, reason, rentalPeriodDays, deviceId, attempt: retryCount + 1 });
 
       // Validate request type
       const typeValidation = validateRequestType(type, reportType);
@@ -147,7 +147,8 @@ exports.requestDevice = async (req, res) => {
         status,
         deviceId: device.id,
         userId,
-        reason
+        reason,
+        rentalPeriodDays: type === 'assign' ? (rentalPeriodDays || 90) : null
       }, { transaction });
 
       console.log(`Request created with ID ${request.id}, now updating device status`);
@@ -206,12 +207,19 @@ const updateDeviceAfterProcessing = async (device, request, status, transaction)
   if (status === 'approved') {
     switch (request.type) {
       case 'assign':
-        // Assign device to user
+        // Assign device to user and calculate expiration date
+        const assignedDate = new Date();
+        const rentalDays = request.rentalPeriodDays || 90;
+        const expirationDate = new Date(assignedDate);
+        expirationDate.setDate(expirationDate.getDate() + rentalDays);
+        
         await device.update({
           status: 'assigned',
           assignedToId: request.userId,
           requestedBy: null,
-          receivedDate: new Date() // Set received date to now for tracking ownership duration
+          receivedDate: assignedDate,
+          expirationDate: expirationDate,
+          rentalPeriodDays: rentalDays
         }, { transaction });
         break;
         

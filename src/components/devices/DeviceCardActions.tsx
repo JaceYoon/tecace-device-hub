@@ -4,6 +4,7 @@ import { Device } from '@/types';
 import { Button } from "@/components/ui/button";
 import { Check, Clock, ChevronRight } from 'lucide-react';
 import ReportDeviceDialog from './ReportDeviceDialog';
+import RequestAssignmentDialog from './RequestAssignmentDialog';
 
 interface DeviceCardActionsProps {
   device: Device;
@@ -49,24 +50,31 @@ const DeviceCardActions: React.FC<DeviceCardActionsProps> = ({
       ) : (
         <>
           {device.status === 'available' && !hasRequested && !isPending && (
-            <Button
-              className="w-full h-10 font-medium dark:bg-white dark:text-black dark:hover:bg-white/90 bg-black text-white hover:bg-black/90"
-              size="sm"
-              onClick={onRequestDevice}
-              disabled={isProcessing}
-            >
-              {isProcessing ? (
-                <>
-                  <Clock className="h-4 w-4 mr-2 animate-spin" />
-                  Processing...
-                </>
-              ) : (
-                <>
-                  Request Device
-                  <ChevronRight className="h-4 w-4 ml-1" />
-                </>
-              )}
-            </Button>
+            <RequestAssignmentDialog
+              device={device}
+              userId={userId}
+              isProcessing={isProcessing}
+              onRequestSubmitted={onAction || (() => {})}
+              trigger={
+                <Button
+                  className="w-full h-10 font-medium dark:bg-white dark:text-black dark:hover:bg-white/90 bg-black text-white hover:bg-black/90"
+                  size="sm"
+                  disabled={isProcessing}
+                >
+                  {isProcessing ? (
+                    <>
+                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      Request Device
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </>
+                  )}
+                </Button>
+              }
+            />
           )}
 
           {/* Pending Request button */}

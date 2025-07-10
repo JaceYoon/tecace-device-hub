@@ -27,6 +27,8 @@ export interface Device {
   deviceStatus?: string;
   receivedDate?: Date;
   returnDate?: Date;
+  expirationDate?: Date; // Device rental expiration date
+  rentalPeriodDays?: number; // Rental period in days
   modelNumber?: string; // Renamed from notes
   notes?: string; // Renamed from memo
   devicePicture?: string; // Base64 encoded device image
@@ -51,6 +53,7 @@ export interface DeviceRequest {
   type: 'assign' | 'release' | 'report' | 'return';
   reportType?: 'missing' | 'stolen' | 'dead';
   reason?: string;
+  rentalPeriodDays?: number; // Rental period in days for assign requests
   requestedAt: Date;
   processedAt?: Date;
   processedBy?: string; // User ID
