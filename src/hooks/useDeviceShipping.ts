@@ -45,6 +45,15 @@ export const useDeviceShipping = () => {
       device.modelNumber?.toLowerCase().includes(query.toLowerCase()) ||
       device.serialNumber?.toLowerCase().includes(query.toLowerCase())
     );
+    
+    console.log('Search results:', {
+      query,
+      totalDevices: allDevices.length,
+      filteredDevices: filtered.length,
+      deviceTypes: [...new Set(filtered.map(d => d.type))],
+      sampleDevices: filtered.slice(0, 3).map(d => ({ id: d.id, type: d.type, project: d.project }))
+    });
+    
     setDevices(filtered);
   }, [allDevices]);
 

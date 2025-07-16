@@ -113,19 +113,23 @@ const DeviceShippingPage = () => {
           {hasSearched && (
             <ShippableDevicesList
               devices={devices.filter(device => {
-                const matchesStatus = !statusFilter || device.status === statusFilter;
-                const matchesType = !typeFilter || device.type === typeFilter;
+                // Status filter - match exact status or if "all" is selected
+                const matchesStatus = !statusFilter || statusFilter === 'all' || device.status === statusFilter;
+                
+                // Type filter - match exact type or if "all" is selected
+                const matchesType = !typeFilter || typeFilter === 'all' || device.type === typeFilter;
+                
                 return matchesStatus && matchesType;
               }).sort((a, b) => {
                 switch (sortBy) {
                   case 'name':
-                    return a.project.localeCompare(b.project);
+                    return (a.project || '').localeCompare(b.project || '');
                   case 'type':
-                    return a.type.localeCompare(b.type);
+                    return (a.type || '').localeCompare(b.type || '');
                   case 'status':
-                    return a.status.localeCompare(b.status);
+                    return (a.status || '').localeCompare(b.status || '');
                   case 'date':
-                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
                   default:
                     return 0;
                 }
