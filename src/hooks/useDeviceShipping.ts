@@ -24,43 +24,45 @@ export const useDeviceShipping = () => {
 
   const hasInitialLoad = useRef(false);
 
-  // Load all devices initially
+  // Load all devices when needed (not initially)
   const loadAllDevices = useCallback(async () => {
-    if (allDevices.length > 0) return;
-    
     setIsLoading(true);
     try {
       const allDeviceData = await deviceService.getAll();
       setAllDevices(allDeviceData);
-      setDevices(allDeviceData); // Show all devices initially
+      setDevices(allDeviceData); // Show all devices when requested
+      console.log('📦 Loaded all devices for shipping:', allDeviceData?.length || 0);
     } catch (error) {
       console.error('Error loading devices:', error);
       toast.error('Failed to load devices');
     } finally {
       setIsLoading(false);
     }
-  }, [allDevices.length]);
+  }, []);
 
   // Search devices
   const searchDevices = useCallback(async (query: string) => {
-    await loadAllDevices();
-
-    const filtered = allDevices.filter(device => 
-      device.project?.toLowerCase().includes(query.toLowerCase()) ||
-      device.modelNumber?.toLowerCase().includes(query.toLowerCase()) ||
-      device.serialNumber?.toLowerCase().includes(query.toLowerCase())
-    );
+    if (!query.trim()) return;
     
-    console.log('Search results:', {
-      query,
-      totalDevices: allDevices.length,
-      filteredDevices: filtered.length,
-      deviceTypes: [...new Set(filtered.map(d => d.type))],
-      sampleDevices: filtered.slice(0, 3).map(d => ({ id: d.id, type: d.type, project: d.project }))
-    });
-    
-    setDevices(filtered);
-  }, [allDevices, loadAllDevices]);
+    setIsLoading(true);
+    try {
+      // Load all devices and filter locally
+      const allDeviceData = await deviceService.getAll();
+      const filtered = allDeviceData.filter(device => 
+        device.project?.toLowerCase().includes(query.toLowerCase()) ||
+        device.modelNumber?.toLowerCase().includes(query.toLowerCase()) ||
+        device.serialNumber?.toLowerCase().includes(query.toLowerCase()) ||
+        device.imei?.toLowerCase().includes(query.toLowerCase())
+      );
+      setDevices(filtered);
+      console.log('🔍 Found devices for shipping:', filtered?.length || 0);
+    } catch (error) {
+      console.error('Error searching devices:', error);
+      toast.error('Failed to search devices');
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
 
   // Load pending shipping requests
   const loadPendingShipping = useCallback(async () => {
@@ -92,7 +94,7 @@ export const useDeviceShipping = () => {
     }
   }, []);
 
-  // Load all data
+  // Load all data (only pending and shipped, not devices)
   const loadData = useCallback(async () => {
     await Promise.all([
       loadPendingShipping(),
@@ -202,14 +204,13 @@ export const useDeviceShipping = () => {
            shippedDevices.find(device => device.id === deviceId);
   }, [allDevices, devices, shippedDevices]);
 
-  // Initial load
+  // Initial load - only load pending and shipped data, not devices
   useEffect(() => {
     if (!hasInitialLoad.current) {
-      loadData();
-      loadAllDevices(); // Load all devices for filtering
+      loadData(); // Only load pending and shipped data
       hasInitialLoad.current = true;
     }
-  }, [loadData, loadAllDevices]);
+  }, [loadData]);
 
   return {
     devices,

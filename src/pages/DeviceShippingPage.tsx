@@ -20,6 +20,7 @@ import { useDeviceShipping } from '@/hooks/useDeviceShipping';
 const DeviceShippingPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [hasSearched, setHasSearched] = useState(false);
+  const [showAllDevices, setShowAllDevices] = useState(false);
   const [statusFilter, setStatusFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -49,13 +50,32 @@ const DeviceShippingPage = () => {
     setOpenConfirmDialog,
     setConfirmText,
     loadData,
-    searchDevices
+    searchDevices,
+    loadAllDevices
   } = useDeviceShipping();
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
       searchDevices(searchQuery);
       setHasSearched(true);
+    }
+  };
+
+  const handleFilterChange = (filterType: string, value: string) => {
+    if (filterType === 'status') {
+      setStatusFilter(value);
+    } else if (filterType === 'type') {
+      setTypeFilter(value);
+    } else if (filterType === 'sort') {
+      setSortBy(value);
+    }
+    
+    // Auto load devices when filter is applied
+    if (value && value !== 'all' && !showAllDevices) {
+      setShowAllDevices(true);
+      if (!hasSearched) {
+        loadAllDevices();
+      }
     }
   };
 
@@ -100,50 +120,66 @@ const DeviceShippingPage = () => {
                 searchQuery={searchQuery}
                 onSearchChange={setSearchQuery}
                 statusFilter={statusFilter}
-                onStatusChange={setStatusFilter}
+                onStatusChange={(value) => handleFilterChange('status', value)}
                 typeFilter={typeFilter}
-                onTypeChange={setTypeFilter}
+                onTypeChange={(value) => handleFilterChange('type', value)}
                 deviceTypes={['Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other']}
                 sortBy={sortBy}
-                onSortChange={setSortBy}
+                onSortChange={(value) => handleFilterChange('sort', value)}
               />
+              
+              <Button 
+                variant={showAllDevices ? "default" : "outline"}
+                onClick={() => {
+                  setShowAllDevices(!showAllDevices);
+                  if (!showAllDevices && !hasSearched) {
+                    loadAllDevices();
+                  }
+                }}
+                disabled={isLoading}
+              >
+                {isLoading ? "Loading..." : (showAllDevices ? "Hide All" : "Show All")}
+              </Button>
             </CardContent>
           </Card>
 
-          <ShippableDevicesList
-            devices={devices.filter(device => {
-              // Status filter - match exact status or if "all" is selected
-              const matchesStatus = !statusFilter || statusFilter === 'all' || device.status === statusFilter;
-              
-              // Type filter - match exact type or if "all" is selected
-              const matchesType = !typeFilter || typeFilter === 'all' || device.type === typeFilter;
-              
-              return matchesStatus && matchesType;
-            }).sort((a, b) => {
-              switch (sortBy) {
-                case 'name':
-                  return (a.project || '').localeCompare(b.project || '');
-                case 'type':
-                  return (a.type || '').localeCompare(b.type || '');
-                case 'status':
-                  return (a.status || '').localeCompare(b.status || '');
-                case 'date':
-                  return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-                default:
-                  return 0;
-              }
-            })}
-            isLoading={isLoading}
-            selectedDevices={selectedDevices}
-            onDeviceSelect={handleDeviceSelect}
-            onCreateShippingRequests={handleCreateShippingRequests}
-          />
-
-          {!hasSearched && devices.length === 0 && (
+          {(hasSearched || showAllDevices || statusFilter !== '' || typeFilter !== '') ? (
+            <ShippableDevicesList
+              devices={devices.filter(device => {
+                // Status filter - match exact status or if "all" is selected
+                const matchesStatus = !statusFilter || statusFilter === 'all' || device.status === statusFilter;
+                
+                // Type filter - match exact type or if "all" is selected
+                const matchesType = !typeFilter || typeFilter === 'all' || device.type === typeFilter;
+                
+                return matchesStatus && matchesType;
+              }).sort((a, b) => {
+                switch (sortBy) {
+                  case 'name':
+                    return (a.project || '').localeCompare(b.project || '');
+                  case 'type':
+                    return (a.type || '').localeCompare(b.type || '');
+                  case 'status':
+                    return (a.status || '').localeCompare(b.status || '');
+                  case 'date':
+                    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+                  default:
+                    return 0;
+                }
+              })}
+              isLoading={isLoading}
+              selectedDevices={selectedDevices}
+              onDeviceSelect={handleDeviceSelect}
+              onCreateShippingRequests={handleCreateShippingRequests}
+            />
+          ) : (
             <Card>
               <CardContent className="py-12 text-center">
-                <p className="text-muted-foreground">
-                  Use the search above to find devices for shipping
+                <p className="text-muted-foreground mb-4">
+                  Search for devices or apply filters to view shipping options
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Use the search bar above, apply filters, or click "Show All" to view available devices
                 </p>
               </CardContent>
             </Card>
