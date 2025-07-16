@@ -24,21 +24,26 @@ export const useDeviceShipping = () => {
 
   const hasInitialLoad = useRef(false);
 
+  // Load all devices initially
+  const loadAllDevices = useCallback(async () => {
+    if (allDevices.length > 0) return;
+    
+    setIsLoading(true);
+    try {
+      const allDeviceData = await deviceService.getAll();
+      setAllDevices(allDeviceData);
+      setDevices(allDeviceData); // Show all devices initially
+    } catch (error) {
+      console.error('Error loading devices:', error);
+      toast.error('Failed to load devices');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [allDevices.length]);
+
   // Search devices
   const searchDevices = useCallback(async (query: string) => {
-    if (!allDevices.length) {
-      setIsLoading(true);
-      try {
-        const allDeviceData = await deviceService.getAll();
-        setAllDevices(allDeviceData);
-      } catch (error) {
-        console.error('Error loading devices:', error);
-        toast.error('Failed to load devices');
-        return;
-      } finally {
-        setIsLoading(false);
-      }
-    }
+    await loadAllDevices();
 
     const filtered = allDevices.filter(device => 
       device.project?.toLowerCase().includes(query.toLowerCase()) ||
@@ -55,7 +60,7 @@ export const useDeviceShipping = () => {
     });
     
     setDevices(filtered);
-  }, [allDevices]);
+  }, [allDevices, loadAllDevices]);
 
   // Load pending shipping requests
   const loadPendingShipping = useCallback(async () => {
@@ -201,9 +206,10 @@ export const useDeviceShipping = () => {
   useEffect(() => {
     if (!hasInitialLoad.current) {
       loadData();
+      loadAllDevices(); // Load all devices for filtering
       hasInitialLoad.current = true;
     }
-  }, [loadData]);
+  }, [loadData, loadAllDevices]);
 
   return {
     devices,
@@ -230,6 +236,7 @@ export const useDeviceShipping = () => {
     setOpenConfirmDialog,
     setConfirmText,
     loadData,
-    searchDevices
+    searchDevices,
+    loadAllDevices
   };
 };

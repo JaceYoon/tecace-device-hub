@@ -110,38 +110,36 @@ const DeviceShippingPage = () => {
             </CardContent>
           </Card>
 
-          {hasSearched && (
-            <ShippableDevicesList
-              devices={devices.filter(device => {
-                // Status filter - match exact status or if "all" is selected
-                const matchesStatus = !statusFilter || statusFilter === 'all' || device.status === statusFilter;
-                
-                // Type filter - match exact type or if "all" is selected
-                const matchesType = !typeFilter || typeFilter === 'all' || device.type === typeFilter;
-                
-                return matchesStatus && matchesType;
-              }).sort((a, b) => {
-                switch (sortBy) {
-                  case 'name':
-                    return (a.project || '').localeCompare(b.project || '');
-                  case 'type':
-                    return (a.type || '').localeCompare(b.type || '');
-                  case 'status':
-                    return (a.status || '').localeCompare(b.status || '');
-                  case 'date':
-                    return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
-                  default:
-                    return 0;
-                }
-              })}
-              isLoading={isLoading}
-              selectedDevices={selectedDevices}
-              onDeviceSelect={handleDeviceSelect}
-              onCreateShippingRequests={handleCreateShippingRequests}
-            />
-          )}
+          <ShippableDevicesList
+            devices={devices.filter(device => {
+              // Status filter - match exact status or if "all" is selected
+              const matchesStatus = !statusFilter || statusFilter === 'all' || device.status === statusFilter;
+              
+              // Type filter - match exact type or if "all" is selected
+              const matchesType = !typeFilter || typeFilter === 'all' || device.type === typeFilter;
+              
+              return matchesStatus && matchesType;
+            }).sort((a, b) => {
+              switch (sortBy) {
+                case 'name':
+                  return (a.project || '').localeCompare(b.project || '');
+                case 'type':
+                  return (a.type || '').localeCompare(b.type || '');
+                case 'status':
+                  return (a.status || '').localeCompare(b.status || '');
+                case 'date':
+                  return new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime();
+                default:
+                  return 0;
+              }
+            })}
+            isLoading={isLoading}
+            selectedDevices={selectedDevices}
+            onDeviceSelect={handleDeviceSelect}
+            onCreateShippingRequests={handleCreateShippingRequests}
+          />
 
-          {!hasSearched && (
+          {!hasSearched && devices.length === 0 && (
             <Card>
               <CardContent className="py-12 text-center">
                 <p className="text-muted-foreground">
