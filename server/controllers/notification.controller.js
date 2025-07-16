@@ -242,7 +242,7 @@ const notificationController = {
       const device = await db.sequelize.query(`
         SELECT d.*, u.id as assigned_user_id, u.name as assigned_user_name, u.email as user_email
         FROM devices d 
-        LEFT JOIN users u ON d.assignedTo = u.id 
+        LEFT JOIN users u ON d.assignedToId = u.id 
         WHERE d.id = :deviceId AND d.status = 'assigned'
       `, {
         replacements: { deviceId },

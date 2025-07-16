@@ -103,7 +103,7 @@ const DeviceShippingPage = () => {
                 onStatusChange={setStatusFilter}
                 typeFilter={typeFilter}
                 onTypeChange={setTypeFilter}
-                deviceTypes={[]}
+                deviceTypes={['Smartphone', 'Tablet', 'Smartwatch', 'Box', 'PC', 'Accessory', 'Other']}
                 sortBy={sortBy}
                 onSortChange={setSortBy}
               />
@@ -112,7 +112,24 @@ const DeviceShippingPage = () => {
 
           {hasSearched && (
             <ShippableDevicesList
-              devices={devices}
+              devices={devices.filter(device => {
+                const matchesStatus = !statusFilter || device.status === statusFilter;
+                const matchesType = !typeFilter || device.type === typeFilter;
+                return matchesStatus && matchesType;
+              }).sort((a, b) => {
+                switch (sortBy) {
+                  case 'name':
+                    return a.project.localeCompare(b.project);
+                  case 'type':
+                    return a.type.localeCompare(b.type);
+                  case 'status':
+                    return a.status.localeCompare(b.status);
+                  case 'date':
+                    return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                  default:
+                    return 0;
+                }
+              })}
               isLoading={isLoading}
               selectedDevices={selectedDevices}
               onDeviceSelect={handleDeviceSelect}
