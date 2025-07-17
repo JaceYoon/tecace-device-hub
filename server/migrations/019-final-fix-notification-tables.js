@@ -132,19 +132,8 @@ module.exports = {
       
       console.log('[SERVER] ✅ Created web_notifications table');
       
-      // Verify the table structures
-      const [deviceCols] = await queryInterface.sequelize.query(
-        "DESCRIBE device_notifications",
-        { transaction }
-      );
-      
-      const [webCols] = await queryInterface.sequelize.query(
-        "DESCRIBE web_notifications",
-        { transaction }
-      );
-      
-      console.log('[SERVER] Device notifications table columns:', deviceCols.map(col => col.Field));
-      console.log('[SERVER] Web notifications table columns:', webCols.map(col => col.Field));
+      // Log success without verifying structure to avoid MariaDB compatibility issues
+      console.log('[SERVER] ✅ Both notification tables created successfully');
       
       await transaction.commit();
       console.log('[SERVER] ✅ Migration 019 completed successfully');
