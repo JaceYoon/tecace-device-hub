@@ -7,12 +7,8 @@ module.exports = {
     const transaction = await queryInterface.sequelize.transaction();
     
     try {
-      // Check what tables currently exist
-      const [results] = await queryInterface.sequelize.query(
-        "SHOW TABLES",
-        { transaction }
-      );
-      const existingTables = results.map(row => Object.values(row)[0]);
+      // Check what tables currently exist using showAllTables (avoids MariaDB meta property issue)
+      const existingTables = await queryInterface.showAllTables({ transaction });
       console.log('[SERVER] Existing tables:', existingTables);
       
       // 1. Fix device_notifications table
@@ -167,11 +163,7 @@ module.exports = {
     
     try {
       // Drop the tables we created
-      const [results] = await queryInterface.sequelize.query(
-        "SHOW TABLES",
-        { transaction }
-      );
-      const existingTables = results.map(row => Object.values(row)[0]);
+      const existingTables = await queryInterface.showAllTables({ transaction });
       
       if (existingTables.includes('device_notifications')) {
         await queryInterface.dropTable('device_notifications', { transaction });
