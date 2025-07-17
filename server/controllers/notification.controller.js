@@ -350,6 +350,7 @@ const notificationController = {
     try {
       const userId = req.user.id;
       const isAdmin = req.user.isAdmin;
+      console.log('Getting notification stats for user:', userId, 'isAdmin:', isAdmin);
 
       try {
         if (isAdmin) {
@@ -366,9 +367,22 @@ const notificationController = {
             type: db.Sequelize.QueryTypes.SELECT
           });
 
+          // Also get web notification counts for admin
+          const webStats = await db.sequelize.query(`
+            SELECT COUNT(*) as web_notifications
+            FROM web_notifications wn
+            WHERE wn.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+          `, {
+            type: db.Sequelize.QueryTypes.SELECT
+          });
+
           const stats = deviceStats[0];
+          const webCount = webStats[0].web_notifications;
+          
+          console.log('Admin stats:', stats, 'Web notifications:', webCount);
+          
           res.json({
-            total_notifications: parseInt(stats.expiring_soon) + parseInt(stats.overdue),
+            total_notifications: parseInt(stats.expiring_soon) + parseInt(stats.overdue) + parseInt(webCount),
             unread_count: parseInt(stats.expiring_soon) + parseInt(stats.overdue),
             expiring_soon: parseInt(stats.expiring_soon),
             overdue: parseInt(stats.overdue),
@@ -376,23 +390,46 @@ const notificationController = {
             total_assigned: parseInt(stats.total_assigned)
           });
         } else {
-          const stats = await db.sequelize.query(`
-            SELECT 
-              COUNT(*) as total_notifications,
-              SUM(CASE WHEN is_read = false THEN 1 ELSE 0 END) as unread_count,
-              SUM(CASE WHEN type = 'expiring_soon' THEN 1 ELSE 0 END) as expiring_soon,
-              SUM(CASE WHEN type = 'overdue' THEN 1 ELSE 0 END) as overdue
-            FROM device_notifications
-            WHERE user_id = :userId AND sent_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
-          `, {
-            replacements: { userId },
-            type: db.Sequelize.QueryTypes.SELECT
+          // Get user's notification stats from both tables
+          const [deviceStats, webStats] = await Promise.all([
+            db.sequelize.query(`
+              SELECT 
+                COUNT(*) as total_notifications,
+                SUM(CASE WHEN is_read = false THEN 1 ELSE 0 END) as unread_count,
+                SUM(CASE WHEN type = 'expiring_soon' THEN 1 ELSE 0 END) as expiring_soon,
+                SUM(CASE WHEN type = 'overdue' THEN 1 ELSE 0 END) as overdue
+              FROM device_notifications
+              WHERE user_id = :userId AND sent_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            `, {
+              replacements: { userId },
+              type: db.Sequelize.QueryTypes.SELECT
+            }),
+            db.sequelize.query(`
+              SELECT 
+                COUNT(*) as total_web_notifications,
+                SUM(CASE WHEN read_status = false THEN 1 ELSE 0 END) as unread_web_count
+              FROM web_notifications
+              WHERE user_id = :userId AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
+            `, {
+              replacements: { userId },
+              type: db.Sequelize.QueryTypes.SELECT
+            })
+          ]);
+          
+          const deviceData = deviceStats[0];
+          const webData = webStats[0];
+          
+          console.log('User stats - Device:', deviceData, 'Web:', webData);
+          
+          res.json({
+            total_notifications: parseInt(deviceData.total_notifications) + parseInt(webData.total_web_notifications),
+            unread_count: parseInt(deviceData.unread_count) + parseInt(webData.unread_web_count),
+            expiring_soon: parseInt(deviceData.expiring_soon),
+            overdue: parseInt(deviceData.overdue)
           });
-
-          res.json(stats[0]);
         }
       } catch (tableError) {
-        console.log('Notification tables not ready yet, returning default stats');
+        console.error('Notification tables error:', tableError);
         res.json({
           total_notifications: 0,
           unread_count: 0,
