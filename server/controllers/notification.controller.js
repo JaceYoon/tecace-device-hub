@@ -8,57 +8,64 @@ const notificationController = {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      // For admin, show expiring and overdue devices instead of notifications
-      console.log('Getting admin device overview...');
+      console.log('Getting all notifications for admin...');
       
       try {
-        const expiringDevices = await db.sequelize.query(`
-          SELECT 
-            d.id,
-            d.name as device_name,
-            d.type as device_type,
-            d.expiration_date,
-            d.assignedTo as user_id,
-            u.name as user_name,
-            u.email as user_email,
-            CASE 
-              WHEN d.expiration_date < NOW() THEN 'overdue'
-              WHEN d.expiration_date BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL 7 DAY) THEN 'expiring_soon'
-              ELSE 'ok'
-            END as status,
-            DATEDIFF(d.expiration_date, NOW()) as days_until_expiry
-          FROM devices d
-          LEFT JOIN users u ON d.assignedTo = u.id
-          WHERE d.status = 'assigned' 
-          AND d.expiration_date IS NOT NULL
-          AND (d.expiration_date < NOW() OR d.expiration_date <= DATE_ADD(NOW(), INTERVAL 7 DAY))
-          ORDER BY d.expiration_date ASC
-        `, {
-          type: db.Sequelize.QueryTypes.SELECT
-        });
+        // Get both device notifications and web notifications for all users
+        const [deviceNotifications, webNotifications] = await Promise.all([
+          db.sequelize.query(`
+            SELECT 
+              dn.id,
+              dn.device_id,
+              dn.user_id,
+              dn.type,
+              dn.message,
+              dn.sent_at,
+              dn.is_read,
+              d.name as device_name,
+              d.type as device_type,
+              u.name as user_name,
+              u.email as user_email,
+              'device' as notification_source
+            FROM device_notifications dn
+            LEFT JOIN devices d ON dn.device_id = d.id
+            LEFT JOIN users u ON dn.user_id = u.id
+            ORDER BY dn.sent_at DESC
+            LIMIT 100
+          `, {
+            type: db.Sequelize.QueryTypes.SELECT
+          }),
+          db.sequelize.query(`
+            SELECT 
+              wn.id,
+              NULL as device_id,
+              wn.user_id,
+              wn.type,
+              wn.message,
+              wn.created_at as sent_at,
+              wn.read_status as is_read,
+              wn.title as device_name,
+              'notification' as device_type,
+              u.name as user_name,
+              u.email as user_email,
+              'web' as notification_source
+            FROM web_notifications wn
+            LEFT JOIN users u ON wn.user_id = u.id
+            ORDER BY wn.created_at DESC
+            LIMIT 100
+          `, {
+            type: db.Sequelize.QueryTypes.SELECT
+          })
+        ]);
 
-        // Format as notification-like objects for UI compatibility
-        const notifications = expiringDevices.map(device => ({
-          id: `device-${device.id}`,
-          device_id: device.id,
-          user_id: device.user_id,
-          type: device.status,
-          message: device.status === 'overdue' 
-            ? `Device "${device.device_name}" is overdue for return (expired: ${new Date(device.expiration_date).toLocaleDateString()})`
-            : `Device "${device.device_name}" is expiring soon (${new Date(device.expiration_date).toLocaleDateString()}) and needs to be returned`,
-          sent_at: new Date().toISOString(),
-          is_read: true, // Admin overview doesn't need read status
-          device_name: device.device_name,
-          device_type: device.device_type,
-          user_name: device.user_name,
-          user_email: device.user_email,
-          expiration_date: device.expiration_date,
-          days_until_expiry: device.days_until_expiry
-        }));
+        // Combine and sort notifications by date
+        const allNotifications = [...deviceNotifications, ...webNotifications]
+          .sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())
+          .slice(0, 100);
 
-        res.json(notifications);
+        res.json(allNotifications);
       } catch (tableError) {
-        console.log('Device tables not ready yet, returning empty array');
+        console.log('Notification tables not ready yet, returning empty array');
         res.json([]);
       }
     } catch (error) {
@@ -74,28 +81,55 @@ const notificationController = {
       console.log('Getting user notifications for:', userId);
 
       try {
-        const notifications = await db.sequelize.query(`
-          SELECT 
-            dn.id,
-            dn.device_id,
-            dn.user_id,
-            dn.type,
-            dn.message,
-            dn.sent_at,
-            dn.is_read,
-            d.name as device_name,
-            d.type as device_type
-          FROM device_notifications dn
-          LEFT JOIN devices d ON dn.device_id = d.id
-          WHERE dn.user_id = :userId
-          ORDER BY dn.sent_at DESC
-          LIMIT 50
-        `, {
-          replacements: { userId },
-          type: db.Sequelize.QueryTypes.SELECT
-        });
+        // Get both device notifications and web notifications
+        const [deviceNotifications, webNotifications] = await Promise.all([
+          db.sequelize.query(`
+            SELECT 
+              dn.id,
+              dn.device_id,
+              dn.user_id,
+              dn.type,
+              dn.message,
+              dn.sent_at,
+              dn.is_read,
+              d.name as device_name,
+              d.type as device_type,
+              'device' as notification_source
+            FROM device_notifications dn
+            LEFT JOIN devices d ON dn.device_id = d.id
+            WHERE dn.user_id = :userId
+            ORDER BY dn.sent_at DESC
+          `, {
+            replacements: { userId },
+            type: db.Sequelize.QueryTypes.SELECT
+          }),
+          db.sequelize.query(`
+            SELECT 
+              wn.id,
+              NULL as device_id,
+              wn.user_id,
+              wn.type,
+              wn.message,
+              wn.created_at as sent_at,
+              wn.read_status as is_read,
+              wn.title as device_name,
+              'notification' as device_type,
+              'web' as notification_source
+            FROM web_notifications wn
+            WHERE wn.user_id = :userId
+            ORDER BY wn.created_at DESC
+          `, {
+            replacements: { userId },
+            type: db.Sequelize.QueryTypes.SELECT
+          })
+        ]);
 
-        res.json(notifications);
+        // Combine and sort notifications by date
+        const allNotifications = [...deviceNotifications, ...webNotifications]
+          .sort((a, b) => new Date(b.sent_at).getTime() - new Date(a.sent_at).getTime())
+          .slice(0, 50);
+
+        res.json(allNotifications);
       } catch (tableError) {
         console.log('Notification tables not ready yet, returning empty array');
         res.json([]);
