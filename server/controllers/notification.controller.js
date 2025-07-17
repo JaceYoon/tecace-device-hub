@@ -278,7 +278,7 @@ const notificationController = {
         // Create web notification for real-time display
         await db.sequelize.query(`
           INSERT INTO web_notifications (user_id, title, message, type, read_status, created_at, updated_at)
-          VALUES (:userId, :title, :message, 'return_request', false, NOW(), NOW())
+          VALUES (:userId, :title, :message, 'return_reminder', false, NOW(), NOW())
         `, {
           replacements: {
             userId: deviceInfo.assigned_user_id,
