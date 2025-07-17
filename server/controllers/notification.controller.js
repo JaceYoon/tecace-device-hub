@@ -118,9 +118,8 @@ const notificationController = {
             wn.title,
             wn.message,
             wn.type,
-            wn.is_read,
-            wn.created_at,
-            wn.action_url
+            wn.read_status as is_read,
+            wn.created_at
           FROM web_notifications wn
           WHERE wn.user_id = :userId
           ORDER BY wn.created_at DESC
@@ -163,7 +162,7 @@ const notificationController = {
           // Update web notification
           await db.sequelize.query(`
             UPDATE web_notifications 
-            SET is_read = true 
+            SET read_status = true 
             WHERE id = :id AND user_id = :userId
           `, {
             replacements: { id, userId },
@@ -195,7 +194,7 @@ const notificationController = {
             UPDATE device_notifications SET is_read = true WHERE is_read = false
           `);
           await db.sequelize.query(`
-            UPDATE web_notifications SET is_read = true WHERE is_read = false
+            UPDATE web_notifications SET read_status = true WHERE read_status = false
           `);
         } else {
           // Mark user's notifications as read
@@ -207,7 +206,7 @@ const notificationController = {
           });
           
           await db.sequelize.query(`
-            UPDATE web_notifications SET is_read = true WHERE user_id = :userId AND is_read = false
+            UPDATE web_notifications SET read_status = true WHERE user_id = :userId AND read_status = false
           `, {
             replacements: { userId },
             type: db.Sequelize.QueryTypes.UPDATE
@@ -278,8 +277,8 @@ const notificationController = {
 
         // Create web notification for real-time display
         await db.sequelize.query(`
-          INSERT INTO web_notifications (user_id, title, message, type, is_read, created_at, updated_at, action_url)
-          VALUES (:userId, :title, :message, 'return_request', false, NOW(), NOW(), '/notifications')
+          INSERT INTO web_notifications (user_id, title, message, type, read_status, created_at, updated_at)
+          VALUES (:userId, :title, :message, 'return_request', false, NOW(), NOW())
         `, {
           replacements: {
             userId: deviceInfo.assigned_user_id,
