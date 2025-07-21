@@ -43,7 +43,7 @@ const notificationController = {
               wn.type,
               wn.message,
               wn.created_at as sent_at,
-              wn.is_read,
+              wn.read_status as is_read,
               wn.title as device_name,
               'notification' as device_type,
               u.name as user_name,
@@ -111,7 +111,7 @@ const notificationController = {
               wn.type,
               wn.message,
               wn.created_at as sent_at,
-              wn.is_read,
+              wn.read_status as is_read,
               wn.title as device_name,
               'notification' as device_type,
               'web' as notification_source
@@ -152,7 +152,7 @@ const notificationController = {
             wn.title,
             wn.message,
             wn.type,
-            wn.is_read,
+            wn.read_status as is_read,
             wn.created_at
           FROM web_notifications wn
           WHERE wn.user_id = :userId
@@ -196,7 +196,7 @@ const notificationController = {
           // Update web notification
           await db.sequelize.query(`
             UPDATE web_notifications 
-            SET is_read = true 
+            SET read_status = true
             WHERE id = :id AND user_id = :userId
           `, {
             replacements: { id, userId },
@@ -228,7 +228,7 @@ const notificationController = {
             UPDATE device_notifications SET is_read = true WHERE is_read = false
           `);
           await db.sequelize.query(`
-            UPDATE web_notifications SET is_read = true WHERE is_read = false
+            UPDATE web_notifications SET read_status = true WHERE read_status = false
           `);
         } else {
           // Mark user's notifications as read
@@ -240,7 +240,7 @@ const notificationController = {
           });
           
           await db.sequelize.query(`
-            UPDATE web_notifications SET is_read = true WHERE user_id = :userId AND is_read = false
+            UPDATE web_notifications SET read_status = true WHERE user_id = :userId AND read_status = false
           `, {
             replacements: { userId },
             type: db.Sequelize.QueryTypes.UPDATE
@@ -311,7 +311,7 @@ const notificationController = {
 
         // Create web notification for real-time display
         await db.sequelize.query(`
-          INSERT INTO web_notifications (user_id, title, message, type, is_read, created_at, updated_at)
+          INSERT INTO web_notifications (user_id, title, message, type, read_status, created_at, updated_at)
           VALUES (:userId, :title, :message, 'info', false, NOW(), NOW())
         `, {
           replacements: {
@@ -407,7 +407,7 @@ const notificationController = {
             db.sequelize.query(`
               SELECT 
                 COUNT(*) as total_web_notifications,
-                SUM(CASE WHEN is_read = false THEN 1 ELSE 0 END) as unread_web_count
+                SUM(CASE WHEN read_status = false THEN 1 ELSE 0 END) as unread_web_count
               FROM web_notifications
               WHERE user_id = :userId AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)
             `, {
